@@ -137,123 +137,37 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     // =========================================================
-    // EPU CUSTOM INTERACTIVE DATE & TIME PICKER (IMAGE 3 MATCH)
+    // DYNAMIC FILTER DROPDOWN CONTROLS
     // =========================================================
-    var now = new Date();
-    $scope.pickerYear = now.getFullYear();
-    $scope.pickerMonth = now.getMonth(); // 0 - 11
-    $scope.pickerDay = now.getDate();
-    $scope.pickerHour = '01';
-    $scope.pickerMinute = '28';
-    $scope.pickerAmpm = 'PM';
-    $scope.calendarDays = [];
-    $scope.monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    $scope.showFilterModal = false;
+    $scope.showFilterDropdown = false;
 
-    $scope.openFilterModal = function() {
-        $scope.showFilterModal = true;
-        $scope.generateCalendar();
+    $scope.toggleFilterDropdown = function($event) {
+        if ($event) $event.stopPropagation();
+        $scope.showFilterDropdown = !$scope.showFilterDropdown;
     };
 
-    $scope.closeFilterModal = function() {
-        $scope.showFilterModal = false;
+    $scope.closeFilterDropdown = function() {
+        $scope.showFilterDropdown = false;
     };
 
-    $scope.prevMonth = function() {
-        if ($scope.pickerMonth === 0) {
-            $scope.pickerMonth = 11;
-            $scope.pickerYear--;
+    $scope.applyTimePreset = function(preset) {
+        $scope.selectTimePreset(preset);
+        $scope.showFilterDropdown = false;
+        if (preset) {
+            $scope.showToast('Applied time filter: ' + preset.name);
         } else {
-            $scope.pickerMonth--;
+            $scope.showToast('Time filter set to All Time');
         }
-        $scope.generateCalendar();
     };
 
-    $scope.nextMonth = function() {
-        if ($scope.pickerMonth === 11) {
-            $scope.pickerMonth = 0;
-            $scope.pickerYear++;
-        } else {
-            $scope.pickerMonth++;
-        }
-        $scope.generateCalendar();
-    };
-
-    $scope.selectDay = function(dayObj) {
-        if (!dayObj || dayObj.empty) return;
-        $scope.pickerDay = dayObj.day;
-        $scope.generateCalendar();
-    };
-
-    $scope.generateCalendar = function() {
-        var year = $scope.pickerYear;
-        var month = $scope.pickerMonth;
-        var firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Sun
-        var daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        var days = [];
-        for (var i = 0; i < firstDayIndex; i++) {
-            days.push({ day: null, empty: true });
-        }
-        for (var d = 1; d <= daysInMonth; d++) {
-            var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-            days.push({
-                day: d,
-                empty: false,
-                dateStr: dateStr,
-                isSelected: ($scope.pickerDay === d)
+    // Close dropdown on outside click
+    $window.addEventListener('click', function() {
+        if ($scope.showFilterDropdown) {
+            $timeout(function() {
+                $scope.showFilterDropdown = false;
             });
         }
-        $scope.calendarDays = days;
-    };
-
-    $scope.applyPresetChip = function(type, preset) {
-        var targetDate = new Date();
-        if (type === 'today') {
-            // today
-        } else if (type === 'tomorrow') {
-            targetDate.setDate(targetDate.getDate() + 1);
-        } else if (type === '1week') {
-            targetDate.setDate(targetDate.getDate() + 7);
-        } else if (type === '2weeks') {
-            targetDate.setDate(targetDate.getDate() + 14);
-        } else if (type === '1month') {
-            targetDate.setMonth(targetDate.getMonth() + 1);
-        } else if (preset) {
-            $scope.selectTimePreset(preset);
-            $scope.closeFilterModal();
-            $scope.showToast('Filter preset applied: ' + preset.name);
-            return;
-        }
-        $scope.pickerYear = targetDate.getFullYear();
-        $scope.pickerMonth = targetDate.getMonth();
-        $scope.pickerDay = targetDate.getDate();
-        $scope.generateCalendar();
-    };
-
-    $scope.confirmCustomDate = function() {
-        var formattedMonth = String($scope.pickerMonth + 1).padStart(2, '0');
-        var formattedDay = String($scope.pickerDay || 1).padStart(2, '0');
-        var dateStr = $scope.pickerYear + '-' + formattedMonth + '-' + formattedDay;
-        
-        $scope.filters.dateFrom = dateStr;
-        $scope.filters.dateTo = dateStr;
-        $scope.dt.currentPage = 1;
-        $scope.closeFilterModal();
-        $scope.showToast('Filter date applied: ' + dateStr);
-    };
-
-    $scope.clearCustomDate = function() {
-        $scope.filters.dateFrom = '';
-        $scope.filters.dateTo = '';
-        $scope.selectedTimePreset = null;
-        $scope.dt.currentPage = 1;
-        $scope.closeFilterModal();
-        $scope.showToast('All date and time filters cleared');
-    };
+    });
 
     // =========================================================
     // DATATABLE CONTROLS & PAGINATION STATE (30 ROWS DEFAULT)

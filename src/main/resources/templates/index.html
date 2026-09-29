@@ -122,12 +122,60 @@
                             <div class="filter-left-controls">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
-                                <button type="button" class="comic-icon-btn" ng-click="openFilterModal()" title="EPU Date Picker & Custom Filters">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                                    </svg>
-                                </button>
-                                <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
+                                
+                                <!-- Filter Presets Dropdown -->
+                                <div class="filter-dropdown-container">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="toggleFilterDropdown($event)" title="Dynamic Time Filters">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                        </svg>
+                                    </button>
+
+                                    <!-- Dropdown Menu of Admin-Created Filters -->
+                                    <div class="filter-dropdown-menu" ng-show="showFilterDropdown" ng-click="$event.stopPropagation()">
+                                        <div class="filter-dropdown-header">
+                                            <span class="filter-dropdown-title">TIME FILTER PRESETS</span>
+                                            <span class="filter-dropdown-count" ng-bind="(timeFilterPresets | filter:{isActive:true}).length + ' Active'"></span>
+                                        </div>
+
+                                        <div class="filter-dropdown-list">
+                                            <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedTimePreset}" ng-click="applyTimePreset(null)">
+                                                <div class="filter-item-info">
+                                                    <span class="filter-item-name">All Time</span>
+                                                    <span class="filter-item-sub">Show all records</span>
+                                                </div>
+                                                <span class="filter-item-check" ng-if="!selectedTimePreset">✓</span>
+                                            </button>
+
+                                            <div class="filter-dropdown-divider"></div>
+
+                                            <button type="button" 
+                                                    class="filter-dropdown-item" 
+                                                    ng-repeat="preset in timeFilterPresets" 
+                                                    ng-if="preset.isActive"
+                                                    ng-class="{'selected': selectedTimePreset && selectedTimePreset.id === preset.id}" 
+                                                    ng-click="applyTimePreset(preset)">
+                                                <div class="filter-item-info">
+                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
+                                                    <span class="filter-item-badge" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span>
+                                                </div>
+                                                <span class="filter-item-check" ng-if="selectedTimePreset && selectedTimePreset.id === preset.id">✓</span>
+                                            </button>
+
+                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 12px; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
+                                                No custom filter presets yet.
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-dropdown-footer">
+                                            <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFilterDropdown();">
+                                                ⚙️ Manage Filter Rules
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" title="Click to clear filter">
                                     <span ng-bind="selectedTimePreset.name"></span> ✕
                                 </span>
                             </div>
@@ -569,12 +617,60 @@
                             <div class="filter-left-controls">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
-                                <button type="button" class="comic-icon-btn" ng-click="openFilterModal()" title="EPU Date Picker & Custom Filters">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                                    </svg>
-                                </button>
-                                <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
+                                
+                                <!-- Filter Presets Dropdown -->
+                                <div class="filter-dropdown-container">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="toggleFilterDropdown($event)" title="Dynamic Time Filters">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                        </svg>
+                                    </button>
+
+                                    <!-- Dropdown Menu of Admin-Created Filters -->
+                                    <div class="filter-dropdown-menu" ng-show="showFilterDropdown" ng-click="$event.stopPropagation()">
+                                        <div class="filter-dropdown-header">
+                                            <span class="filter-dropdown-title">TIME FILTER PRESETS</span>
+                                            <span class="filter-dropdown-count" ng-bind="(timeFilterPresets | filter:{isActive:true}).length + ' Active'"></span>
+                                        </div>
+
+                                        <div class="filter-dropdown-list">
+                                            <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedTimePreset}" ng-click="applyTimePreset(null)">
+                                                <div class="filter-item-info">
+                                                    <span class="filter-item-name">All Time</span>
+                                                    <span class="filter-item-sub">Show all records</span>
+                                                </div>
+                                                <span class="filter-item-check" ng-if="!selectedTimePreset">✓</span>
+                                            </button>
+
+                                            <div class="filter-dropdown-divider"></div>
+
+                                            <button type="button" 
+                                                    class="filter-dropdown-item" 
+                                                    ng-repeat="preset in timeFilterPresets" 
+                                                    ng-if="preset.isActive"
+                                                    ng-class="{'selected': selectedTimePreset && selectedTimePreset.id === preset.id}" 
+                                                    ng-click="applyTimePreset(preset)">
+                                                <div class="filter-item-info">
+                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
+                                                    <span class="filter-item-badge" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span>
+                                                </div>
+                                                <span class="filter-item-check" ng-if="selectedTimePreset && selectedTimePreset.id === preset.id">✓</span>
+                                            </button>
+
+                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 12px; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
+                                                No custom filter presets yet.
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-dropdown-footer">
+                                            <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFilterDropdown();">
+                                                ⚙️ Manage Filter Rules
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" title="Click to clear filter">
                                     <span ng-bind="selectedTimePreset.name"></span> ✕
                                 </span>
                             </div>
@@ -1110,12 +1206,60 @@
                             <div class="filter-left-controls">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
-                                <button type="button" class="comic-icon-btn" ng-click="openFilterModal()" title="EPU Date Picker & Custom Filters">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                                    </svg>
-                                </button>
-                                <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
+                                
+                                <!-- Filter Presets Dropdown -->
+                                <div class="filter-dropdown-container">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="toggleFilterDropdown($event)" title="Dynamic Time Filters">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                        </svg>
+                                    </button>
+
+                                    <!-- Dropdown Menu of Admin-Created Filters -->
+                                    <div class="filter-dropdown-menu" ng-show="showFilterDropdown" ng-click="$event.stopPropagation()">
+                                        <div class="filter-dropdown-header">
+                                            <span class="filter-dropdown-title">TIME FILTER PRESETS</span>
+                                            <span class="filter-dropdown-count" ng-bind="(timeFilterPresets | filter:{isActive:true}).length + ' Active'"></span>
+                                        </div>
+
+                                        <div class="filter-dropdown-list">
+                                            <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedTimePreset}" ng-click="applyTimePreset(null)">
+                                                <div class="filter-item-info">
+                                                    <span class="filter-item-name">All Time</span>
+                                                    <span class="filter-item-sub">Show all records</span>
+                                                </div>
+                                                <span class="filter-item-check" ng-if="!selectedTimePreset">✓</span>
+                                            </button>
+
+                                            <div class="filter-dropdown-divider"></div>
+
+                                            <button type="button" 
+                                                    class="filter-dropdown-item" 
+                                                    ng-repeat="preset in timeFilterPresets" 
+                                                    ng-if="preset.isActive"
+                                                    ng-class="{'selected': selectedTimePreset && selectedTimePreset.id === preset.id}" 
+                                                    ng-click="applyTimePreset(preset)">
+                                                <div class="filter-item-info">
+                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
+                                                    <span class="filter-item-badge" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span>
+                                                </div>
+                                                <span class="filter-item-check" ng-if="selectedTimePreset && selectedTimePreset.id === preset.id">✓</span>
+                                            </button>
+
+                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 12px; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
+                                                No custom filter presets yet.
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-dropdown-footer">
+                                            <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFilterDropdown();">
+                                                ⚙️ Manage Filter Rules
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" title="Click to clear filter">
                                     <span ng-bind="selectedTimePreset.name"></span> ✕
                                 </span>
                             </div>
@@ -1356,96 +1500,10 @@
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- EPU CUSTOM INTERACTIVE DATE & TIME PICKER MODAL (IMAGE 3) -->
-    <!-- ========================================================= -->
-    <div class="epu-modal-overlay" ng-show="showFilterModal">
-        <div class="epu-datepicker-card">
-            
-            <!-- Modal Header Section -->
-            <div class="epu-header-section">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div class="epu-badge-title">
-                        <span>🎓 EPU DATE PICKER</span>
-                    </div>
-                    <button type="button" class="epu-nav-arrow-btn" style="width: 26px; height: 26px; font-size: 0.85rem;" ng-click="closeFilterModal()">&times;</button>
-                </div>
-
-                <div class="epu-month-nav-row">
-                    <button type="button" class="epu-nav-arrow-btn" ng-click="prevMonth()">‹</button>
-                    <div class="epu-month-title">
-                        {{ monthNames[pickerMonth] }} {{ pickerYear }}
-                    </div>
-                    <button type="button" class="epu-nav-arrow-btn" ng-click="nextMonth()">›</button>
-                </div>
-            </div>
-
-            <!-- Quick Preset Chips Row (Built-in + Dynamic Presets) -->
-            <div class="epu-chips-scroll">
-                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('today')">★ Today</button>
-                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('tomorrow')">Tomorrow</button>
-                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('1week')">+1 Week</button>
-                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('2weeks')">+2 Weeks</button>
-                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('1month')">+1 Month</button>
-                
-                <!-- Dynamic Admin-Created Presets -->
-                <button type="button" 
-                        class="epu-chip-btn" 
-                        ng-repeat="p in timeFilterPresets" 
-                        ng-if="p.isActive"
-                        ng-class="{'active-chip': selectedTimePreset && selectedTimePreset.id === p.id}"
-                        ng-click="applyPresetChip(null, p)">
-                    {{ p.name }}
-                </button>
-            </div>
-
-            <!-- Calendar Container -->
-            <div class="epu-calendar-container">
-                <!-- Day Headers -->
-                <div class="epu-weekdays-row">
-                    <span>SU</span>
-                    <span>MO</span>
-                    <span>TU</span>
-                    <span>WE</span>
-                    <span>TH</span>
-                    <span>FR</span>
-                    <span>SA</span>
-                </div>
-
-                <!-- Days 7-column Grid -->
-                <div class="epu-days-grid">
-                    <div class="epu-day-cell" 
-                         ng-repeat="dayObj in calendarDays" 
-                         ng-class="{'empty-day': dayObj.empty, 'selected-day': dayObj.isSelected}"
-                         ng-click="selectDay(dayObj)">
-                        <span ng-if="!dayObj.empty" ng-bind="dayObj.day"></span>
-                    </div>
-                </div>
-
-                <!-- Prompt Divider -->
-                <div class="epu-prompt-divider">
-                    — Pick a date above —
-                </div>
-            </div>
-
-            <!-- Time Picker Row -->
-            <div class="epu-time-section">
-                <div class="epu-time-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>Time</span>
-                </div>
-                <input type="text" class="epu-time-input" ng-model="pickerHour" maxlength="2">
-                <strong style="font-size: 1.1rem; color: #1E1B4B;">:</strong>
-                <input type="text" class="epu-time-input" ng-model="pickerMinute" maxlength="2">
-                <button type="button" class="epu-ampm-badge" ng-click="pickerAmpm = (pickerAmpm === 'PM' ? 'AM' : 'PM')" ng-bind="pickerAmpm">PM</button>
-            </div>
-
-            <!-- Bottom Actions -->
-            <div class="epu-bottom-actions">
-                <button type="button" class="epu-btn-clear" ng-click="clearCustomDate()">✕ Clear</button>
-                <button type="button" class="epu-btn-confirm" ng-click="confirmCustomDate()">✓ Confirm Date</button>
-            </div>
-
+    <!-- Comic Toast Alerts -->
+    <div class="toast-container">
+        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
+            <span ng-bind="toast.message"></span>
         </div>
     </div>
 

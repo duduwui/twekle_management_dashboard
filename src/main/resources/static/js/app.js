@@ -179,9 +179,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     // Close dropdown on outside click
     $window.addEventListener('click', function() {
-        if ($scope.showFilterDropdown) {
+        if ($scope.showFilterDropdown || $scope.showOrderFilterDropdown || $scope.showFeedbackFilterDropdown) {
             $timeout(function() {
                 $scope.showFilterDropdown = false;
+                $scope.showOrderFilterDropdown = false;
+                $scope.showFeedbackFilterDropdown = false;
             });
         }
     });
@@ -468,6 +470,446 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         var filtered = $scope.getFilteredCustomers();
         var start = ($scope.dt.currentPage - 1) * $scope.dt.pageSize;
         return filtered.slice(start, start + $scope.dt.pageSize);
+    };
+
+    // =========================================================
+    // 1. CUSTOMER ORDERS DATATABLE CONTROLS
+    // =========================================================
+    $scope.orderDt = {
+        sortField: 'orderDate',
+        sortReverse: true,
+        currentPage: 1,
+        pageSize: 10
+    };
+    $scope.orderFilters = {
+        search: '',
+        dateFrom: null,
+        dateTo: null
+    };
+    $scope.selectedOrderTimePreset = null;
+    $scope.showOrderFilterDropdown = false;
+
+    $scope.toggleOrderFilterDropdown = function($event) {
+        if ($event) $event.stopPropagation();
+        $scope.showOrderFilterDropdown = !$scope.showOrderFilterDropdown;
+    };
+    $scope.closeOrderFilterDropdown = function() {
+        $scope.showOrderFilterDropdown = false;
+    };
+    $scope.applyOrderTimePreset = function(preset) {
+        $scope.selectedOrderTimePreset = preset;
+        $scope.showOrderFilterDropdown = false;
+        $scope.orderDt.currentPage = 1;
+        if (preset) {
+            $scope.showToast('Order filter set to: ' + preset.name);
+        } else {
+            $scope.showToast('Order filter set to All Time');
+        }
+    };
+    $scope.selectOrderTimePreset = function(preset) {
+        $scope.selectedOrderTimePreset = preset;
+        $scope.orderDt.currentPage = 1;
+    };
+    $scope.sortOrdersBy = function(field) {
+        if ($scope.orderDt.sortField === field) {
+            $scope.orderDt.sortReverse = !$scope.orderDt.sortReverse;
+        } else {
+            $scope.orderDt.sortField = field;
+            $scope.orderDt.sortReverse = false;
+        }
+        $scope.orderDt.currentPage = 1;
+    };
+    $scope.getOrderSortIndicator = function(field) {
+        if ($scope.orderDt.sortField !== field) return '↕';
+        return $scope.orderDt.sortReverse ? '▼' : '▲';
+    };
+    $scope.getFilteredCustomerOrders = function() {
+        if (!$scope.customerOrders) return [];
+        var q = $scope.orderFilters.search;
+        return $scope.customerOrders.filter(function(o) {
+            if (q && !searchMatch([o.orderNumber, o.itemsSummary, o.orderStatus, o.paymentMethod, '$' + o.totalAmount, '#' + o.id].join(' '), q)) {
+                return false;
+            }
+            if (!matchesPreset(o.orderDate, $scope.selectedOrderTimePreset)) return false;
+            if (!isWithinDateRange(o.orderDate, $scope.orderFilters.dateFrom, $scope.orderFilters.dateTo)) return false;
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.orderDt.sortField];
+            var valB = b[$scope.orderDt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.orderDt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.orderDt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+    $scope.getPagedCustomerOrders = function() {
+        var filtered = $scope.getFilteredCustomerOrders();
+        var start = ($scope.orderDt.currentPage - 1) * $scope.orderDt.pageSize;
+        return filtered.slice(start, start + $scope.orderDt.pageSize);
+    };
+    $scope.setOrderPage = function(page) {
+        if (page < 1 || page > $scope.getTotalOrderPages($scope.getFilteredCustomerOrders().length)) return;
+        $scope.orderDt.currentPage = page;
+    };
+    $scope.getTotalOrderPages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.orderDt.pageSize) || 1;
+    };
+    $scope.getOrderPageNumbers = function(totalItems) {
+        var total = $scope.getTotalOrderPages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    // =========================================================
+    // 2. CUSTOMER REVIEWS & COMPLIMENTS DATATABLE CONTROLS
+    // =========================================================
+    $scope.feedbackDt = {
+        sortField: 'createdAt',
+        sortReverse: true,
+        currentPage: 1,
+        pageSize: 10
+    };
+    $scope.feedbackFilters = {
+        search: '',
+        type: 'ALL',
+        dateFrom: null,
+        dateTo: null
+    };
+    $scope.selectedFeedbackTimePreset = null;
+    $scope.showFeedbackFilterDropdown = false;
+
+    $scope.toggleFeedbackFilterDropdown = function($event) {
+        if ($event) $event.stopPropagation();
+        $scope.showFeedbackFilterDropdown = !$scope.showFeedbackFilterDropdown;
+    };
+    $scope.closeFeedbackFilterDropdown = function() {
+        $scope.showFeedbackFilterDropdown = false;
+    };
+    $scope.applyFeedbackTimePreset = function(preset) {
+        $scope.selectedFeedbackTimePreset = preset;
+        $scope.showFeedbackFilterDropdown = false;
+        $scope.feedbackDt.currentPage = 1;
+        if (preset) {
+            $scope.showToast('Feedback filter set to: ' + preset.name);
+        } else {
+            $scope.showToast('Feedback filter set to All Time');
+        }
+    };
+    $scope.selectFeedbackTimePreset = function(preset) {
+        $scope.selectedFeedbackTimePreset = preset;
+        $scope.feedbackDt.currentPage = 1;
+    };
+    $scope.setFeedbackTypeFilter = function(type) {
+        $scope.feedbackFilters.type = type;
+        $scope.feedbackDt.currentPage = 1;
+    };
+    $scope.sortFeedbacksBy = function(field) {
+        if ($scope.feedbackDt.sortField === field) {
+            $scope.feedbackDt.sortReverse = !$scope.feedbackDt.sortReverse;
+        } else {
+            $scope.feedbackDt.sortField = field;
+            $scope.feedbackDt.sortReverse = false;
+        }
+        $scope.feedbackDt.currentPage = 1;
+    };
+    $scope.getFeedbackSortIndicator = function(field) {
+        if ($scope.feedbackDt.sortField !== field) return '↕';
+        return $scope.feedbackDt.sortReverse ? '▼' : '▲';
+    };
+    $scope.getFilteredCustomerFeedbacks = function() {
+        if (!$scope.customerFeedbacks) return [];
+        var q = $scope.feedbackFilters.search;
+        var type = $scope.feedbackFilters.type;
+        return $scope.customerFeedbacks.filter(function(fb) {
+            if (type && type !== 'ALL' && fb.feedbackType !== type) {
+                return false;
+            }
+            if (q && !searchMatch([fb.authorName, fb.feedbackType, fb.content, fb.orderNumber, fb.orderSummary, fb.status, '#' + fb.id].join(' '), q)) {
+                return false;
+            }
+            if (!matchesPreset(fb.createdAt, $scope.selectedFeedbackTimePreset)) return false;
+            if (!isWithinDateRange(fb.createdAt, $scope.feedbackFilters.dateFrom, $scope.feedbackFilters.dateTo)) return false;
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.feedbackDt.sortField];
+            var valB = b[$scope.feedbackDt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.feedbackDt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.feedbackDt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+    $scope.getPagedCustomerFeedbacks = function() {
+        var filtered = $scope.getFilteredCustomerFeedbacks();
+        var start = ($scope.feedbackDt.currentPage - 1) * $scope.feedbackDt.pageSize;
+        return filtered.slice(start, start + $scope.feedbackDt.pageSize);
+    };
+    $scope.setFeedbackPage = function(page) {
+        if (page < 1 || page > $scope.getTotalFeedbackPages($scope.getFilteredCustomerFeedbacks().length)) return;
+        $scope.feedbackDt.currentPage = page;
+    };
+    $scope.getTotalFeedbackPages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.feedbackDt.pageSize) || 1;
+    };
+    $scope.getFeedbackPageNumbers = function(totalItems) {
+        var total = $scope.getTotalFeedbackPages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    // =========================================================
+    // 3. INSPECT ADMIN USERS DATATABLE CONTROLS
+    // =========================================================
+    $scope.adminInspectDt = {
+        sortField: 'usernameEn',
+        sortReverse: false,
+        currentPage: 1,
+        pageSize: 8
+    };
+    $scope.sortAdminInspectBy = function(field) {
+        if ($scope.adminInspectDt.sortField === field) {
+            $scope.adminInspectDt.sortReverse = !$scope.adminInspectDt.sortReverse;
+        } else {
+            $scope.adminInspectDt.sortField = field;
+            $scope.adminInspectDt.sortReverse = false;
+        }
+        $scope.adminInspectDt.currentPage = 1;
+    };
+    $scope.getAdminInspectSortIndicator = function(field) {
+        if ($scope.adminInspectDt.sortField !== field) return '↕';
+        return $scope.adminInspectDt.sortReverse ? '▼' : '▲';
+    };
+    $scope.getFilteredAdminInspectUsers = function() {
+        if (!$scope.users) return [];
+        var q = $scope.adminInspectUserSearch;
+        return $scope.users.filter(function(u) {
+            if (q && !searchMatch([u.usernameEn, u.usernameAr, u.usernameKu, u.phoneNumber, u.status, '#' + u.id].join(' '), q)) {
+                return false;
+            }
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.adminInspectDt.sortField];
+            var valB = b[$scope.adminInspectDt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.adminInspectDt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.adminInspectDt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+    $scope.getPagedAdminInspectUsers = function() {
+        var filtered = $scope.getFilteredAdminInspectUsers();
+        var start = ($scope.adminInspectDt.currentPage - 1) * $scope.adminInspectDt.pageSize;
+        return filtered.slice(start, start + $scope.adminInspectDt.pageSize);
+    };
+    $scope.setAdminInspectPage = function(page) {
+        if (page < 1 || page > $scope.getTotalAdminInspectPages($scope.getFilteredAdminInspectUsers().length)) return;
+        $scope.adminInspectDt.currentPage = page;
+    };
+    $scope.getTotalAdminInspectPages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.adminInspectDt.pageSize) || 1;
+    };
+    $scope.getAdminInspectPageNumbers = function(totalItems) {
+        var total = $scope.getTotalAdminInspectPages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    // =========================================================
+    // 4. DELETE ADMIN SELECTION DATATABLE CONTROLS
+    // =========================================================
+    $scope.deleteAdminDt = {
+        sortField: 'username',
+        sortReverse: false,
+        currentPage: 1,
+        pageSize: 8,
+        search: ''
+    };
+    $scope.sortDeleteAdminsBy = function(field) {
+        if ($scope.deleteAdminDt.sortField === field) {
+            $scope.deleteAdminDt.sortReverse = !$scope.deleteAdminDt.sortReverse;
+        } else {
+            $scope.deleteAdminDt.sortField = field;
+            $scope.deleteAdminDt.sortReverse = false;
+        }
+        $scope.deleteAdminDt.currentPage = 1;
+    };
+    $scope.getDeleteAdminSortIndicator = function(field) {
+        if ($scope.deleteAdminDt.sortField !== field) return '↕';
+        return $scope.deleteAdminDt.sortReverse ? '▼' : '▲';
+    };
+    $scope.getFilteredDeleteAdmins = function() {
+        if (!$scope.admins) return [];
+        var q = $scope.deleteAdminDt.search;
+        return $scope.admins.filter(function(a) {
+            if (q && !searchMatch([a.username, a.phoneNumber, a.status, a.superAdmin ? 'super admin' : 'administrator', '#' + a.id].join(' '), q)) {
+                return false;
+            }
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.deleteAdminDt.sortField];
+            var valB = b[$scope.deleteAdminDt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.deleteAdminDt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.deleteAdminDt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+    $scope.getPagedDeleteAdmins = function() {
+        var filtered = $scope.getFilteredDeleteAdmins();
+        var start = ($scope.deleteAdminDt.currentPage - 1) * $scope.deleteAdminDt.pageSize;
+        return filtered.slice(start, start + $scope.deleteAdminDt.pageSize);
+    };
+    $scope.setDeleteAdminPage = function(page) {
+        if (page < 1 || page > $scope.getTotalDeleteAdminPages($scope.getFilteredDeleteAdmins().length)) return;
+        $scope.deleteAdminDt.currentPage = page;
+    };
+    $scope.getTotalDeleteAdminPages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.deleteAdminDt.pageSize) || 1;
+    };
+    $scope.getDeleteAdminPageNumbers = function(totalItems) {
+        var total = $scope.getTotalDeleteAdminPages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    // =========================================================
+    // 5. DELETE USER SELECTION DATATABLE CONTROLS
+    // =========================================================
+    $scope.deleteUserDt = {
+        sortField: 'usernameEn',
+        sortReverse: false,
+        currentPage: 1,
+        pageSize: 8,
+        search: ''
+    };
+    $scope.sortDeleteUsersBy = function(field) {
+        if ($scope.deleteUserDt.sortField === field) {
+            $scope.deleteUserDt.sortReverse = !$scope.deleteUserDt.sortReverse;
+        } else {
+            $scope.deleteUserDt.sortField = field;
+            $scope.deleteUserDt.sortReverse = false;
+        }
+        $scope.deleteUserDt.currentPage = 1;
+    };
+    $scope.getDeleteUserSortIndicator = function(field) {
+        if ($scope.deleteUserDt.sortField !== field) return '↕';
+        return $scope.deleteUserDt.sortReverse ? '▼' : '▲';
+    };
+    $scope.getFilteredDeleteUsers = function() {
+        if (!$scope.users) return [];
+        var q = $scope.deleteUserDt.search;
+        return $scope.users.filter(function(u) {
+            if (q && !searchMatch([u.usernameEn, u.usernameAr, u.usernameKu, u.phoneNumber, u.status, '#' + u.id].join(' '), q)) {
+                return false;
+            }
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.deleteUserDt.sortField];
+            var valB = b[$scope.deleteUserDt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.deleteUserDt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.deleteUserDt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+    $scope.getPagedDeleteUsers = function() {
+        var filtered = $scope.getFilteredDeleteUsers();
+        var start = ($scope.deleteUserDt.currentPage - 1) * $scope.deleteUserDt.pageSize;
+        return filtered.slice(start, start + $scope.deleteUserDt.pageSize);
+    };
+    $scope.setDeleteUserPage = function(page) {
+        if (page < 1 || page > $scope.getTotalDeleteUserPages($scope.getFilteredDeleteUsers().length)) return;
+        $scope.deleteUserDt.currentPage = page;
+    };
+    $scope.getTotalDeleteUserPages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.deleteUserDt.pageSize) || 1;
+    };
+    $scope.getDeleteUserPageNumbers = function(totalItems) {
+        var total = $scope.getTotalDeleteUserPages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    // =========================================================
+    // 6. DYNAMIC FILTER RULES DATATABLE CONTROLS
+    // =========================================================
+    $scope.filterRulesDt = {
+        sortField: 'id',
+        sortReverse: false,
+        currentPage: 1,
+        pageSize: 8,
+        search: ''
+    };
+    $scope.sortFilterRulesBy = function(field) {
+        if ($scope.filterRulesDt.sortField === field) {
+            $scope.filterRulesDt.sortReverse = !$scope.filterRulesDt.sortReverse;
+        } else {
+            $scope.filterRulesDt.sortField = field;
+            $scope.filterRulesDt.sortReverse = false;
+        }
+        $scope.filterRulesDt.currentPage = 1;
+    };
+    $scope.getFilterRuleSortIndicator = function(field) {
+        if ($scope.filterRulesDt.sortField !== field) return '↕';
+        return $scope.filterRulesDt.sortReverse ? '▼' : '▲';
+    };
+    $scope.getFilteredFilterRules = function() {
+        if (!$scope.timeFilterPresets) return [];
+        var q = $scope.filterRulesDt.search;
+        return $scope.timeFilterPresets.filter(function(r) {
+            if (q && !searchMatch([r.name, r.durationValue, r.durationUnit, r.isActive ? 'active' : 'inactive', '#' + r.id].join(' '), q)) {
+                return false;
+            }
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.filterRulesDt.sortField];
+            var valB = b[$scope.filterRulesDt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.filterRulesDt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.filterRulesDt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+    $scope.getPagedFilterRules = function() {
+        var filtered = $scope.getFilteredFilterRules();
+        var start = ($scope.filterRulesDt.currentPage - 1) * $scope.filterRulesDt.pageSize;
+        return filtered.slice(start, start + $scope.filterRulesDt.pageSize);
+    };
+    $scope.setFilterRulePage = function(page) {
+        if (page < 1 || page > $scope.getTotalFilterRulePages($scope.getFilteredFilterRules().length)) return;
+        $scope.filterRulesDt.currentPage = page;
+    };
+    $scope.getTotalFilterRulePages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.filterRulesDt.pageSize) || 1;
+    };
+    $scope.getFilterRulePageNumbers = function(totalItems) {
+        var total = $scope.getTotalFilterRulePages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
     };
 
     // Data Collections
@@ -1132,6 +1574,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         if (view === 'orders') {
             if (targetCustomer) {
                 $scope.selectedCustomer = targetCustomer;
+                $scope.orderDt.currentPage = 1;
                 $scope.loadCustomerOrders(targetCustomer.id);
                 $scope.updateHash('/customers/orders/' + targetCustomer.id);
             } else {
@@ -1140,6 +1583,8 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         } else if (view === 'feedback') {
             if (targetCustomer) {
                 $scope.selectedCustomer = targetCustomer;
+                $scope.feedbackDt.currentPage = 1;
+                $scope.loadCustomerOrders(targetCustomer.id);
                 $scope.loadCustomerFeedbacks(targetCustomer.id);
                 $scope.updateHash('/customers/feedback/' + targetCustomer.id);
             } else {
@@ -1166,23 +1611,34 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.loadCustomerFeedbacks = function(customerId) {
         if (!customerId) return;
         return $http.get('/api/customers/' + customerId + '/feedbacks').then(function(res) {
-            $scope.customerFeedbacks = res.data;
+            $scope.customerFeedbacks = res.data || [];
         });
+    };
+
+    $scope.showAddFeedbackModal = false;
+    $scope.openAddFeedbackModal = function() {
+        var defaultOrderId = ($scope.customerOrders && $scope.customerOrders.length > 0) ? $scope.customerOrders[0].id : null;
+        $scope.newCustomerFeedback = {
+            orderId: defaultOrderId,
+            feedbackType: 'COMPLIMENT',
+            content: '',
+            rating: 5,
+            authorName: 'Agent Follow-up'
+        };
+        $scope.showAddFeedbackModal = true;
+    };
+    $scope.closeAddFeedbackModal = function() {
+        $scope.showAddFeedbackModal = false;
     };
 
     $scope.submitCustomerFeedback = function() {
         if (!$scope.selectedCustomer || !$scope.newCustomerFeedback.content) {
-            $scope.showToast('Please enter note/compliment details', 'error');
+            $scope.showToast('Please enter review / note / compliment details', 'error');
             return;
         }
         $http.post('/api/customers/' + $scope.selectedCustomer.id + '/feedbacks', $scope.newCustomerFeedback).then(function() {
             $scope.showToast('Customer feedback / compliment saved successfully');
-            $scope.newCustomerFeedback = {
-                feedbackType: 'COMPLIMENT',
-                content: '',
-                rating: 5,
-                authorName: 'Follow-up Agent'
-            };
+            $scope.closeAddFeedbackModal();
             $scope.loadCustomerFeedbacks($scope.selectedCustomer.id);
             $scope.loadCustomerStats();
         }, function(err) {

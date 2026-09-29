@@ -94,16 +94,6 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Customer Follow-up & Order History</h1>
                 </div>
 
-                <!-- Header Status Badge -->
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="display: flex; align-items: center; gap: 10px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: var(--radius-comic); padding: 6px 14px; box-shadow: var(--shadow-comic-sm);">
-                        <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #22C55E; border: 1.5px solid #000;"></div>
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 0.88rem; font-weight: 900; color: var(--text-main);">Twekl System</span>
-                            <span style="font-size: 0.7rem; font-weight: 800; color: var(--primary-color);">Operational</span>
-                        </div>
-                    </div>
-                </div>
             </header>
 
             <!-- Page Body -->
@@ -341,17 +331,17 @@
                         </div>
 
                         <!-- Complete Table of All Users Under Administration -->
-                        <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div class="card-header-flex">
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+                            <div class="card-header-flex" style="margin-bottom: 24px;">
                                 <div class="card-title-group">
                                     <h3 class="card-title">Users Under System Administration</h3>
                                 </div>
 
                                 <!-- Filter & Create User -->
-                                <div style="display: flex; gap: 10px; align-items: center;">
+                                <div style="display: flex; gap: 12px; align-items: center;">
                                     <input type="text" 
                                            class="comic-input" 
-                                           style="width: 240px;" 
+                                           style="width: 260px;" 
                                            placeholder="Search users..." 
                                            ng-model="adminInspectUserSearch">
                                     <button type="button" class="comic-btn" ng-click="setUserView('create')">
@@ -364,14 +354,20 @@
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th>User Names (EN / AR / KU)</th>
-                                            <th>Phone Number</th>
-                                            <th>Status</th>
+                                            <th class="comic-sortable-th" ng-click="sortAdminInspectBy('usernameEn')">
+                                                User Names (EN / AR / KU) <span class="sort-indicator" ng-bind="getAdminInspectSortIndicator('usernameEn')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortAdminInspectBy('phoneNumber')">
+                                                Phone Number <span class="sort-indicator" ng-bind="getAdminInspectSortIndicator('phoneNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortAdminInspectBy('status')">
+                                                Status <span class="sort-indicator" ng-bind="getAdminInspectSortIndicator('status')"></span>
+                                            </th>
                                             <th style="text-align: right;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="user in users | filter:adminInspectUserSearch track by user.id">
+                                        <tr ng-repeat="user in getPagedAdminInspectUsers() track by user.id">
                                             <td>
                                                 <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
                                                 <div style="font-size: 0.8rem; color: var(--text-muted);">
@@ -403,11 +399,23 @@
                                                 </button>
                                             </td>
                                         </tr>
-                                        <tr ng-if="users.length === 0">
+                                        <tr ng-if="getFilteredAdminInspectUsers().length === 0">
                                             <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found. Click Create New User above.</td>
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Users DataTable Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredAdminInspectUsers().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (adminInspectDt.currentPage - 1) * adminInspectDt.pageSize + 1 }} to {{ adminInspectDt.currentPage * adminInspectDt.pageSize > getFilteredAdminInspectUsers().length ? getFilteredAdminInspectUsers().length : adminInspectDt.currentPage * adminInspectDt.pageSize }} of {{ getFilteredAdminInspectUsers().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="adminInspectDt.currentPage === 1" ng-click="setAdminInspectPage(adminInspectDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getAdminInspectPageNumbers(getFilteredAdminInspectUsers().length)" ng-class="{'active': adminInspectDt.currentPage === p}" ng-click="setAdminInspectPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="adminInspectDt.currentPage === getTotalAdminInspectPages(getFilteredAdminInspectUsers().length)" ng-click="setAdminInspectPage(adminInspectDt.currentPage + 1)">Next »</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -454,21 +462,32 @@
                         </div>
 
                         <!-- All Administrators List -->
-                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 6px;">
-                            <div style="font-size: 1.05rem; font-weight: 900;">Select an Administrator to Delete:</div>
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                            <div class="card-header-flex" style="margin-bottom: 24px;">
+                                <div style="font-size: 1.05rem; font-weight: 900;">Select an Administrator to Delete:</div>
+                                <input type="text" class="comic-input" style="width: 260px;" placeholder="Search administrators..." ng-model="deleteAdminDt.search">
+                            </div>
                             <div class="table-responsive">
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th>Username</th>
-                                            <th>Phone Number</th>
-                                            <th>Admin Level</th>
-                                            <th>Status</th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('username')">
+                                                Username <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('username')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('phoneNumber')">
+                                                Phone Number <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('phoneNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('superAdmin')">
+                                                Admin Level <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('superAdmin')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('status')">
+                                                Status <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('status')"></span>
+                                            </th>
                                             <th style="text-align: right;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="admin in admins track by admin.id" ng-class="{'selected-user-row': selectedAdmin && selectedAdmin.id === admin.id}">
+                                        <tr ng-repeat="admin in getPagedDeleteAdmins() track by admin.id" ng-class="{'selected-user-row': selectedAdmin && selectedAdmin.id === admin.id}">
                                             <td><strong ng-bind="admin.username"></strong></td>
                                             <td><span style="color: var(--text-muted);" ng-bind="admin.phoneNumber || '-'"></span></td>
                                             <td>
@@ -486,8 +505,25 @@
                                                 </button>
                                             </td>
                                         </tr>
+                                        <tr ng-if="getFilteredDeleteAdmins().length === 0">
+                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No administrators found.
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Delete Admins Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredDeleteAdmins().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (deleteAdminDt.currentPage - 1) * deleteAdminDt.pageSize + 1 }} to {{ deleteAdminDt.currentPage * deleteAdminDt.pageSize > getFilteredDeleteAdmins().length ? getFilteredDeleteAdmins().length : deleteAdminDt.currentPage * deleteAdminDt.pageSize }} of {{ getFilteredDeleteAdmins().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="deleteAdminDt.currentPage === 1" ng-click="setDeleteAdminPage(deleteAdminDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getDeleteAdminPageNumbers(getFilteredDeleteAdmins().length)" ng-class="{'active': deleteAdminDt.currentPage === p}" ng-click="setDeleteAdminPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="deleteAdminDt.currentPage === getTotalDeleteAdminPages(getFilteredDeleteAdmins().length)" ng-click="setDeleteAdminPage(deleteAdminDt.currentPage + 1)">Next »</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -531,21 +567,32 @@
                         </div>
 
                         <!-- Existing Dynamic Filter Rules Table -->
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                            <div class="card-header-flex" style="margin-bottom: 24px;">
+                                <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
+                                <input type="text" class="comic-input" style="width: 260px;" placeholder="Search filter rules..." ng-model="filterRulesDt.search">
+                            </div>
                             <div class="table-responsive">
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th>Rule ID</th>
-                                            <th>Filter Name</th>
-                                            <th>Duration Period</th>
-                                            <th>Status</th>
+                                            <th class="comic-sortable-th" style="width: 100px;" ng-click="sortFilterRulesBy('id')">
+                                                Rule ID <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('id')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('name')">
+                                                Filter Name <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('name')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('durationValue')">
+                                                Duration Period <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('durationValue')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('isActive')">
+                                                Status <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('isActive')"></span>
+                                            </th>
                                             <th style="text-align: right;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="preset in timeFilterPresets track by preset.id">
+                                        <tr ng-repeat="preset in getPagedFilterRules() track by preset.id">
                                             <td><strong style="color: var(--primary-dark);" ng-bind="'#' + preset.id"></strong></td>
                                             <td><strong style="font-size: 0.95rem;" ng-bind="preset.name"></strong></td>
                                             <td><span style="font-weight: 700; color: var(--text-muted);" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span></td>
@@ -564,11 +611,25 @@
                                                 </button>
                                             </td>
                                         </tr>
-                                        <tr ng-if="timeFilterPresets.length === 0">
-                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">No custom filter rules defined.</td>
+                                        <tr ng-if="getFilteredFilterRules().length === 0">
+                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No custom filter rules match the search query.
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Filter Rules Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredFilterRules().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (filterRulesDt.currentPage - 1) * filterRulesDt.pageSize + 1 }} to {{ filterRulesDt.currentPage * filterRulesDt.pageSize > getFilteredFilterRules().length ? getFilteredFilterRules().length : filterRulesDt.currentPage * filterRulesDt.pageSize }} of {{ getFilteredFilterRules().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === 1" ng-click="setFilterRulePage(filterRulesDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getFilterRulePageNumbers(getFilteredFilterRules().length)" ng-class="{'active': filterRulesDt.currentPage === p}" ng-click="setFilterRulePage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === getTotalFilterRulePages(getFilteredFilterRules().length)" ng-click="setFilterRulePage(filterRulesDt.currentPage + 1)">Next »</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -996,20 +1057,29 @@
                         </div>
 
                         <!-- All Users Selection List -->
-                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 6px;">
-                            <div style="font-size: 1.05rem; font-weight: 900;">Select a User to Delete:</div>
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                            <div class="card-header-flex" style="margin-bottom: 24px;">
+                                <div style="font-size: 1.05rem; font-weight: 900;">Select a User to Delete:</div>
+                                <input type="text" class="comic-input" style="width: 260px;" placeholder="Search users to delete..." ng-model="deleteUserDt.search">
+                            </div>
                             <div class="table-responsive">
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th>User Names (EN / AR / KU)</th>
-                                            <th>Phone Number</th>
-                                            <th>Status</th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('usernameEn')">
+                                                User Names (EN / AR / KU) <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('usernameEn')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('phoneNumber')">
+                                                Phone Number <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('phoneNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('status')">
+                                                Status <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('status')"></span>
+                                            </th>
                                             <th style="text-align: right;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="user in users track by user.id" ng-class="{'selected-user-row': selectedUser && selectedUser.id === user.id}">
+                                        <tr ng-repeat="user in getPagedDeleteUsers() track by user.id" ng-class="{'selected-user-row': selectedUser && selectedUser.id === user.id}">
                                             <td>
                                                 <strong ng-bind="user.usernameEn"></strong>
                                                 <span style="color: var(--text-muted); font-size: 0.8rem;" ng-if="user.usernameAr" ng-bind="' (' + user.usernameAr + ')'"></span>
@@ -1024,8 +1094,25 @@
                                                 </button>
                                             </td>
                                         </tr>
+                                        <tr ng-if="getFilteredDeleteUsers().length === 0">
+                                            <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No users found.
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Delete Users Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredDeleteUsers().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (deleteUserDt.currentPage - 1) * deleteUserDt.pageSize + 1 }} to {{ deleteUserDt.currentPage * deleteUserDt.pageSize > getFilteredDeleteUsers().length ? getFilteredDeleteUsers().length : deleteUserDt.currentPage * deleteUserDt.pageSize }} of {{ getFilteredDeleteUsers().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="deleteUserDt.currentPage === 1" ng-click="setDeleteUserPage(deleteUserDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getDeleteUserPageNumbers(getFilteredDeleteUsers().length)" ng-class="{'active': deleteUserDt.currentPage === p}" ng-click="setDeleteUserPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="deleteUserDt.currentPage === getTotalDeleteUserPages(getFilteredDeleteUsers().length)" ng-click="setDeleteUserPage(deleteUserDt.currentPage + 1)">Next »</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1333,25 +1420,96 @@
                             </div>
                         </div>
 
-                        <!-- Orders List Table -->
+                        <!-- Orders Filter Toolbar & DataTable -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
                             <div style="font-size: 1.15rem; font-weight: 900;">Complete Customer Purchase Ledger & Follow-up Checks:</div>
+
+                            <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
+                            <div class="comic-filter-toolbar">
+                                <div class="filter-left-controls">
+                                    <input type="date" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
+                                    <input type="date" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
+                                    
+                                    <!-- Dynamic Time Presets Dropdown -->
+                                    <div class="filter-dropdown-container">
+                                        <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset}" ng-click="toggleOrderFilterDropdown($event)" title="Dynamic Time Filters">
+                                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Dropdown Menu of Admin-Created Filters -->
+                                        <div class="filter-dropdown-menu" ng-show="showOrderFilterDropdown" ng-click="$event.stopPropagation()">
+                                            <div class="filter-dropdown-list">
+                                                <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedOrderTimePreset}" ng-click="applyOrderTimePreset(null)">
+                                                    <span class="filter-item-name">All Time</span>
+                                                    <span class="filter-item-check" ng-if="!selectedOrderTimePreset">✓</span>
+                                                </button>
+
+                                                <div class="filter-dropdown-divider"></div>
+
+                                                <button type="button" 
+                                                        class="filter-dropdown-item" 
+                                                        ng-repeat="preset in timeFilterPresets" 
+                                                        ng-if="preset.isActive"
+                                                        ng-class="{'selected': selectedOrderTimePreset && selectedOrderTimePreset.id === preset.id}" 
+                                                        ng-click="applyOrderTimePreset(preset)">
+                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
+                                                    <span class="filter-item-check" ng-if="selectedOrderTimePreset && selectedOrderTimePreset.id === preset.id">✓</span>
+                                                </button>
+
+                                                <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 8px 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                                                    No filter presets
+                                                </div>
+                                            </div>
+
+                                            <div class="filter-dropdown-footer">
+                                                <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeOrderFilterDropdown();">
+                                                    Manage Filters
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedOrderTimePreset" ng-click="selectOrderTimePreset(null)" title="Click to clear filter">
+                                        <span ng-bind="selectedOrderTimePreset.name"></span> ✕
+                                    </span>
+                                </div>
+
+                                <!-- Live Search Bar -->
+                                <div class="filter-search-box">
+                                    <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <input type="text" class="comic-search-bar" placeholder="Search orders, items, status..." ng-model="orderFilters.search">
+                                    <button type="button" class="search-clear-btn" ng-show="orderFilters.search" ng-click="orderFilters.search = ''; orderDt.currentPage = 1;" title="Clear search">✕</button>
+                                </div>
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th style="width: 140px;">Order Number</th>
-                                            <th>Order Date</th>
+                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortOrdersBy('orderNumber')">
+                                                Order Number <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('orderDate')">
+                                                Order Date <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderDate')"></span>
+                                            </th>
                                             <th>Order Time</th>
-                                            <th>Items / Product Summary</th>
-                                            <th>Total Price</th>
-                                            <th>Status</th>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('itemsSummary')">
+                                                Items / Product Summary <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('totalAmount')">
+                                                Total Price <span class="sort-indicator" ng-bind="getOrderSortIndicator('totalAmount')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('orderStatus')">
+                                                Status <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderStatus')"></span>
+                                            </th>
                                             <th style="text-align: right;">Milestone Follow-ups</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <!-- Main Order Row (Clickable to Expand Follow-up Checklist) -->
-                                        <tr ng-repeat-start="order in customerOrders track by order.id" 
+                                        <tr ng-repeat-start="order in getPagedCustomerOrders() track by order.id" 
                                             class="order-row-clickable" 
                                             ng-class="getOrderFollowupStatusClass(order)"
                                             ng-click="toggleOrderExpand(order, $event)">
@@ -1443,19 +1601,31 @@
                                             </td>
                                         </tr>
 
-                                        <tr ng-if="customerOrders.length === 0">
+                                        <tr ng-if="getFilteredCustomerOrders().length === 0">
                                             <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
-                                                No orders recorded for this customer yet.
+                                                No orders match the selected filter criteria.
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- DataTable Pagination Footer for Customer Orders -->
+                            <div class="datatable-footer" ng-if="getFilteredCustomerOrders().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (orderDt.currentPage - 1) * orderDt.pageSize + 1 }} to {{ orderDt.currentPage * orderDt.pageSize > getFilteredCustomerOrders().length ? getFilteredCustomerOrders().length : orderDt.currentPage * orderDt.pageSize }} of {{ getFilteredCustomerOrders().length }} orders
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === 1" ng-click="setOrderPage(orderDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getOrderPageNumbers(getFilteredCustomerOrders().length)" ng-class="{'active': orderDt.currentPage === p}" ng-click="setOrderPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === getTotalOrderPages(getFilteredCustomerOrders().length)" ng-click="setOrderPage(orderDt.currentPage + 1)">Next »</button>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
 
-                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE -->
+                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE (PROFESSIONAL AUDIT DATATABLE) -->
                     <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
@@ -1477,38 +1647,164 @@
                                 </div>
                             </div>
 
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="comic-btn" ng-click="setCustomerView('orders', selectedCustomer)">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('orders', selectedCustomer)">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                                     View Purchase Orders Log
+                                </button>
+                                <button type="button" class="comic-btn" ng-click="openAddFeedbackModal()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    + Log Review / Compliment
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Feedback Feed (Clean Audit List) -->
+                        <!-- Feedback Filter Toolbar & Professional DataTable -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Logged Compliments & Notes History:</div>
-                            <div class="feedback-feed-grid">
-                                <div class="comic-feedback-card" ng-repeat="fb in customerFeedbacks track by fb.id">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <span class="comic-tag" 
-                                                  ng-class="{'tag-primary': fb.feedbackType === 'COMPLIMENT', 'tag-warning': fb.feedbackType === 'REVIEW', 'tag-muted': fb.feedbackType === 'NOTE'}"
-                                                  ng-bind="fb.feedbackType">
-                                            </span>
-                                            <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="fb.authorName || 'Follow-up Agent'"></strong>
-                                        </div>
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <span style="color: #F59E0B; font-weight: 900; font-size: 0.95rem;" ng-if="fb.rating">
-                                                <svg ng-repeat="n in [].constructor(fb.rating) track by $index" width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px; vertical-align: -2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                            </span>
-                                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);" ng-bind="fb.createdAt | date:'yyyy-MM-dd HH:mm'"></span>
+                            <div style="font-size: 1.15rem; font-weight: 900;">Logged Compliments, Reviews & Order Notes:</div>
+
+                            <!-- Filter Toolbar (Date Range + Presets Dropdown + Type Pills + Live Search) -->
+                            <div class="comic-filter-toolbar">
+                                <div class="filter-left-controls">
+                                    <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateFrom" title="Start Date">
+                                    <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateTo" title="End Date">
+                                    
+                                    <!-- Dynamic Time Presets Dropdown -->
+                                    <div class="filter-dropdown-container">
+                                        <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedFeedbackTimePreset}" ng-click="toggleFeedbackFilterDropdown($event)" title="Dynamic Time Filters">
+                                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Dropdown Menu of Admin-Created Filters -->
+                                        <div class="filter-dropdown-menu" ng-show="showFeedbackFilterDropdown" ng-click="$event.stopPropagation()">
+                                            <div class="filter-dropdown-list">
+                                                <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedFeedbackTimePreset}" ng-click="applyFeedbackTimePreset(null)">
+                                                    <span class="filter-item-name">All Time</span>
+                                                    <span class="filter-item-check" ng-if="!selectedFeedbackTimePreset">✓</span>
+                                                </button>
+
+                                                <div class="filter-dropdown-divider"></div>
+
+                                                <button type="button" 
+                                                        class="filter-dropdown-item" 
+                                                        ng-repeat="preset in timeFilterPresets" 
+                                                        ng-if="preset.isActive"
+                                                        ng-class="{'selected': selectedFeedbackTimePreset && selectedFeedbackTimePreset.id === preset.id}" 
+                                                        ng-click="applyFeedbackTimePreset(preset)">
+                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
+                                                    <span class="filter-item-check" ng-if="selectedFeedbackTimePreset && selectedFeedbackTimePreset.id === preset.id">✓</span>
+                                                </button>
+
+                                                <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 8px 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                                                    No filter presets
+                                                </div>
+                                            </div>
+
+                                            <div class="filter-dropdown-footer">
+                                                <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFeedbackFilterDropdown();">
+                                                    Manage Filters
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <p style="font-size: 0.92rem; font-weight: 600; line-height: 1.5; color: var(--text-main); background-color: #F7F7F4; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 16px;" ng-bind="fb.content"></p>
+
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedFeedbackTimePreset" ng-click="selectFeedbackTimePreset(null)" title="Click to clear filter">
+                                        <span ng-bind="selectedFeedbackTimePreset.name"></span> ✕
+                                    </span>
+
+                                    <!-- Feedback Type Filter Pills -->
+                                    <div style="display: flex; gap: 6px; margin-left: 6px;">
+                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'ALL'}" ng-click="setFeedbackTypeFilter('ALL')">All</button>
+                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'COMPLIMENT'}" ng-click="setFeedbackTypeFilter('COMPLIMENT')">Compliments</button>
+                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'REVIEW'}" ng-click="setFeedbackTypeFilter('REVIEW')">Reviews</button>
+                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'NOTE'}" ng-click="setFeedbackTypeFilter('NOTE')">Notes</button>
+                                    </div>
                                 </div>
-                                <div ng-if="customerFeedbacks.length === 0" style="text-align: center; padding: 24px; color: var(--text-muted);">
-                                    No reviews or compliments logged for this customer yet.
+
+                                <!-- Live Search Bar -->
+                                <div class="filter-search-box">
+                                    <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <input type="text" class="comic-search-bar" placeholder="Search feedback, order, note..." ng-model="feedbackFilters.search">
+                                    <button type="button" class="search-clear-btn" ng-show="feedbackFilters.search" ng-click="feedbackFilters.search = ''; feedbackDt.currentPage = 1;" title="Clear search">✕</button>
+                                </div>
+                            </div>
+
+                            <!-- Feedback DataTable -->
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortFeedbacksBy('createdAt')">
+                                                Date & Time <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('createdAt')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" style="width: 110px;" ng-click="sortFeedbacksBy('feedbackType')">
+                                                Type <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('feedbackType')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" style="width: 230px;" ng-click="sortFeedbacksBy('orderNumber')">
+                                                Associated Order / Log <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('orderNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" style="width: 130px;" ng-click="sortFeedbacksBy('authorName')">
+                                                Logged By <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('authorName')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" style="width: 110px;" ng-click="sortFeedbacksBy('rating')">
+                                                Rating <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('rating')"></span>
+                                            </th>
+                                            <th>Review / Note Content</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="fb in getPagedCustomerFeedbacks() track by fb.id">
+                                            <td>
+                                                <span style="font-weight: 700; font-size: 0.85rem;" ng-bind="fb.createdAt | date:'yyyy-MM-dd HH:mm'"></span>
+                                            </td>
+                                            <td>
+                                                <span class="comic-tag" 
+                                                      ng-class="{'tag-primary': fb.feedbackType === 'COMPLIMENT', 'tag-warning': fb.feedbackType === 'REVIEW', 'tag-muted': fb.feedbackType === 'NOTE'}"
+                                                      ng-bind="fb.feedbackType">
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div ng-if="fb.orderNumber">
+                                                    <span class="comic-tag tag-primary" style="font-weight: 800; font-size: 0.8rem;" ng-bind="fb.orderNumber"></span>
+                                                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-top: 3px;" ng-bind="fb.orderSummary"></div>
+                                                </div>
+                                                <div ng-if="!fb.orderNumber">
+                                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; font-style: italic;">General / Customer Account</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong style="color: var(--primary-dark); font-size: 0.9rem;" ng-bind="fb.authorName || 'Agent'"></strong>
+                                            </td>
+                                            <td>
+                                                <span style="color: #F59E0B; font-weight: 900; font-size: 0.9rem;" ng-if="fb.rating">
+                                                    <svg ng-repeat="n in [].constructor(fb.rating) track by $index" width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 1px; vertical-align: -2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                                </span>
+                                                <span ng-if="!fb.rating" style="color: var(--text-muted); font-weight: 700;">-</span>
+                                            </td>
+                                            <td>
+                                                <div style="font-size: 0.9rem; font-weight: 600; line-height: 1.45; color: var(--text-main);" ng-bind="fb.content"></div>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="getFilteredCustomerFeedbacks().length === 0">
+                                            <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No reviews or compliments match the selected filter criteria.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- DataTable Pagination Footer for Customer Feedback -->
+                            <div class="datatable-footer" ng-if="getFilteredCustomerFeedbacks().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (feedbackDt.currentPage - 1) * feedbackDt.pageSize + 1 }} to {{ feedbackDt.currentPage * feedbackDt.pageSize > getFilteredCustomerFeedbacks().length ? getFilteredCustomerFeedbacks().length : feedbackDt.currentPage * feedbackDt.pageSize }} of {{ getFilteredCustomerFeedbacks().length }} records
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="feedbackDt.currentPage === 1" ng-click="setFeedbackPage(feedbackDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getFeedbackPageNumbers(getFilteredCustomerFeedbacks().length)" ng-class="{'active': feedbackDt.currentPage === p}" ng-click="setFeedbackPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="feedbackDt.currentPage === getTotalFeedbackPages(getFilteredCustomerFeedbacks().length)" ng-click="setFeedbackPage(feedbackDt.currentPage + 1)">Next »</button>
                                 </div>
                             </div>
                         </div>
@@ -1604,6 +1900,59 @@
             </div>
             <div style="padding: 16px; display: flex; justify-content: center; align-items: center;">
                 <img ng-src="{{previewImageUrl}}" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px; border: 1.5px solid #000;" alt="Full Preview">
+            </div>
+        </div>
+    </div>
+    <!-- ========================================================= -->
+    <!-- 4. LOG CUSTOMER REVIEW / COMPLIMENT / NOTE MODAL          -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Log Review, Compliment or Note</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeAddFeedbackModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Associated Order Selector -->
+                <div class="form-group">
+                    <label class="form-label">Associated Purchase Order / Product Log</label>
+                    <select class="comic-input" ng-model="newCustomerFeedback.orderId" ng-options="order.id as (order.orderNumber + ' — ' + order.itemsSummary) for order in customerOrders">
+                        <option value="">-- General / Not Linked to Specific Order --</option>
+                    </select>
+                </div>
+
+                <!-- Feedback Type Selector -->
+                <div class="form-group">
+                    <label class="form-label">Entry Type</label>
+                    <select class="comic-input" ng-model="newCustomerFeedback.feedbackType">
+                        <option value="COMPLIMENT">Compliment</option>
+                        <option value="REVIEW">Customer Review</option>
+                        <option value="NOTE">Internal Note</option>
+                    </select>
+                </div>
+
+                <!-- Rating -->
+                <div class="form-group" ng-if="newCustomerFeedback.feedbackType !== 'NOTE'">
+                    <label class="form-label">Rating</label>
+                    <select class="comic-input" ng-model="newCustomerFeedback.rating" ng-options="r as (r + ' Stars') for r in [5, 4, 3, 2, 1]">
+                    </select>
+                </div>
+
+                <!-- Author / Logged By -->
+                <div class="form-group">
+                    <label class="form-label">Logged By</label>
+                    <input type="text" class="comic-input" placeholder="e.g. Agent Sarah / Customer Care" ng-model="newCustomerFeedback.authorName">
+                </div>
+
+                <!-- Content Textarea -->
+                <div class="form-group">
+                    <label class="form-label">Content / Review / Note Details</label>
+                    <textarea class="comic-input" rows="4" placeholder="Enter full details of the feedback or compliment..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeAddFeedbackModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="submitCustomerFeedback()">Save Entry</button>
             </div>
         </div>
     </div>

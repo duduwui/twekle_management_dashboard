@@ -452,5 +452,20 @@ public class DataInitializer implements CommandLineRunner {
                 }
             }
         }
+
+        // Ensure all customer feedbacks are linked to their corresponding order logs
+        List<CustomerFeedback> allFeedbacks = feedbackRepository.findAll();
+        for (CustomerFeedback fb : allFeedbacks) {
+            if (fb.getOrderNumber() == null || fb.getOrderNumber().isEmpty()) {
+                List<CustomerOrder> orders = orderRepository.findByCustomerIdOrderByOrderDateDesc(fb.getCustomerId());
+                if (!orders.isEmpty()) {
+                    CustomerOrder o = orders.get(0);
+                    fb.setOrderId(o.getId());
+                    fb.setOrderNumber(o.getOrderNumber());
+                    fb.setOrderSummary(o.getItemsSummary());
+                    feedbackRepository.save(fb);
+                }
+            }
+        }
     }
 }

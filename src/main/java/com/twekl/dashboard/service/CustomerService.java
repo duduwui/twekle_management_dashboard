@@ -180,6 +180,14 @@ public class CustomerService {
         if (feedback.getCreatedAt() == null) {
             feedback.setCreatedAt(LocalDateTime.now());
         }
+        if (feedback.getOrderId() != null && (feedback.getOrderNumber() == null || feedback.getOrderNumber().isEmpty())) {
+            orderRepository.findById(feedback.getOrderId()).ifPresent(o -> {
+                feedback.setOrderNumber(o.getOrderNumber());
+                if (feedback.getOrderSummary() == null || feedback.getOrderSummary().isEmpty()) {
+                    feedback.setOrderSummary(o.getItemsSummary());
+                }
+            });
+        }
         return feedbackRepository.save(feedback);
     }
 

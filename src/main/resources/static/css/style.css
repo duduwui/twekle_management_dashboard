@@ -280,7 +280,7 @@ body {
   border: 2px solid var(--border-black);
   border-radius: var(--radius-comic);
   box-shadow: var(--shadow-comic-sm);
-  margin-bottom: 38px;
+  margin-bottom: 44px;
 }
 
 .filter-left-controls {
@@ -341,6 +341,15 @@ body {
   background-color: #E5E5E0;
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0px #000000;
+}
+
+.comic-btn-secondary-sm.btn-active-pill,
+.btn-active-pill {
+  background-color: var(--primary-color) !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+  border-color: #000000 !important;
 }
 
 .comic-date-input {
@@ -1341,7 +1350,7 @@ body {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .comic-table {

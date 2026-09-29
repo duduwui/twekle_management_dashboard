@@ -628,7 +628,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             if (type && type !== 'ALL' && fb.feedbackType !== type) {
                 return false;
             }
-            if (q && !searchMatch([fb.authorName, fb.feedbackType, fb.content, fb.orderNumber, fb.orderSummary, fb.status, '#' + fb.id].join(' '), q)) {
+            if (q && !searchMatch([fb.customerName, fb.authorName, fb.feedbackType, fb.content, fb.orderNumber, fb.orderSummary, fb.status, '#' + fb.id].join(' '), q)) {
                 return false;
             }
             if (!matchesPreset(fb.createdAt, $scope.selectedFeedbackTimePreset)) return false;

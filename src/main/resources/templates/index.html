@@ -110,7 +110,9 @@
                         <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Buttons + Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
+                                <span class="filter-date-label">From:</span>
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <span class="filter-date-label">To:</span>
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
                                 
                                 <!-- Filter Presets Dropdown -->
@@ -647,7 +649,9 @@
                         <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Button + Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
+                                <span class="filter-date-label">From:</span>
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <span class="filter-date-label">To:</span>
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
                                 
                                 <!-- Filter Presets Dropdown -->
@@ -1244,7 +1248,9 @@
                         <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
+                                <span class="filter-date-label">From:</span>
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <span class="filter-date-label">To:</span>
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
                                 
                                 <!-- Filter Presets Dropdown -->
@@ -1427,7 +1433,9 @@
                             <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
+                                    <span class="filter-date-label">From:</span>
                                     <input type="date" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
                                     <input type="date" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
                                     
                                     <!-- Dynamic Time Presets Dropdown -->
@@ -1666,7 +1674,9 @@
                             <!-- Filter Toolbar (Date Range + Presets Dropdown + Type Pills + Live Search) -->
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
+                                    <span class="filter-date-label">From:</span>
                                     <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateFrom" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
                                     <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateTo" title="End Date">
                                     
                                     <!-- Dynamic Time Presets Dropdown -->
@@ -1726,7 +1736,7 @@
                                 <!-- Live Search Bar -->
                                 <div class="filter-search-box">
                                     <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" class="comic-search-bar" placeholder="Search feedback, order, note..." ng-model="feedbackFilters.search">
+                                    <input type="text" class="comic-search-bar" placeholder="Search customer, product, feedback..." ng-model="feedbackFilters.search">
                                     <button type="button" class="search-clear-btn" ng-show="feedbackFilters.search" ng-click="feedbackFilters.search = ''; feedbackDt.currentPage = 1;" title="Clear search">✕</button>
                                 </div>
                             </div>
@@ -1736,22 +1746,25 @@
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortFeedbacksBy('createdAt')">
+                                            <th class="comic-sortable-th" style="width: 125px;" ng-click="sortFeedbacksBy('createdAt')">
                                                 Date & Time <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('createdAt')"></span>
                                             </th>
                                             <th class="comic-sortable-th" style="width: 110px;" ng-click="sortFeedbacksBy('feedbackType')">
                                                 Type <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('feedbackType')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" style="width: 230px;" ng-click="sortFeedbacksBy('orderNumber')">
-                                                Associated Order / Log <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('orderNumber')"></span>
+                                            <th class="comic-sortable-th" style="width: 170px;" ng-click="sortFeedbacksBy('customerName')">
+                                                Customer <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('customerName')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" style="width: 130px;" ng-click="sortFeedbacksBy('authorName')">
+                                            <th class="comic-sortable-th" style="width: 230px;" ng-click="sortFeedbacksBy('orderNumber')">
+                                                Purchased Product / Order <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('orderNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortFeedbacksBy('rating')">
+                                                Product Rating <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('rating')"></span>
+                                            </th>
+                                            <th>Review / Note Details</th>
+                                            <th class="comic-sortable-th" style="width: 120px;" ng-click="sortFeedbacksBy('authorName')">
                                                 Logged By <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('authorName')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" style="width: 110px;" ng-click="sortFeedbacksBy('rating')">
-                                                Rating <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('rating')"></span>
-                                            </th>
-                                            <th>Review / Note Content</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1766,29 +1779,40 @@
                                                 </span>
                                             </td>
                                             <td>
+                                                <div>
+                                                    <strong style="color: var(--primary-dark); font-size: 0.92rem;" ng-bind="fb.customerName || selectedCustomer.name"></strong>
+                                                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; margin-top: 2px;" ng-if="selectedCustomer">
+                                                        <span ng-bind="selectedCustomer.phoneNumber"></span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
                                                 <div ng-if="fb.orderNumber">
                                                     <span class="comic-tag tag-primary" style="font-weight: 800; font-size: 0.8rem;" ng-bind="fb.orderNumber"></span>
-                                                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-top: 3px;" ng-bind="fb.orderSummary"></div>
+                                                    <div style="font-size: 0.82rem; font-weight: 700; color: #1E293B; margin-top: 4px;" ng-bind="fb.orderSummary"></div>
                                                 </div>
                                                 <div ng-if="!fb.orderNumber">
-                                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; font-style: italic;">General / Customer Account</span>
+                                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; font-style: italic;">General Account Feedback</span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <strong style="color: var(--primary-dark); font-size: 0.9rem;" ng-bind="fb.authorName || 'Agent'"></strong>
-                                            </td>
-                                            <td>
-                                                <span style="color: #F59E0B; font-weight: 900; font-size: 0.9rem;" ng-if="fb.rating">
-                                                    <svg ng-repeat="n in [].constructor(fb.rating) track by $index" width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 1px; vertical-align: -2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                                </span>
+                                                <div ng-if="fb.rating" style="display: flex; flex-direction: column; gap: 3px;">
+                                                    <span style="color: #F59E0B; font-weight: 900; font-size: 0.9rem;">
+                                                        <svg ng-repeat="n in [].constructor(fb.rating) track by $index" width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 1px; vertical-align: -2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                                    </span>
+                                                    <span style="font-size: 0.78rem; font-weight: 900; color: #0F172A;" ng-bind="fb.rating + '.0 / 5.0'"></span>
+                                                </div>
                                                 <span ng-if="!fb.rating" style="color: var(--text-muted); font-weight: 700;">-</span>
                                             </td>
                                             <td>
                                                 <div style="font-size: 0.9rem; font-weight: 600; line-height: 1.45; color: var(--text-main);" ng-bind="fb.content"></div>
                                             </td>
+                                            <td>
+                                                <strong style="color: var(--text-main); font-size: 0.88rem;" ng-bind="fb.authorName || 'Agent'"></strong>
+                                            </td>
                                         </tr>
                                         <tr ng-if="getFilteredCustomerFeedbacks().length === 0">
-                                            <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
                                                 No reviews or compliments match the selected filter criteria.
                                             </td>
                                         </tr>

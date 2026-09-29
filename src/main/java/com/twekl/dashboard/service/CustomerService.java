@@ -41,27 +41,46 @@ public class CustomerService {
     }
 
     public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+        List<Customer> list = customerRepository.findAll();
+        syncCustomerOrderTotals(list);
+        return list;
     }
 
     public Optional<Customer> getCustomerById(Long id) {
-        return customerRepository.findById(id);
+        Optional<Customer> opt = customerRepository.findById(id);
+        opt.ifPresent(c -> syncCustomerOrderTotals(Collections.singletonList(c)));
+        return opt;
     }
 
     public List<Customer> getCustomersByFilter(String filter) {
+        List<Customer> list;
         if (filter == null || filter.equalsIgnoreCase("all")) {
-            return customerRepository.findAll();
+            list = customerRepository.findAll();
+        } else if (filter.equalsIgnoreCase("24h")) {
+            list = customerRepository.findByDaysSinceLastOrderLessThanEqualOrderByDaysSinceLastOrderAsc(1);
+        } else if (filter.equalsIgnoreCase("7d")) {
+            list = customerRepository.findByDaysSinceLastOrderBetweenOrderByDaysSinceLastOrderAsc(2, 7);
+        } else if (filter.equalsIgnoreCase("30d")) {
+            list = customerRepository.findByDaysSinceLastOrderGreaterThanEqualOrderByDaysSinceLastOrderAsc(30);
+        } else {
+            list = customerRepository.findAll();
         }
-        if (filter.equalsIgnoreCase("24h")) {
-            return customerRepository.findByDaysSinceLastOrderLessThanEqualOrderByDaysSinceLastOrderAsc(1);
+        syncCustomerOrderTotals(list);
+        return list;
+    }
+
+    private void syncCustomerOrderTotals(List<Customer> customers) {
+        for (Customer c : customers) {
+            List<CustomerOrder> orders = orderRepository.findByCustomerIdOrderByOrderDateDesc(c.getId());
+            if (!orders.isEmpty()) {
+                c.setTotalOrders(orders.size());
+                double sum = orders.stream().mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
+                c.setTotalSpent(sum);
+                if (orders.get(0).getOrderDate() != null) {
+                    c.setLastOrderDate(orders.get(0).getOrderDate());
+                }
+            }
         }
-        if (filter.equalsIgnoreCase("7d")) {
-            return customerRepository.findByDaysSinceLastOrderBetweenOrderByDaysSinceLastOrderAsc(2, 7);
-        }
-        if (filter.equalsIgnoreCase("30d")) {
-            return customerRepository.findByDaysSinceLastOrderGreaterThanEqualOrderByDaysSinceLastOrderAsc(30);
-        }
-        return customerRepository.findAll();
     }
 
     public List<CustomerOrder> getCustomerOrders(Long customerId) {
@@ -172,11 +191,22 @@ public class CustomerService {
     }
 
     public List<CustomerFeedback> getCustomerFeedbacks(Long customerId) {
-        return feedbackRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+        List<CustomerFeedback> list = feedbackRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+        customerRepository.findById(customerId).ifPresent(c -> {
+            for (CustomerFeedback fb : list) {
+                if (fb.getCustomerName() == null || fb.getCustomerName().isEmpty()) {
+                    fb.setCustomerName(c.getName());
+                }
+            }
+        });
+        return list;
     }
 
     public CustomerFeedback addCustomerFeedback(Long customerId, CustomerFeedback feedback) {
         feedback.setCustomerId(customerId);
+        if (feedback.getCustomerName() == null || feedback.getCustomerName().isEmpty()) {
+            customerRepository.findById(customerId).ifPresent(c -> feedback.setCustomerName(c.getName()));
+        }
         if (feedback.getCreatedAt() == null) {
             feedback.setCreatedAt(LocalDateTime.now());
         }

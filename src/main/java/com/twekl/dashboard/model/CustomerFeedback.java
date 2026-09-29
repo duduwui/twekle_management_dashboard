@@ -14,6 +14,7 @@ public class CustomerFeedback {
     @Column(nullable = false)
     private Long customerId;
 
+    private String customerName;
     private Long orderId;
     private String orderNumber;
     private String orderSummary;
@@ -39,9 +40,10 @@ public class CustomerFeedback {
         this.status = "FOLLOWED_UP";
     }
 
-    public CustomerFeedback(Long id, Long customerId, Long orderId, String orderNumber, String orderSummary, String authorName, String feedbackType, String content, Integer rating, String status, LocalDateTime createdAt) {
+    public CustomerFeedback(Long id, Long customerId, String customerName, Long orderId, String orderNumber, String orderSummary, String authorName, String feedbackType, String content, Integer rating, String status, LocalDateTime createdAt) {
         this.id = id;
         this.customerId = customerId;
+        this.customerName = customerName;
         this.orderId = orderId;
         this.orderNumber = orderNumber;
         this.orderSummary = orderSummary;
@@ -68,6 +70,9 @@ public class CustomerFeedback {
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -104,6 +109,7 @@ public class CustomerFeedback {
     public static class CustomerFeedbackBuilder {
         private Long id;
         private Long customerId;
+        private String customerName;
         private Long orderId;
         private String orderNumber;
         private String orderSummary;
@@ -116,6 +122,7 @@ public class CustomerFeedback {
 
         public CustomerFeedbackBuilder id(Long id) { this.id = id; return this; }
         public CustomerFeedbackBuilder customerId(Long customerId) { this.customerId = customerId; return this; }
+        public CustomerFeedbackBuilder customerName(String customerName) { this.customerName = customerName; return this; }
         public CustomerFeedbackBuilder orderId(Long orderId) { this.orderId = orderId; return this; }
         public CustomerFeedbackBuilder orderNumber(String orderNumber) { this.orderNumber = orderNumber; return this; }
         public CustomerFeedbackBuilder orderSummary(String orderSummary) { this.orderSummary = orderSummary; return this; }
@@ -127,7 +134,7 @@ public class CustomerFeedback {
         public CustomerFeedbackBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
 
         public CustomerFeedback build() {
-            return new CustomerFeedback(id, customerId, orderId, orderNumber, orderSummary, authorName, feedbackType, content, rating, status, createdAt);
+            return new CustomerFeedback(id, customerId, customerName, orderId, orderNumber, orderSummary, authorName, feedbackType, content, rating, status, createdAt);
         }
     }
 }

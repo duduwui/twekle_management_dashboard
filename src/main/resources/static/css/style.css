@@ -372,6 +372,16 @@ body {
   box-shadow: 3px 3px 0px #000000;
 }
 
+.filter-date-label {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #1E293B;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  user-select: none;
+  margin-right: 2px;
+}
+
 .comic-icon-btn {
   padding: 8px 12px;
   background: #FFFFFF;

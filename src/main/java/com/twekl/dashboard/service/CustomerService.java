@@ -3,9 +3,13 @@ package com.twekl.dashboard.service;
 import com.twekl.dashboard.model.Customer;
 import com.twekl.dashboard.model.CustomerFeedback;
 import com.twekl.dashboard.model.CustomerOrder;
+import com.twekl.dashboard.model.OrderFollowupCheck;
+import com.twekl.dashboard.model.TimeFilterPreset;
 import com.twekl.dashboard.repository.CustomerFeedbackRepository;
 import com.twekl.dashboard.repository.CustomerOrderRepository;
 import com.twekl.dashboard.repository.CustomerRepository;
+import com.twekl.dashboard.repository.OrderFollowupCheckRepository;
+import com.twekl.dashboard.repository.TimeFilterPresetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +24,20 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerOrderRepository orderRepository;
     private final CustomerFeedbackRepository feedbackRepository;
+    private final OrderFollowupCheckRepository followupCheckRepository;
+    private final TimeFilterPresetRepository timeFilterPresetRepository;
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository,
                            CustomerOrderRepository orderRepository,
-                           CustomerFeedbackRepository feedbackRepository) {
+                           CustomerFeedbackRepository feedbackRepository,
+                           OrderFollowupCheckRepository followupCheckRepository,
+                           TimeFilterPresetRepository timeFilterPresetRepository) {
         this.customerRepository = customerRepository;
         this.orderRepository = orderRepository;
         this.feedbackRepository = feedbackRepository;
+        this.followupCheckRepository = followupCheckRepository;
+        this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
     public List<Customer> getAllCustomers() {
@@ -75,7 +85,74 @@ public class CustomerService {
             customerRepository.save(c);
         });
 
+        // Initialize follow-up checks for new order
+        initFollowupChecksForOrder(saved.getId());
+
         return saved;
+    }
+
+    public List<OrderFollowupCheck> getOrderFollowupChecks(Long orderId) {
+        List<OrderFollowupCheck> existing = followupCheckRepository.findByOrderIdOrderByIdAsc(orderId);
+        if (existing.isEmpty()) {
+            return initFollowupChecksForOrder(orderId);
+        }
+        return existing;
+    }
+
+    public List<OrderFollowupCheck> initFollowupChecksForOrder(Long orderId) {
+        List<TimeFilterPreset> presets = timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc();
+        if (presets.isEmpty()) {
+            presets = timeFilterPresetRepository.findAllByOrderByIdAsc();
+        }
+        List<OrderFollowupCheck> created = new ArrayList<>();
+        for (TimeFilterPreset p : presets) {
+            OrderFollowupCheck check = OrderFollowupCheck.builder()
+                    .orderId(orderId)
+                    .presetId(p.getId())
+                    .presetName(p.getName())
+                    .durationValue(p.getDurationValue())
+                    .durationUnit(p.getDurationUnit())
+                    .isCompleted(false)
+                    .note("")
+                    .imageUrl("")
+                    .checkedBy("")
+                    .build();
+            created.add(followupCheckRepository.save(check));
+        }
+        return created;
+    }
+
+    public OrderFollowupCheck updateOrderFollowupCheck(Long checkId, OrderFollowupCheck updateData) {
+        return followupCheckRepository.findById(checkId).map(c -> {
+            if (updateData.getIsCompleted() != null) c.setIsCompleted(updateData.getIsCompleted());
+            if (updateData.getNote() != null) c.setNote(updateData.getNote());
+            if (updateData.getImageUrl() != null) c.setImageUrl(updateData.getImageUrl());
+            if (updateData.getCheckedBy() != null) c.setCheckedBy(updateData.getCheckedBy());
+            if (Boolean.TRUE.equals(c.getIsCompleted())) {
+                if (c.getCheckedAt() == null) c.setCheckedAt(LocalDateTime.now());
+            } else {
+                c.setCheckedAt(null);
+            }
+            return followupCheckRepository.save(c);
+        }).orElseThrow(() -> new IllegalArgumentException("Follow-up check not found with id: " + checkId));
+    }
+
+    public OrderFollowupCheck toggleOrderFollowupCheck(Long checkId, String adminUser) {
+        return followupCheckRepository.findById(checkId).map(c -> {
+            boolean nextState = !Boolean.TRUE.equals(c.getIsCompleted());
+            c.setIsCompleted(nextState);
+            if (nextState) {
+                c.setCheckedAt(LocalDateTime.now());
+                if (adminUser != null && !adminUser.trim().isEmpty()) {
+                    c.setCheckedBy(adminUser);
+                } else if (c.getCheckedBy() == null || c.getCheckedBy().isEmpty()) {
+                    c.setCheckedBy("Admin");
+                }
+            } else {
+                c.setCheckedAt(null);
+            }
+            return followupCheckRepository.save(c);
+        }).orElseThrow(() -> new IllegalArgumentException("Follow-up check not found with id: " + checkId));
     }
 
     public List<CustomerFeedback> getCustomerFeedbacks(Long customerId) {

@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Custom Comic Design System Style -->
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=3.1">
     <!-- AngularJS (1.8.2) -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <script src="/js/app.js"></script>
+    <script src="/js/app.js?v=3.1"></script>
 </head>
 <body ng-controller="DashboardController">
 
@@ -241,7 +241,7 @@
                                             <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setAdminView('inspect', admin)">
                                                 Inspect
                                             </button>
-                                            <button type="button" class="comic-btn-danger" ng-click="setAdminView('delete', admin)">
+                                            <button type="button" class="comic-btn-danger" ng-click="openDeleteAdminModal(admin, $event)">
                                                 Delete
                                             </button>
                                         </td>
@@ -1396,32 +1396,120 @@
 
                         <!-- Orders List Table -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Complete Customer Purchase Ledger:</div>
+                            <div style="font-size: 1.15rem; font-weight: 900;">Complete Customer Purchase Ledger & Follow-up Checks:</div>
                             <div class="table-responsive">
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th>Order Number</th>
+                                            <th style="width: 140px;">Order Number</th>
                                             <th>Order Date</th>
                                             <th>Order Time</th>
-                                            <th>Items Summary</th>
-                                            <th>Payment Method</th>
+                                            <th>Items / Product Summary</th>
                                             <th>Total Price</th>
                                             <th>Status</th>
+                                            <th style="text-align: right;">Milestone Follow-ups</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="order in customerOrders track by order.id">
-                                            <td><strong style="color: var(--primary-dark);" ng-bind="order.orderNumber"></strong></td>
+                                        <!-- Main Order Row (Clickable to Expand Follow-up Checklist) -->
+                                        <tr ng-repeat-start="order in customerOrders track by order.id" 
+                                            class="order-row-clickable" 
+                                            ng-click="toggleOrderExpand(order, $event)">
+                                            <td>
+                                                <div style="display: flex; align-items: center;">
+                                                    <button type="button" class="order-expand-toggle-btn" title="Toggle Follow-up Tree">
+                                                        <span ng-if="!isOrderExpanded(order.id)">▶</span>
+                                                        <span ng-if="isOrderExpanded(order.id)">▼</span>
+                                                    </button>
+                                                    <strong style="color: var(--primary-dark);" ng-bind="order.orderNumber"></strong>
+                                                </div>
+                                            </td>
                                             <td><span style="font-weight: 700;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span></td>
                                             <td><span style="color: var(--text-muted); font-weight: 700;" ng-bind="order.orderDate | date:'HH:mm'"></span></td>
-                                            <td><span ng-bind="order.itemsSummary"></span></td>
-                                            <td><span class="comic-tag tag-muted" ng-bind="order.paymentMethod"></span></td>
+                                            <td><strong ng-bind="order.itemsSummary"></strong></td>
                                             <td><strong style="color: var(--primary-dark);" ng-bind="'$' + (order.totalAmount | number:2)"></strong></td>
                                             <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
+                                                    <span ng-if="!isOrderExpanded(order.id)">🌳 View Follow-ups</span>
+                                                    <span ng-if="isOrderExpanded(order.id)">▲ Hide Follow-ups</span>
+                                                </button>
+                                            </td>
                                         </tr>
+
+                                        <!-- Expandable Follow-up Checklist Tree for this Order Record -->
+                                        <tr ng-if="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
+                                            <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
+                                                <div class="order-followup-tree-box">
+                                                    <div class="followup-tree-header">
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                                            <span style="font-size: 1.1rem;">🌳</span>
+                                                            <strong style="font-size: 0.95rem; color: #1E1B4B;">Follow-up Milestone Checklist Tree ({{ (orderFollowups[order.id] || []).length }} Admin Checkpoints)</strong>
+                                                        </div>
+                                                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+                                                            Auditing all active admin-created interval filters for Order {{order.orderNumber}}
+                                                        </span>
+                                                    </div>
+
+                                                    <!-- Milestone Checklist Items -->
+                                                    <div class="followup-tree-list">
+                                                        <div class="followup-check-card" ng-repeat="check in orderFollowups[order.id] || [] track by check.id">
+                                                            <!-- 1. Milestone info -->
+                                                            <div class="check-col-milestone">
+                                                                <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
+                                                                <span class="check-milestone-badge" ng-bind="check.durationValue + ' ' + check.durationUnit"></span>
+                                                            </div>
+
+                                                            <!-- 2. Status Check Yes/No toggle -->
+                                                            <div class="check-col-status">
+                                                                <button type="button" 
+                                                                        class="followup-status-btn" 
+                                                                        ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
+                                                                        ng-click="toggleFollowupCheck(order, check)">
+                                                                    <span ng-if="check.isCompleted">✔ Yes (Done)</span>
+                                                                    <span ng-if="!check.isCompleted">✖ No (Pending)</span>
+                                                                </button>
+                                                                <div class="check-meta-info" ng-if="check.isCompleted">
+                                                                    <span ng-bind="check.checkedBy || 'Admin'"></span> • 
+                                                                    <span ng-bind="check.checkedAt | date:'MMM d, HH:mm'"></span>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- 3. Details & User Note -->
+                                                            <div class="check-col-note">
+                                                                <div class="check-note-text" ng-if="check.note" ng-bind="check.note"></div>
+                                                                <div class="check-note-empty" ng-if="!check.note">No manual note added yet. Click edit to add note.</div>
+                                                            </div>
+
+                                                            <!-- 4. Attached Images -->
+                                                            <div class="check-col-images">
+                                                                <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)">
+                                                                    <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
+                                                                    <span class="thumb-zoom-icon">🔍</span>
+                                                                </div>
+                                                                <span class="check-no-image" ng-if="!check.imageUrl">No image</span>
+                                                            </div>
+
+                                                            <!-- 5. Edit / Add Details Action -->
+                                                            <div class="check-col-action">
+                                                                <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check)">
+                                                                    ✏️ Edit Note & Image
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div ng-if="(orderFollowups[order.id] || []).length === 0" style="padding: 16px; text-align: center; color: var(--text-muted); font-weight: 700;">
+                                                            Loading follow-up checkpoints...
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+
                                         <tr ng-if="customerOrders.length === 0">
-                                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">No orders recorded for this customer yet.</td>
+                                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No orders recorded for this customer yet.
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1500,10 +1588,92 @@
         </div>
     </div>
 
-    <!-- Comic Toast Alerts -->
-    <div class="toast-container">
-        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
-            <span ng-bind="toast.message"></span>
+    <!-- ========================================================= -->
+    <!-- 1. ADMIN DELETE CONFIRMATION POPUP MODAL                  -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 440px;">
+            <div class="comic-modal-header" style="background-color: #FEF2F2; border-bottom: 2px solid var(--border-black);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">⚠️</span>
+                    <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
+                </div>
+                <button type="button" class="comic-modal-close" ng-click="closeDeleteAdminModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 22px; font-size: 0.95rem; line-height: 1.5;">
+                <p>Are you sure you want to permanently delete administrator <strong>{{ adminToDelete.username }}</strong>?</p>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 10px;">This action cannot be undone and will revoke all administrative privileges immediately.</p>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeDeleteAdminModal()">Cancel</button>
+                <button type="button" class="comic-btn-danger" ng-click="confirmDeleteAdmin()">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 2. EDIT / ADD FOLLOW-UP NOTE & IMAGE MODAL                -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">✏️</span>
+                    <strong style="font-size: 1.05rem; color: #1E1B4B;">Milestone Follow-up: {{ editingFollowup.presetName }}</strong>
+                </div>
+                <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 22px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Milestone Status Checkbox -->
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; padding: 12px 16px; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic);">
+                    <div>
+                        <strong style="font-size: 0.92rem;">Mark as Completed / Done</strong>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">Indicates whether this milestone was followed up</div>
+                    </div>
+                    <label class="comic-switch">
+                        <input type="checkbox" ng-model="editingFollowup.isCompleted">
+                        <span class="comic-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Follow-up Note Textarea -->
+                <div class="form-group">
+                    <label class="form-label">Follow-up User Note / Inspection Details</label>
+                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up notes, customer feedback, resolution details..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Attached Proof Image URL -->
+                <div class="form-group">
+                    <label class="form-label">Attached Proof Photo / Receipt Image URL</label>
+                    <input type="text" class="comic-input" placeholder="https://... or upload photo" ng-model="editingFollowup.imageUrl">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Paste photo URL (e.g. proof of installation, signed delivery receipt, screenshot)</div>
+                </div>
+
+                <!-- Photo Preview if present -->
+                <div ng-if="editingFollowup.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1px solid var(--border-black);">
+                    <img ng-src="{{editingFollowup.imageUrl}}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #000;" alt="Preview">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: #334155;">Image Preview Ready</span>
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Milestone Check</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 3. IMAGE PREVIEW LIGHTBOX MODAL                           -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-show="showImageModal" ng-click="closeImageModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 650px; background: #0F172A; color: #FFFFFF; border: 2.5px solid #000000;">
+            <div class="comic-modal-header" style="background-color: #1E293B; border-bottom: 2px solid #000000;">
+                <strong style="font-size: 0.95rem; color: #FFFFFF;">Attached Follow-up Photo</strong>
+                <button type="button" class="comic-modal-close" style="color: #FFFFFF;" ng-click="closeImageModal()">&times;</button>
+            </div>
+            <div style="padding: 16px; display: flex; justify-content: center; align-items: center;">
+                <img ng-src="{{previewImageUrl}}" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px; border: 1.5px solid #000;" alt="Full Preview">
+            </div>
         </div>
     </div>
 

@@ -783,10 +783,26 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         });
     };
 
-    $scope.performDeleteAdmin = function(admin) {
-        if (!admin) return;
+    $scope.adminToDelete = null;
+    $scope.showDeleteAdminModal = false;
+
+    $scope.openDeleteAdminModal = function(admin, $event) {
+        if ($event) $event.stopPropagation();
+        $scope.adminToDelete = admin;
+        $scope.showDeleteAdminModal = true;
+    };
+
+    $scope.closeDeleteAdminModal = function() {
+        $scope.showDeleteAdminModal = false;
+        $scope.adminToDelete = null;
+    };
+
+    $scope.confirmDeleteAdmin = function() {
+        if (!$scope.adminToDelete) return;
+        var admin = $scope.adminToDelete;
         $http.delete('/api/admins/' + admin.id).then(function() {
             $scope.showToast('Administrator ' + admin.username + ' deleted successfully');
+            $scope.closeDeleteAdminModal();
             $scope.selectedAdmin = null;
             $scope.loadAdmins().then(function() {
                 $scope.setAdminView('list');
@@ -794,7 +810,12 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         }, function(err) {
             var msg = err.data && err.data.message ? err.data.message : 'Failed to delete admin';
             $scope.showToast(msg, 'error');
+            $scope.closeDeleteAdminModal();
         });
+    };
+
+    $scope.performDeleteAdmin = function(admin) {
+        $scope.openDeleteAdminModal(admin);
     };
 
     // =========================================================
@@ -1148,26 +1169,85 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         });
     };
 
-    $scope.submitCustomerOrder = function() {
-        if (!$scope.selectedCustomer || !$scope.newCustomerOrder.itemsSummary) {
-            $scope.showToast('Please enter items description', 'error');
-            return;
+    // =========================================================
+    // ORDER / PRODUCT LOG FOLLOW-UP CHECKLIST TREE
+    // =========================================================
+    $scope.expandedOrders = {};
+    $scope.orderFollowups = {};
+
+    $scope.toggleOrderExpand = function(order, $event) {
+        if ($event) $event.stopPropagation();
+        var id = order.id;
+        $scope.expandedOrders[id] = !$scope.expandedOrders[id];
+        if ($scope.expandedOrders[id]) {
+            $scope.loadOrderFollowups(id);
         }
-        $http.post('/api/customers/' + $scope.selectedCustomer.id + '/orders', $scope.newCustomerOrder).then(function() {
-            $scope.showToast('Purchase order logged successfully');
-            $scope.newCustomerOrder = {
-                orderNumber: 'ORD-' + Math.floor(100 + Math.random() * 900),
-                itemsSummary: '',
-                totalAmount: 150.0,
-                paymentMethod: 'Cash on Delivery',
-                orderStatus: 'DELIVERED'
-            };
-            $scope.loadCustomerOrders($scope.selectedCustomer.id);
-            $scope.loadCustomers($scope.customerTimeFilter);
-            $scope.loadCustomerStats();
-        }, function(err) {
-            $scope.showToast(err.data && err.data.error ? err.data.error : 'Failed to save order', 'error');
+    };
+
+    $scope.isOrderExpanded = function(orderId) {
+        return !!$scope.expandedOrders[orderId];
+    };
+
+    $scope.loadOrderFollowups = function(orderId) {
+        return $http.get('/api/orders/' + orderId + '/followups').then(function(res) {
+            $scope.orderFollowups[orderId] = res.data || [];
         });
+    };
+
+    $scope.toggleFollowupCheck = function(order, check) {
+        $http.patch('/api/orders/' + order.id + '/followups/' + check.id + '/toggle', {}).then(function(res) {
+            check.isCompleted = res.data.isCompleted;
+            check.checkedAt = res.data.checkedAt;
+            check.checkedBy = res.data.checkedBy;
+            $scope.showToast('Milestone "' + check.presetName + '" marked ' + (check.isCompleted ? 'Completed (Yes)' : 'Pending (No)'));
+        }, function(err) {
+            $scope.showToast('Failed to toggle milestone status', 'error');
+        });
+    };
+
+    // Edit Follow-up Modal State
+    $scope.editingFollowup = null;
+    $scope.editingFollowupOrder = null;
+    $scope.showEditFollowupModal = false;
+
+    $scope.openEditFollowupModal = function(order, check) {
+        $scope.editingFollowupOrder = order;
+        $scope.editingFollowup = angular.copy(check);
+        $scope.showEditFollowupModal = true;
+    };
+
+    $scope.closeEditFollowupModal = function() {
+        $scope.showEditFollowupModal = false;
+        $scope.editingFollowup = null;
+        $scope.editingFollowupOrder = null;
+    };
+
+    $scope.saveFollowupCheck = function() {
+        if (!$scope.editingFollowup || !$scope.editingFollowupOrder) return;
+        var order = $scope.editingFollowupOrder;
+        var check = $scope.editingFollowup;
+        $http.put('/api/orders/' + order.id + '/followups/' + check.id, check).then(function(res) {
+            $scope.showToast('Follow-up note & details saved successfully');
+            $scope.closeEditFollowupModal();
+            $scope.loadOrderFollowups(order.id);
+        }, function(err) {
+            $scope.showToast('Failed to save follow-up details', 'error');
+        });
+    };
+
+    // Image Preview Lightbox Modal
+    $scope.previewImageUrl = null;
+    $scope.showImageModal = false;
+
+    $scope.previewImage = function(url) {
+        if (!url) return;
+        $scope.previewImageUrl = url;
+        $scope.showImageModal = true;
+    };
+
+    $scope.closeImageModal = function() {
+        $scope.showImageModal = false;
+        $scope.previewImageUrl = null;
     };
 
     // Helper functions

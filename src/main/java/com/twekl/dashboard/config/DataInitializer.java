@@ -25,6 +25,7 @@ public class DataInitializer implements CommandLineRunner {
     private final CustomerOrderRepository orderRepository;
     private final CustomerFeedbackRepository feedbackRepository;
     private final TimeFilterPresetRepository timeFilterPresetRepository;
+    private final OrderFollowupCheckRepository followupCheckRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -36,6 +37,7 @@ public class DataInitializer implements CommandLineRunner {
                            CustomerOrderRepository orderRepository,
                            CustomerFeedbackRepository feedbackRepository,
                            TimeFilterPresetRepository timeFilterPresetRepository,
+                           OrderFollowupCheckRepository followupCheckRepository,
                            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
         this.userRepository = userRepository;
@@ -45,6 +47,7 @@ public class DataInitializer implements CommandLineRunner {
         this.orderRepository = orderRepository;
         this.feedbackRepository = feedbackRepository;
         this.timeFilterPresetRepository = timeFilterPresetRepository;
+        this.followupCheckRepository = followupCheckRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -407,6 +410,37 @@ public class DataInitializer implements CommandLineRunner {
                     .status("FOLLOWED_UP")
                     .createdAt(now.minusHours(2))
                     .build());
+        }
+
+        if (followupCheckRepository.count() == 0) {
+            log.info("Seeding Initial Order Follow-up Milestone Checks & Notes...");
+            LocalDateTime now = LocalDateTime.now();
+            List<CustomerOrder> allOrders = orderRepository.findAll();
+            List<TimeFilterPreset> presets = timeFilterPresetRepository.findAllByOrderByIdAsc();
+
+            for (CustomerOrder o : allOrders) {
+                for (TimeFilterPreset p : presets) {
+                    boolean is24h = p.getName().toLowerCase().contains("24") || (p.getDurationValue() == 24 && "HOURS".equalsIgnoreCase(p.getDurationUnit()));
+                    boolean is7d = p.getName().toLowerCase().contains("7") || (p.getDurationValue() == 7 && "DAYS".equalsIgnoreCase(p.getDurationUnit()));
+                    
+                    boolean completed = is24h || (is7d && o.getId() % 2 == 0);
+                    String note = completed ? "Follow-up completed with client regarding " + o.getItemsSummary() + ". Equipment operational." : "Scheduled milestone check pending.";
+                    String img = completed ? "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=300&q=80" : "";
+
+                    followupCheckRepository.save(OrderFollowupCheck.builder()
+                            .orderId(o.getId())
+                            .presetId(p.getId())
+                            .presetName(p.getName())
+                            .durationValue(p.getDurationValue())
+                            .durationUnit(p.getDurationUnit())
+                            .isCompleted(completed)
+                            .note(note)
+                            .imageUrl(img)
+                            .checkedBy(completed ? "Agent Tariq" : "")
+                            .checkedAt(completed ? now.minusHours(6) : null)
+                            .build());
+                }
+            }
         }
     }
 }

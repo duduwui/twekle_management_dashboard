@@ -38,8 +38,8 @@ public class AdminService {
 
     @Transactional
     public Admin createAdmin(Admin admin) {
-        if (adminRepository.existsByUsername(admin.getUsername())) {
-            throw new IllegalArgumentException("Admin username '" + admin.getUsername() + "' already exists");
+        if (adminRepository.existsByUsernameIgnoreCase(admin.getUsername().trim())) {
+            throw new IllegalArgumentException("Admin username '" + admin.getUsername() + "' already exists (case-insensitive)");
         }
         if (admin.getPassword() != null && !admin.getPassword().trim().isEmpty()) {
             admin.setPassword(passwordEncoder.encode(admin.getPassword().trim()));
@@ -55,8 +55,8 @@ public class AdminService {
         Admin existing = adminRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Admin not found with id: " + id));
 
-        if (adminRepository.existsByUsernameAndIdNot(updated.getUsername(), id)) {
-            throw new IllegalArgumentException("Username '" + updated.getUsername() + "' is already in use");
+        if (adminRepository.existsByUsernameIgnoreCaseAndIdNot(updated.getUsername().trim(), id)) {
+            throw new IllegalArgumentException("Username '" + updated.getUsername() + "' is already in use (case-insensitive)");
         }
 
         existing.setUsername(updated.getUsername());

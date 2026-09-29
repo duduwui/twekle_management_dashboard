@@ -12,8 +12,11 @@ import java.util.Optional;
 @Repository
 public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByUsernameEn(String usernameEn);
+    Optional<AppUser> findByUsernameEnIgnoreCase(String usernameEn);
     boolean existsByUsernameEn(String usernameEn);
+    boolean existsByUsernameEnIgnoreCase(String usernameEn);
     boolean existsByUsernameEnAndIdNot(String usernameEn, Long id);
+    boolean existsByUsernameEnIgnoreCaseAndIdNot(String usernameEn, Long id);
 
     @Query("SELECT u FROM AppUser u WHERE " +
            "LOWER(u.usernameEn) LIKE LOWER(CONCAT('%', :query, '%')) OR " +

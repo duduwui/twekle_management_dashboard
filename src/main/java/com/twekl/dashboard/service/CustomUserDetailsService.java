@@ -38,7 +38,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         String cleanUsername = username.trim();
 
         // 1. Check in Admins
-        Optional<Admin> adminOpt = adminRepository.findByUsername(cleanUsername);
+        Optional<Admin> adminOpt = adminRepository.findByUsernameIgnoreCase(cleanUsername);
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
             if (!"ACTIVE".equalsIgnoreCase(admin.getStatus())) {
@@ -68,7 +68,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // 2. Check in AppUsers
-        Optional<AppUser> userOpt = userRepository.findByUsernameEn(cleanUsername);
+        Optional<AppUser> userOpt = userRepository.findByUsernameEnIgnoreCase(cleanUsername);
         if (userOpt.isPresent()) {
             AppUser user = userOpt.get();
             if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {

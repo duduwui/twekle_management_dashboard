@@ -33,8 +33,8 @@ public class RoleService {
 
     @Transactional
     public Role createRole(Role role) {
-        if (roleRepository.existsByName(role.getName())) {
-            throw new IllegalArgumentException("Role '" + role.getName() + "' already exists");
+        if (roleRepository.existsByNameIgnoreCase(role.getName().trim())) {
+            throw new IllegalArgumentException("Role '" + role.getName() + "' already exists (case-insensitive)");
         }
         return roleRepository.save(role);
     }
@@ -43,7 +43,12 @@ public class RoleService {
     public Role updateRole(Long id, Role updated) {
         Role existing = roleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found with id: " + id));
-        existing.setName(updated.getName());
+        if (updated.getName() != null && !updated.getName().trim().isEmpty()) {
+            if (roleRepository.existsByNameIgnoreCaseAndIdNot(updated.getName().trim(), id)) {
+                throw new IllegalArgumentException("Role '" + updated.getName() + "' already exists (case-insensitive)");
+            }
+            existing.setName(updated.getName().trim());
+        }
         existing.setCanCreate(updated.isCanCreate());
         existing.setCanRead(updated.isCanRead());
         existing.setCanUpdate(updated.isCanUpdate());

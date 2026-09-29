@@ -45,8 +45,8 @@ public class AppUserService {
 
     @Transactional
     public AppUser createUser(AppUser user, List<ModulePermission> initialModules) {
-        if (userRepository.existsByUsernameEn(user.getUsernameEn())) {
-            throw new IllegalArgumentException("Username '" + user.getUsernameEn() + "' already exists");
+        if (userRepository.existsByUsernameEnIgnoreCase(user.getUsernameEn().trim())) {
+            throw new IllegalArgumentException("Username '" + user.getUsernameEn() + "' already exists (case-insensitive)");
         }
         if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword().trim()));
@@ -154,10 +154,10 @@ public class AppUserService {
         AppUser existing = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
         if (updated.getUsernameEn() != null && !updated.getUsernameEn().trim().isEmpty()) {
-            if (!existing.getUsernameEn().equals(updated.getUsernameEn()) && userRepository.existsByUsernameEn(updated.getUsernameEn())) {
-                throw new IllegalArgumentException("Username '" + updated.getUsernameEn() + "' already exists");
+            if (userRepository.existsByUsernameEnIgnoreCaseAndIdNot(updated.getUsernameEn().trim(), id)) {
+                throw new IllegalArgumentException("Username '" + updated.getUsernameEn() + "' already exists (case-insensitive)");
             }
-            existing.setUsernameEn(updated.getUsernameEn());
+            existing.setUsernameEn(updated.getUsernameEn().trim());
         }
         if (updated.getUsernameAr() != null) {
             existing.setUsernameAr(updated.getUsernameAr());

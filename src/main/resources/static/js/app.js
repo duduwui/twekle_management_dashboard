@@ -153,40 +153,112 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.dt.currentPage = 1;
     };
 
-    // =========================================================
-    // DYNAMIC FILTER DROPDOWN CONTROLS
-    // =========================================================
-    $scope.showFilterDropdown = false;
+    $scope.selectTimePreset = function(preset) {
+        if ($scope.selectedTimePreset && $scope.selectedTimePreset.id === (preset ? preset.id : null)) {
+            $scope.selectedTimePreset = null; // toggle off
+        } else {
+            $scope.selectedTimePreset = preset;
+        }
+        $scope.dt.currentPage = 1;
+    };
 
+    // =========================================================
+    // BIG DYNAMIC TIME FILTER SELECTOR MODAL CONTROLS
+    // =========================================================
+    $scope.showBigFilterModal = false;
+    $scope.filterModalContext = 'customer'; // 'customer', 'order', 'feedback', 'user', 'admin'
+    $scope.pendingTimePreset = null;
+    $scope.filterModalSearch = '';
+
+    $scope.openFilterModal = function(context) {
+        $scope.filterModalContext = context || 'customer';
+        $scope.filterModalSearch = '';
+        
+        // Sync pending selection with current active filter
+        if ($scope.filterModalContext === 'order') {
+            $scope.pendingTimePreset = $scope.selectedOrderTimePreset ? angular.copy($scope.selectedOrderTimePreset) : null;
+        } else if ($scope.filterModalContext === 'feedback') {
+            $scope.pendingTimePreset = $scope.selectedFeedbackTimePreset ? angular.copy($scope.selectedFeedbackTimePreset) : null;
+        } else {
+            $scope.pendingTimePreset = $scope.selectedTimePreset ? angular.copy($scope.selectedTimePreset) : null;
+        }
+        
+        $scope.showBigFilterModal = true;
+    };
+
+    $scope.closeFilterModal = function() {
+        $scope.showBigFilterModal = false;
+        $scope.pendingTimePreset = null;
+    };
+
+    $scope.selectPendingPreset = function(preset) {
+        $scope.pendingTimePreset = preset;
+    };
+
+    $scope.isPendingPresetSelected = function(preset) {
+        if (!preset && !$scope.pendingTimePreset) return true;
+        if (preset && $scope.pendingTimePreset && preset.id === $scope.pendingTimePreset.id) return true;
+        return false;
+    };
+
+    $scope.getFilteredModalPresets = function() {
+        if (!$scope.timeFilterPresets) return [];
+        var active = $scope.timeFilterPresets.filter(function(p) { return p.isActive; });
+        var q = ($scope.filterModalSearch || '').toLowerCase().trim();
+        if (!q) return active;
+        return active.filter(function(p) {
+            return (p.name && p.name.toLowerCase().indexOf(q) !== -1) ||
+                   ((p.durationValue + ' ' + p.durationUnit).toLowerCase().indexOf(q) !== -1);
+        });
+    };
+
+    $scope.confirmApplyFilterModal = function() {
+        if ($scope.filterModalContext === 'order') {
+            $scope.selectedOrderTimePreset = $scope.pendingTimePreset;
+            $scope.orderDt.currentPage = 1;
+            if ($scope.pendingTimePreset) {
+                $scope.showToast('Applied order filter: ' + $scope.pendingTimePreset.name);
+            } else {
+                $scope.showToast('Order filter set to All Time');
+            }
+        } else if ($scope.filterModalContext === 'feedback') {
+            $scope.selectedFeedbackTimePreset = $scope.pendingTimePreset;
+            $scope.feedbackDt.currentPage = 1;
+            if ($scope.pendingTimePreset) {
+                $scope.showToast('Applied review filter: ' + $scope.pendingTimePreset.name);
+            } else {
+                $scope.showToast('Review filter set to All Time');
+            }
+        } else {
+            $scope.selectedTimePreset = $scope.pendingTimePreset;
+            $scope.dt.currentPage = 1;
+            if ($scope.pendingTimePreset) {
+                $scope.showToast('Applied time filter: ' + $scope.pendingTimePreset.name);
+            } else {
+                $scope.showToast('Time filter set to All Time');
+            }
+        }
+        $scope.showBigFilterModal = false;
+    };
+
+    $scope.resetFilterModal = function() {
+        $scope.pendingTimePreset = null;
+        $scope.confirmApplyFilterModal();
+    };
+
+    // Legacy fallback bindings
+    $scope.showFilterDropdown = false;
     $scope.toggleFilterDropdown = function($event) {
         if ($event) $event.stopPropagation();
-        $scope.showFilterDropdown = !$scope.showFilterDropdown;
+        $scope.openFilterModal('customer');
     };
-
     $scope.closeFilterDropdown = function() {
-        $scope.showFilterDropdown = false;
+        $scope.showBigFilterModal = false;
     };
-
     $scope.applyTimePreset = function(preset) {
-        $scope.selectTimePreset(preset);
-        $scope.showFilterDropdown = false;
-        if (preset) {
-            $scope.showToast('Applied time filter: ' + preset.name);
-        } else {
-            $scope.showToast('Time filter set to All Time');
-        }
+        $scope.selectPendingPreset(preset);
+        $scope.confirmApplyFilterModal();
     };
-
-    // Close dropdown on outside click
-    $window.addEventListener('click', function() {
-        if ($scope.showFilterDropdown || $scope.showOrderFilterDropdown || $scope.showFeedbackFilterDropdown) {
-            $timeout(function() {
-                $scope.showFilterDropdown = false;
-                $scope.showOrderFilterDropdown = false;
-                $scope.showFeedbackFilterDropdown = false;
-            });
-        }
-    });
 
     // =========================================================
     // DATATABLE CONTROLS & PAGINATION STATE (30 ROWS DEFAULT)

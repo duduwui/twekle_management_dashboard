@@ -34,6 +34,11 @@
   box-sizing: border-box;
 }
 
+/* AngularJS Cloak to prevent Flash of Uncompiled Content (FOUC) */
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-page);
@@ -1731,6 +1736,10 @@ body {
   z-index: 1100;
   padding: 16px;
   animation: fadeIn 0.15s ease-out;
+}
+
+.comic-modal-overlay.ng-hide {
+  display: none !important;
 }
 
 .comic-modal-card {

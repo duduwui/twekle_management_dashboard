@@ -4,17 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twekl Management Dashboard</title>
+    <style>
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+            display: none !important;
+        }
+        .comic-modal-overlay {
+            display: none;
+        }
+        .comic-modal-overlay:not(.ng-hide) {
+            display: flex !important;
+        }
+    </style>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Custom Comic Design System Style -->
-    <link rel="stylesheet" href="/css/style.css?v=3.1">
+    <link rel="stylesheet" href="/css/style.css?v=3.3">
     <!-- AngularJS (1.8.2) -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <script src="/js/app.js?v=3.1"></script>
+    <script src="/js/app.js?v=3.3"></script>
 </head>
-<body ng-controller="DashboardController">
+<body ng-controller="DashboardController" ng-cloak>
 
     <div class="app-container">
         <!-- Sidebar Navigation (Grouped by Administration Category) -->
@@ -106,65 +117,9 @@
                     <!-- 1.1 ADMIN LIST PAGE (DEFAULT) -->
                     <div ng-show="adminView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Buttons + Live Search) -->
+                        <!-- Clean Admin Toolbar (+ Create Admin & Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
-                                <span class="filter-date-label">From:</span>
-                                <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
-                                <span class="filter-date-label">To:</span>
-                                <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
-                                
-                                <!-- Filter Presets Dropdown -->
-                                <div class="filter-dropdown-container">
-                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="toggleFilterDropdown($event)" title="Dynamic Time Filters">
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                                        </svg>
-                                    </button>
-
-                                    <!-- Dropdown Menu of Admin-Created Filters -->
-                                    <div class="filter-dropdown-menu" ng-show="showFilterDropdown" ng-click="$event.stopPropagation()">
-                                        <div class="filter-dropdown-list">
-                                            <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedTimePreset}" ng-click="applyTimePreset(null)">
-                                                <span class="filter-item-name">All Time</span>
-                                                <span class="filter-item-check" ng-if="!selectedTimePreset">✓</span>
-                                            </button>
-
-                                            <div class="filter-dropdown-divider"></div>
-
-                                            <button type="button" 
-                                                    class="filter-dropdown-item" 
-                                                    ng-repeat="preset in timeFilterPresets" 
-                                                    ng-if="preset.isActive"
-                                                    ng-class="{'selected': selectedTimePreset && selectedTimePreset.id === preset.id}" 
-                                                    ng-click="applyTimePreset(preset)">
-                                                <span class="filter-item-name" ng-bind="preset.name"></span>
-                                                <span class="filter-item-check" ng-if="selectedTimePreset && selectedTimePreset.id === preset.id">✓</span>
-                                            </button>
-
-                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 8px 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-                                                No filter presets
-                                            </div>
-                                        </div>
-
-                                        <div class="filter-dropdown-footer">
-                                            <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFilterDropdown();">
-                                                Manage Filters
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" title="Click to clear filter">
-                                    <span ng-bind="selectedTimePreset.name"></span> ✕
-                                </span>
-                            </div>
-
-                            <!-- Small Action Buttons in Toolbar -->
-                            <div class="filter-middle-actions">
-                                <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')">
-                                    Manage Filters ({{timeFilterPresets.length}})
-                                </button>
                                 <button type="button" class="comic-btn-sm" ng-click="setAdminView('create')">
                                     + Create Admin
                                 </button>
@@ -736,7 +691,7 @@
                                         </td>
                                         <td style="text-align: right;" ng-click="$event.stopPropagation()">
                                             <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('inspect', user)">
-                                                Inspect & Perms
+                                                Permissions
                                             </button>
                                             <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('update', user)">
                                                 Edit
@@ -1789,7 +1744,7 @@
     <!-- ========================================================= -->
     <!-- 1. ADMIN DELETE CONFIRMATION POPUP MODAL                  -->
     <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
+    <div class="comic-modal-overlay" ng-cloak ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 460px;">
             <div class="comic-modal-header" style="background-color: #FEF2F2; border-bottom: 2px solid var(--border-black);">
                 <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
@@ -1809,7 +1764,7 @@
     <!-- ========================================================= -->
     <!-- 2. EDIT / ADD FOLLOW-UP NOTE & IMAGE MODAL                -->
     <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
+    <div class="comic-modal-overlay" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 500px;">
             <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
                 <strong style="font-size: 1.05rem; color: #1E1B4B;">Follow-up: {{ editingFollowup.presetName }}</strong>
@@ -1861,7 +1816,7 @@
     <!-- ========================================================= -->
     <!-- 3. IMAGE PREVIEW LIGHTBOX MODAL                           -->
     <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-show="showImageModal" ng-click="closeImageModal()">
+    <div class="comic-modal-overlay" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 650px; background: #0F172A; color: #FFFFFF; border: 2.5px solid #000000;">
             <div class="comic-modal-header" style="background-color: #1E293B; border-bottom: 2px solid #000000;">
                 <strong style="font-size: 0.95rem; color: #FFFFFF;">Attached Follow-up Photo</strong>
@@ -1875,7 +1830,7 @@
     <!-- ========================================================= -->
     <!-- 4. LOG CUSTOMER REVIEW / COMPLIMENT / NOTE MODAL          -->
     <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
+    <div class="comic-modal-overlay" ng-cloak ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
             <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
                 <strong style="font-size: 1.05rem; color: #1E1B4B;">Log Review, Compliment or Note</strong>
@@ -1923,48 +1878,6 @@
                 <button type="button" class="comic-btn-secondary" ng-click="closeAddFeedbackModal()">Cancel</button>
                 <button type="button" class="comic-btn" ng-click="submitCustomerFeedback()">Save Entry</button>
             </div>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- 5. SPRING SECURITY AUTHENTICATION LOGIN MODAL             -->
-    <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-show="showLoginModal" ng-click="closeLoginModal()">
-        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 440px;">
-            <div class="comic-modal-header" style="background-color: var(--teal-surface); border-bottom: 2px solid var(--border-black);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.1rem;">🔒</span>
-                    <strong style="font-size: 1.05rem; color: var(--teal-dark);">Spring Security Login</strong>
-                </div>
-                <button type="button" class="comic-modal-close" ng-click="closeLoginModal()">&times;</button>
-            </div>
-            <form ng-submit="login()">
-                <div class="comic-modal-body" style="padding: 24px 20px; display: flex; flex-direction: column; gap: 16px;">
-                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
-                        Access to administrator operations and customer records is protected by Spring Security role-based authorization.
-                    </p>
-
-                    <div class="form-group">
-                        <label class="form-label">Username</label>
-                        <input type="text" class="comic-input" placeholder="e.g. twekl_super_admin" ng-model="loginForm.username" required autofocus>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="comic-input" placeholder="Enter password" ng-model="loginForm.password" required>
-                    </div>
-
-                    <div style="padding: 10px 12px; background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 6px; font-size: 0.78rem; color: var(--text-muted);">
-                        <strong>Quick Logins:</strong><br>
-                        • Super Admin: <code style="color: var(--teal-dark);">twekl_super_admin</code> / <code style="color: var(--teal-dark);">Super@2026</code><br>
-                        • Ops Admin: <code style="color: var(--teal-dark);">ops_admin</code> / <code style="color: var(--teal-dark);">Admin@2026</code>
-                    </div>
-                </div>
-                <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
-                    <button type="button" class="comic-btn-secondary" ng-click="closeLoginModal()">Cancel</button>
-                    <button type="submit" class="comic-btn">Authenticate Session</button>
-                </div>
-            </form>
         </div>
     </div>
 

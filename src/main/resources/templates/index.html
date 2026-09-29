@@ -157,8 +157,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr ng-repeat="admin in getPagedAdmins() track by admin.id"
-                                        ng-class="{'tr-status-active': admin.status === 'ACTIVE', 'tr-status-inactive': admin.status !== 'ACTIVE'}">
+                                    <tr ng-repeat="admin in getPagedAdmins() track by admin.id">
                                         <td><strong ng-bind="admin.username"></strong></td>
                                         <td><span style="color: var(--text-muted);" ng-bind="admin.phoneNumber || '-'"></span></td>
                                         <td>
@@ -632,7 +631,6 @@
                                 <tbody>
                                     <tr ng-repeat="user in getPagedUsers() track by user.id" 
                                         style="cursor: pointer;"
-                                        ng-class="{'tr-status-active': user.status === 'ACTIVE', 'tr-status-inactive': user.status !== 'ACTIVE'}"
                                         ng-click="setUserView('inspect', user)">
                                         <td>
                                             <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>

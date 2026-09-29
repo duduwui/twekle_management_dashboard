@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TimeFilterPresetRepository timeFilterPresetRepository;
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @Autowired
     public DataInitializer(AdminRepository adminRepository, 
@@ -38,7 +39,8 @@ public class DataInitializer implements CommandLineRunner {
                            CustomerFeedbackRepository feedbackRepository,
                            TimeFilterPresetRepository timeFilterPresetRepository,
                            OrderFollowupCheckRepository followupCheckRepository,
-                           org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+                           org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                           org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.adminRepository = adminRepository;
         this.userRepository = userRepository;
         this.permissionRepository = permissionRepository;
@@ -49,10 +51,18 @@ public class DataInitializer implements CommandLineRunner {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
         this.followupCheckRepository = followupCheckRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
+        try {
+            jdbcTemplate.execute("ALTER TABLE order_followup_checks MODIFY COLUMN image_url LONGTEXT");
+            log.info("Successfully ensured order_followup_checks.image_url is LONGTEXT");
+        } catch (Exception e) {
+            log.warn("Notice updating table column image_url: {}", e.getMessage());
+        }
+
         if (timeFilterPresetRepository.count() == 0) {
             log.info("Seeding Dynamic Time Filter Presets...");
             timeFilterPresetRepository.save(TimeFilterPreset.builder().name("24 Hours Ago").durationValue(24).durationUnit("HOURS").isActive(true).build());

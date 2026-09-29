@@ -35,7 +35,8 @@ public class OrderFollowupCheck {
     @Column(name = "note", length = 2000)
     private String note;
 
-    @Column(name = "image_url", length = 1000)
+    @Lob
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     @Column(name = "checked_by")

@@ -1265,11 +1265,33 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             var file = element.files[0];
             var reader = new FileReader();
             reader.onload = function(e) {
-                $scope.$apply(function() {
-                    if ($scope.editingFollowup) {
-                        $scope.editingFollowup.imageUrl = e.target.result;
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var maxDim = 1200;
+                    var width = img.width;
+                    var height = img.height;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
                     }
-                });
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    $scope.$apply(function() {
+                        if ($scope.editingFollowup) {
+                            $scope.editingFollowup.imageUrl = compressedDataUrl;
+                        }
+                    });
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }

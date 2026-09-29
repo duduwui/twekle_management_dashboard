@@ -93,19 +93,6 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'roles'">Role Templates Directory</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Customer Follow-up & Order History</h1>
                 </div>
-
-                <!-- Spring Security User & Session Bar -->
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div ng-if="auth.authenticated" style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 6px 14px; box-shadow: 2px 2px 0px var(--border-black);">
-                        <span style="font-size: 0.95rem;">👤</span>
-                        <strong style="font-size: 0.88rem; color: var(--text-main);" ng-bind="auth.username"></strong>
-                        <span class="comic-badge-active" style="font-size: 0.72rem; padding: 2px 6px;" ng-bind="auth.role"></span>
-                        <button type="button" class="comic-btn-secondary" style="padding: 4px 10px; font-size: 0.78rem; margin-left: 6px;" ng-click="logout()" title="End Session">Logout</button>
-                    </div>
-                    <div ng-if="!auth.authenticated">
-                        <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem;" ng-click="openLoginModal()">Login</button>
-                    </div>
-                </div>
             </header>
 
             <!-- Page Body -->
@@ -310,33 +297,21 @@
                     </div>
 
                     <!-- 1.3 INSPECT ADMIN PAGE -->
-                    <div ng-show="adminView === 'inspect'" style="display: flex; flex-direction: column; gap: 24px;">
-                        <div class="action-page-header">
-                            <button type="button" class="comic-btn" ng-click="setAdminView('create')">
-                                + Create Admin
-                            </button>
-                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
-                                ← Back to Admins List
-                            </button>
-                        </div>
-
-                        <!-- Inspected Admin Profile Mini-Banner -->
-                        <div class="inspected-target-banner" ng-if="selectedAdmin">
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Currently Inspecting Administrator:</div>
-                                <div style="font-size: 1.15rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
-                                    <span ng-bind="selectedAdmin.username"></span>
-                                    <span class="comic-tag" style="margin-left: 8px;" ng-class="selectedAdmin.superAdmin ? 'tag-primary' : 'tag-muted'">
-                                        <span ng-if="selectedAdmin.superAdmin">Super Admin</span>
-                                        <span ng-if="!selectedAdmin.superAdmin">Standard Admin</span>
-                                    </span>
-                                </div>
+                    <div ng-show="adminView === 'inspect'" style="display: flex; flex-direction: column; gap: 18px;">
+                        <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                    ← Back to Admins List
+                                </button>
+                                <button type="button" class="comic-btn" ng-click="setAdminView('create')">
+                                    + Create Admin
+                                </button>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.85rem; font-weight: 800;">Switch Admin:</span>
+                            <div style="display: flex; align-items: center; gap: 8px;" ng-if="selectedAdmin">
+                                <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted);">Switch Admin:</span>
                                 <select class="comic-input" 
-                                        style="width: 200px; padding: 6px 10px; font-size: 0.85rem;" 
+                                        style="width: 180px; padding: 5px 10px; font-size: 0.82rem;" 
                                         ng-model="selectedAdmin" 
                                         ng-options="a as a.username for a in admins track by a.id"
                                         ng-change="setAdminView('inspect', selectedAdmin)">
@@ -344,88 +319,80 @@
                             </div>
                         </div>
 
-                        <!-- Complete Table of All Users Under Administration -->
-                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
-                            <div class="card-header-flex" style="margin-bottom: 24px;">
-                                <div class="card-title-group">
-                                    <h3 class="card-title">Users Under System Administration</h3>
+                        <!-- Admin Profile & Permissions Detail Card -->
+                        <div class="inspect-card" ng-if="selectedAdmin">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-black); padding-bottom: 14px;">
+                                <div>
+                                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Administrator Profile</div>
+                                    <h2 style="font-size: 1.35rem; font-weight: 900; color: var(--text-main); margin: 3px 0 0 0;" ng-bind="selectedAdmin.username"></h2>
                                 </div>
-
-                                <!-- Filter & Create User -->
-                                <div style="display: flex; gap: 12px; align-items: center;">
-                                    <input type="text" 
-                                           class="comic-input" 
-                                           style="width: 260px;" 
-                                           placeholder="Search users..." 
-                                           ng-model="adminInspectUserSearch">
-                                    <button type="button" class="comic-btn" ng-click="setUserView('create')">
-                                        + Create New User
-                                    </button>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <span class="comic-tag" ng-class="selectedAdmin.superAdmin ? 'tag-primary' : 'tag-muted'">
+                                        <span ng-if="selectedAdmin.superAdmin">Super Admin</span>
+                                        <span ng-if="!selectedAdmin.superAdmin">Standard Admin</span>
+                                    </span>
+                                    <span class="comic-tag" ng-class="selectedAdmin.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedAdmin.status"></span>
                                 </div>
                             </div>
 
-                            <div class="table-responsive">
-                                <table class="comic-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="comic-sortable-th" ng-click="sortAdminInspectBy('usernameEn')">
-                                                User Names (EN / AR / KU) <span class="sort-indicator" ng-bind="getAdminInspectSortIndicator('usernameEn')"></span>
-                                            </th>
-                                            <th class="comic-sortable-th" ng-click="sortAdminInspectBy('phoneNumber')">
-                                                Phone Number <span class="sort-indicator" ng-bind="getAdminInspectSortIndicator('phoneNumber')"></span>
-                                            </th>
-                                            <th class="comic-sortable-th" ng-click="sortAdminInspectBy('status')">
-                                                Status <span class="sort-indicator" ng-bind="getAdminInspectSortIndicator('status')"></span>
-                                            </th>
-                                            <th style="text-align: right;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="user in getPagedAdminInspectUsers() track by user.id">
-                                            <td>
-                                                <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>
-                                            </td>
-                                            <td>
-                                                <span style="color: var(--text-muted); font-weight: 700;" ng-bind="user.phoneNumber || '-'"></span>
-                                            </td>
-                                            <td>
-                                                <div style="display: flex; align-items: center; gap: 8px;" ng-click="$event.stopPropagation()">
-                                                    <label class="comic-switch">
-                                                        <input type="checkbox" ng-checked="user.status === 'ACTIVE'" ng-click="toggleUserStatus(user, $event)">
-                                                        <span class="comic-slider"></span>
-                                                    </label>
-                                                    <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
-                                                </div>
-                                            </td>
-                                            <td style="text-align: right;">
-                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('inspect', user)">
-                                                    Inspect Perms
-                                                </button>
-                                                <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('update', user)">
-                                                    Edit
-                                                </button>
-                                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', user)">
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr ng-if="getFilteredAdminInspectUsers().length === 0">
-                                            <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found. Click Create New User above.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- Admin Details Grid -->
+                            <div class="detail-grid-3">
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Username</span>
+                                    <strong class="detail-item-value" ng-bind="selectedAdmin.username"></strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Phone Number</span>
+                                    <span class="detail-item-value" ng-bind="selectedAdmin.phoneNumber || 'None'"></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Account Status</span>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="selectedAdmin.status === 'ACTIVE'" ng-click="toggleAdminStatus(selectedAdmin, $event)">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                        <strong style="font-size: 0.88rem;" ng-bind="selectedAdmin.status"></strong>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Users DataTable Pagination Footer -->
-                            <div class="datatable-footer" ng-if="getFilteredAdminInspectUsers().length > 0">
-                                <div class="datatable-info">
-                                    Showing {{ (adminInspectDt.currentPage - 1) * adminInspectDt.pageSize + 1 }} to {{ adminInspectDt.currentPage * adminInspectDt.pageSize > getFilteredAdminInspectUsers().length ? getFilteredAdminInspectUsers().length : adminInspectDt.currentPage * adminInspectDt.pageSize }} of {{ getFilteredAdminInspectUsers().length }} entries
+                            <!-- Admin System Privileges & Capabilities -->
+                            <div style="background-color: #F8FAFC; border: 2px solid var(--border-black); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+                                <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">
+                                    Administrative Capabilities & System Permissions
                                 </div>
-                                <div class="datatable-pagination">
-                                    <button type="button" class="page-btn" ng-disabled="adminInspectDt.currentPage === 1" ng-click="setAdminInspectPage(adminInspectDt.currentPage - 1)">« Prev</button>
-                                    <button type="button" class="page-btn" ng-repeat="p in getAdminInspectPageNumbers(getFilteredAdminInspectUsers().length)" ng-class="{'active': adminInspectDt.currentPage === p}" ng-click="setAdminInspectPage(p)" ng-bind="p"></button>
-                                    <button type="button" class="page-btn" ng-disabled="adminInspectDt.currentPage === getTotalAdminInspectPages(getFilteredAdminInspectUsers().length)" ng-click="setAdminInspectPage(adminInspectDt.currentPage + 1)">Next »</button>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 14px; box-shadow: 2px 2px 0px var(--border-black);">
+                                        <span style="font-size: 1.2rem;">👑</span>
+                                        <div>
+                                            <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">Super Administrator</div>
+                                            <strong style="font-size: 0.88rem;" ng-style="{'color': selectedAdmin.superAdmin ? 'var(--primary-dark)' : 'var(--text-muted)'}" ng-bind="selectedAdmin.superAdmin ? 'Yes (Full System Access)' : 'No (Standard Access)'"></strong>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 14px; box-shadow: 2px 2px 0px var(--border-black);">
+                                        <span style="font-size: 1.2rem;">🛡️</span>
+                                        <div>
+                                            <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">Role Management</div>
+                                            <strong style="font-size: 0.88rem;" ng-style="{'color': (selectedAdmin.canCreateRoles || selectedAdmin.superAdmin) ? 'var(--primary-dark)' : 'var(--text-muted)'}" ng-bind="(selectedAdmin.canCreateRoles || selectedAdmin.superAdmin) ? 'Granted (Create/Edit Roles)' : 'Restricted'"></strong>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 14px; box-shadow: 2px 2px 0px var(--border-black);">
+                                        <span style="font-size: 1.2rem;">👥</span>
+                                        <div>
+                                            <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">User Management</div>
+                                            <strong style="font-size: 0.88rem;" ng-style="{'color': (selectedAdmin.canManageUsers || selectedAdmin.superAdmin) ? 'var(--primary-dark)' : 'var(--text-muted)'}" ng-bind="(selectedAdmin.canManageUsers || selectedAdmin.superAdmin) ? 'Granted (Manage Users & Perms)' : 'Restricted'"></strong>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Card Action Buttons -->
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 4px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('list')">← Back to Admins List</button>
+                                <button type="button" class="comic-btn-danger" ng-click="confirmDeleteAdminModal(selectedAdmin)">Delete Administrator</button>
                             </div>
                         </div>
                     </div>
@@ -848,40 +815,37 @@
                     </div>
 
                     <!-- 2.3 INSPECT USER & 3-COLUMN CRUD MODULE PERMISSIONS PAGE (R) -->
-                    <div ng-show="userView === 'inspect'" style="display: flex; flex-direction: column; gap: 24px;">
+                    <div ng-show="userView === 'inspect'" style="display: flex; flex-direction: column; gap: 18px;">
                         
-                        <div class="action-page-header">
-                            <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
-                                Edit Details (U)
-                            </button>
-                            <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
-                                Delete User (D)
-                            </button>
-                            <button type="button" class="back-btn" ng-click="setUserView('list')">
-                                ← Back to Users List
-                            </button>
-                        </div>
-
-                        <!-- Inspected User Profile Banner -->
-                        <div class="inspected-target-banner" ng-if="selectedUser">
-                            <div>
-                                <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Currently Inspecting User:</div>
-                                <h3 style="font-size: 1.3rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
-                                    <span ng-bind="selectedUser.usernameEn"></span>
-                                </h3>
-                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
-                                    Phone: <strong ng-bind="selectedUser.phoneNumber || 'None'"></strong> • Status: <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
-                                </div>
+                        <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                    ← Back to Users List
+                                </button>
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
+                                    Edit Details (U)
+                                </button>
+                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
+                                    Delete User (D)
+                                </button>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.85rem; font-weight: 800;">Switch User:</span>
-                                <select class="comic-input" 
-                                        style="width: 220px; padding: 6px 10px; font-size: 0.85rem;" 
-                                        ng-model="selectedUser" 
-                                        ng-options="u as u.usernameEn for u in users track by u.id"
-                                        ng-change="setUserView('inspect', selectedUser)">
-                                </select>
+                            <div style="display: flex; align-items: center; gap: 12px;" ng-if="selectedUser">
+                                <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 6px 14px; box-shadow: 2px 2px 0px var(--border-black);">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">User:</span>
+                                    <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="selectedUser.usernameEn"></strong>
+                                    <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
+                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; margin-left: 4px;" ng-if="selectedUser.phoneNumber" ng-bind="'(' + selectedUser.phoneNumber + ')'"></span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted);">Switch:</span>
+                                    <select class="comic-input" 
+                                            style="width: 170px; padding: 5px 10px; font-size: 0.82rem;" 
+                                            ng-model="selectedUser" 
+                                            ng-options="u as u.usernameEn for u in users track by u.id"
+                                            ng-change="setUserView('inspect', selectedUser)">
+                                    </select>
+                                </div>
                             </div>
                         </div>
 

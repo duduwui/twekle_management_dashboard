@@ -117,19 +117,7 @@
                     <!-- 1.1 ADMIN LIST PAGE (DEFAULT) -->
                     <div ng-show="adminView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Action Buttons -->
-                        <div class="card-header-flex" style="justify-content: flex-end; margin-bottom: 4px;">
-                            <div class="crud-toolbar">
-                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('filters')">
-                                    ⚙️ Manage Time Filter Rules ({{timeFilterPresets.length}})
-                                </button>
-                                <button type="button" class="comic-btn" ng-click="setAdminView('create')">
-                                    + Create Admin
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
+                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Buttons + Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
@@ -142,6 +130,16 @@
                                 <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
                                     <span ng-bind="selectedTimePreset.name"></span> ✕
                                 </span>
+                            </div>
+
+                            <!-- Small Action Buttons in Toolbar -->
+                            <div class="filter-middle-actions">
+                                <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')">
+                                    ⚙️ Manage Filters ({{timeFilterPresets.length}})
+                                </button>
+                                <button type="button" class="comic-btn-sm" ng-click="setAdminView('create')">
+                                    + Create Admin
+                                </button>
                             </div>
 
                             <!-- Live Search Bar -->
@@ -565,16 +563,7 @@
                     <!-- 2.1 USERS LIST PAGE (DEFAULT) -->
                     <div ng-show="userView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Action Buttons -->
-                        <div class="card-header-flex" style="justify-content: flex-end; margin-bottom: 4px;">
-                            <div class="crud-toolbar">
-                                <button type="button" class="comic-btn" ng-click="setUserView('create')">
-                                    + Create User (C)
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
+                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Button + Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
@@ -587,6 +576,13 @@
                                 <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
                                     <span ng-bind="selectedTimePreset.name"></span> ✕
                                 </span>
+                            </div>
+
+                            <!-- Small Action Button in Toolbar -->
+                            <div class="filter-middle-actions">
+                                <button type="button" class="comic-btn-sm" ng-click="setUserView('create')">
+                                    + Create User (C)
+                                </button>
                             </div>
 
                             <!-- Live Search Bar -->
@@ -990,15 +986,14 @@
                 <!-- ======================================================= -->
                 <section class="comic-card" ng-show="currentTab === 'roles'">
                     
-                    <div class="card-header-flex" style="justify-content: flex-end; margin-bottom: 4px;">
-                        <button type="button" class="comic-btn" ng-click="toggleAddRoleForm()">
-                            + Add Role Template
-                        </button>
-                    </div>
-
-                    <!-- Modern Filter Toolbar -->
+                    <!-- Modern Filter Toolbar (Action Button + Live Search) -->
                     <div class="comic-filter-toolbar">
-                        <div class="filter-search-box" style="max-width: 100%;">
+                        <div class="filter-middle-actions">
+                            <button type="button" class="comic-btn-sm" ng-click="toggleAddRoleForm()">
+                                + Add Role Template
+                            </button>
+                        </div>
+                        <div class="filter-search-box" style="max-width: 320px;">
                             <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             <input type="text" class="comic-search-bar" placeholder="Search role templates by name..." ng-model="filters.search">
                         </div>

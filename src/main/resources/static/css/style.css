@@ -280,7 +280,7 @@ body {
   border: 2px solid var(--border-black);
   border-radius: var(--radius-comic);
   box-shadow: var(--shadow-comic-sm);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .filter-left-controls {
@@ -288,6 +288,59 @@ body {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.filter-middle-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.comic-btn-sm {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border-radius: var(--radius-comic);
+  border: 2px solid var(--border-black);
+  background-color: var(--primary-color);
+  color: #FFFFFF;
+  box-shadow: 2px 2px 0px #000000;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.comic-btn-sm:hover {
+  background-color: var(--primary-dark);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.comic-btn-secondary-sm {
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border-radius: var(--radius-comic);
+  border: 2px solid var(--border-black);
+  background-color: #F7F7F4;
+  color: var(--text-main);
+  box-shadow: 2px 2px 0px #000000;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.comic-btn-secondary-sm:hover {
+  background-color: #E5E5E0;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
 }
 
 .comic-date-input {

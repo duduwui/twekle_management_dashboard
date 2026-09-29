@@ -814,12 +814,17 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.adminToDelete = null;
     };
 
-    $scope.confirmDeleteAdmin = function() {
+    $scope.proceedToDeleteAdminPage = function() {
         if (!$scope.adminToDelete) return;
-        var admin = $scope.adminToDelete;
+        var targetAdmin = $scope.adminToDelete;
+        $scope.closeDeleteAdminModal();
+        $scope.setAdminView('delete', targetAdmin);
+    };
+
+    $scope.performDeleteAdmin = function(admin) {
+        if (!admin) return;
         $http.delete('/api/admins/' + admin.id).then(function() {
             $scope.showToast('Administrator ' + admin.username + ' deleted successfully');
-            $scope.closeDeleteAdminModal();
             $scope.selectedAdmin = null;
             $scope.loadAdmins().then(function() {
                 $scope.setAdminView('list');
@@ -827,12 +832,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         }, function(err) {
             var msg = err.data && err.data.message ? err.data.message : 'Failed to delete admin';
             $scope.showToast(msg, 'error');
-            $scope.closeDeleteAdminModal();
         });
-    };
-
-    $scope.performDeleteAdmin = function(admin) {
-        $scope.openDeleteAdminModal(admin);
     };
 
     // =========================================================

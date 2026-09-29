@@ -1569,18 +1569,18 @@
     <!-- 1. ADMIN DELETE CONFIRMATION POPUP MODAL                  -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
-        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 440px;">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 460px;">
             <div class="comic-modal-header" style="background-color: #FEF2F2; border-bottom: 2px solid var(--border-black);">
                 <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
                 <button type="button" class="comic-modal-close" ng-click="closeDeleteAdminModal()">&times;</button>
             </div>
             <div class="comic-modal-body" style="padding: 22px; font-size: 0.95rem; line-height: 1.5;">
-                <p>Are you sure you want to permanently delete administrator <strong>{{ adminToDelete.username }}</strong>?</p>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 10px;">This action cannot be undone and will revoke all administrative privileges immediately.</p>
+                <p>Are you sure you want to delete administrator <strong>{{ adminToDelete.username }}</strong>?</p>
+                <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 10px;">Clicking proceed will take you to the dedicated Delete Administrator page to review details and finalize removal.</p>
             </div>
             <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
                 <button type="button" class="comic-btn-secondary" ng-click="closeDeleteAdminModal()">Cancel</button>
-                <button type="button" class="comic-btn-danger" ng-click="confirmDeleteAdmin()">Confirm Delete</button>
+                <button type="button" class="comic-btn-danger" ng-click="proceedToDeleteAdminPage()">Proceed to Delete</button>
             </div>
         </div>
     </div>

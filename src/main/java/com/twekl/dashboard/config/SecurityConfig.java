@@ -70,8 +70,38 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .authorizeHttpRequests(auth -> auth
-                // Allow all requests for seamless dashboard experience
-                .requestMatchers("/**").permitAll()
+                // Static web resources & web landing
+                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                
+                // Public Authentication Endpoints
+                .requestMatchers("/api/auth/**").permitAll()
+                
+                // Super Administrator Sensitive Operations
+                .requestMatchers(HttpMethod.POST, "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/admins/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                
+                // Role Templates & Permission Controls
+                .requestMatchers(HttpMethod.POST, "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
+                .requestMatchers(HttpMethod.PATCH, "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
+                .requestMatchers(HttpMethod.DELETE, "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
+                .requestMatchers(HttpMethod.GET, "/api/roles/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                
+                // User Management Endpoints
+                .requestMatchers("/api/users/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "PERMISSION_MANAGE_USERS")
+                
+                // Customer Follow-up, Orders, Presets & Dashboard Stats
+                .requestMatchers("/api/customers/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/api/orders/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/api/time-filters/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/api/stats/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                
+                // All other API endpoints require authenticated session
+                .requestMatchers("/api/**").authenticated()
+                
+                // Any other SPA page routes
                 .anyRequest().permitAll()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));

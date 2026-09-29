@@ -94,6 +94,18 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Customer Follow-up & Order History</h1>
                 </div>
 
+                <!-- Spring Security User & Session Bar -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div ng-if="auth.authenticated" style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 6px 14px; box-shadow: 2px 2px 0px var(--border-black);">
+                        <span style="font-size: 0.95rem;">👤</span>
+                        <strong style="font-size: 0.88rem; color: var(--text-main);" ng-bind="auth.username"></strong>
+                        <span class="comic-badge-active" style="font-size: 0.72rem; padding: 2px 6px;" ng-bind="auth.role"></span>
+                        <button type="button" class="comic-btn-secondary" style="padding: 4px 10px; font-size: 0.78rem; margin-left: 6px;" ng-click="logout()" title="End Session">Logout</button>
+                    </div>
+                    <div ng-if="!auth.authenticated">
+                        <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem;" ng-click="openLoginModal()">Login</button>
+                    </div>
+                </div>
             </header>
 
             <!-- Page Body -->
@@ -1978,6 +1990,48 @@
                 <button type="button" class="comic-btn-secondary" ng-click="closeAddFeedbackModal()">Cancel</button>
                 <button type="button" class="comic-btn" ng-click="submitCustomerFeedback()">Save Entry</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 5. SPRING SECURITY AUTHENTICATION LOGIN MODAL             -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-show="showLoginModal" ng-click="closeLoginModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 440px;">
+            <div class="comic-modal-header" style="background-color: var(--teal-surface); border-bottom: 2px solid var(--border-black);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.1rem;">🔒</span>
+                    <strong style="font-size: 1.05rem; color: var(--teal-dark);">Spring Security Login</strong>
+                </div>
+                <button type="button" class="comic-modal-close" ng-click="closeLoginModal()">&times;</button>
+            </div>
+            <form ng-submit="login()">
+                <div class="comic-modal-body" style="padding: 24px 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+                        Access to administrator operations and customer records is protected by Spring Security role-based authorization.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="comic-input" placeholder="e.g. twekl_super_admin" ng-model="loginForm.username" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="comic-input" placeholder="Enter password" ng-model="loginForm.password" required>
+                    </div>
+
+                    <div style="padding: 10px 12px; background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 6px; font-size: 0.78rem; color: var(--text-muted);">
+                        <strong>Quick Logins:</strong><br>
+                        • Super Admin: <code style="color: var(--teal-dark);">twekl_super_admin</code> / <code style="color: var(--teal-dark);">Super@2026</code><br>
+                        • Ops Admin: <code style="color: var(--teal-dark);">ops_admin</code> / <code style="color: var(--teal-dark);">Admin@2026</code>
+                    </div>
+                </div>
+                <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeLoginModal()">Cancel</button>
+                    <button type="submit" class="comic-btn">Authenticate Session</button>
+                </div>
+            </form>
         </div>
     </div>
 

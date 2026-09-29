@@ -77,8 +77,8 @@ public class DataInitializer implements CommandLineRunner {
             roleRepository.save(Role.builder().name("Product Specialist").canCreate(false).canRead(true).canUpdate(true).canDelete(false).build());
             roleRepository.save(Role.builder().name("Read-Only Auditor").canCreate(false).canRead(true).canUpdate(false).canDelete(false).build());
         }
-        if (adminRepository.count() == 0) {
-            log.info("Seeding Super Admin and Administrators...");
+        if (!adminRepository.existsByUsername("twekl_super_admin")) {
+            log.info("Seeding Super Admin twekl_super_admin...");
             adminRepository.save(Admin.builder()
                     .username("twekl_super_admin")
                     .password(passwordEncoder.encode("Super@2026"))
@@ -88,7 +88,10 @@ public class DataInitializer implements CommandLineRunner {
                     .canManageUsers(true)
                     .status("ACTIVE")
                     .build());
+        }
 
+        if (!adminRepository.existsByUsername("ops_admin")) {
+            log.info("Seeding Operations Admin ops_admin...");
             adminRepository.save(Admin.builder()
                     .username("ops_admin")
                     .password(passwordEncoder.encode("Admin@2026"))

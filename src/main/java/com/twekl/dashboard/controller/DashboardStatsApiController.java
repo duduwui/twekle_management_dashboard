@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/stats")
-
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 public class DashboardStatsApiController {
 
     private final AdminRepository adminRepository;

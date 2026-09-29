@@ -1804,8 +1804,16 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     // Initialize application
     $scope.init = function() {
-        $scope.refreshAllData();
-        $scope.syncRouteFromHash();
+        $scope.checkAuth().then(function() {
+            if ($scope.auth.authenticated) {
+                $scope.refreshAllData();
+            } else {
+                // Auto-login default super admin or open login modal
+                $scope.loginForm = { username: 'twekl_super_admin', password: 'Super@2026' };
+                $scope.login();
+            }
+            $scope.syncRouteFromHash();
+        });
     };
 
     $scope.init();

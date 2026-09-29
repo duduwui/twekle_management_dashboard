@@ -28,6 +28,7 @@ public class UserApiController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<List<AppUser>> getAllUsers(@RequestParam(value = "query", required = false) String query) {
         if (query != null && !query.trim().isEmpty()) {
             return ResponseEntity.ok(userService.searchUsers(query));
@@ -36,6 +37,7 @@ public class UserApiController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
                 .map(ResponseEntity::ok)
@@ -43,11 +45,13 @@ public class UserApiController {
     }
 
     @GetMapping("/{id}/modules")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<List<ModulePermission>> getUserModules(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getPermissionsForUser(id));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> createUser(@Valid @RequestBody CreateUserDto dto) {
         AppUser user = AppUser.builder()
                 .usernameEn(dto.getUsernameEn().trim())
@@ -63,6 +67,7 @@ public class UserApiController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserDto dto) {
         AppUser user = new AppUser();
         user.setUsernameEn(dto.getUsernameEn().trim());
@@ -81,6 +86,7 @@ public class UserApiController {
     }
 
     @PatchMapping("/{userId}/modules/{moduleKey}/toggle")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<ModulePermission> toggleModulePermission(@PathVariable Long userId,
                                                                    @PathVariable String moduleKey,
                                                                    @RequestParam("field") String field,
@@ -90,18 +96,21 @@ public class UserApiController {
     }
 
     @PostMapping("/{userId}/modules")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<ModulePermission> addCustomModule(@PathVariable Long userId, @Valid @RequestBody ModulePermission module) {
         ModulePermission added = userService.addCustomModuleForUser(userId, module);
         return ResponseEntity.status(HttpStatus.CREATED).body(added);
     }
 
     @PatchMapping("/{id}/toggle-status")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> toggleStatus(@PathVariable Long id) {
         AppUser toggled = userService.toggleUserStatus(id);
         return ResponseEntity.ok(toggled);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(Map.of(

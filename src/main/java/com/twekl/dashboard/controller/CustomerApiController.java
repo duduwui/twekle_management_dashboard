@@ -7,6 +7,7 @@ import com.twekl.dashboard.model.OrderFollowupCheck;
 import com.twekl.dashboard.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 public class CustomerApiController {
 
     private final CustomerService customerService;

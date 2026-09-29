@@ -24,11 +24,13 @@ public class RoleApiController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<List<Role>> getAllRoles() {
         return ResponseEntity.ok(roleService.getAllRoles());
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<?> createRole(@RequestBody Role role) {
         if (role.getName() == null || role.getName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Role name is required"));
@@ -38,6 +40,7 @@ public class RoleApiController {
     }
 
     @PatchMapping("/{id}/toggle")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<?> toggleRolePermission(@PathVariable Long id,
                                                   @RequestParam("field") String field,
                                                   @RequestParam("value") boolean value) {
@@ -46,6 +49,7 @@ public class RoleApiController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<?> deleteRole(@PathVariable Long id) {
         roleService.deleteRole(id);
         return ResponseEntity.ok(Map.of("message", "Role deleted successfully", "id", id));

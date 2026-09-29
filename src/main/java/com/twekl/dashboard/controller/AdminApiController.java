@@ -27,6 +27,7 @@ public class AdminApiController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Admin>> getAllAdmins(@RequestParam(value = "query", required = false) String query) {
         if (query != null && !query.trim().isEmpty()) {
             return ResponseEntity.ok(adminService.searchAdmins(query));
@@ -35,6 +36,7 @@ public class AdminApiController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Admin> getAdminById(@PathVariable Long id) {
         return adminService.getAdminById(id)
                 .map(ResponseEntity::ok)
@@ -42,6 +44,7 @@ public class AdminApiController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Admin> createAdmin(@Valid @RequestBody CreateAdminDto dto) {
         Admin admin = Admin.builder()
                 .username(dto.getUsername().trim())
@@ -58,6 +61,7 @@ public class AdminApiController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Admin> updateAdmin(@PathVariable Long id, @Valid @RequestBody UpdateAdminDto dto) {
         Admin admin = new Admin();
         admin.setUsername(dto.getUsername().trim());
@@ -83,12 +87,14 @@ public class AdminApiController {
     }
 
     @PatchMapping("/{id}/toggle-status")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Admin> toggleStatus(@PathVariable Long id) {
         Admin toggled = adminService.toggleAdminStatus(id);
         return ResponseEntity.ok(toggled);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Map<String, Object>> deleteAdmin(@PathVariable Long id) {
         adminService.deleteAdmin(id);
         return ResponseEntity.ok(Map.of(

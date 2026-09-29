@@ -374,6 +374,39 @@ public class DataInitializer implements CommandLineRunner {
                     .status("PENDING")
                     .createdAt(now.minusDays(10))
                     .build());
+
+            // Customer 7: John Smith (Active / Follow-up 24h)
+            Customer c7 = customerRepository.save(Customer.builder()
+                    .name("John Smith")
+                    .phoneNumber("+964 750 999 8877")
+                    .email("john_smith@twekl-partner.com")
+                    .city("Erbil")
+                    .totalOrders(6)
+                    .totalSpent(2850.0)
+                    .lastOrderDate(now.minusHours(4))
+                    .daysSinceLastOrder(0)
+                    .status("FOLLOW_UP_24H")
+                    .build());
+
+            orderRepository.save(CustomerOrder.builder()
+                    .customerId(c7.getId())
+                    .orderNumber("ORD-990")
+                    .orderDate(now.minusHours(4))
+                    .itemsSummary("Cloud POS Enterprise Master Station + 4 Barcode Readers")
+                    .totalAmount(2850.0)
+                    .paymentMethod("Credit Card")
+                    .orderStatus("DELIVERED")
+                    .build());
+
+            feedbackRepository.save(CustomerFeedback.builder()
+                    .customerId(c7.getId())
+                    .authorName("Agent John")
+                    .feedbackType("COMPLIMENT")
+                    .content("Client thrilled with system onboarding and fast responses.")
+                    .rating(5)
+                    .status("FOLLOWED_UP")
+                    .createdAt(now.minusHours(2))
+                    .build());
         }
     }
 }

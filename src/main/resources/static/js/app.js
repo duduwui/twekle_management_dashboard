@@ -319,6 +319,30 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         return true;
     }
 
+    // Flexible Multi-Token Search Matcher Helper (handles spaces, underscores, dashes, case-insensitive)
+    function searchMatch(haystack, needle) {
+        if (!needle || !needle.trim()) return true;
+        if (!haystack) return false;
+        var rawHaystack = ('' + haystack).toLowerCase();
+        var normHaystack = rawHaystack.replace(/[_.\-\/]/g, ' ');
+        var normNeedle = ('' + needle).toLowerCase().trim().replace(/[_.\-\/]/g, ' ');
+        if (!normNeedle) return true;
+        
+        // Exact substring match on normalized text
+        if (normHaystack.indexOf(normNeedle) !== -1 || rawHaystack.indexOf(('' + needle).toLowerCase().trim()) !== -1) {
+            return true;
+        }
+
+        // Tokenized match: every word in search query matches somewhere in haystack
+        var terms = normNeedle.split(/\s+/).filter(Boolean);
+        if (terms.length > 0) {
+            return terms.every(function(term) {
+                return normHaystack.indexOf(term) !== -1 || rawHaystack.indexOf(term) !== -1;
+            });
+        }
+        return false;
+    }
+
     // Dynamic Time Filter Preset Matcher Helper (Admins & Users creation dates)
     function matchesPreset(itemDateStr, preset) {
         if (!preset) return true;
@@ -391,15 +415,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Admins DataTable
     $scope.getFilteredAdmins = function() {
         if (!$scope.admins) return [];
-        var q = ($scope.filters.search || '').toLowerCase().trim();
+        var q = $scope.filters.search;
         return $scope.admins.filter(function(a) {
-            // Search filter
-            if (q) {
-                var u = (a.username || '').toLowerCase();
-                var p = (a.phoneNumber || '').toLowerCase();
-                var s = (a.status || '').toLowerCase();
-                var t = a.superAdmin ? 'super admin' : 'administrator';
-                if (!u.includes(q) && !p.includes(q) && !s.includes(q) && !t.includes(q)) return false;
+            // Flexible Search filter across admin attributes
+            if (q && !searchMatch([a.username, a.phoneNumber, a.status, a.superAdmin ? 'super admin' : 'administrator', '#' + a.id].join(' '), q)) {
+                return false;
             }
             // Dynamic Time Filter Preset
             if (!matchesPreset(a.createdAt, $scope.selectedTimePreset)) return false;
@@ -428,16 +448,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Users DataTable
     $scope.getFilteredUsers = function() {
         if (!$scope.users) return [];
-        var q = ($scope.filters.search || '').toLowerCase().trim();
+        var q = $scope.filters.search;
         return $scope.users.filter(function(u) {
-            // Search filter
-            if (q) {
-                var en = (u.usernameEn || '').toLowerCase();
-                var ar = (u.usernameAr || '').toLowerCase();
-                var ku = (u.usernameKu || '').toLowerCase();
-                var p = (u.phoneNumber || '').toLowerCase();
-                var s = (u.status || '').toLowerCase();
-                if (!en.includes(q) && !ar.includes(q) && !ku.includes(q) && !p.includes(q) && !s.includes(q)) return false;
+            // Flexible Search filter across multi-lingual user attributes
+            if (q && !searchMatch([u.usernameEn, u.usernameAr, u.usernameKu, u.phoneNumber, u.status, '#' + u.id].join(' '), q)) {
+                return false;
             }
             // Dynamic Time Filter Preset
             if (!matchesPreset(u.createdAt, $scope.selectedTimePreset)) return false;
@@ -466,11 +481,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Role Templates DataTable
     $scope.getFilteredRoles = function() {
         if (!$scope.roles) return [];
-        var q = ($scope.filters.search || '').toLowerCase().trim();
+        var q = $scope.filters.search;
         return $scope.roles.filter(function(r) {
-            if (q) {
-                var name = (r.name || '').toLowerCase();
-                if (!name.includes(q)) return false;
+            if (q && !searchMatch([r.name, r.description, '#' + r.id].join(' '), q)) {
+                return false;
             }
             return true;
         }).sort(function(a, b) {
@@ -495,15 +509,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Customers DataTable
     $scope.getFilteredCustomers = function() {
         if (!$scope.customers) return [];
-        var q = ($scope.filters.search || '').toLowerCase().trim();
+        var q = $scope.filters.search;
         return $scope.customers.filter(function(c) {
-            if (q) {
-                var n = (c.name || '').toLowerCase();
-                var p = (c.phoneNumber || '').toLowerCase();
-                var e = (c.email || '').toLowerCase();
-                var city = (c.city || '').toLowerCase();
-                var s = (c.status || '').toLowerCase();
-                if (!n.includes(q) && !p.includes(q) && !e.includes(q) && !city.includes(q) && !s.includes(q)) return false;
+            // Flexible Search filter across customer name, phone, email, city, status
+            if (q && !searchMatch([c.name, c.phoneNumber, c.email, c.city, c.status, '#' + c.id].join(' '), q)) {
+                return false;
             }
             // Dynamic Time Filter Preset (Smart Recency Bucketing)
             if (!matchesCustomerPreset(c, $scope.selectedTimePreset)) return false;
@@ -748,6 +758,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.setTab = function(tabName) {
         $scope.currentTab = tabName;
         $scope.dt.currentPage = 1;
+        $scope.filters.search = ''; // Reset search query when navigating tabs to avoid false 0 results
         if (tabName === 'admins') {
             $scope.adminView = 'list';
             $scope.categories.admin = true;

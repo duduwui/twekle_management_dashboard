@@ -280,7 +280,7 @@ body {
   border: 2px solid var(--border-black);
   border-radius: var(--radius-comic);
   box-shadow: var(--shadow-comic-sm);
-  margin-bottom: 28px;
+  margin-bottom: 38px;
 }
 
 .filter-left-controls {
@@ -674,7 +674,7 @@ body {
 
 .comic-search-bar {
   width: 100%;
-  padding: 8px 12px 8px 36px;
+  padding: 8px 34px 8px 36px;
   font-family: inherit;
   font-size: 0.88rem;
   font-weight: 700;
@@ -685,6 +685,31 @@ body {
   box-shadow: 2px 2px 0px #000000;
   outline: none;
   transition: all 0.15s ease;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: #E2E8F0;
+  border: 1.5px solid var(--border-black);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.search-clear-btn:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #000000;
 }
 
 .comic-search-bar:focus {
@@ -1467,7 +1492,7 @@ body {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
-  margin-top: 4px;
+  margin-top: 16px;
 }
 
 .comic-table {

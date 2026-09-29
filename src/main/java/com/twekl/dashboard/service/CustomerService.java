@@ -79,6 +79,28 @@ public class CustomerService {
                 if (orders.get(0).getOrderDate() != null) {
                     c.setLastOrderDate(orders.get(0).getOrderDate());
                 }
+
+                // Check if all follow-up checks are completed across all customer orders
+                boolean allDone = true;
+                boolean hasAnyCheck = false;
+                for (CustomerOrder o : orders) {
+                    List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
+                    if (!checks.isEmpty()) {
+                        hasAnyCheck = true;
+                        for (OrderFollowupCheck chk : checks) {
+                            if (!Boolean.TRUE.equals(chk.getIsCompleted())) {
+                                allDone = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        allDone = false;
+                    }
+                    if (!allDone) break;
+                }
+                c.setAllFollowupsCompleted(hasAnyCheck && allDone);
+            } else {
+                c.setAllFollowupsCompleted(false);
             }
         }
     }

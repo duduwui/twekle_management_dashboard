@@ -1473,40 +1473,61 @@ body {
   box-shadow: inset 4px 0 0 var(--primary-color);
 }
 
-/* Green Hover for Active Users / Admins / 24h Recent Customers */
-.comic-table tbody tr.tr-status-active:hover,
-.comic-table tbody tr.row-active:hover {
-  background-color: #E6FAF4 !important;
-  box-shadow: inset 6px 0 0 #10B981 !important;
+/* =========================================================
+   VISIBLE ROW STATUS STYLES (STATIC & HOVER - GREEN & RED)
+   ========================================================= */
+/* Completed Follow-ups / Active Accounts -> Visible Green */
+.comic-table tbody tr.row-completed,
+.comic-table tbody tr.order-row-completed,
+.comic-table tbody tr.tr-status-active {
+  background-color: #F0FDF4 !important;
+  box-shadow: inset 6px 0 0 #22C55E !important;
 }
 
-.comic-table tbody tr.tr-status-active:hover strong,
-.comic-table tbody tr.tr-status-active:hover td {
-  color: #064E3B;
+.comic-table tbody tr.row-completed td:first-child,
+.comic-table tbody tr.order-row-completed td:first-child,
+.comic-table tbody tr.tr-status-active td:first-child {
+  border-left: 6px solid #22C55E !important;
 }
 
-/* Red Hover for Inactive / Disabled Users / Dormant Records (>7d / >30d) */
-.comic-table tbody tr.tr-status-inactive:hover,
-.comic-table tbody tr.row-inactive:hover {
+.comic-table tbody tr.row-completed:hover,
+.comic-table tbody tr.order-row-completed:hover,
+.comic-table tbody tr.tr-status-active:hover {
+  background-color: #DCFCE7 !important;
+  box-shadow: inset 8px 0 0 #16A34A !important;
+}
+
+.comic-table tbody tr.row-completed strong,
+.comic-table tbody tr.order-row-completed strong,
+.comic-table tbody tr.tr-status-active strong {
+  color: #166534;
+}
+
+/* Pending Follow-ups / Inactive Accounts -> Visible Red */
+.comic-table tbody tr.row-pending,
+.comic-table tbody tr.order-row-pending,
+.comic-table tbody tr.tr-status-inactive {
   background-color: #FEF2F2 !important;
   box-shadow: inset 6px 0 0 #EF4444 !important;
 }
 
-.comic-table tbody tr.tr-status-inactive:hover strong,
-.comic-table tbody tr.tr-status-inactive:hover td {
-  color: #7F1D1D;
+.comic-table tbody tr.row-pending td:first-child,
+.comic-table tbody tr.order-row-pending td:first-child,
+.comic-table tbody tr.tr-status-inactive td:first-child {
+  border-left: 6px solid #EF4444 !important;
 }
 
-/* Amber Hover for 7-day Warning / Intermediate Follow-ups */
-.comic-table tbody tr.tr-status-warning:hover,
-.comic-table tbody tr.row-warning:hover {
-  background-color: #FFFBEB !important;
-  box-shadow: inset 6px 0 0 #F59E0B !important;
+.comic-table tbody tr.row-pending:hover,
+.comic-table tbody tr.order-row-pending:hover,
+.comic-table tbody tr.tr-status-inactive:hover {
+  background-color: #FEE2E2 !important;
+  box-shadow: inset 8px 0 0 #DC2626 !important;
 }
 
-.comic-table tbody tr.tr-status-warning:hover strong,
-.comic-table tbody tr.tr-status-warning:hover td {
-  color: #78350F;
+.comic-table tbody tr.row-pending strong,
+.comic-table tbody tr.order-row-pending strong,
+.comic-table tbody tr.tr-status-inactive strong {
+  color: #991B1B;
 }
 
 /* Comic Status Badges */

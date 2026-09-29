@@ -1769,6 +1769,8 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             check.checkedAt = res.data.checkedAt;
             check.checkedBy = res.data.checkedBy;
             $scope.showToast('Milestone "' + check.presetName + '" marked ' + (check.isCompleted ? 'Completed' : 'Pending'));
+            $scope.loadCustomers($scope.customerTimeFilter);
+            $scope.loadCustomerStats();
         }, function(err) {
             $scope.showToast('Failed to toggle milestone status', 'error');
         });

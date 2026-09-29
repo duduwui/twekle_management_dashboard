@@ -29,6 +29,9 @@ public class Customer {
     @Column(nullable = false)
     private String status = "ACTIVE"; // "FOLLOW_UP_24H", "FOLLOW_UP_7D", "DORMANT_30D", "ACTIVE"
 
+    @Transient
+    private Boolean allFollowupsCompleted = false;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -101,6 +104,9 @@ public class Customer {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Boolean getAllFollowupsCompleted() { return allFollowupsCompleted; }
+    public void setAllFollowupsCompleted(Boolean allFollowupsCompleted) { this.allFollowupsCompleted = allFollowupsCompleted; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

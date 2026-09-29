@@ -1161,7 +1161,7 @@
                                 </thead>
                                 <tbody>
                                     <tr ng-repeat="cust in getPagedCustomers() track by cust.id"
-                                        ng-class="{'tr-status-active': cust.daysSinceLastOrder <= 1, 'tr-status-warning': cust.daysSinceLastOrder > 1 && cust.daysSinceLastOrder <= 7, 'tr-status-inactive': cust.daysSinceLastOrder > 7}">
+                                        ng-class="cust.allFollowupsCompleted ? 'row-completed' : 'row-pending'">
                                         <td>
                                             <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'#' + cust.id"></strong>
                                         </td>
@@ -1311,7 +1311,7 @@
                                         <!-- Main Order Row (Clickable to Expand Follow-up Checklist) -->
                                         <tr ng-repeat-start="order in getPagedCustomerOrders() track by order.id" 
                                             class="order-row-clickable" 
-                                            ng-class="[getOrderFollowupStatusClass(order), (order.orderStatus === 'DELIVERED' || order.orderStatus === 'COMPLETED') ? 'tr-status-active' : 'tr-status-warning']"
+                                            ng-class="getOrderFollowupStatusClass(order)"
                                             ng-click="toggleOrderExpand(order, $event)">
                                             <td>
                                                 <div style="display: flex; align-items: center;">

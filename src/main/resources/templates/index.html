@@ -1742,93 +1742,47 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 5. BIG TIME FILTER PRESET SELECTOR MODAL (CENTERED POPUP) -->
+    <!-- 5. CLEAN 3-COLUMN TIME FILTER POPUP MODAL                 -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
         <div class="filter-modal-card" ng-click="$event.stopPropagation()">
-            <!-- Modal Header -->
-            <div class="filter-modal-header">
-                <div class="filter-modal-title-box">
-                    <div class="filter-modal-title">
-                        <span>⚡ Dynamic Time Filter Presets</span>
-                        <span class="comic-tag tag-primary" style="font-size: 0.75rem; padding: 2px 8px;" ng-bind="(timeFilterPresets | filter:{isActive:true}).length + ' Active Rules'"></span>
-                    </div>
-                    <div class="filter-modal-subtitle">
-                        Select a time window preset to dynamically filter records and products, then click Confirm to apply.
-                    </div>
-                </div>
+            <!-- Clean Header -->
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Time Filters</strong>
                 <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
             </div>
 
-            <!-- Modal Body -->
-            <div class="filter-modal-body">
-                <!-- Search input for filter rules (instant search for 10+ rules in future) -->
-                <div class="filter-modal-search-wrapper">
-                    <svg class="filter-modal-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" class="filter-modal-search-input" placeholder="Search filter rules (e.g. 24 hours, 7 days, 30 days)..." ng-model="filterModalSearch">
-                </div>
-
-                <!-- Presets Grid Container -->
-                <div class="filter-presets-grid">
-                    <!-- Option 1: All Time (No Filter) -->
-                    <div class="filter-preset-card" 
+            <!-- 3-Column Clean Presets Grid -->
+            <div style="padding: 18px 20px;">
+                <div class="filter-presets-grid-3">
+                    <!-- All Time Card -->
+                    <div class="filter-preset-card-simple" 
                          ng-class="{'selected': isPendingPresetSelected(null)}" 
                          ng-click="selectPendingPreset(null)">
-                        <div class="filter-preset-card-left">
-                            <div class="filter-preset-card-name">All Time (Show Everything)</div>
-                            <div class="filter-preset-card-meta">
-                                <span>No time boundary • Displays all historic records</span>
-                            </div>
-                        </div>
-                        <div class="filter-preset-indicator">
+                        <span class="filter-simple-name">All Time</span>
+                        <div class="filter-simple-check">
                             <span ng-if="isPendingPresetSelected(null)">✓</span>
                         </div>
                     </div>
 
-                    <!-- Option 2..N: Dynamic Admin-Created Presets -->
-                    <div class="filter-preset-card" 
-                         ng-repeat="preset in getFilteredModalPresets() track by preset.id"
+                    <!-- Dynamic Preset Cards -->
+                    <div class="filter-preset-card-simple" 
+                         ng-repeat="preset in timeFilterPresets track by preset.id"
+                         ng-if="preset.isActive"
                          ng-class="{'selected': isPendingPresetSelected(preset)}" 
                          ng-click="selectPendingPreset(preset)">
-                        <div class="filter-preset-card-left">
-                            <div class="filter-preset-card-name" ng-bind="preset.name"></div>
-                            <div class="filter-preset-card-meta">
-                                <span class="comic-tag tag-primary" style="font-size: 0.72rem; padding: 2px 6px;" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span>
-                                <span>Dynamic Cutoff Rule</span>
-                            </div>
-                        </div>
-                        <div class="filter-preset-indicator">
+                        <span class="filter-simple-name" ng-bind="preset.name"></span>
+                        <div class="filter-simple-check">
                             <span ng-if="isPendingPresetSelected(preset)">✓</span>
                         </div>
                     </div>
                 </div>
-
-                <!-- Empty State if search finds no presets -->
-                <div ng-if="getFilteredModalPresets().length === 0 && filterModalSearch" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 700;">
-                    No filter presets match "<strong>{{filterModalSearch}}</strong>".
-                </div>
             </div>
 
-            <!-- Modal Footer -->
-            <div class="filter-modal-footer">
-                <button type="button" class="comic-btn-secondary" style="font-size: 0.82rem;" ng-click="setAdminView('filters'); closeFilterModal();">
-                    ⚙ Manage Filter Rules
-                </button>
-
-                <div class="filter-modal-footer-actions">
-                    <button type="button" class="comic-btn-secondary" ng-click="resetFilterModal()">
-                        Reset (All Time)
-                    </button>
-                    <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()">
-                        Cancel
-                    </button>
-                    <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()">
-                        ✓ Confirm & Apply Filter
-                    </button>
-                </div>
+            <!-- Clean Footer -->
+            <div class="filter-modal-footer-simple">
+                <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()">Confirm</button>
             </div>
         </div>
     </div>

@@ -280,7 +280,7 @@ body {
   border: 2px solid var(--border-black);
   border-radius: var(--radius-comic);
   box-shadow: var(--shadow-comic-sm);
-  margin-bottom: 12px;
+  margin-bottom: 24px;
 }
 
 .filter-left-controls {
@@ -1414,6 +1414,7 @@ body {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
+  margin-top: 4px;
 }
 
 .comic-table {

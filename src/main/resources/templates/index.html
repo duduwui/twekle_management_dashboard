@@ -117,12 +117,8 @@
                     <!-- 1.1 ADMIN LIST PAGE (DEFAULT) -->
                     <div ng-show="adminView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Header & Action Buttons -->
-                        <div class="card-header-flex">
-                            <div class="card-title-group">
-                                <h2 class="card-title">System Administrators</h2>
-                            </div>
-                            <!-- Action Toolbar -->
+                        <!-- Action Buttons -->
+                        <div class="card-header-flex" style="justify-content: flex-end; margin-bottom: 4px;">
                             <div class="crud-toolbar">
                                 <button type="button" class="comic-btn-secondary" ng-click="setAdminView('filters')">
                                     ⚙️ Manage Time Filter Rules ({{timeFilterPresets.length}})
@@ -472,6 +468,8 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+
                     <!-- 1.5 DYNAMIC TIME FILTER PRESETS MANAGEMENT (ADMIN ONLY) -->
                     <div ng-show="adminView === 'filters'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
@@ -567,13 +565,8 @@
                     <!-- 2.1 USERS LIST PAGE (DEFAULT) -->
                     <div ng-show="userView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Header & Action Buttons -->
-                        <div class="card-header-flex">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Users Directory & Permissions</h2>
-                            </div>
-
-                            <!-- Action Toolbar -->
+                        <!-- Action Buttons -->
+                        <div class="card-header-flex" style="justify-content: flex-end; margin-bottom: 4px;">
                             <div class="crud-toolbar">
                                 <button type="button" class="comic-btn" ng-click="setUserView('create')">
                                     + Create User (C)
@@ -997,10 +990,7 @@
                 <!-- ======================================================= -->
                 <section class="comic-card" ng-show="currentTab === 'roles'">
                     
-                    <div class="card-header-flex">
-                        <div class="card-title-group">
-                            <h2 class="card-title">Role Templates Directory</h2>
-                        </div>
+                    <div class="card-header-flex" style="justify-content: flex-end; margin-bottom: 4px;">
                         <button type="button" class="comic-btn" ng-click="toggleAddRoleForm()">
                             + Add Role Template
                         </button>
@@ -1115,12 +1105,7 @@
                     <!-- 4.1 CUSTOMERS LIST & FOLLOW-UP DIRECTORY (DEFAULT) -->
                     <div ng-show="customerView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Header & Title -->
-                        <div class="card-header-flex">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Customer Follow-up & Order Recency</h2>
-                            </div>
-                        </div>
+
 
                         <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
                         <div class="comic-filter-toolbar">

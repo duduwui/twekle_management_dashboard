@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="tweklApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twekl Management Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Custom Comic Design System Style -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- AngularJS (1.8.2) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="/js/app.js"></script>
+</head>
+<body ng-controller="DashboardController">
+
+    <div class="app-container">
+        <!-- Sidebar Navigation (Grouped by Administration Category) -->
+        <aside class="sidebar">
+            <div class="brand-section">
+                <img src="/images/twekl-logo.png" alt="Twekl Logo" class="brand-logo-img">
+                <div class="brand-info">
+                    <span class="brand-title">Twekl</span>
+                    <span class="brand-subtitle">Management</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-label">Navigation</span>
+                
+                <!-- Group 1: Administration Category Accordion -->
+                <div class="nav-category-group">
+                    <button type="button" 
+                            class="nav-category-toggle" 
+                            ng-class="{'active-category': currentTab === 'admins' || currentTab === 'users' || currentTab === 'roles'}"
+                            ng-click="toggleCategory('admin')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="category-arrow" ng-class="{'expanded': isCategoryOpen('admin')}">▶</span>
+                            <span>Administration</span>
+                        </div>
+                        <span class="nav-badge" ng-bind="admins.length + users.length + roles.length">0</span>
+                    </button>
+
+                    <!-- Administration 3 Sub-tabs (Shown when clicked) -->
+                    <div class="nav-sub-items" ng-show="isCategoryOpen('admin')">
+                        <button type="button" 
+                                class="nav-sub-item" 
+                                ng-class="{'active': currentTab === 'admins'}" 
+                                ng-click="setTab('admins')">
+                            <span>Admin Management</span>
+                            <span class="nav-badge-sm" ng-bind="admins.length">0</span>
+                        </button>
+
+                        <button type="button" 
+                                class="nav-sub-item" 
+                                ng-class="{'active': currentTab === 'users'}" 
+                                ng-click="setTab('users')">
+                            <span>Users & Permissions</span>
+                            <span class="nav-badge-sm" ng-bind="users.length">0</span>
+                        </button>
+
+                        <button type="button" 
+                                class="nav-sub-item" 
+                                ng-class="{'active': currentTab === 'roles'}" 
+                                ng-click="setTab('roles')">
+                            <span>Role Templates</span>
+                            <span class="nav-badge-sm" ng-bind="roles.length">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 2: Customer Follow-up -->
+                <button type="button" 
+                        class="nav-item" 
+                        ng-class="{'active': currentTab === 'customers'}" 
+                        ng-click="setTab('customers')" 
+                        style="margin-top: 6px;">
+                    <span>Customer Follow-up</span>
+                    <span class="nav-badge" ng-bind="customers.length">0</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div>
+                    <h1 class="header-page-title" ng-show="currentTab === 'admins'">Admin Management</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'users'">User Roles & Permissions</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'roles'">Role Templates Directory</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'customers'">Customer Follow-up & Order History</h1>
+                </div>
+
+                <!-- Header Status Badge -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: var(--radius-comic); padding: 6px 14px; box-shadow: var(--shadow-comic-sm);">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #22C55E; border: 1.5px solid #000;"></div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 0.88rem; font-weight: 900; color: var(--text-main);">Twekl System</span>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: var(--primary-color);">Operational</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <main class="page-body">
+
+                <!-- ======================================================= -->
+                <!-- PAGE 1: ADMIN MANAGEMENT                                -->
+                <!-- ======================================================= -->
+                <section class="comic-card" ng-show="currentTab === 'admins'">
+
+                    <!-- 1.1 ADMIN LIST PAGE (DEFAULT) -->
+                    <div ng-show="adminView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
+                        
+                        <!-- Header & Action Buttons -->
+                        <div class="card-header-flex">
+                            <div class="card-title-group">
+                                <h2 class="card-title">System Administrators</h2>
+                            </div>
+                            <!-- Action Toolbar -->
+                            <div class="crud-toolbar">
+                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('filters')">
+                                    ⚙️ Manage Time Filter Rules ({{timeFilterPresets.length}})
+                                </button>
+                                <button type="button" class="comic-btn" ng-click="setAdminView('create')">
+                                    + Create Admin
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
+                        <div class="comic-filter-toolbar">
+                            <div class="filter-left-controls">
+                                <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
+                                <button type="button" class="comic-icon-btn" ng-click="openFilterModal()" title="EPU Date Picker & Custom Filters">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                    </svg>
+                                </button>
+                                <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
+                                    <span ng-bind="selectedTimePreset.name"></span> ✕
+                                </span>
+                            </div>
+
+                            <!-- Live Search Bar -->
+                            <div class="filter-search-box">
+                                <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" class="comic-search-bar" placeholder="Search administrators..." ng-model="filters.search">
+                            </div>
+                        </div>
+
+                        <!-- Admins DataTable with Sortable Columns -->
+                        <div class="table-responsive">
+                            <table class="comic-table">
+                                <thead>
+                                    <tr>
+                                        <th class="comic-sortable-th" ng-click="sortBy('username')">
+                                            Username <span class="sort-indicator" ng-bind="getSortIndicator('username')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
+                                            Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('superAdmin')">
+                                            Admin Level <span class="sort-indicator" ng-bind="getSortIndicator('superAdmin')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('status')">
+                                            Status <span class="sort-indicator" ng-bind="getSortIndicator('status')"></span>
+                                        </th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="admin in getPagedAdmins() track by admin.id">
+                                        <td><strong ng-bind="admin.username"></strong></td>
+                                        <td><span style="color: var(--text-muted);" ng-bind="admin.phoneNumber || '-'"></span></td>
+                                        <td>
+                                            <span class="comic-tag" ng-class="admin.superAdmin ? 'tag-primary' : 'tag-muted'">
+                                                <span ng-if="admin.superAdmin">Super Admin</span>
+                                                <span ng-if="!admin.superAdmin">Administrator</span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <label class="comic-switch">
+                                                    <input type="checkbox" ng-checked="admin.status === 'ACTIVE'" ng-click="toggleAdminStatus(admin, $event)">
+                                                    <span class="comic-slider"></span>
+                                                </label>
+                                                <span class="comic-tag" ng-class="admin.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="admin.status"></span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setAdminView('inspect', admin)">
+                                                Inspect
+                                            </button>
+                                            <button type="button" class="comic-btn-danger" ng-click="setAdminView('delete', admin)">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr ng-if="getFilteredAdmins().length === 0">
+                                        <td colspan="5" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                            No administrators match the selected filters.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- DataTable Pagination Footer -->
+                        <div class="datatable-footer" ng-if="getFilteredAdmins().length > 0">
+                            <div class="datatable-info">
+                                Showing {{ (dt.currentPage - 1) * dt.pageSize + 1 }} to {{ dt.currentPage * dt.pageSize > getFilteredAdmins().length ? getFilteredAdmins().length : dt.currentPage * dt.pageSize }} of {{ getFilteredAdmins().length }} entries
+                            </div>
+                            <div class="datatable-pagination">
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">« Prev</button>
+                                <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredAdmins().length)" ng-class="{'active': dt.currentPage === p}" ng-click="setPage(p)" ng-bind="p"></button>
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredAdmins().length)" ng-click="setPage(dt.currentPage + 1)">Next »</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 1.2 CREATE ADMIN PAGE -->
+                    <div ng-show="adminView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Create New Administrator</h2>
+                                <span class="card-subtitle">Add a new system administrator. Configure administrative privileges, role creation rights, and user management capabilities.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                ← Back to Admins List
+                            </button>
+                        </div>
+
+                        <!-- Create Admin Form -->
+                        <div class="comic-form-box">
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. ops_manager" ng-model="newAdmin.username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newAdmin.password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="comic-input" placeholder="+966 50 123 4567" ng-model="newAdmin.phoneNumber">
+                                </div>
+                            </div>
+
+                            <div class="comic-checkboxes-row">
+                                <label class="comic-checkbox-label">
+                                    <input type="checkbox" ng-model="newAdmin.isSuperAdmin">
+                                    <span>Super Administrator (Full Power)</span>
+                                </label>
+                                <label class="comic-checkbox-label">
+                                    <input type="checkbox" ng-model="newAdmin.canCreateRoles">
+                                    <span>Can Create Role Templates & Perms</span>
+                                </label>
+                                <label class="comic-checkbox-label">
+                                    <input type="checkbox" ng-model="newAdmin.canManageUsers">
+                                    <span>Can Create & Edit Users</span>
+                                </label>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('list')">Cancel</button>
+                                <button type="button" class="comic-btn" ng-click="createAdmin()">Save & Create Administrator</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.3 INSPECT ADMIN PAGE -->
+                    <div ng-show="adminView === 'inspect'" style="display: flex; flex-direction: column; gap: 24px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Administrator Overview & Users Table</h2>
+                                <span class="card-subtitle">Administrator profile and complete table of all registered users managed under administration.</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="comic-btn" ng-click="setAdminView('create')">
+                                    + Create Admin
+                                </button>
+                                <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                    ← Back to Admins List
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Inspected Admin Profile Mini-Banner -->
+                        <div class="inspected-target-banner" ng-if="selectedAdmin">
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Currently Inspecting Administrator:</div>
+                                <div style="font-size: 1.15rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
+                                    <span ng-bind="selectedAdmin.username"></span>
+                                    <span class="comic-tag" style="margin-left: 8px;" ng-class="selectedAdmin.superAdmin ? 'tag-primary' : 'tag-muted'">
+                                        <span ng-if="selectedAdmin.superAdmin">Super Admin</span>
+                                        <span ng-if="!selectedAdmin.superAdmin">Standard Admin</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.85rem; font-weight: 800;">Switch Admin:</span>
+                                <select class="comic-input" 
+                                        style="width: 200px; padding: 6px 10px; font-size: 0.85rem;" 
+                                        ng-model="selectedAdmin" 
+                                        ng-options="a as a.username for a in admins track by a.id"
+                                        ng-change="setAdminView('inspect', selectedAdmin)">
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Complete Table of All Users Under Administration -->
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <div class="card-header-flex">
+                                <div class="card-title-group">
+                                    <h3 class="card-title">Users Under System Administration</h3>
+                                </div>
+
+                                <!-- Filter & Create User -->
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="text" 
+                                           class="comic-input" 
+                                           style="width: 240px;" 
+                                           placeholder="Search users..." 
+                                           ng-model="adminInspectUserSearch">
+                                    <button type="button" class="comic-btn" ng-click="setUserView('create')">
+                                        + Create New User
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User Names (EN / AR / KU)</th>
+                                            <th>Phone Number</th>
+                                            <th>Status</th>
+                                            <th style="text-align: right;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="user in users | filter:adminInspectUserSearch track by user.id">
+                                            <td>
+                                                <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
+                                                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                                    <span ng-if="user.usernameAr" ng-bind="'AR: ' + user.usernameAr + ' '"></span>
+                                                    <span ng-if="user.usernameKu" ng-bind="'| KU: ' + user.usernameKu"></span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span style="color: var(--text-muted); font-weight: 700;" ng-bind="user.phoneNumber || '-'"></span>
+                                            </td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 8px;" ng-click="$event.stopPropagation()">
+                                                    <label class="comic-switch">
+                                                        <input type="checkbox" ng-checked="user.status === 'ACTIVE'" ng-click="toggleUserStatus(user, $event)">
+                                                        <span class="comic-slider"></span>
+                                                    </label>
+                                                    <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
+                                                </div>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('inspect', user)">
+                                                    Inspect Perms
+                                                </button>
+                                                <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('update', user)">
+                                                    Edit
+                                                </button>
+                                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', user)">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="users.length === 0">
+                                            <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found. Click Create New User above.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.4 DELETE ADMINS PAGE -->
+                    <div ng-show="adminView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Delete Administrator</h2>
+                                <span class="card-subtitle">Safely remove administrator accounts from the system. Removing an administrator will immediately revoke their dashboard access.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                ← Back to Admins List
+                            </button>
+                        </div>
+
+                        <!-- Delete Confirmation Card for Selected Admin -->
+                        <div class="inspect-card" ng-if="selectedAdmin" style="border-color: #EF4444;">
+                            <div style="font-size: 1.15rem; font-weight: 900; color: #DC2626;">
+                                Confirm Permanent Deletion of Administrator:
+                            </div>
+                            
+                            <div class="detail-grid-3">
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Username</span>
+                                    <strong class="detail-item-value" ng-bind="selectedAdmin.username"></strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Admin Level</span>
+                                    <span class="detail-item-value" ng-bind="selectedAdmin.superAdmin ? 'Super Administrator' : 'Administrator'"></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Phone Number</span>
+                                    <span class="detail-item-value" ng-bind="selectedAdmin.phoneNumber || 'None'"></span>
+                                </div>
+                            </div>
+
+                            <div style="background-color: #FEF2F2; border: 2px solid #EF4444; border-radius: 8px; padding: 12px 16px; font-weight: 700; font-size: 0.88rem; color: #991B1B;">
+                                Warning: This action cannot be undone. Administrator account "{{selectedAdmin.username}}" will be permanently removed.
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 6px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('list')">Cancel & Go Back</button>
+                                <button type="button" class="comic-btn" style="background-color: #EF4444; color: #FFFFFF;" ng-click="performDeleteAdmin(selectedAdmin)">
+                                    Yes, Delete Administrator
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- All Administrators List -->
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 6px;">
+                            <div style="font-size: 1.05rem; font-weight: 900;">Select an Administrator to Delete:</div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Phone Number</th>
+                                            <th>Admin Level</th>
+                                            <th>Status</th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="admin in admins track by admin.id" ng-class="{'selected-user-row': selectedAdmin && selectedAdmin.id === admin.id}">
+                                            <td><strong ng-bind="admin.username"></strong></td>
+                                            <td><span style="color: var(--text-muted);" ng-bind="admin.phoneNumber || '-'"></span></td>
+                                            <td>
+                                                <span class="comic-tag" ng-class="admin.superAdmin ? 'tag-primary' : 'tag-muted'">
+                                                    <span ng-if="admin.superAdmin">Super Admin</span>
+                                                    <span ng-if="!admin.superAdmin">Administrator</span>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="comic-tag" ng-class="admin.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="admin.status"></span>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-danger" ng-click="setAdminView('delete', admin)">
+                                                    Select for Deletion
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    <!-- 1.5 DYNAMIC TIME FILTER PRESETS MANAGEMENT (ADMIN ONLY) -->
+                    <div ng-show="adminView === 'filters'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Dynamic Time Filter Rules Management</h2>
+                                <span class="card-subtitle">Define custom time periods (e.g., 20 Hours, 2 Weeks, 30 Days) and toggle rule availability across dashboard filters.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                ← Back to Admins List
+                            </button>
+                        </div>
+
+                        <!-- Create New Dynamic Time Filter Form -->
+                        <div class="comic-form-box">
+                            <div style="font-size: 1rem; font-weight: 900; margin-bottom: 12px; color: var(--primary-dark);">
+                                Create New Custom Time Filter Rule:
+                            </div>
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">Rule Display Name</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. Last 20 Hours, 2 Weeks Ago" ng-model="newPreset.name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Duration Value (Number)</label>
+                                    <input type="number" class="comic-input" placeholder="e.g. 20, 14, 2" ng-model="newPreset.durationValue" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Duration Unit</label>
+                                    <select class="comic-input" ng-model="newPreset.durationUnit">
+                                        <option value="HOURS">Hours</option>
+                                        <option value="DAYS">Days</option>
+                                        <option value="WEEKS">Weeks</option>
+                                        <option value="MONTHS">Months</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 14px;">
+                                <button type="button" class="comic-btn" ng-click="createTimeFilterPreset()">+ Add Dynamic Filter Rule</button>
+                            </div>
+                        </div>
+
+                        <!-- Existing Dynamic Filter Rules Table -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rule ID</th>
+                                            <th>Filter Name</th>
+                                            <th>Duration Period</th>
+                                            <th>Status</th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="preset in timeFilterPresets track by preset.id">
+                                            <td><strong style="color: var(--primary-dark);" ng-bind="'#' + preset.id"></strong></td>
+                                            <td><strong style="font-size: 0.95rem;" ng-bind="preset.name"></strong></td>
+                                            <td><span style="font-weight: 700; color: var(--text-muted);" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span></td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <label class="comic-switch">
+                                                        <input type="checkbox" ng-checked="preset.isActive" ng-click="toggleTimeFilterPreset(preset)">
+                                                        <span class="comic-slider"></span>
+                                                    </label>
+                                                    <span class="comic-tag" ng-class="preset.isActive ? 'tag-primary' : 'tag-muted'" ng-bind="preset.isActive ? 'ACTIVE' : 'INACTIVE'"></span>
+                                                </div>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-danger" ng-click="deleteTimeFilterPreset(preset)">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="timeFilterPresets.length === 0">
+                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">No custom filter rules defined.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ======================================================= -->
+                <!-- PAGE 2: USERS MANAGEMENT & PERMISSIONS                  -->
+                <!-- ======================================================= -->
+                <section class="comic-card" ng-show="currentTab === 'users'">
+
+                    <!-- 2.1 USERS LIST PAGE (DEFAULT) -->
+                    <div ng-show="userView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
+                        
+                        <!-- Header & Action Buttons -->
+                        <div class="card-header-flex">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Users Directory & Permissions</h2>
+                            </div>
+
+                            <!-- Action Toolbar -->
+                            <div class="crud-toolbar">
+                                <button type="button" class="comic-btn" ng-click="setUserView('create')">
+                                    + Create User (C)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
+                        <div class="comic-filter-toolbar">
+                            <div class="filter-left-controls">
+                                <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
+                                <button type="button" class="comic-icon-btn" ng-click="openFilterModal()" title="EPU Date Picker & Custom Filters">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                    </svg>
+                                </button>
+                                <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
+                                    <span ng-bind="selectedTimePreset.name"></span> ✕
+                                </span>
+                            </div>
+
+                            <!-- Live Search Bar -->
+                            <div class="filter-search-box">
+                                <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" class="comic-search-bar" placeholder="Search users by name, phone..." ng-model="filters.search">
+                            </div>
+                        </div>
+
+                        <!-- Users DataTable with Sortable Columns -->
+                        <div class="table-responsive">
+                            <table class="comic-table">
+                                <thead>
+                                    <tr>
+                                        <th class="comic-sortable-th" ng-click="sortBy('usernameEn')">
+                                            User Names (EN / AR / KU) <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
+                                            Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('status')">
+                                            Status <span class="sort-indicator" ng-bind="getSortIndicator('status')"></span>
+                                        </th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="user in getPagedUsers() track by user.id" 
+                                        style="cursor: pointer;"
+                                        ng-click="setUserView('inspect', user)">
+                                        <td>
+                                            <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
+                                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                                <span ng-if="user.usernameAr" ng-bind="'AR: ' + user.usernameAr + ' '"></span>
+                                                <span ng-if="user.usernameKu" ng-bind="'| KU: ' + user.usernameKu"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style="color: var(--text-muted); font-weight: 700;" ng-bind="user.phoneNumber || '-'"></span>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 8px;" ng-click="$event.stopPropagation()">
+                                                <label class="comic-switch">
+                                                    <input type="checkbox" ng-checked="user.status === 'ACTIVE'" ng-click="toggleUserStatus(user, $event)">
+                                                    <span class="comic-slider"></span>
+                                                </label>
+                                                <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right;" ng-click="$event.stopPropagation()">
+                                            <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('inspect', user)">
+                                                Inspect & Perms
+                                            </button>
+                                            <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('update', user)">
+                                                Edit
+                                            </button>
+                                            <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', user)">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr ng-if="getFilteredUsers().length === 0">
+                                        <td colspan="4" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                            No users match the selected filters.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- DataTable Pagination Footer -->
+                        <div class="datatable-footer" ng-if="getFilteredUsers().length > 0">
+                            <div class="datatable-info">
+                                Showing {{ (dt.currentPage - 1) * dt.pageSize + 1 }} to {{ dt.currentPage * dt.pageSize > getFilteredUsers().length ? getFilteredUsers().length : dt.currentPage * dt.pageSize }} of {{ getFilteredUsers().length }} entries
+                            </div>
+                            <div class="datatable-pagination">
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">« Prev</button>
+                                <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredUsers().length)" ng-class="{'active': dt.currentPage === p}" ng-click="setPage(p)" ng-bind="p"></button>
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredUsers().length)" ng-click="setPage(dt.currentPage + 1)">Next »</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 2.2 CREATE USER PAGE (C) -->
+                    <div ng-show="userView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Create New User</h2>
+                                <span class="card-subtitle">Register a new user account with trilingual support (English, Arabic, Kurdish) and initial module privileges.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                ← Back to Users List
+                            </button>
+                        </div>
+
+                        <!-- Create Form -->
+                        <div class="comic-form-box">
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">English Name (Required)</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. John Doe" ng-model="newUser.usernameEn" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Arabic Name (Optional)</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. جون دو" ng-model="newUser.usernameAr">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kurdish Name (Optional)</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. جۆن دۆ" ng-model="newUser.usernameKu">
+                                </div>
+                            </div>
+
+                            <div class="form-grid-3" style="margin-top: 14px;">
+                                <div class="form-group">
+                                    <label class="form-label">Account Password</label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newUser.password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="comic-input" placeholder="+964 750 000 0000" ng-model="newUser.phoneNumber">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Initial Status</label>
+                                    <select class="comic-input" ng-model="newUser.status">
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="INACTIVE">INACTIVE</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel</button>
+                                <button type="button" class="comic-btn" ng-click="createUser()">Save & Create User</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.3 INSPECT USER & 3-COLUMN CRUD MODULE PERMISSIONS PAGE (R) -->
+                    <div ng-show="userView === 'inspect'" style="display: flex; flex-direction: column; gap: 24px;">
+                        
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">User Permission Matrix & Overview</h2>
+                                <span class="card-subtitle">Real-time per-department CRUD switches across Software, Sales, and Product departments.</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
+                                    Edit Details (U)
+                                </button>
+                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
+                                    Delete User (D)
+                                </button>
+                                <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                    ← Back to Users List
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Inspected User Profile Banner -->
+                        <div class="inspected-target-banner" ng-if="selectedUser">
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Currently Inspecting User:</div>
+                                <h3 style="font-size: 1.3rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
+                                    <span ng-bind="selectedUser.usernameEn"></span>
+                                    <span style="font-size: 0.95rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-if="selectedUser.usernameAr" ng-bind="'(' + selectedUser.usernameAr + ')'"></span>
+                                </h3>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
+                                    Phone: <strong ng-bind="selectedUser.phoneNumber || 'None'"></strong> • Status: <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.85rem; font-weight: 800;">Switch User:</span>
+                                <select class="comic-input" 
+                                        style="width: 220px; padding: 6px 10px; font-size: 0.85rem;" 
+                                        ng-model="selectedUser" 
+                                        ng-options="u as u.usernameEn for u in users track by u.id"
+                                        ng-change="setUserView('inspect', selectedUser)">
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 3-COLUMN MODULE PERMISSION CARDS (Software, Sales, Product Management) -->
+                        <div class="module-cards-grid">
+                            <div class="comic-module-card" ng-repeat="mod in userModules track by mod.moduleKey">
+                                <!-- Card Header -->
+                                <div class="module-card-header">
+                                    <div class="module-title-group">
+                                        <h3 class="module-title" ng-bind="mod.moduleNameEn"></h3>
+                                        <div class="module-lang-subtitle">
+                                            <span ng-if="mod.moduleNameAr" ng-bind="mod.moduleNameAr"></span>
+                                            <span ng-if="mod.moduleNameKu" ng-bind="' • ' + mod.moduleNameKu"></span>
+                                        </div>
+                                    </div>
+                                    <span class="module-tag" ng-style="{'background-color': mod.badgeColor || '#35B89F'}" ng-bind="mod.moduleKey"></span>
+                                </div>
+
+                                <p class="module-desc" ng-bind="mod.descriptionEn"></p>
+
+                                <!-- 4 Direct CRUD Switches -->
+                                <div class="crud-switches-box">
+                                    <!-- Create (C) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canCreate}">C</span>
+                                            <span>Create</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canCreate" ng-click="toggleModuleField(mod, 'canCreate')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Read (R) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canRead}">R</span>
+                                            <span>Read</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canRead" ng-click="toggleModuleField(mod, 'canRead')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Update (U) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canUpdate}">U</span>
+                                            <span>Update</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canUpdate" ng-click="toggleModuleField(mod, 'canUpdate')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Delete (D) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canDelete}">D</span>
+                                            <span>Delete</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canDelete" ng-click="toggleModuleField(mod, 'canDelete')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Presets -->
+                                <div class="module-quick-actions">
+                                    <button type="button" class="preset-btn" ng-click="setFullCrud(mod)">Full CRUD</button>
+                                    <button type="button" class="preset-btn" ng-click="setReadOnly(mod)">Read Only</button>
+                                    <button type="button" class="preset-btn-danger" ng-click="revokeModuleAccess(mod)">Revoke</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 2.4 UPDATE USER PAGE (U) -->
+                    <div ng-show="userView === 'update'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Edit User Profile</h2>
+                                <span class="card-subtitle">Modify user names in 3 languages, change phone number, update credentials, or adjust active status.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                ← Back to Users List
+                            </button>
+                        </div>
+
+                        <!-- Update Form -->
+                        <div class="comic-form-box" ng-if="editingUser">
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">English Name</label>
+                                    <input type="text" class="comic-input" ng-model="editingUser.usernameEn" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Arabic Name</label>
+                                    <input type="text" class="comic-input" ng-model="editingUser.usernameAr">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kurdish Name</label>
+                                    <input type="text" class="comic-input" ng-model="editingUser.usernameKu">
+                                </div>
+                            </div>
+
+                            <div class="form-grid-3" style="margin-top: 14px;">
+                                <div class="form-group">
+                                    <label class="form-label">New Password (leave empty to keep current)</label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="editingUser.password">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="comic-input" ng-model="editingUser.phoneNumber">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <select class="comic-input" ng-model="editingUser.status">
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="INACTIVE">INACTIVE</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel</button>
+                                <button type="button" class="comic-btn" ng-click="updateUser()">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.5 DELETE USER PAGE (D) -->
+                    <div ng-show="userView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Delete User Account</h2>
+                                <span class="card-subtitle">Permanently remove user accounts and erase their associated department permissions from the system.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                ← Back to Users List
+                            </button>
+                        </div>
+
+                        <!-- Delete Confirmation Card -->
+                        <div class="inspect-card" ng-if="selectedUser" style="border-color: #EF4444;">
+                            <div style="font-size: 1.15rem; font-weight: 900; color: #DC2626;">
+                                Confirm Permanent Deletion of User:
+                            </div>
+                            
+                            <div class="detail-grid-3">
+                                <div class="detail-item">
+                                    <span class="detail-item-label">English Username</span>
+                                    <strong class="detail-item-value" ng-bind="selectedUser.usernameEn"></strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Arabic / Kurdish</span>
+                                    <span class="detail-item-value" ng-bind="(selectedUser.usernameAr || '-') + ' / ' + (selectedUser.usernameKu || '-')"></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Phone Number</span>
+                                    <span class="detail-item-value" ng-bind="selectedUser.phoneNumber || 'None'"></span>
+                                </div>
+                            </div>
+
+                            <div style="background-color: #FEF2F2; border: 2px solid #EF4444; border-radius: 8px; padding: 12px 16px; font-weight: 700; font-size: 0.88rem; color: #991B1B;">
+                                Warning: This operation will permanently erase user "{{selectedUser.usernameEn}}" and delete all of their Software, Sales, and Product permission records from the database.
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 6px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel & Go Back</button>
+                                <button type="button" class="comic-btn" style="background-color: #EF4444; color: #FFFFFF;" ng-click="performDeleteUser(selectedUser)">
+                                    Yes, Permanently Delete User
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- All Users Selection List -->
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 6px;">
+                            <div style="font-size: 1.05rem; font-weight: 900;">Select a User to Delete:</div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User Names (EN / AR / KU)</th>
+                                            <th>Phone Number</th>
+                                            <th>Status</th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="user in users track by user.id" ng-class="{'selected-user-row': selectedUser && selectedUser.id === user.id}">
+                                            <td>
+                                                <strong ng-bind="user.usernameEn"></strong>
+                                                <span style="color: var(--text-muted); font-size: 0.8rem;" ng-if="user.usernameAr" ng-bind="' (' + user.usernameAr + ')'"></span>
+                                            </td>
+                                            <td><span style="color: var(--text-muted);" ng-bind="user.phoneNumber || '-'"></span></td>
+                                            <td>
+                                                <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', user)">
+                                                    Select for Deletion
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ======================================================= -->
+                <!-- PAGE 3: ROLE TEMPLATES DIRECTORY                        -->
+                <!-- ======================================================= -->
+                <section class="comic-card" ng-show="currentTab === 'roles'">
+                    
+                    <div class="card-header-flex">
+                        <div class="card-title-group">
+                            <h2 class="card-title">Role Templates Directory</h2>
+                        </div>
+                        <button type="button" class="comic-btn" ng-click="toggleAddRoleForm()">
+                            + Add Role Template
+                        </button>
+                    </div>
+
+                    <!-- Modern Filter Toolbar -->
+                    <div class="comic-filter-toolbar">
+                        <div class="filter-search-box" style="max-width: 100%;">
+                            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" class="comic-search-bar" placeholder="Search role templates by name..." ng-model="filters.search">
+                        </div>
+                    </div>
+
+                    <!-- Inline Add Role Form -->
+                    <div class="comic-form-box" ng-show="showAddRoleForm">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label">Role Name</label>
+                                <input type="text" class="comic-input" placeholder="e.g. Quality Assurance Engineer" ng-model="newRole.name" required>
+                            </div>
+                        </div>
+
+                        <div class="comic-checkboxes-row">
+                            <label class="comic-checkbox-label">
+                                <input type="checkbox" ng-model="newRole.canCreate">
+                                <span>Create</span>
+                            </label>
+                            <label class="comic-checkbox-label">
+                                <input type="checkbox" ng-model="newRole.canRead">
+                                <span>Read</span>
+                            </label>
+                            <label class="comic-checkbox-label">
+                                <input type="checkbox" ng-model="newRole.canUpdate">
+                                <span>Update</span>
+                            </label>
+                            <label class="comic-checkbox-label">
+                                <input type="checkbox" ng-model="newRole.canDelete">
+                                <span>Delete</span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;">
+                            <button type="button" class="comic-btn-secondary" ng-click="toggleAddRoleForm()">Cancel</button>
+                            <button type="button" class="comic-btn" ng-click="createRole()">Save Role</button>
+                        </div>
+                    </div>
+
+                    <!-- Role Templates Grid -->
+                    <div class="roles-grid">
+                        <div class="role-card" ng-repeat="role in getFilteredRoles() track by role.id">
+                            <div class="module-card-header">
+                                <h3 class="module-title" ng-bind="role.name"></h3>
+                                <button type="button" class="comic-btn-danger" ng-click="deleteRole(role)">Delete</button>
+                            </div>
+
+                            <!-- 4 Direct CRUD Switches for Role Template -->
+                            <div class="crud-switches-box">
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" ng-class="{'active': role.canCreate}">C</span>
+                                        <span>Create</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" ng-checked="role.canCreate" ng-click="toggleRoleField(role, 'canCreate')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" ng-class="{'active': role.canRead}">R</span>
+                                        <span>Read</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" ng-checked="role.canRead" ng-click="toggleRoleField(role, 'canRead')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" ng-class="{'active': role.canUpdate}">U</span>
+                                        <span>Update</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" ng-checked="role.canUpdate" ng-click="toggleRoleField(role, 'canUpdate')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" ng-class="{'active': role.canDelete}">D</span>
+                                        <span>Delete</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" ng-checked="role.canDelete" ng-click="toggleRoleField(role, 'canDelete')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ======================================================= -->
+                <!-- PAGE 4: CUSTOMER FOLLOW-UP & PURCHASE HISTORY           -->
+                <!-- ======================================================= -->
+                <section class="comic-card" ng-show="currentTab === 'customers'">
+
+                    <!-- 4.1 CUSTOMERS LIST & FOLLOW-UP DIRECTORY (DEFAULT) -->
+                    <div ng-show="customerView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
+                        
+                        <!-- Header & Title -->
+                        <div class="card-header-flex">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Customer Follow-up & Order Recency</h2>
+                            </div>
+                        </div>
+
+                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Live Search) -->
+                        <div class="comic-filter-toolbar">
+                            <div class="filter-left-controls">
+                                <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
+                                <button type="button" class="comic-icon-btn" ng-click="openFilterModal()" title="EPU Date Picker & Custom Filters">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                    </svg>
+                                </button>
+                                <span class="comic-tag tag-primary" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" style="cursor: pointer;" title="Click to clear filter">
+                                    <span ng-bind="selectedTimePreset.name"></span> ✕
+                                </span>
+                            </div>
+
+                            <!-- Live Search Bar -->
+                            <div class="filter-search-box">
+                                <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" class="comic-search-bar" placeholder="Search customers by name, phone, city..." ng-model="filters.search">
+                            </div>
+                        </div>
+
+                        <!-- Customers DataTable with Sortable Columns -->
+                        <div class="table-responsive">
+                            <table class="comic-table">
+                                <thead>
+                                    <tr>
+                                        <th class="comic-sortable-th" style="width: 75px;" ng-click="sortBy('id')">
+                                            ID <span class="sort-indicator" ng-bind="getSortIndicator('id')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('name')">
+                                            Customer Details <span class="sort-indicator" ng-bind="getSortIndicator('name')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
+                                            Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('totalOrders')">
+                                            Order Count <span class="sort-indicator" ng-bind="getSortIndicator('totalOrders')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('totalSpent')">
+                                            Total Spend <span class="sort-indicator" ng-bind="getSortIndicator('totalSpent')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('daysSinceLastOrder')">
+                                            Days Since Last Order <span class="sort-indicator" ng-bind="getSortIndicator('daysSinceLastOrder')"></span>
+                                        </th>
+                                        <th style="text-align: right;">Page Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="cust in getPagedCustomers() track by cust.id">
+                                        <td>
+                                            <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'#' + cust.id"></strong>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong style="font-size: 0.98rem; color: var(--primary-dark);" ng-bind="cust.name"></strong>
+                                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                                                    <span ng-bind="cust.city || 'Erbil'"></span> • <span ng-bind="cust.email || '-'"></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong style="font-size: 0.92rem;" ng-bind="cust.phoneNumber"></strong>
+                                        </td>
+                                        <td>
+                                            <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="cust.totalOrders + ' Orders'"></strong>
+                                        </td>
+                                        <td>
+                                            <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="'$' + (cust.totalSpent | number:2)"></strong>
+                                        </td>
+                                        <td>
+                                            <span class="comic-tag" 
+                                                  ng-class="{'tag-primary': cust.daysSinceLastOrder <= 1, 'tag-warning': cust.daysSinceLastOrder > 1 && cust.daysSinceLastOrder <= 7, 'tag-danger': cust.daysSinceLastOrder > 7}"
+                                                  ng-bind="formatDaysText(cust.daysSinceLastOrder)">
+                                            </span>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem; margin-right: 8px;" ng-click="setCustomerView('orders', cust)">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                                Orders Log
+                                            </button>
+                                            <button type="button" class="comic-btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="setCustomerView('feedback', cust)">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                                Reviews & Compliments
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr ng-if="getFilteredCustomers().length === 0">
+                                        <td colspan="7" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                            No customers match the selected filter criteria.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- DataTable Pagination Footer -->
+                        <div class="datatable-footer" ng-if="getFilteredCustomers().length > 0">
+                            <div class="datatable-info">
+                                Showing {{ (dt.currentPage - 1) * dt.pageSize + 1 }} to {{ dt.currentPage * dt.pageSize > getFilteredCustomers().length ? getFilteredCustomers().length : dt.currentPage * dt.pageSize }} of {{ getFilteredCustomers().length }} customers
+                            </div>
+                            <div class="datatable-pagination">
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">« Prev</button>
+                                <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredCustomers().length)" ng-class="{'active': dt.currentPage === p}" ng-click="setPage(p)" ng-bind="p"></button>
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(dt.currentPage + 1)">Next »</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 4.2 DEDICATED CUSTOMER PURCHASE HISTORY / ORDER LOG PAGE (AUDIT VIEW) -->
+                    <div ng-show="customerView === 'orders'" style="display: flex; flex-direction: column; gap: 24px;">
+                        
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Customer Purchase History & Order Log</h2>
+                                <span class="card-subtitle">Complete audit log of all previous and recent purchases for this customer.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setCustomerView('list')">
+                                ← Back to Customer Follow-up
+                            </button>
+                        </div>
+
+                        <!-- Customer Profile Banner -->
+                        <div class="inspected-target-banner" ng-if="selectedCustomer">
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer Profile:</div>
+                                <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
+                                    <span ng-bind="selectedCustomer.name"></span>
+                                    <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-bind="'(ID: #' + selectedCustomer.id + ')'"></span>
+                                </h3>
+                                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
+                                    Phone: <strong ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city"></strong> • Email: <strong ng-bind="selectedCustomer.email"></strong>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('feedback', selectedCustomer)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                    View Reviews & Compliments
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Orders List Table -->
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 1.15rem; font-weight: 900;">Complete Customer Purchase Ledger:</div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order Number</th>
+                                            <th>Order Date</th>
+                                            <th>Order Time</th>
+                                            <th>Items Summary</th>
+                                            <th>Payment Method</th>
+                                            <th>Total Price</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="order in customerOrders track by order.id">
+                                            <td><strong style="color: var(--primary-dark);" ng-bind="order.orderNumber"></strong></td>
+                                            <td><span style="font-weight: 700;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span></td>
+                                            <td><span style="color: var(--text-muted); font-weight: 700;" ng-bind="order.orderDate | date:'HH:mm'"></span></td>
+                                            <td><span ng-bind="order.itemsSummary"></span></td>
+                                            <td><span class="comic-tag tag-muted" ng-bind="order.paymentMethod"></span></td>
+                                            <td><strong style="color: var(--primary-dark);" ng-bind="'$' + (order.totalAmount | number:2)"></strong></td>
+                                            <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
+                                        </tr>
+                                        <tr ng-if="customerOrders.length === 0">
+                                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">No orders recorded for this customer yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE -->
+                    <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 24px;">
+                        
+                        <div class="action-page-header">
+                            <div class="card-title-group">
+                                <h2 class="card-title">Customer Reviews, Notes & Compliments</h2>
+                                <span class="card-subtitle">Client feedback feed, agent follow-up notes, and compliments audit log.</span>
+                            </div>
+                            <button type="button" class="back-btn" ng-click="setCustomerView('list')">
+                                ← Back to Customer Follow-up
+                            </button>
+                        </div>
+
+                        <!-- Customer Profile Banner -->
+                        <div class="inspected-target-banner" ng-if="selectedCustomer">
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer Profile:</div>
+                                <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
+                                    <span ng-bind="selectedCustomer.name"></span>
+                                    <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-bind="'(ID: #' + selectedCustomer.id + ')'"></span>
+                                </h3>
+                                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
+                                    Phone: <strong ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city"></strong> • Email: <strong ng-bind="selectedCustomer.email"></strong>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="comic-btn" ng-click="setCustomerView('orders', selectedCustomer)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                    View Purchase Orders Log
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Feed (Clean Audit List) -->
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 1.15rem; font-weight: 900;">Logged Compliments & Notes History:</div>
+                            <div class="feedback-feed-grid">
+                                <div class="comic-feedback-card" ng-repeat="fb in customerFeedbacks track by fb.id">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span class="comic-tag" 
+                                                  ng-class="{'tag-primary': fb.feedbackType === 'COMPLIMENT', 'tag-warning': fb.feedbackType === 'REVIEW', 'tag-muted': fb.feedbackType === 'NOTE'}"
+                                                  ng-bind="fb.feedbackType">
+                                            </span>
+                                            <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="fb.authorName || 'Follow-up Agent'"></strong>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="color: #F59E0B; font-weight: 900; font-size: 0.95rem;" ng-if="fb.rating">
+                                                <svg ng-repeat="n in [].constructor(fb.rating) track by $index" width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px; vertical-align: -2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                            </span>
+                                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);" ng-bind="fb.createdAt | date:'yyyy-MM-dd HH:mm'"></span>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 0.92rem; font-weight: 600; line-height: 1.5; color: var(--text-main); background-color: #F7F7F4; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 16px;" ng-bind="fb.content"></p>
+                                </div>
+                                <div ng-if="customerFeedbacks.length === 0" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                                    No reviews or compliments logged for this customer yet.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- EPU CUSTOM INTERACTIVE DATE & TIME PICKER MODAL (IMAGE 3) -->
+    <!-- ========================================================= -->
+    <div class="epu-modal-overlay" ng-show="showFilterModal">
+        <div class="epu-datepicker-card">
+            
+            <!-- Modal Header Section -->
+            <div class="epu-header-section">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div class="epu-badge-title">
+                        <span>🎓 EPU DATE PICKER</span>
+                    </div>
+                    <button type="button" class="epu-nav-arrow-btn" style="width: 26px; height: 26px; font-size: 0.85rem;" ng-click="closeFilterModal()">&times;</button>
+                </div>
+
+                <div class="epu-month-nav-row">
+                    <button type="button" class="epu-nav-arrow-btn" ng-click="prevMonth()">‹</button>
+                    <div class="epu-month-title">
+                        {{ monthNames[pickerMonth] }} {{ pickerYear }}
+                    </div>
+                    <button type="button" class="epu-nav-arrow-btn" ng-click="nextMonth()">›</button>
+                </div>
+            </div>
+
+            <!-- Quick Preset Chips Row (Built-in + Dynamic Presets) -->
+            <div class="epu-chips-scroll">
+                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('today')">★ Today</button>
+                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('tomorrow')">Tomorrow</button>
+                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('1week')">+1 Week</button>
+                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('2weeks')">+2 Weeks</button>
+                <button type="button" class="epu-chip-btn" ng-click="applyPresetChip('1month')">+1 Month</button>
+                
+                <!-- Dynamic Admin-Created Presets -->
+                <button type="button" 
+                        class="epu-chip-btn" 
+                        ng-repeat="p in timeFilterPresets" 
+                        ng-if="p.isActive"
+                        ng-class="{'active-chip': selectedTimePreset && selectedTimePreset.id === p.id}"
+                        ng-click="applyPresetChip(null, p)">
+                    {{ p.name }}
+                </button>
+            </div>
+
+            <!-- Calendar Container -->
+            <div class="epu-calendar-container">
+                <!-- Day Headers -->
+                <div class="epu-weekdays-row">
+                    <span>SU</span>
+                    <span>MO</span>
+                    <span>TU</span>
+                    <span>WE</span>
+                    <span>TH</span>
+                    <span>FR</span>
+                    <span>SA</span>
+                </div>
+
+                <!-- Days 7-column Grid -->
+                <div class="epu-days-grid">
+                    <div class="epu-day-cell" 
+                         ng-repeat="dayObj in calendarDays" 
+                         ng-class="{'empty-day': dayObj.empty, 'selected-day': dayObj.isSelected}"
+                         ng-click="selectDay(dayObj)">
+                        <span ng-if="!dayObj.empty" ng-bind="dayObj.day"></span>
+                    </div>
+                </div>
+
+                <!-- Prompt Divider -->
+                <div class="epu-prompt-divider">
+                    — Pick a date above —
+                </div>
+            </div>
+
+            <!-- Time Picker Row -->
+            <div class="epu-time-section">
+                <div class="epu-time-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Time</span>
+                </div>
+                <input type="text" class="epu-time-input" ng-model="pickerHour" maxlength="2">
+                <strong style="font-size: 1.1rem; color: #1E1B4B;">:</strong>
+                <input type="text" class="epu-time-input" ng-model="pickerMinute" maxlength="2">
+                <button type="button" class="epu-ampm-badge" ng-click="pickerAmpm = (pickerAmpm === 'PM' ? 'AM' : 'PM')" ng-bind="pickerAmpm">PM</button>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="epu-bottom-actions">
+                <button type="button" class="epu-btn-clear" ng-click="clearCustomDate()">✕ Clear</button>
+                <button type="button" class="epu-btn-confirm" ng-click="confirmCustomDate()">✓ Confirm Date</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Comic Toast Alerts -->
+    <div class="toast-container">
+        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
+            <span ng-bind="toast.message"></span>
+        </div>
+    </div>
+
+</body>
+</html>

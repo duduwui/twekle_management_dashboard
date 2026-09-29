@@ -1,0 +1,1276 @@
+/**
+ * Twekl Management Dashboard - AngularJS 1.8.x Client Application
+ * - Grouped Sidebar: "Administration" Accordion (Admins, Users, Roles) + Customer Follow-up
+ * - Modern Filter Toolbar: Date From/To, Extra Filters Pop-up Modal, Live Search Bar
+ * - Full DataTables: Multi-column sorting, Dynamic Pagination (5/10/25/50 per page), Page Navigation
+ * - Spring Security Server-Side Protection Integration (401/403 alerts, Login/Logout)
+ * - Comic / Neobrutalism Design System with Unified Twekl Teal Palette
+ */
+var app = angular.module('tweklApp', []);
+
+// Configure HTTP interceptor to catch 401/403 Spring Security rejections
+app.config(['$httpProvider', function($httpProvider) {
+    $httpProvider.interceptors.push(['$q', '$rootScope', function($q, $rootScope) {
+        return {
+            'responseError': function(rejection) {
+                if (rejection.status === 401) {
+                    $rootScope.$broadcast('auth:unauthorized', rejection.data);
+                } else if (rejection.status === 403) {
+                    $rootScope.$broadcast('auth:forbidden', rejection.data);
+                }
+                return $q.reject(rejection);
+            }
+        };
+    }]);
+}]);
+
+app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window', function($scope, $http, $timeout, $window) {
+
+    // Sidebar Category Accordion State
+    $scope.categories = {
+        admin: true // Administration accordion open by default
+    };
+
+    $scope.toggleCategory = function(cat) {
+        $scope.categories[cat] = !$scope.categories[cat];
+    };
+
+    $scope.isCategoryOpen = function(cat) {
+        return !!$scope.categories[cat];
+    };
+
+    $scope.currentTab = 'admins'; // 'admins', 'users', 'roles', or 'customers'
+    $scope.adminView = 'list'; // 'list', 'create', 'inspect', 'delete'
+    $scope.userView = 'list'; // 'list', 'create', 'inspect', 'update', 'delete'
+    $scope.customerView = 'list'; // 'list', 'orders', 'feedback'
+    $scope.customerTimeFilter = 'all'; // 'all', '24h', '7d', '30d'
+    $scope.currentLang = 'en';
+
+    // Spring Security Authentication State
+    $scope.auth = {
+        authenticated: false,
+        username: '',
+        role: '',
+        isSuperAdmin: false,
+        canCreateRoles: false,
+        canManageUsers: false
+    };
+
+    $scope.showLoginModal = false;
+    $scope.loginForm = {
+        username: '',
+        password: ''
+    };
+
+    // =========================================================
+    // FILTER TOOLBAR & PAGINATION STATE
+    // =========================================================
+    $scope.filters = {
+        search: '',
+        dateFrom: '',
+        dateTo: ''
+    };
+
+    // =========================================================
+    // DYNAMIC TIME FILTER PRESETS (ADMIN CONFIGURABLE)
+    // =========================================================
+    $scope.timeFilterPresets = [];
+    $scope.selectedTimePreset = null; // Currently active preset filter (or null for all)
+    $scope.newPreset = {
+        name: '',
+        durationValue: 24,
+        durationUnit: 'HOURS',
+        isActive: true
+    };
+    $scope.showPresetManager = false; // toggle admin manager section in picker modal
+
+    $scope.loadTimeFilterPresets = function() {
+        return $http.get('/api/time-filters').then(function(res) {
+            $scope.timeFilterPresets = res.data || [];
+        });
+    };
+
+    $scope.createTimeFilterPreset = function() {
+        if (!$scope.newPreset.name || !$scope.newPreset.durationValue) {
+            $scope.showToast('Please enter preset name and duration value', 'error');
+            return;
+        }
+        $http.post('/api/time-filters', $scope.newPreset).then(function(res) {
+            $scope.showToast('Custom filter preset "' + res.data.name + '" created successfully!');
+            $scope.newPreset = {
+                name: '',
+                durationValue: 24,
+                durationUnit: 'HOURS',
+                isActive: true
+            };
+            $scope.loadTimeFilterPresets();
+        }, function(err) {
+            $scope.showToast('Failed to create filter preset', 'error');
+        });
+    };
+
+    $scope.toggleTimeFilterPreset = function(preset) {
+        $http.patch('/api/time-filters/' + preset.id + '/toggle', {}).then(function(res) {
+            preset.isActive = res.data.isActive;
+            $scope.showToast('Filter preset "' + preset.name + '" set to ' + (preset.isActive ? 'Active' : 'Inactive'));
+        });
+    };
+
+    $scope.deleteTimeFilterPreset = function(preset) {
+        if (!confirm('Are you sure you want to delete filter preset "' + preset.name + '"?')) return;
+        $http.delete('/api/time-filters/' + preset.id).then(function() {
+            $scope.showToast('Filter preset deleted');
+            if ($scope.selectedTimePreset && $scope.selectedTimePreset.id === preset.id) {
+                $scope.selectedTimePreset = null;
+            }
+            $scope.loadTimeFilterPresets();
+        });
+    };
+
+    $scope.selectTimePreset = function(preset) {
+        if ($scope.selectedTimePreset && $scope.selectedTimePreset.id === (preset ? preset.id : null)) {
+            $scope.selectedTimePreset = null; // toggle off
+        } else {
+            $scope.selectedTimePreset = preset;
+        }
+        $scope.dt.currentPage = 1;
+    };
+
+    // =========================================================
+    // EPU CUSTOM INTERACTIVE DATE & TIME PICKER (IMAGE 3 MATCH)
+    // =========================================================
+    var now = new Date();
+    $scope.pickerYear = now.getFullYear();
+    $scope.pickerMonth = now.getMonth(); // 0 - 11
+    $scope.pickerDay = now.getDate();
+    $scope.pickerHour = '01';
+    $scope.pickerMinute = '28';
+    $scope.pickerAmpm = 'PM';
+    $scope.calendarDays = [];
+    $scope.monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    $scope.showFilterModal = false;
+
+    $scope.openFilterModal = function() {
+        $scope.showFilterModal = true;
+        $scope.generateCalendar();
+    };
+
+    $scope.closeFilterModal = function() {
+        $scope.showFilterModal = false;
+    };
+
+    $scope.prevMonth = function() {
+        if ($scope.pickerMonth === 0) {
+            $scope.pickerMonth = 11;
+            $scope.pickerYear--;
+        } else {
+            $scope.pickerMonth--;
+        }
+        $scope.generateCalendar();
+    };
+
+    $scope.nextMonth = function() {
+        if ($scope.pickerMonth === 11) {
+            $scope.pickerMonth = 0;
+            $scope.pickerYear++;
+        } else {
+            $scope.pickerMonth++;
+        }
+        $scope.generateCalendar();
+    };
+
+    $scope.selectDay = function(dayObj) {
+        if (!dayObj || dayObj.empty) return;
+        $scope.pickerDay = dayObj.day;
+        $scope.generateCalendar();
+    };
+
+    $scope.generateCalendar = function() {
+        var year = $scope.pickerYear;
+        var month = $scope.pickerMonth;
+        var firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Sun
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        var days = [];
+        for (var i = 0; i < firstDayIndex; i++) {
+            days.push({ day: null, empty: true });
+        }
+        for (var d = 1; d <= daysInMonth; d++) {
+            var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            days.push({
+                day: d,
+                empty: false,
+                dateStr: dateStr,
+                isSelected: ($scope.pickerDay === d)
+            });
+        }
+        $scope.calendarDays = days;
+    };
+
+    $scope.applyPresetChip = function(type, preset) {
+        var targetDate = new Date();
+        if (type === 'today') {
+            // today
+        } else if (type === 'tomorrow') {
+            targetDate.setDate(targetDate.getDate() + 1);
+        } else if (type === '1week') {
+            targetDate.setDate(targetDate.getDate() + 7);
+        } else if (type === '2weeks') {
+            targetDate.setDate(targetDate.getDate() + 14);
+        } else if (type === '1month') {
+            targetDate.setMonth(targetDate.getMonth() + 1);
+        } else if (preset) {
+            $scope.selectTimePreset(preset);
+            $scope.closeFilterModal();
+            $scope.showToast('Filter preset applied: ' + preset.name);
+            return;
+        }
+        $scope.pickerYear = targetDate.getFullYear();
+        $scope.pickerMonth = targetDate.getMonth();
+        $scope.pickerDay = targetDate.getDate();
+        $scope.generateCalendar();
+    };
+
+    $scope.confirmCustomDate = function() {
+        var formattedMonth = String($scope.pickerMonth + 1).padStart(2, '0');
+        var formattedDay = String($scope.pickerDay || 1).padStart(2, '0');
+        var dateStr = $scope.pickerYear + '-' + formattedMonth + '-' + formattedDay;
+        
+        $scope.filters.dateFrom = dateStr;
+        $scope.filters.dateTo = dateStr;
+        $scope.dt.currentPage = 1;
+        $scope.closeFilterModal();
+        $scope.showToast('Filter date applied: ' + dateStr);
+    };
+
+    $scope.clearCustomDate = function() {
+        $scope.filters.dateFrom = '';
+        $scope.filters.dateTo = '';
+        $scope.selectedTimePreset = null;
+        $scope.dt.currentPage = 1;
+        $scope.closeFilterModal();
+        $scope.showToast('All date and time filters cleared');
+    };
+
+    // =========================================================
+    // DATATABLE CONTROLS & PAGINATION STATE (30 ROWS DEFAULT)
+    // =========================================================
+    $scope.dt = {
+        pageSize: 30,
+        currentPage: 1,
+        sortField: 'id',
+        sortReverse: false
+    };
+
+    $scope.setPageSize = function(size) {
+        $scope.dt.pageSize = parseInt(size, 10) || 30;
+        $scope.dt.currentPage = 1;
+    };
+
+    $scope.sortBy = function(field) {
+        if ($scope.dt.sortField === field) {
+            $scope.dt.sortReverse = !$scope.dt.sortReverse;
+        } else {
+            $scope.dt.sortField = field;
+            $scope.dt.sortReverse = false;
+        }
+    };
+
+    $scope.getSortIndicator = function(field) {
+        if ($scope.dt.sortField !== field) return '⇅';
+        return $scope.dt.sortReverse ? '▼' : '▲';
+    };
+
+    $scope.setPage = function(p) {
+        if (p < 1) return;
+        $scope.dt.currentPage = p;
+    };
+
+    $scope.getPageNumbers = function(totalItems) {
+        var totalPages = Math.ceil(totalItems / $scope.dt.pageSize) || 1;
+        var pages = [];
+        for (var i = 1; i <= totalPages; i++) {
+            pages.push(i);
+        }
+        return pages;
+    };
+
+    $scope.getTotalPages = function(totalItems) {
+        return Math.ceil(totalItems / $scope.dt.pageSize) || 1;
+    };
+
+    // Generic Date Matcher Helper
+    function isWithinDateRange(itemDateStr, fromStr, toStr) {
+        if (!fromStr && !toStr) return true;
+        if (!itemDateStr) return true;
+        var itemDate = new Date(itemDateStr).getTime();
+        if (isNaN(itemDate)) return true;
+        if (fromStr) {
+            var fromDate = new Date(fromStr).getTime();
+            if (itemDate < fromDate) return false;
+        }
+        if (toStr) {
+            var toDate = new Date(toStr).getTime() + (24 * 60 * 60 * 1000 - 1); // end of day
+            if (itemDate > toDate) return false;
+        }
+        return true;
+    }
+
+    // Dynamic Time Filter Preset Matcher Helper (Admins & Users creation dates)
+    function matchesPreset(itemDateStr, preset) {
+        if (!preset) return true;
+        if (!itemDateStr) return true;
+        var itemTime = new Date(itemDateStr).getTime();
+        if (isNaN(itemTime)) return true;
+        var totalHours = 24;
+        var val = preset.durationValue || 24;
+        var unit = (preset.durationUnit || 'HOURS').toUpperCase();
+        if (unit === 'HOURS') totalHours = val;
+        else if (unit === 'DAYS') totalHours = val * 24;
+        else if (unit === 'WEEKS') totalHours = val * 24 * 7;
+        else if (unit === 'MONTHS') totalHours = val * 24 * 30;
+
+        var cutoff = Date.now() - (totalHours * 3600 * 1000);
+        return itemTime >= cutoff;
+    }
+
+    // Dynamic Time Filter Preset Matcher for Customers (Recency & Follow-up Interval Buckets)
+    function matchesCustomerPreset(c, preset) {
+        if (!preset) return true;
+        
+        // Compute days ago from customer record
+        var daysAgo = c.daysSinceLastOrder;
+        var itemDateStr = c.lastOrderDate || c.createdAt;
+        if (itemDateStr) {
+            var itemTime = new Date(itemDateStr).getTime();
+            if (!isNaN(itemTime)) {
+                var diffMs = Date.now() - itemTime;
+                var calculatedDays = Math.max(0, Math.floor(diffMs / (1000 * 3600 * 24)));
+                if (daysAgo == null || isNaN(daysAgo)) {
+                    daysAgo = calculatedDays;
+                }
+            }
+        }
+        if (daysAgo == null || isNaN(daysAgo)) daysAgo = 0;
+
+        var val = parseInt(preset.durationValue, 10) || 24;
+        var unit = (preset.durationUnit || 'HOURS').toUpperCase();
+        var targetDays = val;
+
+        if (unit === 'HOURS') {
+            targetDays = val / 24;
+        } else if (unit === 'DAYS') {
+            targetDays = val;
+        } else if (unit === 'WEEKS') {
+            targetDays = val * 7;
+        } else if (unit === 'MONTHS') {
+            targetDays = val * 30;
+        }
+
+        var presetNameLower = (preset.name || '').toLowerCase();
+
+        // 1. Hours / 24 Hours / 1 Day recency bucket
+        if (unit === 'HOURS' || targetDays <= 1 || presetNameLower.includes('24') || presetNameLower.includes('hour')) {
+            return daysAgo <= 1;
+        }
+
+        // 2. Dormant / 30+ Days bucket
+        if (targetDays >= 28 || presetNameLower.includes('dormant') || presetNameLower.includes('30+')) {
+            return daysAgo >= 25;
+        }
+
+        // 3. Milestone Buckets (e.g. 7 Days Ago = ~1 week, 2 Weeks Ago = ~14 days)
+        var minDays = Math.max(2, Math.floor(targetDays * 0.7));
+        var maxDays = Math.ceil(targetDays * 1.3) + 1;
+        return daysAgo >= minDays && daysAgo <= maxDays;
+    }
+
+    // Filtered Admins DataTable
+    $scope.getFilteredAdmins = function() {
+        if (!$scope.admins) return [];
+        var q = ($scope.filters.search || '').toLowerCase().trim();
+        return $scope.admins.filter(function(a) {
+            // Search filter
+            if (q) {
+                var u = (a.username || '').toLowerCase();
+                var p = (a.phoneNumber || '').toLowerCase();
+                var s = (a.status || '').toLowerCase();
+                var t = a.superAdmin ? 'super admin' : 'administrator';
+                if (!u.includes(q) && !p.includes(q) && !s.includes(q) && !t.includes(q)) return false;
+            }
+            // Dynamic Time Filter Preset
+            if (!matchesPreset(a.createdAt, $scope.selectedTimePreset)) return false;
+            // Date Range
+            if (!isWithinDateRange(a.createdAt, $scope.filters.dateFrom, $scope.filters.dateTo)) return false;
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.dt.sortField];
+            var valB = b[$scope.dt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.dt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.dt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+
+    $scope.getPagedAdmins = function() {
+        var filtered = $scope.getFilteredAdmins();
+        var start = ($scope.dt.currentPage - 1) * $scope.dt.pageSize;
+        return filtered.slice(start, start + $scope.dt.pageSize);
+    };
+
+    // Filtered Users DataTable
+    $scope.getFilteredUsers = function() {
+        if (!$scope.users) return [];
+        var q = ($scope.filters.search || '').toLowerCase().trim();
+        return $scope.users.filter(function(u) {
+            // Search filter
+            if (q) {
+                var en = (u.usernameEn || '').toLowerCase();
+                var ar = (u.usernameAr || '').toLowerCase();
+                var ku = (u.usernameKu || '').toLowerCase();
+                var p = (u.phoneNumber || '').toLowerCase();
+                var s = (u.status || '').toLowerCase();
+                if (!en.includes(q) && !ar.includes(q) && !ku.includes(q) && !p.includes(q) && !s.includes(q)) return false;
+            }
+            // Dynamic Time Filter Preset
+            if (!matchesPreset(u.createdAt, $scope.selectedTimePreset)) return false;
+            // Date Range
+            if (!isWithinDateRange(u.createdAt, $scope.filters.dateFrom, $scope.filters.dateTo)) return false;
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.dt.sortField];
+            var valB = b[$scope.dt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.dt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.dt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+
+    $scope.getPagedUsers = function() {
+        var filtered = $scope.getFilteredUsers();
+        var start = ($scope.dt.currentPage - 1) * $scope.dt.pageSize;
+        return filtered.slice(start, start + $scope.dt.pageSize);
+    };
+
+    // Filtered Role Templates DataTable
+    $scope.getFilteredRoles = function() {
+        if (!$scope.roles) return [];
+        var q = ($scope.filters.search || '').toLowerCase().trim();
+        return $scope.roles.filter(function(r) {
+            if (q) {
+                var name = (r.name || '').toLowerCase();
+                if (!name.includes(q)) return false;
+            }
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.dt.sortField];
+            var valB = b[$scope.dt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.dt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.dt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+
+    $scope.getPagedRoles = function() {
+        var filtered = $scope.getFilteredRoles();
+        var start = ($scope.dt.currentPage - 1) * $scope.dt.pageSize;
+        return filtered.slice(start, start + $scope.dt.pageSize);
+    };
+
+    // Filtered Customers DataTable
+    $scope.getFilteredCustomers = function() {
+        if (!$scope.customers) return [];
+        var q = ($scope.filters.search || '').toLowerCase().trim();
+        return $scope.customers.filter(function(c) {
+            if (q) {
+                var n = (c.name || '').toLowerCase();
+                var p = (c.phoneNumber || '').toLowerCase();
+                var e = (c.email || '').toLowerCase();
+                var city = (c.city || '').toLowerCase();
+                var s = (c.status || '').toLowerCase();
+                if (!n.includes(q) && !p.includes(q) && !e.includes(q) && !city.includes(q) && !s.includes(q)) return false;
+            }
+            // Dynamic Time Filter Preset (Smart Recency Bucketing)
+            if (!matchesCustomerPreset(c, $scope.selectedTimePreset)) return false;
+            // Date Range
+            if (!isWithinDateRange(c.lastOrderDate || c.createdAt, $scope.filters.dateFrom, $scope.filters.dateTo)) return false;
+            return true;
+        }).sort(function(a, b) {
+            var valA = a[$scope.dt.sortField];
+            var valB = b[$scope.dt.sortField];
+            if (valA == null) valA = '';
+            if (valB == null) valB = '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return $scope.dt.sortReverse ? 1 : -1;
+            if (valA > valB) return $scope.dt.sortReverse ? -1 : 1;
+            return 0;
+        });
+    };
+
+    $scope.getPagedCustomers = function() {
+        var filtered = $scope.getFilteredCustomers();
+        var start = ($scope.dt.currentPage - 1) * $scope.dt.pageSize;
+        return filtered.slice(start, start + $scope.dt.pageSize);
+    };
+
+    // Data Collections
+    $scope.admins = [];
+    $scope.users = [];
+    $scope.roles = [];
+    $scope.customers = [];
+    $scope.customerOrders = [];
+    $scope.customerFeedbacks = [];
+    $scope.customerStats = {
+        totalCustomers: 0,
+        count24h: 0,
+        count7d: 0,
+        count30d: 0,
+        totalFeedbacks: 0,
+        complimentsCount: 0
+    };
+
+    $scope.selectedAdmin = null;
+    $scope.selectedUser = null;
+    $scope.editingUser = null;
+    $scope.userModules = [];
+    $scope.selectedCustomer = null;
+
+    // New Follow-up Note / Compliment Model
+    $scope.newCustomerFeedback = {
+        feedbackType: 'COMPLIMENT',
+        content: '',
+        rating: 5,
+        authorName: 'Agent Follow-up'
+    };
+
+    // New Order Model
+    $scope.newCustomerOrder = {
+        orderNumber: 'ORD-' + Math.floor(100 + Math.random() * 900),
+        itemsSummary: '',
+        totalAmount: 150.0,
+        paymentMethod: 'Cash on Delivery',
+        orderStatus: 'DELIVERED'
+    };
+
+    // Toasts
+    $scope.toasts = [];
+    $scope.showToast = function(msg, type) {
+        var toast = { id: Date.now(), message: msg, type: type || 'success' };
+        $scope.toasts.push(toast);
+        $timeout(function() {
+            var i = $scope.toasts.indexOf(toast);
+            if (i !== -1) $scope.toasts.splice(i, 1);
+        }, 3600);
+    };
+
+    // =========================================================
+    // SPRING SECURITY AUTHENTICATION & SESSION MANAGEMENT
+    // =========================================================
+    $scope.checkAuth = function() {
+        return $http.get('/api/auth/current').then(function(res) {
+            if (res.data && res.data.authenticated) {
+                $scope.auth = {
+                    authenticated: true,
+                    username: res.data.username,
+                    role: res.data.role,
+                    isSuperAdmin: res.data.isSuperAdmin,
+                    canCreateRoles: res.data.canCreateRoles,
+                    canManageUsers: res.data.canManageUsers
+                };
+            } else {
+                $scope.auth = {
+                    authenticated: false,
+                    username: '',
+                    role: '',
+                    isSuperAdmin: false,
+                    canCreateRoles: false,
+                    canManageUsers: false
+                };
+            }
+        });
+    };
+
+    $scope.openLoginModal = function() {
+        $scope.showLoginModal = true;
+        $scope.loginForm = { username: 'twekl_super_admin', password: '' };
+    };
+
+    $scope.closeLoginModal = function() {
+        $scope.showLoginModal = false;
+    };
+
+    $scope.login = function() {
+        if (!$scope.loginForm.username || !$scope.loginForm.password) {
+            $scope.showToast('Please enter both username and password', 'error');
+            return;
+        }
+
+        $http.post('/api/auth/login', $scope.loginForm).then(function(res) {
+            $scope.auth = {
+                authenticated: true,
+                username: res.data.username,
+                role: res.data.role,
+                isSuperAdmin: res.data.superAdmin || res.data.isSuperAdmin,
+                canCreateRoles: res.data.canCreateRoles,
+                canManageUsers: res.data.canManageUsers
+            };
+            $scope.showLoginModal = false;
+            $scope.showToast('Authenticated as ' + res.data.username + ' (' + res.data.role + ')');
+            $scope.refreshAllData();
+        }, function(err) {
+            var msg = err.data && err.data.message ? err.data.message : 'Invalid credentials';
+            $scope.showToast('Authentication Failed: ' + msg, 'error');
+        });
+    };
+
+    $scope.logout = function() {
+        $http.post('/api/auth/logout', {}).then(function() {
+            $scope.auth = {
+                authenticated: false,
+                username: '',
+                role: '',
+                isSuperAdmin: false,
+                canCreateRoles: false,
+                canManageUsers: false
+            };
+            $scope.showToast('You have been logged out');
+            $scope.openLoginModal();
+        });
+    };
+
+    // Listen to Spring Security HTTP interceptor events
+    $scope.$on('auth:unauthorized', function(event, data) {
+        var msg = data && data.message ? data.message : 'Authentication required. Please log in.';
+        $scope.showToast('Spring Security: ' + msg, 'error');
+        $scope.openLoginModal();
+    });
+
+    $scope.$on('auth:forbidden', function(event, data) {
+        var msg = data && data.message ? data.message : 'Access denied by Spring Security. Insufficient administrative privileges.';
+        $scope.showToast('Spring Security 403: ' + msg, 'error');
+    });
+
+    // =========================================================
+    // URL ROUTING & HASH SYNCHRONIZATION
+    // =========================================================
+    $scope.updateHash = function(path) {
+        var formatted = path.startsWith('/') ? '#' + path : '#/' + path;
+        if ($window.location.hash !== formatted) {
+            if ($window.history && $window.history.pushState) {
+                $window.history.pushState(null, '', formatted);
+            } else {
+                $window.location.hash = formatted;
+            }
+        }
+    };
+
+    $scope.syncRouteFromHash = function() {
+        var hash = $window.location.hash || '#/admins';
+        var cleanHash = hash.replace(/^#\/?/, '');
+        var parts = cleanHash.split('/');
+        var section = parts[0] || 'admins';
+        var action = parts[1] || 'list';
+        var id = parts[2] ? parseInt(parts[2], 10) : null;
+
+        if (section === 'admins') {
+            $scope.currentTab = 'admins';
+            $scope.adminView = action;
+            $scope.categories.admin = true;
+            if (action === 'filters') {
+                $scope.loadTimeFilterPresets();
+            }
+            if (id && $scope.admins && $scope.admins.length > 0) {
+                var foundAdmin = $scope.admins.find(function(a) { return a.id === id; });
+                if (foundAdmin) $scope.selectedAdmin = foundAdmin;
+            }
+        } else if (section === 'users') {
+            $scope.currentTab = 'users';
+            $scope.userView = action;
+            $scope.categories.admin = true;
+            if (id && $scope.users && $scope.users.length > 0) {
+                var foundUser = $scope.users.find(function(u) { return u.id === id; });
+                if (foundUser) {
+                    $scope.selectedUser = foundUser;
+                    $scope.editingUser = angular.copy(foundUser);
+                    $scope.loadUserModules(foundUser.id);
+                }
+            }
+        } else if (section === 'roles') {
+            $scope.currentTab = 'roles';
+            $scope.categories.admin = true;
+            $scope.loadRoles();
+        } else if (section === 'customers' || section === 'followup') {
+            $scope.currentTab = 'customers';
+            $scope.customerView = action;
+            if (id && $scope.customers && $scope.customers.length > 0) {
+                var foundCustomer = $scope.customers.find(function(c) { return c.id === id; });
+                if (foundCustomer) {
+                    $scope.selectedCustomer = foundCustomer;
+                    if (action === 'orders') {
+                        $scope.loadCustomerOrders(foundCustomer.id);
+                    } else if (action === 'feedback') {
+                        $scope.loadCustomerFeedbacks(foundCustomer.id);
+                    }
+                }
+            }
+        }
+    };
+
+    // Listen to browser hash changes (Back / Forward buttons)
+    $window.addEventListener('hashchange', function() {
+        $timeout(function() {
+            $scope.syncRouteFromHash();
+        });
+    });
+    $window.addEventListener('popstate', function() {
+        $timeout(function() {
+            $scope.syncRouteFromHash();
+        });
+    });
+
+    // Top-Level Tab Navigation
+    $scope.setTab = function(tabName) {
+        $scope.currentTab = tabName;
+        $scope.dt.currentPage = 1;
+        if (tabName === 'admins') {
+            $scope.adminView = 'list';
+            $scope.categories.admin = true;
+            $scope.loadAdmins();
+            $scope.updateHash('/admins');
+        } else if (tabName === 'users') {
+            $scope.userView = 'list';
+            $scope.categories.admin = true;
+            $scope.loadUsers();
+            $scope.updateHash('/users');
+        } else if (tabName === 'roles') {
+            $scope.categories.admin = true;
+            $scope.loadRoles();
+            $scope.updateHash('/roles');
+        } else if (tabName === 'customers') {
+            $scope.customerView = 'list';
+            $scope.loadCustomers($scope.customerTimeFilter);
+            $scope.loadCustomerStats();
+            $scope.updateHash('/customers');
+        }
+    };
+
+    // =========================================================
+    // ADMIN TAB - VIEW ROUTING & CRUD ACTIONS
+    // =========================================================
+    $scope.newAdmin = {
+        username: '',
+        password: '',
+        phoneNumber: '',
+        isSuperAdmin: false,
+        canCreateRoles: true,
+        canManageUsers: true,
+        status: 'ACTIVE'
+    };
+
+    $scope.setAdminView = function(view, admin) {
+        $scope.currentTab = 'admins';
+        $scope.adminView = view || 'list';
+
+        var targetAdmin = admin || $scope.selectedAdmin || ($scope.admins.length > 0 ? $scope.admins[0] : null);
+
+        if (view === 'create') {
+            $scope.newAdmin = {
+                username: '',
+                password: '',
+                phoneNumber: '',
+                isSuperAdmin: false,
+                canCreateRoles: true,
+                canManageUsers: true,
+                status: 'ACTIVE'
+            };
+            $scope.updateHash('/admins/create');
+        } else if (view === 'filters') {
+            $scope.loadTimeFilterPresets();
+            $scope.updateHash('/admins/filters');
+        } else if (view === 'inspect' || view === 'delete') {
+            if (targetAdmin) {
+                $scope.selectedAdmin = targetAdmin;
+                $scope.updateHash('/admins/' + view + '/' + targetAdmin.id);
+            } else {
+                $scope.updateHash('/admins/' + view);
+            }
+        } else {
+            $scope.updateHash('/admins');
+        }
+    };
+
+    $scope.loadAdmins = function() {
+        return $http.get('/api/admins').then(function(res) {
+            $scope.admins = res.data;
+            if ($scope.selectedAdmin) {
+                var found = $scope.admins.find(function(a) { return a.id === $scope.selectedAdmin.id; });
+                if (found) {
+                    $scope.selectedAdmin = found;
+                } else if ($scope.admins.length > 0) {
+                    $scope.selectedAdmin = $scope.admins[0];
+                }
+            } else if ($scope.admins.length > 0) {
+                $scope.selectedAdmin = $scope.admins[0];
+            }
+        });
+    };
+
+    $scope.createAdmin = function() {
+        if (!$scope.newAdmin.username || !$scope.newAdmin.password) {
+            $scope.showToast('Username and password are required', 'error');
+            return;
+        }
+        $http.post('/api/admins', $scope.newAdmin).then(function(res) {
+            $scope.showToast('Administrator created successfully');
+            $scope.loadAdmins().then(function() {
+                $scope.setAdminView('inspect', res.data);
+            });
+        }, function(err) {
+            var errorMsg = err.data && err.data.fieldErrors ? JSON.stringify(err.data.fieldErrors) : (err.data && err.data.message ? err.data.message : 'Failed to create admin');
+            $scope.showToast(errorMsg, 'error');
+        });
+    };
+
+    $scope.toggleAdminStatus = function(admin, event) {
+        if (event) event.stopPropagation();
+        $http.patch('/api/admins/' + admin.id + '/toggle-status').then(function(res) {
+            admin.status = res.data.status;
+            if ($scope.selectedAdmin && $scope.selectedAdmin.id === admin.id) {
+                $scope.selectedAdmin.status = res.data.status;
+            }
+            $scope.showToast('Admin status: ' + admin.status);
+        });
+    };
+
+    $scope.performDeleteAdmin = function(admin) {
+        if (!admin) return;
+        $http.delete('/api/admins/' + admin.id).then(function() {
+            $scope.showToast('Administrator ' + admin.username + ' deleted successfully');
+            $scope.selectedAdmin = null;
+            $scope.loadAdmins().then(function() {
+                $scope.setAdminView('list');
+            });
+        }, function(err) {
+            var msg = err.data && err.data.message ? err.data.message : 'Failed to delete admin';
+            $scope.showToast(msg, 'error');
+        });
+    };
+
+    // =========================================================
+    // USER TAB - VIEW ROUTING & CRUD ACTIONS
+    // =========================================================
+    $scope.newUser = {
+        usernameEn: '',
+        usernameAr: '',
+        usernameKu: '',
+        password: '',
+        phoneNumber: '',
+        status: 'ACTIVE'
+    };
+
+    $scope.setUserView = function(view, user) {
+        $scope.currentTab = 'users';
+        $scope.userView = view || 'list';
+
+        var targetUser = user || $scope.selectedUser || ($scope.users.length > 0 ? $scope.users[0] : null);
+
+        if (view === 'create') {
+            $scope.newUser = {
+                usernameEn: '',
+                usernameAr: '',
+                usernameKu: '',
+                password: '',
+                phoneNumber: '',
+                status: 'ACTIVE'
+            };
+            $scope.updateHash('/users/create');
+        } else if (view === 'inspect' || view === 'update' || view === 'delete') {
+            if (targetUser) {
+                $scope.selectedUser = targetUser;
+                $scope.editingUser = angular.copy(targetUser);
+                $scope.loadUserModules(targetUser.id);
+                $scope.updateHash('/users/' + view + '/' + targetUser.id);
+            } else {
+                $scope.updateHash('/users/' + view);
+            }
+        } else {
+            $scope.updateHash('/users');
+        }
+    };
+
+    $scope.loadUsers = function() {
+        return $http.get('/api/users').then(function(res) {
+            $scope.users = res.data;
+            if ($scope.selectedUser) {
+                var found = $scope.users.find(function(u) { return u.id === $scope.selectedUser.id; });
+                if (found) {
+                    $scope.selectedUser = found;
+                    $scope.editingUser = angular.copy(found);
+                    $scope.loadUserModules(found.id);
+                } else if ($scope.users.length > 0) {
+                    $scope.selectedUser = $scope.users[0];
+                    $scope.editingUser = angular.copy($scope.users[0]);
+                    $scope.loadUserModules($scope.users[0].id);
+                }
+            } else if ($scope.users.length > 0) {
+                $scope.selectedUser = $scope.users[0];
+                $scope.editingUser = angular.copy($scope.users[0]);
+                $scope.loadUserModules($scope.users[0].id);
+            }
+        });
+    };
+
+    $scope.loadUserModules = function(userId) {
+        if (!userId) return;
+        $http.get('/api/users/' + userId + '/modules').then(function(res) {
+            $scope.userModules = res.data;
+        });
+    };
+
+    $scope.createUser = function() {
+        if (!$scope.newUser.usernameEn || !$scope.newUser.password) {
+            $scope.showToast('English username and password are required', 'error');
+            return;
+        }
+        $http.post('/api/users', $scope.newUser).then(function(res) {
+            $scope.showToast('User created successfully');
+            $scope.loadUsers().then(function() {
+                $scope.setUserView('inspect', res.data);
+            });
+        }, function(err) {
+            var errorMsg = err.data && err.data.fieldErrors ? JSON.stringify(err.data.fieldErrors) : (err.data && err.data.message ? err.data.message : 'Failed to create user');
+            $scope.showToast(errorMsg, 'error');
+        });
+    };
+
+    $scope.updateUser = function() {
+        if (!$scope.editingUser || !$scope.editingUser.usernameEn) {
+            $scope.showToast('English username is required', 'error');
+            return;
+        }
+        $http.put('/api/users/' + $scope.editingUser.id, $scope.editingUser).then(function(res) {
+            $scope.showToast('User details updated successfully');
+            $scope.selectedUser = res.data;
+            $scope.loadUsers().then(function() {
+                $scope.setUserView('inspect', res.data);
+            });
+        }, function(err) {
+            var msg = err.data && err.data.message ? err.data.message : 'Failed to update user';
+            $scope.showToast(msg, 'error');
+        });
+    };
+
+    $scope.toggleUserStatus = function(user, event) {
+        if (event) event.stopPropagation();
+        $http.patch('/api/users/' + user.id + '/toggle-status').then(function(res) {
+            user.status = res.data.status;
+            if ($scope.selectedUser && $scope.selectedUser.id === user.id) {
+                $scope.selectedUser.status = res.data.status;
+            }
+            $scope.showToast('User status: ' + user.status);
+        });
+    };
+
+    $scope.performDeleteUser = function(user) {
+        if (!user) return;
+        $http.delete('/api/users/' + user.id).then(function() {
+            $scope.showToast('User ' + user.usernameEn + ' deleted successfully');
+            $scope.selectedUser = null;
+            $scope.loadUsers().then(function() {
+                $scope.setUserView('list');
+            });
+        }, function(err) {
+            var msg = err.data && err.data.message ? err.data.message : 'Failed to delete user';
+            $scope.showToast(msg, 'error');
+        });
+    };
+
+    // DIRECT INLINE CRUD TOGGLE ON ANY 3-COLUMN MODULE CARD
+    $scope.toggleModuleField = function(mod, field) {
+        var newVal;
+        if (field === 'visible') {
+            newVal = !mod.visible;
+        } else if (field === 'canCreate') {
+            newVal = !mod.canCreate;
+        } else if (field === 'canRead') {
+            newVal = !mod.canRead;
+        } else if (field === 'canUpdate') {
+            newVal = !mod.canUpdate;
+        } else if (field === 'canDelete') {
+            newVal = !mod.canDelete;
+        }
+
+        var paramField = field.replace('can', '').toLowerCase();
+
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=' + paramField + '&value=' + newVal)
+            .then(function() {
+                if (field === 'visible') mod.visible = newVal;
+                if (field === 'canCreate') mod.canCreate = newVal;
+                if (field === 'canRead') mod.canRead = newVal;
+                if (field === 'canUpdate') mod.canUpdate = newVal;
+                if (field === 'canDelete') mod.canDelete = newVal;
+                $scope.showToast(mod.moduleNameEn + ': ' + paramField.toUpperCase() + ' ' + (newVal ? 'ON' : 'OFF'));
+            }, function() {
+                $scope.showToast('Failed to update permission', 'error');
+            });
+    };
+
+    // Module Quick Preset Actions
+    $scope.setFullCrud = function(mod) {
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=full_crud&value=true')
+            .then(function() {
+                mod.canCreate = true;
+                mod.canRead = true;
+                mod.canUpdate = true;
+                mod.canDelete = true;
+                mod.visible = true;
+                $scope.showToast(mod.moduleNameEn + ': Full CRUD granted');
+            });
+    };
+
+    $scope.setReadOnly = function(mod) {
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=create&value=false');
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=read&value=true');
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=update&value=false');
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=delete&value=false');
+        mod.canCreate = false;
+        mod.canRead = true;
+        mod.canUpdate = false;
+        mod.canDelete = false;
+        mod.visible = true;
+        $scope.showToast(mod.moduleNameEn + ': Set to Read Only');
+    };
+
+    $scope.revokeModuleAccess = function(mod) {
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=full_crud&value=false');
+        $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=visible&value=false');
+        mod.canCreate = false;
+        mod.canRead = false;
+        mod.canUpdate = false;
+        mod.canDelete = false;
+        mod.visible = false;
+        $scope.showToast(mod.moduleNameEn + ': Access Revoked / Hidden');
+    };
+
+    // =========================================================
+    // ROLE TEMPLATES MANAGEMENT (Dedicated Page)
+    // =========================================================
+    $scope.newRole = {
+        name: '',
+        canCreate: false,
+        canRead: true,
+        canUpdate: false,
+        canDelete: false
+    };
+
+    $scope.showAddRoleForm = false;
+    $scope.toggleAddRoleForm = function() {
+        $scope.showAddRoleForm = !$scope.showAddRoleForm;
+    };
+
+    $scope.loadRoles = function() {
+        return $http.get('/api/roles').then(function(res) {
+            $scope.roles = res.data;
+        });
+    };
+
+    $scope.createRole = function() {
+        if (!$scope.newRole.name || $scope.newRole.name.trim() === '') {
+            $scope.showToast('Role name is required', 'error');
+            return;
+        }
+        $http.post('/api/roles', $scope.newRole).then(function() {
+            $scope.showToast('Role template created successfully');
+            $scope.newRole = { name: '', canCreate: false, canRead: true, canUpdate: false, canDelete: false };
+            $scope.showAddRoleForm = false;
+            $scope.loadRoles();
+        }, function(err) {
+            $scope.showToast(err.data && err.data.error ? err.data.error : 'Failed to create role', 'error');
+        });
+    };
+
+    $scope.toggleRoleField = function(role, field) {
+        var newVal;
+        if (field === 'canCreate') newVal = !role.canCreate;
+        if (field === 'canRead') newVal = !role.canRead;
+        if (field === 'canUpdate') newVal = !role.canUpdate;
+        if (field === 'canDelete') newVal = !role.canDelete;
+
+        var paramField = field.replace('can', '').toLowerCase();
+
+        $http.patch('/api/roles/' + role.id + '/toggle?field=' + paramField + '&value=' + newVal)
+            .then(function() {
+                if (field === 'canCreate') role.canCreate = newVal;
+                if (field === 'canRead') role.canRead = newVal;
+                if (field === 'canUpdate') role.canUpdate = newVal;
+                if (field === 'canDelete') role.canDelete = newVal;
+                $scope.showToast(role.name + ': ' + paramField.toUpperCase() + ' ' + (newVal ? 'ON' : 'OFF'));
+            }, function() {
+                $scope.showToast('Failed to update role permission', 'error');
+            });
+    };
+
+    $scope.deleteRole = function(role) {
+        $http.delete('/api/roles/' + role.id).then(function() {
+            $scope.showToast('Role deleted');
+            $scope.loadRoles();
+        });
+    };
+
+    // =========================================================
+    // CUSTOMER FOLLOW-UP MANAGEMENT (PAGE-PER-ACTION WORKFLOW)
+    // =========================================================
+    $scope.loadCustomers = function(filter) {
+        var f = filter || $scope.customerTimeFilter || 'all';
+        return $http.get('/api/customers?filter=' + f).then(function(res) {
+            $scope.customers = res.data;
+            if ($scope.selectedCustomer) {
+                var found = $scope.customers.find(function(c) { return c.id === $scope.selectedCustomer.id; });
+                if (found) $scope.selectedCustomer = found;
+            } else if ($scope.customers.length > 0) {
+                $scope.selectedCustomer = $scope.customers[0];
+            }
+        });
+    };
+
+    $scope.loadCustomerStats = function() {
+        return $http.get('/api/customers/stats').then(function(res) {
+            $scope.customerStats = res.data;
+        });
+    };
+
+    $scope.setCustomerTimeFilter = function(filter) {
+        $scope.customerTimeFilter = filter;
+        $scope.loadCustomers(filter);
+    };
+
+    $scope.setCustomerView = function(view, customer) {
+        $scope.currentTab = 'customers';
+        $scope.customerView = view || 'list';
+
+        var targetCustomer = customer || $scope.selectedCustomer || ($scope.customers.length > 0 ? $scope.customers[0] : null);
+
+        if (view === 'orders') {
+            if (targetCustomer) {
+                $scope.selectedCustomer = targetCustomer;
+                $scope.loadCustomerOrders(targetCustomer.id);
+                $scope.updateHash('/customers/orders/' + targetCustomer.id);
+            } else {
+                $scope.updateHash('/customers/orders');
+            }
+        } else if (view === 'feedback') {
+            if (targetCustomer) {
+                $scope.selectedCustomer = targetCustomer;
+                $scope.loadCustomerFeedbacks(targetCustomer.id);
+                $scope.updateHash('/customers/feedback/' + targetCustomer.id);
+            } else {
+                $scope.updateHash('/customers/feedback');
+            }
+        } else {
+            $scope.loadCustomers($scope.customerTimeFilter);
+            $scope.loadCustomerStats();
+            $scope.updateHash('/customers');
+        }
+    };
+
+    $scope.loadCustomerOrders = function(customerId) {
+        if (!customerId) return;
+        return $http.get('/api/customers/' + customerId + '/orders').then(function(res) {
+            $scope.customerOrders = res.data;
+        });
+    };
+
+    $scope.loadCustomerFeedbacks = function(customerId) {
+        if (!customerId) return;
+        return $http.get('/api/customers/' + customerId + '/feedbacks').then(function(res) {
+            $scope.customerFeedbacks = res.data;
+        });
+    };
+
+    $scope.submitCustomerFeedback = function() {
+        if (!$scope.selectedCustomer || !$scope.newCustomerFeedback.content) {
+            $scope.showToast('Please enter note/compliment details', 'error');
+            return;
+        }
+        $http.post('/api/customers/' + $scope.selectedCustomer.id + '/feedbacks', $scope.newCustomerFeedback).then(function() {
+            $scope.showToast('Customer feedback / compliment saved successfully');
+            $scope.newCustomerFeedback = {
+                feedbackType: 'COMPLIMENT',
+                content: '',
+                rating: 5,
+                authorName: 'Follow-up Agent'
+            };
+            $scope.loadCustomerFeedbacks($scope.selectedCustomer.id);
+            $scope.loadCustomerStats();
+        }, function(err) {
+            $scope.showToast(err.data && err.data.error ? err.data.error : 'Failed to save feedback', 'error');
+        });
+    };
+
+    $scope.submitCustomerOrder = function() {
+        if (!$scope.selectedCustomer || !$scope.newCustomerOrder.itemsSummary) {
+            $scope.showToast('Please enter items description', 'error');
+            return;
+        }
+        $http.post('/api/customers/' + $scope.selectedCustomer.id + '/orders', $scope.newCustomerOrder).then(function() {
+            $scope.showToast('Purchase order logged successfully');
+            $scope.newCustomerOrder = {
+                orderNumber: 'ORD-' + Math.floor(100 + Math.random() * 900),
+                itemsSummary: '',
+                totalAmount: 150.0,
+                paymentMethod: 'Cash on Delivery',
+                orderStatus: 'DELIVERED'
+            };
+            $scope.loadCustomerOrders($scope.selectedCustomer.id);
+            $scope.loadCustomers($scope.customerTimeFilter);
+            $scope.loadCustomerStats();
+        }, function(err) {
+            $scope.showToast(err.data && err.data.error ? err.data.error : 'Failed to save order', 'error');
+        });
+    };
+
+    // Helper functions
+    $scope.getUserDisplayName = function(user) {
+        if (!user) return '';
+        return user.usernameEn || user.usernameAr || user.usernameKu;
+    };
+
+    $scope.formatDaysText = function(days) {
+        if (days === 0 || days === 1) return '24 Hours Ago';
+        if (days <= 7) return days + ' Days Ago (1 Week)';
+        return days + ' Days Ago';
+    };
+
+    $scope.refreshAllData = function() {
+        $scope.loadAdmins();
+        $scope.loadUsers();
+        $scope.loadRoles();
+        $scope.loadCustomers();
+        $scope.loadCustomerStats();
+        $scope.loadTimeFilterPresets();
+    };
+
+    // Initialize application
+    $scope.init = function() {
+        $scope.refreshAllData();
+        $scope.syncRouteFromHash();
+    };
+
+    $scope.init();
+}]);

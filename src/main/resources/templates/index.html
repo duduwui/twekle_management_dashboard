@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="tweklApp">
 <head>
+    <base href="/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twekl Management Dashboard</title>
@@ -20,10 +21,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Custom Comic Design System Style -->
-    <link rel="stylesheet" href="/css/style.css?v=3.3">
+    <link rel="stylesheet" href="/css/style.css?v=3.4">
     <!-- AngularJS (1.8.2) -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <script src="/js/app.js?v=3.3"></script>
+    <script src="/js/app.js?v=3.4"></script>
 </head>
 <body ng-controller="DashboardController" ng-cloak>
 
@@ -82,13 +83,13 @@
                     </div>
                 </div>
 
-                <!-- Group 2: Customer Follow-up -->
+                <!-- Group 2: Follow-ups -->
                 <button type="button" 
                         class="nav-item" 
                         ng-class="{'active': currentTab === 'customers'}" 
                         ng-click="setTab('customers')" 
                         style="margin-top: 6px;">
-                    <span>Customer Follow-up</span>
+                    <span>Follow-ups</span>
                     <span class="nav-badge" ng-bind="customers.length">0</span>
                 </button>
             </div>
@@ -102,7 +103,7 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'admins'">Admin Management</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'users'">User Roles & Permissions</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'roles'">Role Templates Directory</h1>
-                    <h1 class="header-page-title" ng-show="currentTab === 'customers'">Customer Follow-up & Order History</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups & Purchase History</h1>
                 </div>
             </header>
 
@@ -144,7 +145,7 @@
                                         <th class="comic-sortable-th" ng-click="sortBy('username')">
                                             Username <span class="sort-indicator" ng-bind="getSortIndicator('username')"></span>
                                         </th>
-                                        <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
+                                        <th class="comic-sortable-th col-phone nowrap" ng-click="sortBy('phoneNumber')">
                                             Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
                                         </th>
                                         <th class="comic-sortable-th" ng-click="sortBy('superAdmin')">
@@ -153,13 +154,13 @@
                                         <th class="comic-sortable-th" ng-click="sortBy('status')">
                                             Status <span class="sort-indicator" ng-bind="getSortIndicator('status')"></span>
                                         </th>
-                                        <th style="text-align: right;">Actions</th>
+                                        <th style="text-align: right;" class="nowrap">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr ng-repeat="admin in getPagedAdmins() track by admin.id">
                                         <td><strong ng-bind="admin.username"></strong></td>
-                                        <td><span style="color: var(--text-muted);" ng-bind="admin.phoneNumber || '-'"></span></td>
+                                        <td class="col-phone nowrap"><span style="color: var(--text-muted); white-space: nowrap;" ng-bind="admin.phoneNumber || '-'"></span></td>
                                         <td>
                                             <span class="comic-tag" ng-class="admin.superAdmin ? 'tag-primary' : 'tag-muted'">
                                                 <span ng-if="admin.superAdmin">Super Admin</span>
@@ -619,13 +620,13 @@
                                         <th class="comic-sortable-th" ng-click="sortBy('usernameEn')">
                                             Username <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
                                         </th>
-                                        <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
+                                        <th class="comic-sortable-th col-phone nowrap" ng-click="sortBy('phoneNumber')">
                                             Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
                                         </th>
                                         <th class="comic-sortable-th" ng-click="sortBy('status')">
                                             Status <span class="sort-indicator" ng-bind="getSortIndicator('status')"></span>
                                         </th>
-                                        <th style="text-align: right;">Actions</th>
+                                        <th style="text-align: right;" class="nowrap">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -633,10 +634,10 @@
                                         style="cursor: pointer;"
                                         ng-click="setUserView('inspect', user)">
                                         <td>
-                                            <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>
+                                             <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>
                                         </td>
-                                        <td>
-                                            <span style="color: var(--text-muted); font-weight: 700;" ng-bind="user.phoneNumber || '-'"></span>
+                                        <td class="col-phone nowrap">
+                                            <span style="color: var(--text-muted); font-weight: 700; white-space: nowrap;" ng-bind="user.phoneNumber || '-'"></span>
                                         </td>
                                         <td>
                                             <div style="display: flex; align-items: center; gap: 8px;" ng-click="$event.stopPropagation()">
@@ -1136,31 +1137,31 @@
                             <table class="comic-table">
                                 <thead>
                                     <tr>
-                                        <th class="comic-sortable-th" style="width: 75px;" ng-click="sortBy('id')">
+                                        <th class="comic-sortable-th nowrap" style="width: 75px;" ng-click="sortBy('id')">
                                              ID <span class="sort-indicator" ng-bind="getSortIndicator('id')"></span>
                                         </th>
                                         <th class="comic-sortable-th" ng-click="sortBy('name')">
                                             Customer Details <span class="sort-indicator" ng-bind="getSortIndicator('name')"></span>
                                         </th>
-                                        <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
+                                        <th class="comic-sortable-th col-phone nowrap" ng-click="sortBy('phoneNumber')">
                                             Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
                                         </th>
-                                        <th class="comic-sortable-th" ng-click="sortBy('totalOrders')">
+                                        <th class="comic-sortable-th nowrap" ng-click="sortBy('totalOrders')">
                                             Order Count <span class="sort-indicator" ng-bind="getSortIndicator('totalOrders')"></span>
                                         </th>
-                                        <th class="comic-sortable-th" ng-click="sortBy('totalSpent')">
+                                        <th class="comic-sortable-th nowrap" ng-click="sortBy('totalSpent')">
                                             Total Spend <span class="sort-indicator" ng-bind="getSortIndicator('totalSpent')"></span>
                                         </th>
-                                        <th class="comic-sortable-th" ng-click="sortBy('daysSinceLastOrder')">
-                                            Days Since Last Order <span class="sort-indicator" ng-bind="getSortIndicator('daysSinceLastOrder')"></span>
+                                        <th class="comic-sortable-th nowrap" ng-click="sortBy('remainingFollowupsCount')">
+                                            Remaining Order Follow-ups <span class="sort-indicator" ng-bind="getSortIndicator('remainingFollowupsCount')"></span>
                                         </th>
-                                        <th style="text-align: right;">Page Actions</th>
+                                        <th style="text-align: right;" class="nowrap">Page Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr ng-repeat="cust in getPagedCustomers() track by cust.id"
                                         ng-class="cust.allFollowupsCompleted ? 'row-completed' : 'row-pending'">
-                                        <td>
+                                        <td class="nowrap">
                                             <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'#' + cust.id"></strong>
                                         </td>
                                         <td>
@@ -1171,29 +1172,30 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <strong style="font-size: 0.92rem;" ng-bind="cust.phoneNumber"></strong>
+                                        <td class="col-phone nowrap">
+                                            <strong style="font-size: 0.92rem; white-space: nowrap;" ng-bind="cust.phoneNumber"></strong>
                                         </td>
-                                        <td>
-                                            <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="cust.totalOrders + ' Orders'"></strong>
+                                        <td class="nowrap">
+                                            <strong style="font-size: 0.95rem; color: var(--text-main); white-space: nowrap;" ng-bind="cust.totalOrders + ' Orders'"></strong>
                                         </td>
-                                        <td>
-                                            <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="'$' + (cust.totalSpent | number:2)"></strong>
+                                        <td class="nowrap">
+                                            <strong style="font-size: 0.95rem; color: var(--primary-dark); white-space: nowrap;" ng-bind="'$' + (cust.totalSpent | number:2)"></strong>
                                         </td>
-                                        <td>
-                                            <span class="comic-tag" 
-                                                  ng-class="{'tag-primary': cust.daysSinceLastOrder <= 1, 'tag-warning': cust.daysSinceLastOrder > 1 && cust.daysSinceLastOrder <= 7, 'tag-danger': cust.daysSinceLastOrder > 7}"
-                                                  ng-bind="formatDaysText(cust.daysSinceLastOrder)">
+                                        <td class="nowrap">
+                                            <span class="comic-tag tag-primary" ng-if="cust.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
+                                                ✓ All Done
                                             </span>
+                                            <span class="comic-tag tag-warning" ng-if="!cust.allFollowupsCompleted && cust.totalOrders > 0" ng-bind="cust.nextPendingFollowup || 'Pending'"></span>
+                                            <span ng-if="!cust.totalOrders || cust.totalOrders === 0" style="color: var(--text-muted); font-weight: 700;">-</span>
                                         </td>
-                                        <td style="text-align: right;">
+                                        <td style="text-align: right;" class="nowrap">
                                             <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem; margin-right: 8px;" ng-click="setCustomerView('orders', cust)">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                                                 Orders Log
                                             </button>
                                             <button type="button" class="comic-btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="setCustomerView('feedback', cust)">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                                Reviews & Compliments
+                                                Reviews & Notes
                                             </button>
                                         </td>
                                     </tr>
@@ -1225,7 +1227,7 @@
                         
                         <div class="action-page-header">
                             <button type="button" class="back-btn" ng-click="setCustomerView('list')">
-                                ← Back to Customer Follow-up
+                                ← Back to Follow-ups
                             </button>
                         </div>
 
@@ -1245,7 +1247,7 @@
                             <div style="display: flex; gap: 10px;">
                                 <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('feedback', selectedCustomer)">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                    View Reviews & Compliments
+                                    View Notes & Photos
                                 </button>
                             </div>
                         </div>
@@ -1423,12 +1425,12 @@
 
                     </div>
 
-                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE (PROFESSIONAL AUDIT DATATABLE) -->
+                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE -->
                     <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
                             <button type="button" class="back-btn" ng-click="setCustomerView('list')">
-                                ← Back to Customer Follow-up
+                                ← Back to Follow-ups
                             </button>
                         </div>
 
@@ -1440,8 +1442,8 @@
                                     <span ng-bind="selectedCustomer.name"></span>
                                     <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-bind="'(ID: #' + selectedCustomer.id + ')'"></span>
                                 </h3>
-                                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
-                                    Phone: <strong ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city"></strong> • Email: <strong ng-bind="selectedCustomer.email"></strong>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 3px;">
+                                    Phone: <strong style="color: var(--text-main); white-space: nowrap;" ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city || 'Erbil'"></strong> • Email: <strong ng-bind="selectedCustomer.email || '-'"></strong>
                                 </div>
                             </div>
 
@@ -1452,16 +1454,16 @@
                                 </button>
                                 <button type="button" class="comic-btn" ng-click="openAddFeedbackModal()">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                    + Log Review / Compliment
+                                    + Add Order Note & Photo
                                 </button>
                             </div>
                         </div>
 
                         <!-- Feedback Filter Toolbar & Professional DataTable -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Logged Compliments, Reviews & Order Notes:</div>
+                            <div style="font-size: 1.15rem; font-weight: 900;">Customer Order Notes, Compliments & Photos:</div>
 
-                            <!-- Filter Toolbar (Date Range + Presets Dropdown + Type Pills + Live Search) -->
+                            <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
@@ -1469,7 +1471,6 @@
                                     <span class="filter-date-label">To:</span>
                                     <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateTo" title="End Date">
                                     
-                                    <!-- Dynamic Time Presets Dropdown -->
                                     <!-- Big Filter Preset Selector Button -->
                                     <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedFeedbackTimePreset}" ng-click="openFilterModal('feedback')" title="Select Time Filter Preset">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1480,20 +1481,12 @@
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedFeedbackTimePreset" ng-click="selectFeedbackTimePreset(null)" title="Click to clear filter">
                                         <span ng-bind="selectedFeedbackTimePreset.name"></span> ✕
                                     </span>
-
-                                    <!-- Feedback Type Filter Pills -->
-                                    <div style="display: flex; gap: 6px; margin-left: 6px;">
-                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'ALL'}" ng-click="setFeedbackTypeFilter('ALL')">All</button>
-                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'COMPLIMENT'}" ng-click="setFeedbackTypeFilter('COMPLIMENT')">Compliments</button>
-                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'REVIEW'}" ng-click="setFeedbackTypeFilter('REVIEW')">Reviews</button>
-                                        <button type="button" class="comic-btn-secondary-sm" ng-class="{'btn-active-pill': feedbackFilters.type === 'NOTE'}" ng-click="setFeedbackTypeFilter('NOTE')">Notes</button>
-                                    </div>
                                 </div>
 
                                 <!-- Live Search Bar -->
                                 <div class="filter-search-box">
                                     <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" class="comic-search-bar" placeholder="Search customer, product, feedback..." ng-model="feedbackFilters.search">
+                                    <input type="text" class="comic-search-bar" placeholder="Search notes, orders, items..." ng-model="feedbackFilters.search">
                                     <button type="button" class="search-clear-btn" ng-show="feedbackFilters.search" ng-click="feedbackFilters.search = ''; feedbackDt.currentPage = 1;" title="Clear search">✕</button>
                                 </div>
                             </div>
@@ -1503,75 +1496,66 @@
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th class="comic-sortable-th" style="width: 125px;" ng-click="sortFeedbacksBy('createdAt')">
+                                            <th class="comic-sortable-th nowrap" style="width: 140px;" ng-click="sortFeedbacksBy('createdAt')">
                                                 Date & Time <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('createdAt')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" style="width: 110px;" ng-click="sortFeedbacksBy('feedbackType')">
-                                                Type <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('feedbackType')"></span>
-                                            </th>
-                                            <th class="comic-sortable-th" style="width: 170px;" ng-click="sortFeedbacksBy('customerName')">
+                                            <th class="comic-sortable-th col-phone nowrap" style="width: 180px;" ng-click="sortFeedbacksBy('customerName')">
                                                 Customer <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('customerName')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" style="width: 230px;" ng-click="sortFeedbacksBy('orderNumber')">
-                                                Purchased Product / Order <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('orderNumber')"></span>
+                                            <th class="comic-sortable-th nowrap" style="width: 220px;" ng-click="sortFeedbacksBy('orderNumber')">
+                                                Order / Product <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('orderNumber')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortFeedbacksBy('rating')">
-                                                Product Rating <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('rating')"></span>
-                                            </th>
-                                            <th>Review / Note Details</th>
-                                            <th class="comic-sortable-th" style="width: 120px;" ng-click="sortFeedbacksBy('authorName')">
+                                            <th>Note & Details</th>
+                                            <th class="nowrap" style="width: 120px;">Attached Photo</th>
+                                            <th class="comic-sortable-th nowrap" style="width: 130px;" ng-click="sortFeedbacksBy('authorName')">
                                                 Logged By <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('authorName')"></span>
                                             </th>
+                                            <th style="text-align: right;" class="nowrap" style="width: 140px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="fb in getPagedCustomerFeedbacks() track by fb.id"
-                                            ng-class="{'tr-status-active': fb.feedbackType === 'COMPLIMENT', 'tr-status-warning': fb.feedbackType === 'REVIEW', 'tr-status-inactive': fb.feedbackType === 'NOTE'}">
-                                            <td>
+                                        <tr ng-repeat="fb in getPagedCustomerFeedbacks() track by fb.id">
+                                            <td class="nowrap">
                                                 <span style="font-weight: 700; font-size: 0.85rem;" ng-bind="fb.createdAt | date:'yyyy-MM-dd HH:mm'"></span>
                                             </td>
-                                            <td>
-                                                <span class="comic-tag" 
-                                                      ng-class="{'tag-primary': fb.feedbackType === 'COMPLIMENT', 'tag-warning': fb.feedbackType === 'REVIEW', 'tag-muted': fb.feedbackType === 'NOTE'}"
-                                                      ng-bind="fb.feedbackType">
-                                                </span>
-                                            </td>
-                                            <td>
+                                            <td class="col-phone nowrap">
                                                 <div>
                                                     <strong style="color: var(--primary-dark); font-size: 0.92rem;" ng-bind="fb.customerName || selectedCustomer.name"></strong>
-                                                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; margin-top: 2px;" ng-if="selectedCustomer">
+                                                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; margin-top: 2px; white-space: nowrap;" ng-if="selectedCustomer">
                                                         <span ng-bind="selectedCustomer.phoneNumber"></span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td class="nowrap">
                                                 <div ng-if="fb.orderNumber">
                                                     <span class="comic-tag tag-primary" style="font-weight: 800; font-size: 0.8rem;" ng-bind="fb.orderNumber"></span>
                                                     <div style="font-size: 0.82rem; font-weight: 700; color: #1E293B; margin-top: 4px;" ng-bind="fb.orderSummary"></div>
                                                 </div>
                                                 <div ng-if="!fb.orderNumber">
-                                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; font-style: italic;">General Account Feedback</span>
+                                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; font-style: italic;">General Account Note</span>
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <div ng-if="fb.rating" style="display: flex; flex-direction: column; gap: 3px;">
-                                                    <span style="color: #F59E0B; font-weight: 900; font-size: 0.9rem;">
-                                                        <svg ng-repeat="n in [].constructor(fb.rating) track by $index" width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 1px; vertical-align: -2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                                    </span>
-                                                    <span style="font-size: 0.78rem; font-weight: 900; color: #0F172A;" ng-bind="fb.rating + '.0 / 5.0'"></span>
-                                                </div>
-                                                <span ng-if="!fb.rating" style="color: var(--text-muted); font-weight: 700;">-</span>
                                             </td>
                                             <td>
                                                 <div style="font-size: 0.9rem; font-weight: 600; line-height: 1.45; color: var(--text-main);" ng-bind="fb.content"></div>
                                             </td>
-                                            <td>
+                                            <td class="nowrap">
+                                                <div ng-if="fb.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(fb.imageUrl)" title="Click to view full image">
+                                                    <img ng-src="{{fb.imageUrl}}" class="check-image-thumb" alt="Proof">
+                                                </div>
+                                                <span class="check-no-image" ng-if="!fb.imageUrl">No photo</span>
+                                            </td>
+                                            <td class="nowrap">
                                                 <strong style="color: var(--text-main); font-size: 0.88rem;" ng-bind="fb.authorName || 'Agent'"></strong>
+                                            </td>
+                                            <td style="text-align: right;" class="nowrap">
+                                                <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFeedbackModal(fb)">
+                                                    Edit Note & Photo
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr ng-if="getFilteredCustomerFeedbacks().length === 0">
                                             <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
-                                                No reviews or compliments match the selected filter criteria.
+                                                No notes or compliments match the selected filter criteria.
                                             </td>
                                         </tr>
                                     </tbody>
@@ -1686,15 +1670,22 @@
         </div>
     </div>
     <!-- ========================================================= -->
-    <!-- 4. LOG CUSTOMER REVIEW / COMPLIMENT / NOTE MODAL          -->
+    <!-- 4. ADD CUSTOMER NOTE / COMPLIMENT & PHOTO MODAL            -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
             <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
-                <strong style="font-size: 1.05rem; color: #1E1B4B;">Log Review, Compliment or Note</strong>
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">+ Add Note & Photo</strong>
                 <button type="button" class="comic-modal-close" ng-click="closeAddFeedbackModal()">&times;</button>
             </div>
             <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Customer Context Header -->
+                <div style="background: #F8FAFC; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic); padding: 10px 14px;" ng-if="selectedCustomer">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer:</div>
+                    <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="selectedCustomer.name"></strong>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-left: 8px;" ng-bind="selectedCustomer.phoneNumber"></span>
+                </div>
+
                 <!-- Associated Order Selector -->
                 <div class="form-group">
                     <label class="form-label">Associated Purchase Order / Product Log</label>
@@ -1703,38 +1694,99 @@
                     </select>
                 </div>
 
-                <!-- Feedback Type Selector -->
+                <!-- Content Textarea -->
                 <div class="form-group">
-                    <label class="form-label">Entry Type</label>
-                    <select class="comic-input" ng-model="newCustomerFeedback.feedbackType">
-                        <option value="COMPLIMENT">Compliment</option>
-                        <option value="REVIEW">Customer Review</option>
-                        <option value="NOTE">Internal Note</option>
-                    </select>
+                    <label class="form-label">Note / Compliment Details</label>
+                    <textarea class="comic-input" rows="4" placeholder="Enter full details of the note or customer compliment..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
                 </div>
 
-                <!-- Rating -->
-                <div class="form-group" ng-if="newCustomerFeedback.feedbackType !== 'NOTE'">
-                    <label class="form-label">Rating</label>
-                    <select class="comic-input" ng-model="newCustomerFeedback.rating" ng-options="r as (r + ' Stars') for r in [5, 4, 3, 2, 1]">
-                    </select>
+                <!-- Attached Proof / Note Image File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Attach Photo / Screenshot</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleFeedbackImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="newCustomerFeedback.imageUrl" ng-click="clearFeedbackImage()">
+                            Remove
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Author / Logged By -->
+                <!-- Photo Preview if present -->
+                <div ng-if="newCustomerFeedback.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{newCustomerFeedback.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Photo attached and ready to save</span>
+                </div>
+
+                <!-- Logged By -->
                 <div class="form-group">
                     <label class="form-label">Logged By</label>
                     <input type="text" class="comic-input" placeholder="e.g. Agent Sarah / Customer Care" ng-model="newCustomerFeedback.authorName">
                 </div>
-
-                <!-- Content Textarea -->
-                <div class="form-group">
-                    <label class="form-label">Content / Review / Note Details</label>
-                    <textarea class="comic-input" rows="4" placeholder="Enter full details of the feedback or compliment..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
-                </div>
             </div>
             <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
                 <button type="button" class="comic-btn-secondary" ng-click="closeAddFeedbackModal()">Cancel</button>
-                <button type="button" class="comic-btn" ng-click="submitCustomerFeedback()">Save Entry</button>
+                <button type="button" class="comic-btn" ng-click="submitCustomerFeedback()">Save Note & Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 4.1 EDIT CUSTOMER NOTE / COMPLIMENT & PHOTO MODAL         -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showEditFeedbackModal" ng-click="closeEditFeedbackModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Edit Note & Photo</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeEditFeedbackModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Customer Context Header -->
+                <div style="background: #F8FAFC; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic); padding: 10px 14px;" ng-if="selectedCustomer">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer:</div>
+                    <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="selectedCustomer.name"></strong>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-left: 8px;" ng-bind="selectedCustomer.phoneNumber"></span>
+                </div>
+
+                <!-- Associated Order Selector -->
+                <div class="form-group">
+                    <label class="form-label">Associated Purchase Order / Product Log</label>
+                    <select class="comic-input" ng-model="editingCustomerFeedback.orderId" ng-options="order.id as (order.orderNumber + ' — ' + order.itemsSummary) for order in customerOrders">
+                        <option value="">-- General / Not Linked to Specific Order --</option>
+                    </select>
+                </div>
+
+                <!-- Content Textarea -->
+                <div class="form-group">
+                    <label class="form-label">Note / Compliment Details</label>
+                    <textarea class="comic-input" rows="4" placeholder="Enter note details..." ng-model="editingCustomerFeedback.content" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Attached Proof / Note Image File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Attached Photo / Screenshot</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleEditFeedbackImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="editingCustomerFeedback.imageUrl" ng-click="clearEditFeedbackImage()">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photo Preview if present -->
+                <div ng-if="editingCustomerFeedback.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{editingCustomerFeedback.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Photo attached and ready to save</span>
+                </div>
+
+                <!-- Logged By -->
+                <div class="form-group">
+                    <label class="form-label">Logged By</label>
+                    <input type="text" class="comic-input" placeholder="e.g. Agent Sarah / Customer Care" ng-model="editingCustomerFeedback.authorName">
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeEditFeedbackModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="saveEditFeedback()">Update Note</button>
             </div>
         </div>
     </div>

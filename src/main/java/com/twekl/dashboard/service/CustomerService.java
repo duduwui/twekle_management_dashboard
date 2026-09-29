@@ -80,27 +80,39 @@ public class CustomerService {
                     c.setLastOrderDate(orders.get(0).getOrderDate());
                 }
 
-                // Check if all follow-up checks are completed across all customer orders
-                boolean allDone = true;
-                boolean hasAnyCheck = false;
+                // Check remaining follow-up checks across all customer orders
+                int remainingCount = 0;
+                int totalChecksCount = 0;
+                String closestPendingMilestone = null;
+
                 for (CustomerOrder o : orders) {
                     List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
-                    if (!checks.isEmpty()) {
-                        hasAnyCheck = true;
-                        for (OrderFollowupCheck chk : checks) {
-                            if (!Boolean.TRUE.equals(chk.getIsCompleted())) {
-                                allDone = false;
-                                break;
+                    for (OrderFollowupCheck chk : checks) {
+                        totalChecksCount++;
+                        if (!Boolean.TRUE.equals(chk.getIsCompleted())) {
+                            remainingCount++;
+                            if (closestPendingMilestone == null) {
+                                String orderSuffix = orders.size() > 1 ? " (" + o.getOrderNumber() + ")" : "";
+                                closestPendingMilestone = chk.getPresetName() + orderSuffix;
                             }
                         }
-                    } else {
-                        allDone = false;
                     }
-                    if (!allDone) break;
                 }
-                c.setAllFollowupsCompleted(hasAnyCheck && allDone);
+
+                boolean allCompleted = (totalChecksCount > 0 && remainingCount == 0);
+                c.setAllFollowupsCompleted(allCompleted);
+                c.setRemainingFollowupsCount(remainingCount);
+                if (allCompleted) {
+                    c.setNextPendingFollowup("All Done");
+                } else if (closestPendingMilestone != null) {
+                    c.setNextPendingFollowup(closestPendingMilestone);
+                } else {
+                    c.setNextPendingFollowup("Pending Follow-up");
+                }
             } else {
                 c.setAllFollowupsCompleted(false);
+                c.setRemainingFollowupsCount(0);
+                c.setNextPendingFollowup("-");
             }
         }
     }
@@ -241,6 +253,22 @@ public class CustomerService {
             });
         }
         return feedbackRepository.save(feedback);
+    }
+
+    public CustomerFeedback updateCustomerFeedback(Long feedbackId, CustomerFeedback update) {
+        return feedbackRepository.findById(feedbackId).map(fb -> {
+            if (update.getContent() != null) fb.setContent(update.getContent());
+            if (update.getImageUrl() != null) fb.setImageUrl(update.getImageUrl());
+            if (update.getAuthorName() != null) fb.setAuthorName(update.getAuthorName());
+            if (update.getOrderId() != null) {
+                fb.setOrderId(update.getOrderId());
+                orderRepository.findById(update.getOrderId()).ifPresent(o -> {
+                    fb.setOrderNumber(o.getOrderNumber());
+                    fb.setOrderSummary(o.getItemsSummary());
+                });
+            }
+            return feedbackRepository.save(fb);
+        }).orElseThrow(() -> new IllegalArgumentException("Feedback not found with id: " + feedbackId));
     }
 
     public Map<String, Object> getCustomerFollowupStats() {

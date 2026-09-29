@@ -1464,6 +1464,21 @@ body {
   vertical-align: middle;
 }
 
+.nowrap,
+.nowrap-cell,
+.comic-table td.col-nowrap,
+.comic-table th.col-nowrap,
+.comic-table td.col-phone,
+.comic-table th.col-phone,
+.comic-table td.col-date,
+.comic-table th.col-date,
+.comic-table td.col-num,
+.comic-table th.col-num,
+.comic-table td.col-action,
+.comic-table th.col-action {
+  white-space: nowrap !important;
+}
+
 .comic-table tbody tr {
   transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }

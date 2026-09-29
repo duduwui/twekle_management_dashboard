@@ -58,6 +58,13 @@ public class CustomerApiController {
         return customerService.addCustomerFeedback(id, feedback);
     }
 
+    @PutMapping("/customers/{customerId}/feedbacks/{feedbackId}")
+    public CustomerFeedback updateCustomerFeedback(@PathVariable Long customerId,
+                                                   @PathVariable Long feedbackId,
+                                                   @RequestBody CustomerFeedback feedback) {
+        return customerService.updateCustomerFeedback(feedbackId, feedback);
+    }
+
     @GetMapping("/customers/stats")
     public Map<String, Object> getCustomerFollowupStats() {
         return customerService.getCustomerFollowupStats();

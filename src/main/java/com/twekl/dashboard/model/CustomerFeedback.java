@@ -30,6 +30,9 @@ public class CustomerFeedback {
     private Integer rating = 5; // 1 - 5 stars
     private String status = "FOLLOWED_UP";  // "FOLLOWED_UP", "PENDING", "RESOLVED"
 
+    @Column(columnDefinition = "LONGTEXT")
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     public CustomerFeedback() {
@@ -98,6 +101,9 @@ public class CustomerFeedback {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -118,6 +124,7 @@ public class CustomerFeedback {
         private String content;
         private Integer rating = 5;
         private String status = "FOLLOWED_UP";
+        private String imageUrl;
         private LocalDateTime createdAt;
 
         public CustomerFeedbackBuilder id(Long id) { this.id = id; return this; }
@@ -131,10 +138,13 @@ public class CustomerFeedback {
         public CustomerFeedbackBuilder content(String content) { this.content = content; return this; }
         public CustomerFeedbackBuilder rating(Integer rating) { this.rating = rating; return this; }
         public CustomerFeedbackBuilder status(String status) { this.status = status; return this; }
+        public CustomerFeedbackBuilder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }
         public CustomerFeedbackBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
 
         public CustomerFeedback build() {
-            return new CustomerFeedback(id, customerId, customerName, orderId, orderNumber, orderSummary, authorName, feedbackType, content, rating, status, createdAt);
+            CustomerFeedback fb = new CustomerFeedback(id, customerId, customerName, orderId, orderNumber, orderSummary, authorName, feedbackType, content, rating, status, createdAt);
+            fb.setImageUrl(imageUrl);
+            return fb;
         }
     }
 }

@@ -32,6 +32,12 @@ public class Customer {
     @Transient
     private Boolean allFollowupsCompleted = false;
 
+    @Transient
+    private String nextPendingFollowup;
+
+    @Transient
+    private Integer remainingFollowupsCount = 0;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -107,6 +113,12 @@ public class Customer {
 
     public Boolean getAllFollowupsCompleted() { return allFollowupsCompleted; }
     public void setAllFollowupsCompleted(Boolean allFollowupsCompleted) { this.allFollowupsCompleted = allFollowupsCompleted; }
+
+    public String getNextPendingFollowup() { return nextPendingFollowup; }
+    public void setNextPendingFollowup(String nextPendingFollowup) { this.nextPendingFollowup = nextPendingFollowup; }
+
+    public Integer getRemainingFollowupsCount() { return remainingFollowupsCount; }
+    public void setRemainingFollowupsCount(Integer remainingFollowupsCount) { this.remainingFollowupsCount = remainingFollowupsCount; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -11,7 +11,24 @@ import java.util.Locale;
 @Controller
 public class WebViewController {
 
-    @GetMapping("/")
+    @GetMapping(value = {
+        "/", 
+        "/login", 
+        "/admin", 
+        "/admin/**", 
+        "/followups", 
+        "/followups/**", 
+        "/users", 
+        "/users/**", 
+        "/roles", 
+        "/roles/**", 
+        "/role-templates", 
+        "/role-templates/**",
+        "/admins", 
+        "/admins/**", 
+        "/customers", 
+        "/customers/**"
+    })
     public String index(Model model) {
         LocalDate today = LocalDate.now();
         String formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH));

@@ -1122,23 +1122,49 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     });
 
     // =========================================================
-    // URL ROUTING & HASH SYNCHRONIZATION
+    // CLEAN URL ROUTING (HTML5 HISTORY API - NO HASH '#')
     // =========================================================
-    $scope.updateHash = function(path) {
-        var formatted = path.startsWith('/') ? '#' + path : '#/' + path;
-        if ($window.location.hash !== formatted) {
-            if ($window.history && $window.history.pushState) {
-                $window.history.pushState(null, '', formatted);
+    $scope.updateUrl = function(path) {
+        if (!path) path = '/admin/admins';
+        if (!path.startsWith('/')) path = '/' + path;
+        
+        // Normalize standard path structures
+        if (path !== '/login' && !path.startsWith('/admin')) {
+            if (path.startsWith('/admins')) path = '/admin/admins' + path.substring(7);
+            else if (path.startsWith('/users')) path = '/admin/users' + path.substring(6);
+            else if (path.startsWith('/roles') || path.startsWith('/role-templates')) path = '/admin/role-templates';
+            else if (path.startsWith('/customers') || path.startsWith('/followups') || path.startsWith('/followup')) {
+                var suffix = path.replace(/^\/(customers|followups|followup)/, '');
+                path = '/admin/followups' + suffix;
             } else {
-                $window.location.hash = formatted;
+                path = '/admin' + path;
+            }
+        }
+        
+        if ($window.location.pathname !== path) {
+            if ($window.history && $window.history.pushState) {
+                $window.history.pushState(null, '', path);
             }
         }
     };
 
-    $scope.syncRouteFromHash = function() {
-        var hash = $window.location.hash || '#/admins';
-        var cleanHash = hash.replace(/^#\/?/, '');
-        var parts = cleanHash.split('/');
+    // Backwards compatibility alias
+    $scope.updateHash = $scope.updateUrl;
+
+    $scope.syncRouteFromPath = function() {
+        var path = $window.location.pathname || '/admin/admins';
+        
+        // Convert any legacy hash URL to clean path seamlessly
+        if ($window.location.hash && $window.location.hash.length > 1) {
+            var legacy = $window.location.hash.replace(/^#\/?/, '');
+            path = legacy.startsWith('admin/') ? '/' + legacy : '/admin/' + legacy;
+            if ($window.history && $window.history.replaceState) {
+                $window.history.replaceState(null, '', path);
+            }
+        }
+
+        var clean = path.replace(/^\/admin\/?/, '').replace(/^\//, '');
+        var parts = clean.split('/');
         var section = parts[0] || 'admins';
         var action = parts[1] || 'list';
         var id = parts[2] ? parseInt(parts[2], 10) : null;
@@ -1150,52 +1176,76 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             if (action === 'filters') {
                 $scope.loadTimeFilterPresets();
             }
-            if (id && $scope.admins && $scope.admins.length > 0) {
-                var foundAdmin = $scope.admins.find(function(a) { return a.id === id; });
-                if (foundAdmin) $scope.selectedAdmin = foundAdmin;
+            if (id) {
+                if ($scope.admins && $scope.admins.length > 0) {
+                    var foundAdmin = $scope.admins.find(function(a) { return a.id === id; });
+                    if (foundAdmin) $scope.selectedAdmin = foundAdmin;
+                } else {
+                    $http.get('/api/admins/' + id).then(function(res) {
+                        $scope.selectedAdmin = res.data;
+                    });
+                }
             }
         } else if (section === 'users') {
             $scope.currentTab = 'users';
             $scope.userView = action;
             $scope.categories.admin = true;
-            if (id && $scope.users && $scope.users.length > 0) {
-                var foundUser = $scope.users.find(function(u) { return u.id === id; });
-                if (foundUser) {
-                    $scope.selectedUser = foundUser;
-                    $scope.editingUser = angular.copy(foundUser);
-                    $scope.loadUserModules(foundUser.id);
+            if (id) {
+                if ($scope.users && $scope.users.length > 0) {
+                    var foundUser = $scope.users.find(function(u) { return u.id === id; });
+                    if (foundUser) {
+                        $scope.selectedUser = foundUser;
+                        $scope.editingUser = angular.copy(foundUser);
+                        $scope.loadUserModules(foundUser.id);
+                    }
+                } else {
+                    $http.get('/api/users/' + id).then(function(res) {
+                        $scope.selectedUser = res.data;
+                        $scope.editingUser = angular.copy(res.data);
+                        $scope.loadUserModules(id);
+                    });
                 }
             }
-        } else if (section === 'roles') {
+        } else if (section === 'roles' || section === 'role-templates') {
             $scope.currentTab = 'roles';
             $scope.categories.admin = true;
             $scope.loadRoles();
-        } else if (section === 'customers' || section === 'followup') {
+        } else if (section === 'customers' || section === 'followups' || section === 'followup') {
             $scope.currentTab = 'customers';
             $scope.customerView = action;
-            if (id && $scope.customers && $scope.customers.length > 0) {
-                var foundCustomer = $scope.customers.find(function(c) { return c.id === id; });
-                if (foundCustomer) {
-                    $scope.selectedCustomer = foundCustomer;
-                    if (action === 'orders') {
-                        $scope.loadCustomerOrders(foundCustomer.id);
-                    } else if (action === 'feedback') {
-                        $scope.loadCustomerFeedbacks(foundCustomer.id);
+            if (id) {
+                if ($scope.customers && $scope.customers.length > 0) {
+                    var foundCustomer = $scope.customers.find(function(c) { return c.id === id; });
+                    if (foundCustomer) {
+                        $scope.selectedCustomer = foundCustomer;
+                        if (action === 'orders') {
+                            $scope.loadCustomerOrders(foundCustomer.id);
+                        } else if (action === 'feedback') {
+                            $scope.loadCustomerOrders(foundCustomer.id);
+                            $scope.loadCustomerFeedbacks(foundCustomer.id);
+                        }
                     }
+                } else {
+                    $http.get('/api/customers/' + id).then(function(res) {
+                        $scope.selectedCustomer = res.data;
+                        if (action === 'orders') {
+                            $scope.loadCustomerOrders(res.data.id);
+                        } else if (action === 'feedback') {
+                            $scope.loadCustomerOrders(res.data.id);
+                            $scope.loadCustomerFeedbacks(res.data.id);
+                        }
+                    });
                 }
             }
         }
     };
 
-    // Listen to browser hash changes (Back / Forward buttons)
-    $window.addEventListener('hashchange', function() {
-        $timeout(function() {
-            $scope.syncRouteFromHash();
-        });
-    });
+    $scope.syncRouteFromHash = $scope.syncRouteFromPath;
+
+    // Listen to browser Back / Forward buttons (HTML5 popstate)
     $window.addEventListener('popstate', function() {
         $timeout(function() {
-            $scope.syncRouteFromHash();
+            $scope.syncRouteFromPath();
         });
     });
 
@@ -1203,26 +1253,26 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.setTab = function(tabName) {
         $scope.currentTab = tabName;
         $scope.dt.currentPage = 1;
-        $scope.filters.search = ''; // Reset search query when navigating tabs to avoid false 0 results
+        $scope.filters.search = '';
         if (tabName === 'admins') {
             $scope.adminView = 'list';
             $scope.categories.admin = true;
             $scope.loadAdmins();
-            $scope.updateHash('/admins');
+            $scope.updateUrl('/admin/admins');
         } else if (tabName === 'users') {
             $scope.userView = 'list';
             $scope.categories.admin = true;
             $scope.loadUsers();
-            $scope.updateHash('/users');
+            $scope.updateUrl('/admin/users');
         } else if (tabName === 'roles') {
             $scope.categories.admin = true;
             $scope.loadRoles();
-            $scope.updateHash('/roles');
+            $scope.updateUrl('/admin/role-templates');
         } else if (tabName === 'customers') {
             $scope.customerView = 'list';
             $scope.loadCustomers($scope.customerTimeFilter);
             $scope.loadCustomerStats();
-            $scope.updateHash('/customers');
+            $scope.updateUrl('/admin/followups');
         }
     };
 
@@ -1255,19 +1305,19 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 canManageUsers: true,
                 status: 'ACTIVE'
             };
-            $scope.updateHash('/admins/create');
+            $scope.updateUrl('/admin/admins/create');
         } else if (view === 'filters') {
             $scope.loadTimeFilterPresets();
-            $scope.updateHash('/admins/filters');
+            $scope.updateUrl('/admin/admins/filters');
         } else if (view === 'inspect' || view === 'delete') {
             if (targetAdmin) {
                 $scope.selectedAdmin = targetAdmin;
-                $scope.updateHash('/admins/' + view + '/' + targetAdmin.id);
+                $scope.updateUrl('/admin/admins/' + view + '/' + targetAdmin.id);
             } else {
-                $scope.updateHash('/admins/' + view);
+                $scope.updateUrl('/admin/admins/' + view);
             }
         } else {
-            $scope.updateHash('/admins');
+            $scope.updateUrl('/admin/admins');
         }
     };
 
@@ -1376,18 +1426,18 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 phoneNumber: '',
                 status: 'ACTIVE'
             };
-            $scope.updateHash('/users/create');
+            $scope.updateUrl('/admin/users/create');
         } else if (view === 'inspect' || view === 'update' || view === 'delete') {
             if (targetUser) {
                 $scope.selectedUser = targetUser;
                 $scope.editingUser = angular.copy(targetUser);
                 $scope.loadUserModules(targetUser.id);
-                $scope.updateHash('/users/' + view + '/' + targetUser.id);
+                $scope.updateUrl('/admin/users/' + view + '/' + targetUser.id);
             } else {
-                $scope.updateHash('/users/' + view);
+                $scope.updateUrl('/admin/users/' + view);
             }
         } else {
-            $scope.updateHash('/users');
+            $scope.updateUrl('/admin/users');
         }
     };
 
@@ -1651,9 +1701,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 }
                 $scope.orderDt.currentPage = 1;
                 $scope.loadCustomerOrders(targetCustomer.id);
-                $scope.updateHash('/customers/orders/' + targetCustomer.id);
+                $scope.updateUrl('/admin/followups/orders/' + targetCustomer.id);
             } else {
-                $scope.updateHash('/customers/orders');
+                $scope.updateUrl('/admin/followups/orders');
             }
         } else if (view === 'feedback') {
             if (targetCustomer) {
@@ -1661,14 +1711,14 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 $scope.feedbackDt.currentPage = 1;
                 $scope.loadCustomerOrders(targetCustomer.id);
                 $scope.loadCustomerFeedbacks(targetCustomer.id);
-                $scope.updateHash('/customers/feedback/' + targetCustomer.id);
+                $scope.updateUrl('/admin/followups/feedback/' + targetCustomer.id);
             } else {
-                $scope.updateHash('/customers/feedback');
+                $scope.updateUrl('/admin/followups/feedback');
             }
         } else {
             $scope.loadCustomers($scope.customerTimeFilter);
             $scope.loadCustomerStats();
-            $scope.updateHash('/customers');
+            $scope.updateUrl('/admin/followups');
         }
     };
 
@@ -1695,9 +1745,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         var defaultOrderId = ($scope.customerOrders && $scope.customerOrders.length > 0) ? $scope.customerOrders[0].id : null;
         $scope.newCustomerFeedback = {
             orderId: defaultOrderId,
-            feedbackType: 'COMPLIMENT',
+            feedbackType: 'NOTE',
             content: '',
-            rating: 5,
+            imageUrl: '',
             authorName: 'Agent Follow-up'
         };
         $scope.showAddFeedbackModal = true;
@@ -1706,18 +1756,128 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.showAddFeedbackModal = false;
     };
 
+    $scope.handleFeedbackImageUpload = function(element) {
+        if (element.files && element.files[0]) {
+            var file = element.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var maxDim = 800;
+                    var width = img.width;
+                    var height = img.height;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                    $scope.$apply(function() {
+                        $scope.newCustomerFeedback.imageUrl = compressedDataUrl;
+                    });
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    $scope.clearFeedbackImage = function() {
+        $scope.newCustomerFeedback.imageUrl = '';
+    };
+
     $scope.submitCustomerFeedback = function() {
         if (!$scope.selectedCustomer || !$scope.newCustomerFeedback.content) {
-            $scope.showToast('Please enter review / note / compliment details', 'error');
+            $scope.showToast('Please enter note / compliment details', 'error');
             return;
         }
         $http.post('/api/customers/' + $scope.selectedCustomer.id + '/feedbacks', $scope.newCustomerFeedback).then(function() {
-            $scope.showToast('Customer feedback / compliment saved successfully');
+            $scope.showToast('Customer order note & image saved successfully');
             $scope.closeAddFeedbackModal();
             $scope.loadCustomerFeedbacks($scope.selectedCustomer.id);
             $scope.loadCustomerStats();
         }, function(err) {
-            $scope.showToast(err.data && err.data.error ? err.data.error : 'Failed to save feedback', 'error');
+            $scope.showToast(err.data && err.data.error ? err.data.error : 'Failed to save note', 'error');
+        });
+    };
+
+    // Edit Existing Feedback / Compliment Modal
+    $scope.editingCustomerFeedback = null;
+    $scope.showEditFeedbackModal = false;
+
+    $scope.openEditFeedbackModal = function(fb) {
+        $scope.editingCustomerFeedback = angular.copy(fb);
+        $scope.showEditFeedbackModal = true;
+    };
+
+    $scope.closeEditFeedbackModal = function() {
+        $scope.showEditFeedbackModal = false;
+        $scope.editingCustomerFeedback = null;
+    };
+
+    $scope.handleEditFeedbackImageUpload = function(element) {
+        if (element.files && element.files[0]) {
+            var file = element.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var maxDim = 800;
+                    var width = img.width;
+                    var height = img.height;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                    $scope.$apply(function() {
+                        if ($scope.editingCustomerFeedback) {
+                            $scope.editingCustomerFeedback.imageUrl = compressedDataUrl;
+                        }
+                    });
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    $scope.clearEditFeedbackImage = function() {
+        if ($scope.editingCustomerFeedback) {
+            $scope.editingCustomerFeedback.imageUrl = '';
+        }
+    };
+
+    $scope.saveEditFeedback = function() {
+        if (!$scope.editingCustomerFeedback || !$scope.selectedCustomer) return;
+        var fb = $scope.editingCustomerFeedback;
+        $http.put('/api/customers/' + $scope.selectedCustomer.id + '/feedbacks/' + fb.id, fb).then(function() {
+            $scope.showToast('Note and image updated successfully');
+            $scope.closeEditFeedbackModal();
+            $scope.loadCustomerFeedbacks($scope.selectedCustomer.id);
+        }, function(err) {
+            $scope.showToast('Failed to update note details', 'error');
         });
     };
 

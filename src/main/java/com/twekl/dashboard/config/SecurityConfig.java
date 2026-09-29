@@ -70,8 +70,8 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .authorizeHttpRequests(auth -> auth
-                // Static web resources & web landing
-                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                // Static web resources & web landing / SPA routes
+                .requestMatchers("/", "/index.html", "/login", "/admin/**", "/followups/**", "/users/**", "/roles/**", "/role-templates/**", "/admins/**", "/customers/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 
                 // Public Authentication Endpoints
                 .requestMatchers("/api/auth/**").permitAll()

@@ -9,11 +9,8 @@
         [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
             display: none !important;
         }
-        .comic-modal-overlay {
-            display: none;
-        }
-        .comic-modal-overlay:not(.ng-hide) {
-            display: flex !important;
+        .comic-modal-overlay.ng-hide {
+            display: none !important;
         }
     </style>
     <!-- Google Fonts -->
@@ -104,6 +101,19 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'users'">User Roles & Permissions</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'roles'">Role Templates Directory</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups & Purchase History</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);" ng-if="auth.authenticated">
+                        <span style="color: var(--text-muted);">Logged in as:</span>
+                        <strong style="color: var(--primary-dark); margin-left: 4px;" ng-bind="auth.username"></strong>
+                        <span class="comic-tag tag-primary" style="margin-left: 6px; font-size: 0.75rem;" ng-bind="auth.role"></span>
+                    </div>
+                    <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.8rem;" ng-if="auth.authenticated" ng-click="logout()">
+                        Logout
+                    </button>
+                    <button type="button" class="comic-btn" style="padding: 5px 14px; font-size: 0.8rem;" ng-if="!auth.authenticated" ng-click="openLoginModal()">
+                        Log In
+                    </button>
                 </div>
             </header>
 
@@ -1834,6 +1844,34 @@
                 <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()">Cancel</button>
                 <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()">Confirm</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 6. AUTHENTICATION / LOGIN POPUP MODAL                     -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showLoginModal" ng-click="closeLoginModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 420px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Administrator Login</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeLoginModal()">&times;</button>
+            </div>
+            <form ng-submit="login()">
+                <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="comic-input" placeholder="e.g. twekl_super_admin" ng-model="loginForm.username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="comic-input" placeholder="••••••••" ng-model="loginForm.password" required>
+                    </div>
+                </div>
+                <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeLoginModal()">Cancel</button>
+                    <button type="submit" class="comic-btn">Log In</button>
+                </div>
+            </form>
         </div>
     </div>
 

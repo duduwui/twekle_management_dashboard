@@ -1574,6 +1574,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         if (view === 'orders') {
             if (targetCustomer) {
                 $scope.selectedCustomer = targetCustomer;
+                if ($scope.selectedTimePreset) {
+                    $scope.selectedOrderTimePreset = $scope.selectedTimePreset;
+                }
                 $scope.orderDt.currentPage = 1;
                 $scope.loadCustomerOrders(targetCustomer.id);
                 $scope.updateHash('/customers/orders/' + targetCustomer.id);

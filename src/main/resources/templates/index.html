@@ -383,11 +383,7 @@
                                     <tbody>
                                         <tr ng-repeat="user in getPagedAdminInspectUsers() track by user.id">
                                             <td>
-                                                <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
-                                                <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                                    <span ng-if="user.usernameAr" ng-bind="'AR: ' + user.usernameAr + ' '"></span>
-                                                    <span ng-if="user.usernameKu" ng-bind="'| KU: ' + user.usernameKu"></span>
-                                                </div>
+                                                <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>
                                             </td>
                                             <td>
                                                 <span style="color: var(--text-muted); font-weight: 700;" ng-bind="user.phoneNumber || '-'"></span>
@@ -744,7 +740,7 @@
                                 <thead>
                                     <tr>
                                         <th class="comic-sortable-th" ng-click="sortBy('usernameEn')">
-                                            User Names (EN / AR / KU) <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
+                                            Username <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
                                         </th>
                                         <th class="comic-sortable-th" ng-click="sortBy('phoneNumber')">
                                             Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
@@ -760,11 +756,7 @@
                                         style="cursor: pointer;"
                                         ng-click="setUserView('inspect', user)">
                                         <td>
-                                            <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
-                                            <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                                <span ng-if="user.usernameAr" ng-bind="'AR: ' + user.usernameAr + ' '"></span>
-                                                <span ng-if="user.usernameKu" ng-bind="'| KU: ' + user.usernameKu"></span>
-                                            </div>
+                                            <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>
                                         </td>
                                         <td>
                                             <span style="color: var(--text-muted); font-weight: 700;" ng-bind="user.phoneNumber || '-'"></span>
@@ -823,32 +815,24 @@
 
                         <!-- Create Form -->
                         <div class="comic-form-box">
-                            <div class="form-grid-3">
+                            <div class="form-grid-2">
                                 <div class="form-group">
-                                    <label class="form-label">English Name (Required)</label>
-                                    <input type="text" class="comic-input" placeholder="e.g. John Doe" ng-model="newUser.usernameEn" required>
+                                    <label class="form-label">Username (Required)</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. tariq_dev" ng-model="newUser.usernameEn" required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Arabic Name (Optional)</label>
-                                    <input type="text" class="comic-input" placeholder="e.g. جون دو" ng-model="newUser.usernameAr">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Kurdish Name (Optional)</label>
-                                    <input type="text" class="comic-input" placeholder="e.g. جۆن دۆ" ng-model="newUser.usernameKu">
+                                    <label class="form-label">Account Password (Required)</label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newUser.password" required>
                                 </div>
                             </div>
 
-                            <div class="form-grid-3" style="margin-top: 14px;">
-                                <div class="form-group">
-                                    <label class="form-label">Account Password</label>
-                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newUser.password" required>
-                                </div>
+                            <div class="form-grid-2" style="margin-top: 14px;">
                                 <div class="form-group">
                                     <label class="form-label">Phone Number</label>
                                     <input type="text" class="comic-input" placeholder="+964 750 000 0000" ng-model="newUser.phoneNumber">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Initial Status</label>
+                                    <label class="form-label">Account Status</label>
                                     <select class="comic-input" ng-model="newUser.status">
                                         <option value="ACTIVE">ACTIVE</option>
                                         <option value="INACTIVE">INACTIVE</option>
@@ -884,7 +868,6 @@
                                 <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Currently Inspecting User:</div>
                                 <h3 style="font-size: 1.3rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
                                     <span ng-bind="selectedUser.usernameEn"></span>
-                                    <span style="font-size: 0.95rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-if="selectedUser.usernameAr" ng-bind="'(' + selectedUser.usernameAr + ')'"></span>
                                 </h3>
                                 <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
                                     Phone: <strong ng-bind="selectedUser.phoneNumber || 'None'"></strong> • Status: <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
@@ -909,10 +892,6 @@
                                 <div class="module-card-header">
                                     <div class="module-title-group">
                                         <h3 class="module-title" ng-bind="mod.moduleNameEn"></h3>
-                                        <div class="module-lang-subtitle">
-                                            <span ng-if="mod.moduleNameAr" ng-bind="mod.moduleNameAr"></span>
-                                            <span ng-if="mod.moduleNameKu" ng-bind="' • ' + mod.moduleNameKu"></span>
-                                        </div>
                                     </div>
                                     <span class="module-tag" ng-style="{'background-color': mod.badgeColor || '#35B89F'}" ng-bind="mod.moduleKey"></span>
                                 </div>
@@ -991,32 +970,24 @@
 
                         <!-- Update Form -->
                         <div class="comic-form-box" ng-if="editingUser">
-                            <div class="form-grid-3">
+                            <div class="form-grid-2">
                                 <div class="form-group">
-                                    <label class="form-label">English Name</label>
+                                    <label class="form-label">Username (Required)</label>
                                     <input type="text" class="comic-input" ng-model="editingUser.usernameEn" required>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Arabic Name</label>
-                                    <input type="text" class="comic-input" ng-model="editingUser.usernameAr">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Kurdish Name</label>
-                                    <input type="text" class="comic-input" ng-model="editingUser.usernameKu">
-                                </div>
-                            </div>
-
-                            <div class="form-grid-3" style="margin-top: 14px;">
                                 <div class="form-group">
                                     <label class="form-label">New Password (leave empty to keep current)</label>
                                     <input type="password" class="comic-input" placeholder="••••••••" ng-model="editingUser.password">
                                 </div>
+                            </div>
+
+                            <div class="form-grid-2" style="margin-top: 14px;">
                                 <div class="form-group">
                                     <label class="form-label">Phone Number</label>
                                     <input type="text" class="comic-input" ng-model="editingUser.phoneNumber">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Status</label>
+                                    <label class="form-label">Account Status</label>
                                     <select class="comic-input" ng-model="editingUser.status">
                                         <option value="ACTIVE">ACTIVE</option>
                                         <option value="INACTIVE">INACTIVE</option>
@@ -1047,12 +1018,14 @@
                             
                             <div class="detail-grid-3">
                                 <div class="detail-item">
-                                    <span class="detail-item-label">English Username</span>
+                                    <span class="detail-item-label">Username</span>
                                     <strong class="detail-item-value" ng-bind="selectedUser.usernameEn"></strong>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-item-label">Arabic / Kurdish</span>
-                                    <span class="detail-item-value" ng-bind="(selectedUser.usernameAr || '-') + ' / ' + (selectedUser.usernameKu || '-')"></span>
+                                    <span class="detail-item-label">Status</span>
+                                    <div class="detail-item-value" style="margin-top: 4px;">
+                                        <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
+                                    </div>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-item-label">Phone Number</span>
@@ -1083,7 +1056,7 @@
                                     <thead>
                                         <tr>
                                             <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('usernameEn')">
-                                                User Names (EN / AR / KU) <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('usernameEn')"></span>
+                                                Username <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('usernameEn')"></span>
                                             </th>
                                             <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('phoneNumber')">
                                                 Phone Number <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('phoneNumber')"></span>
@@ -1098,7 +1071,6 @@
                                         <tr ng-repeat="user in getPagedDeleteUsers() track by user.id" ng-class="{'selected-user-row': selectedUser && selectedUser.id === user.id}">
                                             <td>
                                                 <strong ng-bind="user.usernameEn"></strong>
-                                                <span style="color: var(--text-muted); font-size: 0.8rem;" ng-if="user.usernameAr" ng-bind="' (' + user.usernameAr + ')'"></span>
                                             </td>
                                             <td><span style="color: var(--text-muted);" ng-bind="user.phoneNumber || '-'"></span></td>
                                             <td>

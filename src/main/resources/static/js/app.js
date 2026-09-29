@@ -1350,7 +1350,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     $scope.createUser = function() {
         if (!$scope.newUser.usernameEn || !$scope.newUser.password) {
-            $scope.showToast('English username and password are required', 'error');
+            $scope.showToast('Username and password are required', 'error');
             return;
         }
         $http.post('/api/users', $scope.newUser).then(function(res) {
@@ -1366,7 +1366,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     $scope.updateUser = function() {
         if (!$scope.editingUser || !$scope.editingUser.usernameEn) {
-            $scope.showToast('English username is required', 'error');
+            $scope.showToast('Username is required', 'error');
             return;
         }
         $http.put('/api/users/' + $scope.editingUser.id, $scope.editingUser).then(function(res) {
@@ -1784,7 +1784,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Helper functions
     $scope.getUserDisplayName = function(user) {
         if (!user) return '';
-        return user.usernameEn || user.usernameAr || user.usernameKu;
+        return user.usernameEn || '';
     };
 
     $scope.formatDaysText = function(days) {

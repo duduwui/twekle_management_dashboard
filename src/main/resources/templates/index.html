@@ -133,17 +133,9 @@
 
                                     <!-- Dropdown Menu of Admin-Created Filters -->
                                     <div class="filter-dropdown-menu" ng-show="showFilterDropdown" ng-click="$event.stopPropagation()">
-                                        <div class="filter-dropdown-header">
-                                            <span class="filter-dropdown-title">TIME FILTER PRESETS</span>
-                                            <span class="filter-dropdown-count" ng-bind="(timeFilterPresets | filter:{isActive:true}).length + ' Active'"></span>
-                                        </div>
-
                                         <div class="filter-dropdown-list">
                                             <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedTimePreset}" ng-click="applyTimePreset(null)">
-                                                <div class="filter-item-info">
-                                                    <span class="filter-item-name">All Time</span>
-                                                    <span class="filter-item-sub">Show all records</span>
-                                                </div>
+                                                <span class="filter-item-name">All Time</span>
                                                 <span class="filter-item-check" ng-if="!selectedTimePreset">✓</span>
                                             </button>
 
@@ -155,21 +147,18 @@
                                                     ng-if="preset.isActive"
                                                     ng-class="{'selected': selectedTimePreset && selectedTimePreset.id === preset.id}" 
                                                     ng-click="applyTimePreset(preset)">
-                                                <div class="filter-item-info">
-                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
-                                                    <span class="filter-item-badge" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span>
-                                                </div>
+                                                <span class="filter-item-name" ng-bind="preset.name"></span>
                                                 <span class="filter-item-check" ng-if="selectedTimePreset && selectedTimePreset.id === preset.id">✓</span>
                                             </button>
 
-                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 12px; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
-                                                No custom filter presets yet.
+                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 8px 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                                                No filter presets
                                             </div>
                                         </div>
 
                                         <div class="filter-dropdown-footer">
                                             <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFilterDropdown();">
-                                                ⚙️ Manage Filter Rules
+                                                Manage Filters
                                             </button>
                                         </div>
                                     </div>
@@ -183,7 +172,7 @@
                             <!-- Small Action Buttons in Toolbar -->
                             <div class="filter-middle-actions">
                                 <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')">
-                                    ⚙️ Manage Filters ({{timeFilterPresets.length}})
+                                    Manage Filters ({{timeFilterPresets.length}})
                                 </button>
                                 <button type="button" class="comic-btn-sm" ng-click="setAdminView('create')">
                                     + Create Admin
@@ -1208,6 +1197,7 @@
                                 <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
                                 
                                 <!-- Filter Presets Dropdown -->
+                                <!-- Filter Presets Dropdown -->
                                 <div class="filter-dropdown-container">
                                     <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="toggleFilterDropdown($event)" title="Dynamic Time Filters">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1217,17 +1207,9 @@
 
                                     <!-- Dropdown Menu of Admin-Created Filters -->
                                     <div class="filter-dropdown-menu" ng-show="showFilterDropdown" ng-click="$event.stopPropagation()">
-                                        <div class="filter-dropdown-header">
-                                            <span class="filter-dropdown-title">TIME FILTER PRESETS</span>
-                                            <span class="filter-dropdown-count" ng-bind="(timeFilterPresets | filter:{isActive:true}).length + ' Active'"></span>
-                                        </div>
-
                                         <div class="filter-dropdown-list">
                                             <button type="button" class="filter-dropdown-item" ng-class="{'selected': !selectedTimePreset}" ng-click="applyTimePreset(null)">
-                                                <div class="filter-item-info">
-                                                    <span class="filter-item-name">All Time</span>
-                                                    <span class="filter-item-sub">Show all records</span>
-                                                </div>
+                                                <span class="filter-item-name">All Time</span>
                                                 <span class="filter-item-check" ng-if="!selectedTimePreset">✓</span>
                                             </button>
 
@@ -1239,21 +1221,18 @@
                                                     ng-if="preset.isActive"
                                                     ng-class="{'selected': selectedTimePreset && selectedTimePreset.id === preset.id}" 
                                                     ng-click="applyTimePreset(preset)">
-                                                <div class="filter-item-info">
-                                                    <span class="filter-item-name" ng-bind="preset.name"></span>
-                                                    <span class="filter-item-badge" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span>
-                                                </div>
+                                                <span class="filter-item-name" ng-bind="preset.name"></span>
                                                 <span class="filter-item-check" ng-if="selectedTimePreset && selectedTimePreset.id === preset.id">✓</span>
                                             </button>
 
-                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 12px; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
-                                                No custom filter presets yet.
+                                            <div ng-if="(timeFilterPresets | filter:{isActive:true}).length === 0" style="padding: 8px 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                                                No filter presets
                                             </div>
                                         </div>
 
                                         <div class="filter-dropdown-footer">
                                             <button type="button" class="filter-manage-link" ng-click="setAdminView('filters'); closeFilterDropdown();">
-                                                ⚙️ Manage Filter Rules
+                                                Manage Filters
                                             </button>
                                         </div>
                                     </div>
@@ -1278,7 +1257,7 @@
                                 <thead>
                                     <tr>
                                         <th class="comic-sortable-th" style="width: 75px;" ng-click="sortBy('id')">
-                                            ID <span class="sort-indicator" ng-bind="getSortIndicator('id')"></span>
+                                             ID <span class="sort-indicator" ng-bind="getSortIndicator('id')"></span>
                                         </th>
                                         <th class="comic-sortable-th" ng-click="sortBy('name')">
                                             Customer Details <span class="sort-indicator" ng-bind="getSortIndicator('name')"></span>
@@ -1414,10 +1393,11 @@
                                         <!-- Main Order Row (Clickable to Expand Follow-up Checklist) -->
                                         <tr ng-repeat-start="order in customerOrders track by order.id" 
                                             class="order-row-clickable" 
+                                            ng-class="getOrderFollowupStatusClass(order)"
                                             ng-click="toggleOrderExpand(order, $event)">
                                             <td>
                                                 <div style="display: flex; align-items: center;">
-                                                    <button type="button" class="order-expand-toggle-btn" title="Toggle Follow-up Tree">
+                                                    <button type="button" class="order-expand-toggle-btn" title="Toggle Follow-up List">
                                                         <span ng-if="!isOrderExpanded(order.id)">▶</span>
                                                         <span ng-if="isOrderExpanded(order.id)">▼</span>
                                                     </button>
@@ -1431,8 +1411,8 @@
                                             <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
                                             <td style="text-align: right;">
                                                 <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
-                                                    <span ng-if="!isOrderExpanded(order.id)">🌳 View Follow-ups</span>
-                                                    <span ng-if="isOrderExpanded(order.id)">▲ Hide Follow-ups</span>
+                                                    <span ng-if="!isOrderExpanded(order.id)">View Follow-ups</span>
+                                                    <span ng-if="isOrderExpanded(order.id)">Hide Follow-ups</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -1442,50 +1422,47 @@
                                             <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
                                                 <div class="order-followup-tree-box">
                                                     <div class="followup-tree-header">
-                                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                                            <span style="font-size: 1.1rem;">🌳</span>
-                                                            <strong style="font-size: 0.95rem; color: #1E1B4B;">Follow-up Milestone Checklist Tree ({{ (orderFollowups[order.id] || []).length }} Admin Checkpoints)</strong>
+                                                        <div>
+                                                            <strong style="font-size: 0.95rem; color: #1E1B4B;">Follow-up Checklist ({{ (orderFollowups[order.id] || []).length }} Checkpoints)</strong>
                                                         </div>
                                                         <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
-                                                            Auditing all active admin-created interval filters for Order {{order.orderNumber}}
+                                                            Active follow-up rules for Order {{order.orderNumber}}
                                                         </span>
                                                     </div>
 
                                                     <!-- Milestone Checklist Items -->
                                                     <div class="followup-tree-list">
                                                         <div class="followup-check-card" ng-repeat="check in orderFollowups[order.id] || [] track by check.id">
-                                                            <!-- 1. Milestone info -->
+                                                            <!-- 1. Milestone info (Single clean title, no redundant badge) -->
                                                             <div class="check-col-milestone">
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
-                                                                <span class="check-milestone-badge" ng-bind="check.durationValue + ' ' + check.durationUnit"></span>
                                                             </div>
 
-                                                            <!-- 2. Status Check Yes/No toggle -->
+                                                            <!-- 2. Status Check Yes/No toggle (Clean Symbol Only) -->
                                                             <div class="check-col-status">
                                                                 <button type="button" 
                                                                         class="followup-status-btn" 
                                                                         ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
-                                                                        ng-click="toggleFollowupCheck(order, check)">
-                                                                    <span ng-if="check.isCompleted">✔ Yes (Done)</span>
-                                                                    <span ng-if="!check.isCompleted">✖ No (Pending)</span>
+                                                                        ng-click="toggleFollowupCheck(order, check)"
+                                                                        title="Click to toggle status">
+                                                                    <span ng-if="check.isCompleted">✔</span>
+                                                                    <span ng-if="!check.isCompleted">✖</span>
                                                                 </button>
                                                                 <div class="check-meta-info" ng-if="check.isCompleted">
-                                                                    <span ng-bind="check.checkedBy || 'Admin'"></span> • 
-                                                                    <span ng-bind="check.checkedAt | date:'MMM d, HH:mm'"></span>
+                                                                    <span ng-bind="check.checkedBy || 'Admin'"></span>
                                                                 </div>
                                                             </div>
 
-                                                            <!-- 3. Details & User Note -->
+                                                            <!-- 3. Details & User Note (Clean plain text, no side accent borders) -->
                                                             <div class="check-col-note">
                                                                 <div class="check-note-text" ng-if="check.note" ng-bind="check.note"></div>
-                                                                <div class="check-note-empty" ng-if="!check.note">No manual note added yet. Click edit to add note.</div>
+                                                                <div class="check-note-empty" ng-if="!check.note">No note added</div>
                                                             </div>
 
                                                             <!-- 4. Attached Images -->
                                                             <div class="check-col-images">
-                                                                <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)">
+                                                                <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)" title="Click to view full image">
                                                                     <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
-                                                                    <span class="thumb-zoom-icon">🔍</span>
                                                                 </div>
                                                                 <span class="check-no-image" ng-if="!check.imageUrl">No image</span>
                                                             </div>
@@ -1493,13 +1470,13 @@
                                                             <!-- 5. Edit / Add Details Action -->
                                                             <div class="check-col-action">
                                                                 <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check)">
-                                                                    ✏️ Edit Note & Image
+                                                                    Edit Note & Image
                                                                 </button>
                                                             </div>
                                                         </div>
 
                                                         <div ng-if="(orderFollowups[order.id] || []).length === 0" style="padding: 16px; text-align: center; color: var(--text-muted); font-weight: 700;">
-                                                            Loading follow-up checkpoints...
+                                                            No active follow-up checkpoints configured.
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1594,10 +1571,7 @@
     <div class="comic-modal-overlay" ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 440px;">
             <div class="comic-modal-header" style="background-color: #FEF2F2; border-bottom: 2px solid var(--border-black);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.2rem;">⚠️</span>
-                    <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
-                </div>
+                <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
                 <button type="button" class="comic-modal-close" ng-click="closeDeleteAdminModal()">&times;</button>
             </div>
             <div class="comic-modal-body" style="padding: 22px; font-size: 0.95rem; line-height: 1.5;">
@@ -1615,20 +1589,17 @@
     <!-- 2. EDIT / ADD FOLLOW-UP NOTE & IMAGE MODAL                -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
-        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 500px;">
             <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.2rem;">✏️</span>
-                    <strong style="font-size: 1.05rem; color: #1E1B4B;">Milestone Follow-up: {{ editingFollowup.presetName }}</strong>
-                </div>
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Follow-up: {{ editingFollowup.presetName }}</strong>
                 <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
             </div>
-            <div class="comic-modal-body" style="padding: 22px; display: flex; flex-direction: column; gap: 16px;">
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                 <!-- Milestone Status Checkbox -->
                 <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; padding: 12px 16px; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic);">
                     <div>
-                        <strong style="font-size: 0.92rem;">Mark as Completed / Done</strong>
-                        <div style="font-size: 0.78rem; color: var(--text-muted);">Indicates whether this milestone was followed up</div>
+                        <strong style="font-size: 0.92rem;">Mark as Completed</strong>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">Indicates whether this checkpoint was done</div>
                     </div>
                     <label class="comic-switch">
                         <input type="checkbox" ng-model="editingFollowup.isCompleted">
@@ -1638,26 +1609,30 @@
 
                 <!-- Follow-up Note Textarea -->
                 <div class="form-group">
-                    <label class="form-label">Follow-up User Note / Inspection Details</label>
-                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up notes, customer feedback, resolution details..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
+                    <label class="form-label">Note / Details</label>
+                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up note..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
                 </div>
 
-                <!-- Attached Proof Image URL -->
+                <!-- Attached Proof Image File Upload -->
                 <div class="form-group">
-                    <label class="form-label">Attached Proof Photo / Receipt Image URL</label>
-                    <input type="text" class="comic-input" placeholder="https://... or upload photo" ng-model="editingFollowup.imageUrl">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Paste photo URL (e.g. proof of installation, signed delivery receipt, screenshot)</div>
+                    <label class="form-label">Upload Image</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="editingFollowup.imageUrl" ng-click="editingFollowup.imageUrl = ''">
+                            Remove
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Photo Preview if present -->
-                <div ng-if="editingFollowup.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1px solid var(--border-black);">
-                    <img ng-src="{{editingFollowup.imageUrl}}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #000;" alt="Preview">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: #334155;">Image Preview Ready</span>
+                <div ng-if="editingFollowup.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{editingFollowup.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Image ready for save</span>
                 </div>
             </div>
             <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
                 <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
-                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Milestone Check</button>
+                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Checkpoint</button>
             </div>
         </div>
     </div>

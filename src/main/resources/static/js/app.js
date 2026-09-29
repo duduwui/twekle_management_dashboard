@@ -103,7 +103,13 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 durationUnit: 'HOURS',
                 isActive: true
             };
-            $scope.loadTimeFilterPresets();
+            $scope.loadTimeFilterPresets().then(function() {
+                if ($scope.customerOrders && $scope.customerOrders.length > 0) {
+                    $scope.customerOrders.forEach(function(order) {
+                        $scope.loadOrderFollowups(order.id);
+                    });
+                }
+            });
         }, function(err) {
             $scope.showToast('Failed to create filter preset', 'error');
         });
@@ -113,6 +119,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $http.patch('/api/time-filters/' + preset.id + '/toggle', {}).then(function(res) {
             preset.isActive = res.data.isActive;
             $scope.showToast('Filter preset "' + preset.name + '" set to ' + (preset.isActive ? 'Active' : 'Inactive'));
+            if ($scope.customerOrders && $scope.customerOrders.length > 0) {
+                $scope.customerOrders.forEach(function(order) {
+                    $scope.loadOrderFollowups(order.id);
+                });
+            }
         });
     };
 
@@ -123,7 +134,13 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             if ($scope.selectedTimePreset && $scope.selectedTimePreset.id === preset.id) {
                 $scope.selectedTimePreset = null;
             }
-            $scope.loadTimeFilterPresets();
+            $scope.loadTimeFilterPresets().then(function() {
+                if ($scope.customerOrders && $scope.customerOrders.length > 0) {
+                    $scope.customerOrders.forEach(function(order) {
+                        $scope.loadOrderFollowups(order.id);
+                    });
+                }
+            });
         });
     };
 
@@ -1138,7 +1155,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.loadCustomerOrders = function(customerId) {
         if (!customerId) return;
         return $http.get('/api/customers/' + customerId + '/orders').then(function(res) {
-            $scope.customerOrders = res.data;
+            $scope.customerOrders = res.data || [];
+            // Preload followups for each order so completion status is immediately calculated
+            $scope.customerOrders.forEach(function(order) {
+                $scope.loadOrderFollowups(order.id);
+            });
         });
     };
 
@@ -1194,12 +1215,29 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         });
     };
 
+    $scope.isOrderFullyFollowedUp = function(order) {
+        if (!order) return false;
+        var checks = $scope.orderFollowups[order.id];
+        if (!checks || checks.length === 0) return false;
+        return checks.every(function(c) { return c.isCompleted === true; });
+    };
+
+    $scope.getOrderFollowupStatusClass = function(order) {
+        if (!order) return '';
+        var checks = $scope.orderFollowups[order.id];
+        if (!checks) return 'order-row-pending';
+        if (checks.length > 0 && checks.every(function(c) { return c.isCompleted === true; })) {
+            return 'order-row-completed';
+        }
+        return 'order-row-pending';
+    };
+
     $scope.toggleFollowupCheck = function(order, check) {
         $http.patch('/api/orders/' + order.id + '/followups/' + check.id + '/toggle', {}).then(function(res) {
             check.isCompleted = res.data.isCompleted;
             check.checkedAt = res.data.checkedAt;
             check.checkedBy = res.data.checkedBy;
-            $scope.showToast('Milestone "' + check.presetName + '" marked ' + (check.isCompleted ? 'Completed (Yes)' : 'Pending (No)'));
+            $scope.showToast('Milestone "' + check.presetName + '" marked ' + (check.isCompleted ? 'Completed' : 'Pending'));
         }, function(err) {
             $scope.showToast('Failed to toggle milestone status', 'error');
         });
@@ -1220,6 +1258,21 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.showEditFollowupModal = false;
         $scope.editingFollowup = null;
         $scope.editingFollowupOrder = null;
+    };
+
+    $scope.handleFollowupImageUpload = function(element) {
+        if (element.files && element.files[0]) {
+            var file = element.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $scope.$apply(function() {
+                    if ($scope.editingFollowup) {
+                        $scope.editingFollowup.imageUrl = e.target.result;
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     $scope.saveFollowupCheck = function() {

@@ -93,33 +93,49 @@ public class CustomerService {
 
     public List<OrderFollowupCheck> getOrderFollowupChecks(Long orderId) {
         List<OrderFollowupCheck> existing = followupCheckRepository.findByOrderIdOrderByIdAsc(orderId);
-        if (existing.isEmpty()) {
-            return initFollowupChecksForOrder(orderId);
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc();
+        if (activePresets.isEmpty()) {
+            activePresets = timeFilterPresetRepository.findAllByOrderByIdAsc();
         }
-        return existing;
+
+        Map<Long, OrderFollowupCheck> existingByPresetId = new HashMap<>();
+        Map<String, OrderFollowupCheck> existingByPresetName = new HashMap<>();
+        for (OrderFollowupCheck c : existing) {
+            if (c.getPresetId() != null) existingByPresetId.put(c.getPresetId(), c);
+            if (c.getPresetName() != null) existingByPresetName.put(c.getPresetName().trim().toLowerCase(), c);
+        }
+
+        List<OrderFollowupCheck> result = new ArrayList<>();
+        for (TimeFilterPreset p : activePresets) {
+            OrderFollowupCheck match = existingByPresetId.get(p.getId());
+            if (match == null && p.getName() != null) {
+                match = existingByPresetName.get(p.getName().trim().toLowerCase());
+            }
+            if (match != null) {
+                match.setPresetName(p.getName());
+                match.setDurationValue(p.getDurationValue());
+                match.setDurationUnit(p.getDurationUnit());
+                result.add(followupCheckRepository.save(match));
+            } else {
+                OrderFollowupCheck newCheck = OrderFollowupCheck.builder()
+                        .orderId(orderId)
+                        .presetId(p.getId())
+                        .presetName(p.getName())
+                        .durationValue(p.getDurationValue())
+                        .durationUnit(p.getDurationUnit())
+                        .isCompleted(false)
+                        .note("")
+                        .imageUrl("")
+                        .checkedBy("")
+                        .build();
+                result.add(followupCheckRepository.save(newCheck));
+            }
+        }
+        return result;
     }
 
     public List<OrderFollowupCheck> initFollowupChecksForOrder(Long orderId) {
-        List<TimeFilterPreset> presets = timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc();
-        if (presets.isEmpty()) {
-            presets = timeFilterPresetRepository.findAllByOrderByIdAsc();
-        }
-        List<OrderFollowupCheck> created = new ArrayList<>();
-        for (TimeFilterPreset p : presets) {
-            OrderFollowupCheck check = OrderFollowupCheck.builder()
-                    .orderId(orderId)
-                    .presetId(p.getId())
-                    .presetName(p.getName())
-                    .durationValue(p.getDurationValue())
-                    .durationUnit(p.getDurationUnit())
-                    .isCompleted(false)
-                    .note("")
-                    .imageUrl("")
-                    .checkedBy("")
-                    .build();
-            created.add(followupCheckRepository.save(check));
-        }
-        return created;
+        return getOrderFollowupChecks(orderId);
     }
 
     public OrderFollowupCheck updateOrderFollowupCheck(Long checkId, OrderFollowupCheck updateData) {

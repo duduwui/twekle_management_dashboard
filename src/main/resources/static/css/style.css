@@ -757,11 +757,11 @@ body {
 /* Action Page Header (With Back Navigation) */
 .action-page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 18px;
-  border-bottom: 2px solid var(--border-black);
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-bottom: 0;
+  margin-bottom: 4px;
   flex-wrap: wrap;
 }
 

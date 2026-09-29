@@ -261,10 +261,6 @@
                     <!-- 1.2 CREATE ADMIN PAGE -->
                     <div ng-show="adminView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Create New Administrator</h2>
-                                <span class="card-subtitle">Add a new system administrator. Configure administrative privileges, role creation rights, and user management capabilities.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setAdminView('list')">
                                 ← Back to Admins List
                             </button>
@@ -312,18 +308,12 @@
                     <!-- 1.3 INSPECT ADMIN PAGE -->
                     <div ng-show="adminView === 'inspect'" style="display: flex; flex-direction: column; gap: 24px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Administrator Overview & Users Table</h2>
-                                <span class="card-subtitle">Administrator profile and complete table of all registered users managed under administration.</span>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="comic-btn" ng-click="setAdminView('create')">
-                                    + Create Admin
-                                </button>
-                                <button type="button" class="back-btn" ng-click="setAdminView('list')">
-                                    ← Back to Admins List
-                                </button>
-                            </div>
+                            <button type="button" class="comic-btn" ng-click="setAdminView('create')">
+                                + Create Admin
+                            </button>
+                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                ← Back to Admins List
+                            </button>
                         </div>
 
                         <!-- Inspected Admin Profile Mini-Banner -->
@@ -425,10 +415,6 @@
                     <!-- 1.4 DELETE ADMINS PAGE -->
                     <div ng-show="adminView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Delete Administrator</h2>
-                                <span class="card-subtitle">Safely remove administrator accounts from the system. Removing an administrator will immediately revoke their dashboard access.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setAdminView('list')">
                                 ← Back to Admins List
                             </button>
@@ -509,10 +495,6 @@
                     <!-- 1.5 DYNAMIC TIME FILTER PRESETS MANAGEMENT (ADMIN ONLY) -->
                     <div ng-show="adminView === 'filters'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Dynamic Time Filter Rules Management</h2>
-                                <span class="card-subtitle">Define custom time periods (e.g., 20 Hours, 2 Weeks, 30 Days) and toggle rule availability across dashboard filters.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setAdminView('list')">
                                 ← Back to Admins List
                             </button>
@@ -757,10 +739,6 @@
                     <!-- 2.2 CREATE USER PAGE (C) -->
                     <div ng-show="userView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Create New User</h2>
-                                <span class="card-subtitle">Register a new user account with trilingual support (English, Arabic, Kurdish) and initial module privileges.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setUserView('list')">
                                 ← Back to Users List
                             </button>
@@ -812,21 +790,15 @@
                     <div ng-show="userView === 'inspect'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">User Permission Matrix & Overview</h2>
-                                <span class="card-subtitle">Real-time per-department CRUD switches across Software, Sales, and Product departments.</span>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
-                                    Edit Details (U)
-                                </button>
-                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
-                                    Delete User (D)
-                                </button>
-                                <button type="button" class="back-btn" ng-click="setUserView('list')">
-                                    ← Back to Users List
-                                </button>
-                            </div>
+                            <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
+                                Edit Details (U)
+                            </button>
+                            <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
+                                Delete User (D)
+                            </button>
+                            <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                ← Back to Users List
+                            </button>
                         </div>
 
                         <!-- Inspected User Profile Banner -->
@@ -935,10 +907,6 @@
                     <!-- 2.4 UPDATE USER PAGE (U) -->
                     <div ng-show="userView === 'update'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Edit User Profile</h2>
-                                <span class="card-subtitle">Modify user names in 3 languages, change phone number, update credentials, or adjust active status.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setUserView('list')">
                                 ← Back to Users List
                             </button>
@@ -989,10 +957,6 @@
                     <!-- 2.5 DELETE USER PAGE (D) -->
                     <div ng-show="userView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Delete User Account</h2>
-                                <span class="card-subtitle">Permanently remove user accounts and erase their associated department permissions from the system.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setUserView('list')">
                                 ← Back to Users List
                             </button>
@@ -1343,10 +1307,6 @@
                     <div ng-show="customerView === 'orders'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Customer Purchase History & Order Log</h2>
-                                <span class="card-subtitle">Complete audit log of all previous and recent purchases for this customer.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setCustomerView('list')">
                                 ← Back to Customer Follow-up
                             </button>
@@ -1499,10 +1459,6 @@
                     <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
-                            <div class="card-title-group">
-                                <h2 class="card-title">Customer Reviews, Notes & Compliments</h2>
-                                <span class="card-subtitle">Client feedback feed, agent follow-up notes, and compliments audit log.</span>
-                            </div>
                             <button type="button" class="back-btn" ng-click="setCustomerView('list')">
                                 ← Back to Customer Follow-up
                             </button>

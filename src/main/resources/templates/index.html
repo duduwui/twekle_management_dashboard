@@ -117,11 +117,14 @@
                     <!-- 1.1 ADMIN LIST PAGE (DEFAULT) -->
                     <div ng-show="adminView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Clean Admin Toolbar (+ Create Admin & Live Search) -->
+                        <!-- Clean Admin Toolbar (+ Create Admin + Time Filter Rules & Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <button type="button" class="comic-btn-sm" ng-click="setAdminView('create')">
                                     + Create Admin
+                                </button>
+                                <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')">
+                                    ⚙ Time Filter Rules ({{timeFilterPresets.length}})
                                 </button>
                             </div>
 
@@ -1194,6 +1197,10 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')" title="Configure custom dynamic time filter rules">
+                                    ⚙ Filter Rules
+                                </button>
 
                                 <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" title="Click to clear filter">
                                     <span ng-bind="selectedTimePreset.name"></span> ✕

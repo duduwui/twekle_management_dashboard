@@ -1748,10 +1748,29 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         });
     };
 
-    $scope.openCustomerOrder = function(customer, orderId, $event) {
+    $scope.highlightedMilestone = null;
+    $scope.highlightTimeoutPromise = null;
+
+    $scope.isMilestoneHighlighted = function(check) {
+        if (!$scope.highlightedMilestone || !check) return false;
+        var h = ($scope.highlightedMilestone + '').trim().toLowerCase();
+        var p = (check.presetName || '').trim().toLowerCase();
+        return h === p || (h && p && (p.indexOf(h) !== -1 || h.indexOf(p) !== -1));
+    };
+
+    $scope.openCustomerOrder = function(customer, orderId, milestoneName, $event) {
         if ($event) $event.stopPropagation();
         if (!customer) return;
         $scope.setCustomerView('orders', customer);
+        if (milestoneName) {
+            $scope.highlightedMilestone = milestoneName;
+            if ($scope.highlightTimeoutPromise) {
+                $timeout.cancel($scope.highlightTimeoutPromise);
+            }
+            $scope.highlightTimeoutPromise = $timeout(function() {
+                $scope.highlightedMilestone = null;
+            }, 4500);
+        }
         if (orderId) {
             $timeout(function() {
                 $scope.expandedOrders[orderId] = true;
@@ -1760,20 +1779,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         }
     };
 
-    $scope.goToComplimentsForCheck = function(order, check, $event) {
-        if ($event) $event.stopPropagation();
-        var customer = $scope.selectedCustomer || (order ? order.customer : null);
-        $scope.setCustomerView('feedback', customer);
-        if (order && order.id) {
-            $scope.expandedOrders[order.id] = true;
-            $scope.loadOrderFollowups(order.id);
-            $timeout(function() {
-                $scope.openEditFollowupModal(order, check);
-            }, 150);
-        }
-    };
-
-    $scope.goToComplimentsForOrder = function(order, $event) {
+    $scope.goToFeedbackForOrder = function(order, $event) {
         if ($event) $event.stopPropagation();
         var customer = $scope.selectedCustomer || (order ? order.customer : null);
         $scope.setCustomerView('feedback', customer);
@@ -1782,6 +1788,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 $scope.expandedOrders[order.id] = true;
                 $scope.loadOrderFollowups(order.id);
             }, 100);
+            $scope.showToast('Switched to Customer Feedback Mode for Order ' + order.orderNumber);
+        } else {
+            $scope.showToast('Switched to Customer Feedback Mode');
         }
     };
 
@@ -1794,6 +1803,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 $scope.expandedOrders[order.id] = true;
                 $scope.loadOrderFollowups(order.id);
             }, 100);
+            $scope.showToast('Switched to Order Follow-ups Audit Log for Order ' + order.orderNumber);
+        } else {
+            $scope.showToast('Switched to Order Follow-ups Audit Log');
         }
     };
 

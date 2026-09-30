@@ -630,6 +630,25 @@
                             </div>
                         </div>
 
+                        <!-- Role Template Presets Bar -->
+                        <div class="comic-form-box" style="background-color: #F8FAFC; padding: 14px 18px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                <div style="font-size: 0.92rem; font-weight: 800; color: #000000;">
+                                    Role Templates & Presets (Click to apply permissions below):
+                                </div>
+                                <div class="role-template-pills-row">
+                                    <button type="button" 
+                                            class="role-pill-btn" 
+                                            ng-repeat="role in roles track by role.id"
+                                            ng-class="{'active': selectedCreateRole && selectedCreateRole.id === role.id}"
+                                            ng-click="applyRoleToCreateForm(role)"
+                                            title="Apply {{role.name}} preset to permissions">
+                                        <span ng-bind="role.name"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 2. 3-Module CRUD Matrix -->
                         <div>
                             <div style="font-size: 1.05rem; font-weight: 900; color: #000000; margin-bottom: 12px;">
@@ -1199,8 +1218,8 @@
                                             <button type="button" 
                                                     class="comic-milestone-link-btn" 
                                                     ng-if="!cust.allFollowupsCompleted && cust.totalOrders > 0" 
-                                                    ng-click="openCustomerOrder(cust, cust.nextPendingOrderId, $event)"
-                                                    title="Open Order Checklist">
+                                                    ng-click="openCustomerOrder(cust, cust.nextPendingOrderId, cust.nextPendingFollowup, $event)"
+                                                    title="Open Order Checklist & Highlight Milestone">
                                                 <span>{{ cust.nextPendingFollowup || 'Pending' }}</span>
                                                 <span class="milestone-arrow">➔</span>
                                             </button>
@@ -1213,7 +1232,7 @@
                                             </button>
                                             <button type="button" class="comic-btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="setCustomerView('feedback', cust)">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                                Reviews & Notes
+                                                Feedback
                                             </button>
                                         </td>
                                     </tr>
@@ -1249,23 +1268,25 @@
                             </button>
                         </div>
 
-                        <!-- Customer Profile Banner -->
-                        <div class="inspected-target-banner" ng-if="selectedCustomer">
+                        <!-- Distinct Audit Mode Banner -->
+                        <div class="audit-mode-banner" ng-if="selectedCustomer">
                             <div>
-                                <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer Profile:</div>
-                                <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="comic-tag tag-primary" style="background-color: #2563EB; color: #FFFFFF; font-weight: 900; font-size: 0.82rem;">📦 Order Follow-ups Audit Log</span>
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: #1E3A8A;">Audit & Checklist Mode</span>
+                                </div>
+                                <h3 style="font-size: 1.25rem; font-weight: 900; color: #1E1B4B; margin-top: 4px;">
                                     <span ng-bind="selectedCustomer.name"></span>
                                     <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-bind="'(ID: #' + selectedCustomer.id + ')'"></span>
                                 </h3>
                                 <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
-                                    Phone: <strong ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city"></strong> • Email: <strong ng-bind="selectedCustomer.email"></strong>
+                                    Phone: <strong style="color: var(--text-main); white-space: nowrap;" ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city || 'Erbil'"></strong> • Email: <strong ng-bind="selectedCustomer.email || '-'"></strong>
                                 </div>
                             </div>
 
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('feedback', selectedCustomer)">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                    Add / Edit Notes & Photos
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button type="button" class="comic-btn" style="background-color: #FEF3C7; color: #92400E; border: 2px solid #000000;" ng-click="goToFeedbackForOrder(null, $event)">
+                                    💬 Switch to Customer Feedback Mode ➔
                                 </button>
                             </div>
                         </div>
@@ -1350,8 +1371,8 @@
                                                     <span ng-if="!isOrderExpanded(order.id)">View Follow-ups</span>
                                                     <span ng-if="isOrderExpanded(order.id)">Hide Follow-ups</span>
                                                 </button>
-                                                <button type="button" class="comic-btn-sm" style="margin-left: 6px;" ng-click="goToComplimentsForOrder(order, $event)" title="Jump to Compliments for this Order">
-                                                    Compliments ➔
+                                                <button type="button" class="comic-btn-sm" style="margin-left: 6px; background-color: #FEF3C7; color: #92400E; border: 2px solid #000;" ng-click="goToFeedbackForOrder(order, $event)" title="View & Manage Feedback for this Order">
+                                                    Feedback ➔
                                                 </button>
                                             </td>
                                         </tr>
@@ -1369,15 +1390,18 @@
                                                         </span>
                                                     </div>
 
-                                                    <!-- Milestone Checklist Items (View-Only Note & Image + Direct Link to Compliments) -->
+                                                    <!-- Milestone Checklist Items (Clean View-Only Audit Mode) -->
                                                     <div class="followup-tree-list">
-                                                        <div class="followup-check-card" ng-repeat="check in orderFollowups[order.id] || [] track by check.id">
+                                                        <div class="followup-check-card audit-card" 
+                                                             ng-repeat="check in orderFollowups[order.id] || [] track by check.id"
+                                                             ng-class="{'highlighted-milestone-checkpoint': isMilestoneHighlighted(check)}">
                                                             <!-- 1. Milestone info -->
                                                             <div class="check-col-milestone">
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
+                                                                <span class="comic-tag" style="background-color: #F59E0B; color: #000000; font-size: 0.68rem; font-weight: 900; margin-top: 3px; display: inline-block; width: fit-content;" ng-if="isMilestoneHighlighted(check)">Target Milestone</span>
                                                             </div>
 
-                                                            <!-- 2. Status Check Yes/No toggle -->
+                                                            <!-- 2. Status Check Yes/No toggle (No author name under it) -->
                                                             <div class="check-col-status">
                                                                 <button type="button" 
                                                                         class="followup-status-btn" 
@@ -1387,9 +1411,6 @@
                                                                     <span ng-if="check.isCompleted">✔</span>
                                                                     <span ng-if="!check.isCompleted">✖</span>
                                                                 </button>
-                                                                <div class="check-meta-info" ng-if="check.isCompleted">
-                                                                    <span ng-bind="check.checkedBy || 'Admin'"></span>
-                                                                </div>
                                                             </div>
 
                                                             <!-- 3. Details & User Note (View-Only) -->
@@ -1404,13 +1425,6 @@
                                                                     <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
                                                                 </div>
                                                                 <span class="check-no-image" ng-if="!check.imageUrl">No image</span>
-                                                            </div>
-
-                                                            <!-- 5. Direct Link to Add / Edit Note & Photo in Compliments -->
-                                                            <div class="check-col-action">
-                                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="goToComplimentsForCheck(order, check, $event)" title="Add or edit note & photo for this checkpoint in Compliments">
-                                                                    + Note / Photo ➔
-                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1446,7 +1460,7 @@
 
                     </div>
 
-                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE (REPLICA TREE OF ORDER LOG WITH INLINE NOTES & PHOTO UPLOAD) -->
+                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & FEEDBACK PAGE -->
                     <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
@@ -1455,28 +1469,30 @@
                             </button>
                         </div>
 
-                        <!-- Customer Profile Banner -->
-                        <div class="inspected-target-banner" ng-if="selectedCustomer">
+                        <!-- Distinct Feedback Mode Banner -->
+                        <div class="feedback-mode-banner" ng-if="selectedCustomer">
                             <div>
-                                <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer Profile:</div>
-                                <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--primary-dark); margin-top: 2px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="comic-tag" style="background-color: #F59E0B; color: #000000; font-weight: 900; font-size: 0.82rem;">💬 Customer Feedback & Review Notes</span>
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: #92400E;">Feedback & Proof Upload Mode</span>
+                                </div>
+                                <h3 style="font-size: 1.25rem; font-weight: 900; color: #78350F; margin-top: 4px;">
                                     <span ng-bind="selectedCustomer.name"></span>
-                                    <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 800; margin-left: 8px;" ng-bind="'(ID: #' + selectedCustomer.id + ')'"></span>
+                                    <span style="font-size: 0.9rem; color: #92400E; font-weight: 800; margin-left: 8px;" ng-bind="'(ID: #' + selectedCustomer.id + ')'"></span>
                                 </h3>
-                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 3px;">
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #92400E; margin-top: 2px;">
                                     Phone: <strong style="color: var(--text-main); white-space: nowrap;" ng-bind="selectedCustomer.phoneNumber"></strong> • City: <strong ng-bind="selectedCustomer.city || 'Erbil'"></strong> • Email: <strong ng-bind="selectedCustomer.email || '-'"></strong>
                                 </div>
                             </div>
 
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('orders', selectedCustomer)">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                    View Audit Orders Log
+                                <button type="button" class="comic-btn" style="background-color: #EFF6FF; color: #1E3A8A; border: 2px solid #000000;" ng-click="goToOrderLogForOrder(null, $event)">
+                                    📦 Switch to Order Follow-ups Audit Log ➔
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Orders & Follow-up Tree with Note & Photo Editor (Exact Replica of Order Log) -->
+                        <!-- Orders & Follow-up Tree with Note & Photo Editor -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
                             <div style="font-size: 1.15rem; font-weight: 900;">Customer Orders & Follow-up Notes / Photos (Interactive Tree):</div>
 
@@ -1583,7 +1599,7 @@
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
                                                             </div>
 
-                                                            <!-- 2. Status Check Yes/No toggle -->
+                                                            <!-- 2. Status Check Yes/No toggle (No author name under it) -->
                                                             <div class="check-col-status">
                                                                 <button type="button" 
                                                                         class="followup-status-btn" 
@@ -1593,9 +1609,6 @@
                                                                     <span ng-if="check.isCompleted">✔</span>
                                                                     <span ng-if="!check.isCompleted">✖</span>
                                                                 </button>
-                                                                <div class="check-meta-info" ng-if="check.isCompleted">
-                                                                    <span ng-bind="check.checkedBy || 'Admin'"></span>
-                                                                </div>
                                                             </div>
 
                                                             <!-- 3. Details & User Note -->
@@ -1746,7 +1759,7 @@
         </div>
     </div>
     <!-- ========================================================= -->
-    <!-- 4. ADD CUSTOMER NOTE / COMPLIMENT & PHOTO MODAL            -->
+    <!-- 4. ADD CUSTOMER NOTE / FEEDBACK & PHOTO MODAL               -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
@@ -1772,8 +1785,8 @@
 
                 <!-- Content Textarea -->
                 <div class="form-group">
-                    <label class="form-label">Note / Compliment Details</label>
-                    <textarea class="comic-input" rows="4" placeholder="Enter full details of the note or customer compliment..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
+                    <label class="form-label">Note & Feedback Details</label>
+                    <textarea class="comic-input" rows="4" placeholder="Enter full details of the note or customer feedback..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
                 </div>
 
                 <!-- Attached Proof / Note Image File Upload -->
@@ -1807,7 +1820,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 4.1 EDIT CUSTOMER NOTE / COMPLIMENT & PHOTO MODAL         -->
+    <!-- 4.1 EDIT CUSTOMER NOTE / FEEDBACK & PHOTO MODAL           -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showEditFeedbackModal" ng-click="closeEditFeedbackModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
@@ -1833,7 +1846,7 @@
 
                 <!-- Content Textarea -->
                 <div class="form-group">
-                    <label class="form-label">Note / Compliment Details</label>
+                    <label class="form-label">Note & Feedback Details</label>
                     <textarea class="comic-input" rows="4" placeholder="Enter note details..." ng-model="editingCustomerFeedback.content" style="resize: vertical;"></textarea>
                 </div>
 

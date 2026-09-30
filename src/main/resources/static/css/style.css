@@ -1564,22 +1564,44 @@ body {
   box-shadow: inset 4px 0 0 var(--primary-color);
 }
 
-/* Clean Table Row Hover & Soft Highlights */
+/* Clean Table Row Hover & Soft Status Tint Highlights (No harsh borders) */
 .comic-table tbody tr.row-completed,
 .comic-table tbody tr.order-row-completed {
-  background-color: #FFFFFF;
+  background-color: #F4FDF7 !important;
 }
 
 .comic-table tbody tr.row-pending,
 .comic-table tbody tr.order-row-pending {
-  background-color: #FFFFFF;
+  background-color: #FFF8F8 !important;
 }
 
 .comic-table tbody tr.row-completed:hover,
-.comic-table tbody tr.order-row-completed:hover,
+.comic-table tbody tr.order-row-completed:hover {
+  background-color: #E8F8EE !important;
+}
+
 .comic-table tbody tr.row-pending:hover,
 .comic-table tbody tr.order-row-pending:hover {
-  background-color: #F8FAFC !important;
+  background-color: #FEEEEE !important;
+}
+
+/* Spotlight Highlight for Target Milestone Checkpoint */
+.highlighted-milestone-checkpoint {
+  border: 2.5px solid #F59E0B !important;
+  background-color: #FEF3C7 !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 3px 3px 0px #000000 !important;
+  transform: scale(1.015);
+  transition: all 0.3s ease;
+  animation: milestonePulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes milestonePulse {
+  0% {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 3px 3px 0px #000000;
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.15), 4px 4px 0px #000000;
+  }
 }
 
 /* Comic Status Badges */
@@ -1952,7 +1974,7 @@ body {
 
 .followup-check-card {
   display: grid;
-  grid-template-columns: 180px 70px 1fr 60px 140px;
+  grid-template-columns: 180px 60px 1fr 60px 140px;
   gap: 12px;
   align-items: center;
   background-color: #FFFFFF;
@@ -1960,12 +1982,39 @@ body {
   border-radius: var(--radius-comic);
   padding: 10px 14px;
   box-shadow: 2px 2px 0px #000000;
-  transition: transform 0.15s ease;
+  transition: all 0.15s ease;
+}
+
+.followup-check-card.audit-card {
+  grid-template-columns: 180px 60px 1fr 60px;
 }
 
 .followup-check-card:hover {
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0px #000000;
+}
+
+/* Distinct Mode Banners (Order Log vs Customer Feedback) */
+.audit-mode-banner {
+  background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+  border: 2px solid #2563EB;
+  border-radius: var(--radius-comic);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.feedback-mode-banner {
+  background: linear-gradient(135deg, #FFFDF7 0%, #FEF3C7 100%);
+  border: 2px solid #D97706;
+  border-radius: var(--radius-comic);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 .check-col-milestone {

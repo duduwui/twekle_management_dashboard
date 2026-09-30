@@ -63,7 +63,13 @@ public class OrderFollowupCheck {
     private Long hoursUntilDue = 0L;
 
     @Transient
+    private Long minutesUntilDue = 0L;
+
+    @Transient
     private Long orderAgeHours = 0L;
+
+    @Transient
+    private Long orderAgeMinutes = 0L;
 
     @Transient
     private Boolean isPresetActive = true;
@@ -137,8 +143,14 @@ public class OrderFollowupCheck {
     public Long getHoursUntilDue() { return hoursUntilDue; }
     public void setHoursUntilDue(Long hoursUntilDue) { this.hoursUntilDue = hoursUntilDue; }
 
+    public Long getMinutesUntilDue() { return minutesUntilDue; }
+    public void setMinutesUntilDue(Long minutesUntilDue) { this.minutesUntilDue = minutesUntilDue; }
+
     public Long getOrderAgeHours() { return orderAgeHours; }
     public void setOrderAgeHours(Long orderAgeHours) { this.orderAgeHours = orderAgeHours; }
+
+    public Long getOrderAgeMinutes() { return orderAgeMinutes; }
+    public void setOrderAgeMinutes(Long orderAgeMinutes) { this.orderAgeMinutes = orderAgeMinutes; }
 
     public Boolean getIsPresetActive() { return isPresetActive; }
     public void setIsPresetActive(Boolean isPresetActive) { this.isPresetActive = isPresetActive; }

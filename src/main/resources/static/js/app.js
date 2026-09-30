@@ -24,7 +24,7 @@ app.config(['$httpProvider', function($httpProvider) {
     }]);
 }]);
 
-app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window', function($scope, $http, $timeout, $window) {
+app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval', '$window', function($scope, $http, $timeout, $interval, $window) {
 
     // Sidebar Category Accordion State
     $scope.categories = {
@@ -2193,18 +2193,32 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     $scope.formatOrderAge = function(order) {
-        if (!order || !order.orderDate) return '0h';
+        if (!order || !order.orderDate) return '0m old';
         var d = new Date(order.orderDate);
         var now = new Date();
         var diffMs = now.getTime() - d.getTime();
         if (diffMs < 0) diffMs = 0;
-        var totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-        if (totalHours < 1) return '0h old';
-        if (totalHours < 24) return totalHours + 'h old';
+        var totalMins = Math.floor(diffMs / (1000 * 60));
+        if (totalMins < 1) return 'Just now';
+        if (totalMins < 60) return totalMins + 'm old';
+        var totalHours = Math.floor(totalMins / 60);
+        var remMins = totalMins % 60;
+        if (totalHours < 24) {
+            return remMins > 0 ? (totalHours + 'h ' + remMins + 'm old') : (totalHours + 'h old');
+        }
         var days = Math.floor(totalHours / 24);
         var remHours = totalHours % 24;
         if (remHours === 0) return days + 'd old';
         return days + 'd ' + remHours + 'h old';
+    };
+
+    // Format minutes until due as a human-readable countdown
+    $scope.formatCountdown = function(minutesUntilDue) {
+        if (!minutesUntilDue || minutesUntilDue <= 0) return '';
+        if (minutesUntilDue < 60) return minutesUntilDue + 'm';
+        var h = Math.floor(minutesUntilDue / 60);
+        var m = minutesUntilDue % 60;
+        return m > 0 ? (h + 'h ' + m + 'm') : (h + 'h');
     };
 
     $scope.toggleFollowupCheck = function(order, check) {
@@ -2312,7 +2326,6 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         }, function(err) {
             $scope.showToast('Failed to save follow-up details', 'error');
         });
-    };
     };
 
     // Image Preview Lightbox Modal
@@ -2537,6 +2550,20 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.checkAuth().then(function() {
             if ($scope.auth.authenticated) {
                 $scope.refreshAllData();
+                // Live refresh every 60 seconds — keeps age badges and countdown timers current
+                $interval(function() {
+                    if ($scope.auth.authenticated) {
+                        $scope.loadCustomers($scope.customerTimeFilter);
+                        $scope.loadCustomerStats();
+                        // Refresh open followup lists so milestone badges re-evaluate
+                        Object.keys($scope.orderFollowups || {}).forEach(function(orderId) {
+                            $scope.loadOrderFollowups(parseInt(orderId));
+                        });
+                        if ($scope.currentTab === 'reports') {
+                            $scope.loadReport($scope.reportPeriod);
+                        }
+                    }
+                }, 60000); // every 60 seconds
             } else {
                 // Auto-login default super admin or open login modal
                 $scope.loginForm = { username: 'twekl_super_admin', password: 'Super@2026' };

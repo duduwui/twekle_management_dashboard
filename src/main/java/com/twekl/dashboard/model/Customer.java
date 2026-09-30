@@ -50,6 +50,9 @@ public class Customer {
     @Transient
     private Long hoursSinceLastOrder = 0L;
 
+    @Transient
+    private Long minutesSinceLastOrder = 0L;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -143,6 +146,9 @@ public class Customer {
 
     public Long getHoursSinceLastOrder() { return hoursSinceLastOrder; }
     public void setHoursSinceLastOrder(Long hoursSinceLastOrder) { this.hoursSinceLastOrder = hoursSinceLastOrder; }
+
+    public Long getMinutesSinceLastOrder() { return minutesSinceLastOrder; }
+    public void setMinutesSinceLastOrder(Long minutesSinceLastOrder) { this.minutesSinceLastOrder = minutesSinceLastOrder; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

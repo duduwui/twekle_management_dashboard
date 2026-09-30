@@ -36,6 +36,9 @@ public class CustomerOrder {
     @Transient
     private Long ageHours = 0L;
 
+    @Transient
+    private Long ageMinutes = 0L;
+
     private LocalDateTime createdAt;
 
     public CustomerOrder() {
@@ -99,6 +102,9 @@ public class CustomerOrder {
 
     public Long getAgeHours() { return ageHours; }
     public void setAgeHours(Long ageHours) { this.ageHours = ageHours; }
+
+    public Long getAgeMinutes() { return ageMinutes; }
+    public void setAgeMinutes(Long ageMinutes) { this.ageMinutes = ageMinutes; }
 
     // Builder pattern
     public static CustomerOrderBuilder builder() {

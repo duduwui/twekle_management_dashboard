@@ -101,6 +101,8 @@ public class CustomerService {
                     c.setDaysSinceLastOrder((int) Math.max(0, diffDays));
                     long diffHours = java.time.Duration.between(orders.get(0).getOrderDate(), LocalDateTime.now()).toHours();
                     c.setHoursSinceLastOrder(Math.max(0, diffHours));
+                    long diffMinutes = Math.max(0, java.time.Duration.between(orders.get(0).getOrderDate(), LocalDateTime.now()).toMinutes());
+                    c.setMinutesSinceLastOrder(diffMinutes);
                 }
 
                 int duePendingCount = 0;
@@ -108,7 +110,7 @@ public class CustomerService {
                 String closestPendingMilestone = null;
                 Long closestPendingOrderId = null;
                 String closestPendingOrderNumber = null;
-                long earliestHoursUntilDue = Long.MAX_VALUE;
+                long earliestMinutesUntilDue = Long.MAX_VALUE;
 
                 for (CustomerOrder o : orders) {
                     List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
@@ -123,8 +125,8 @@ public class CustomerService {
                                 closestPendingOrderNumber = o.getOrderNumber();
                             }
                         } else {
-                            if (chk.getHoursUntilDue() != null && chk.getHoursUntilDue() > 0 && chk.getHoursUntilDue() < earliestHoursUntilDue) {
-                                earliestHoursUntilDue = chk.getHoursUntilDue();
+                            if (chk.getMinutesUntilDue() != null && chk.getMinutesUntilDue() > 0 && chk.getMinutesUntilDue() < earliestMinutesUntilDue) {
+                                earliestMinutesUntilDue = chk.getMinutesUntilDue();
                             }
                         }
                     }
@@ -150,8 +152,18 @@ public class CustomerService {
                     c.setRemainingFollowupsCount(0);
                     c.setNextPendingOrderId(null);
                     c.setNextPendingOrderNumber(null);
-                    if (earliestHoursUntilDue != Long.MAX_VALUE) {
-                        c.setNextPendingFollowup("Fresh Order (Due in " + earliestHoursUntilDue + "h)");
+                    if (earliestMinutesUntilDue != Long.MAX_VALUE) {
+                        if (earliestMinutesUntilDue < 60) {
+                            c.setNextPendingFollowup("Fresh Order (Due in " + earliestMinutesUntilDue + "m)");
+                        } else {
+                            long h = earliestMinutesUntilDue / 60;
+                            long m = earliestMinutesUntilDue % 60;
+                            if (m > 0) {
+                                c.setNextPendingFollowup("Fresh Order (Due in " + h + "h " + m + "m)");
+                            } else {
+                                c.setNextPendingFollowup("Fresh Order (Due in " + h + "h)");
+                            }
+                        }
                     } else {
                         c.setNextPendingFollowup("Fresh Order (Idle)");
                     }
@@ -173,8 +185,9 @@ public class CustomerService {
             List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
             boolean hasDuePending = checks.stream().anyMatch(chk -> Boolean.TRUE.equals(chk.getIsDue()) && !Boolean.TRUE.equals(chk.getIsCompleted()));
             boolean hasCompleted = checks.stream().anyMatch(chk -> Boolean.TRUE.equals(chk.getIsCompleted()));
-            long ageHours = Math.max(0, java.time.Duration.between(o.getOrderDate() != null ? o.getOrderDate() : o.getCreatedAt(), LocalDateTime.now()).toHours());
-            o.setAgeHours(ageHours);
+            long ageMinutes = Math.max(0, java.time.Duration.between(o.getOrderDate() != null ? o.getOrderDate() : o.getCreatedAt(), LocalDateTime.now()).toMinutes());
+            o.setAgeMinutes(ageMinutes);
+            o.setAgeHours(ageMinutes / 60L);
 
             if (hasDuePending) {
                 o.setFollowupStatus("ALERT");
@@ -289,11 +302,14 @@ public class CustomerService {
         boolean isDue = isPresetActive && (ageMinutes >= thresholdMinutes);
         chk.setIsDue(isDue);
         chk.setOrderAgeHours(ageMinutes / 60L);
+        chk.setOrderAgeMinutes(ageMinutes);
         if (isPresetActive && !isDue) {
             long minLeft = thresholdMinutes - ageMinutes;
-            chk.setHoursUntilDue(Math.max(1L, minLeft / 60L));
+            chk.setMinutesUntilDue(Math.max(1L, minLeft));
+            chk.setHoursUntilDue(Math.max(1L, (minLeft + 59L) / 60L));
         } else {
             chk.setHoursUntilDue(0L);
+            chk.setMinutesUntilDue(0L);
         }
     }
 

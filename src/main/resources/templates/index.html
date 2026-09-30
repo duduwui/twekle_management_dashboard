@@ -81,6 +81,16 @@
                     <span>Follow-ups</span>
                     <span class="nav-badge" ng-bind="customers.length">0</span>
                 </button>
+
+                <!-- Group 3: Reports -->
+                <button type="button" 
+                        class="nav-item" 
+                        ng-class="{'active': currentTab === 'reports'}" 
+                        ng-click="setTab('reports')" 
+                        style="margin-top: 6px;">
+                    <span>Reports</span>
+                    <span class="nav-badge" ng-bind="reportData.summary.totalFollowupsDue || 0">0</span>
+                </button>
             </div>
         </aside>
 
@@ -92,6 +102,7 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'admins'">Admin Management</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'users'">Users & Permissions</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'reports'">Follow-up Insights & Reports</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);" ng-if="auth.authenticated">
@@ -1636,6 +1647,402 @@
 
                 </section>
 
+                <!-- ======================================================= -->
+                <!-- PAGE 5: FOLLOW-UP INSIGHTS & REPORTING                  -->
+                <!-- ======================================================= -->
+                <section class="comic-card page-slide-fade" ng-show="currentTab === 'reports'">
+                    <div class="reports-dashboard">
+
+                        <!-- Top Time Period & Export Control Bar -->
+                        <div class="reports-period-bar">
+                            <div class="reports-period-pills">
+                                <span style="font-size: 0.82rem; font-weight: 900; color: #475569; text-transform: uppercase; margin-right: 4px;">Time Horizon:</span>
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'daily'}" ng-click="loadReport('daily')">
+                                    Daily (Today)
+                                </button>
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'weekly'}" ng-click="loadReport('weekly')">
+                                    Weekly (7 Days)
+                                </button>
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'monthly'}" ng-click="loadReport('monthly')">
+                                    Monthly (30 Days)
+                                </button>
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'all'}" ng-click="loadReport('all')">
+                                    All Time
+                                </button>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.78rem; font-weight: 800; color: #64748B;">From:</span>
+                                    <input type="date" class="comic-date-input" style="padding: 4px 8px; font-size: 0.8rem;" ng-model="reportFilters.dateFrom">
+                                    <span style="font-size: 0.78rem; font-weight: 800; color: #64748B;">To:</span>
+                                    <input type="date" class="comic-date-input" style="padding: 4px 8px; font-size: 0.8rem;" ng-model="reportFilters.dateTo">
+                                    <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="applyCustomReportRange()">
+                                        Apply
+                                    </button>
+                                </div>
+                                <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="exportReportCsv()">
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3 Executive Summary KPI Cards -->
+                        <div class="report-kpi-grid">
+                            <!-- KPI 1: Follow-up Velocity -->
+                            <div class="report-kpi-card">
+                                <div class="report-kpi-title">Follow-up Completion Rate</div>
+                                <div class="report-kpi-num">{{ reportData.summary.completionRate || 0 }}%</div>
+                                <div class="report-kpi-subtext">
+                                    <strong>{{ reportData.summary.finishedFollowups || 0 }}</strong> completed of <strong>{{ reportData.summary.totalFollowupsDue || 0 }}</strong> checks due
+                                    <span style="color: #991B1B; margin-left: 4px;" ng-if="reportData.summary.pendingFollowups > 0">
+                                        ({{ reportData.summary.pendingFollowups }} pending)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- KPI 2: Customer Satisfaction Breakdown -->
+                            <div class="report-kpi-card">
+                                <div class="report-kpi-title">Customer Satisfaction</div>
+                                <div style="display: flex; gap: 8px; align-items: baseline; margin: 4px 0;">
+                                    <span style="font-size: 1.5rem; font-weight: 900; color: #0F172A;" ng-bind="reportData.summary.satisfaction.satisfied || 0">0</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; color: #475569;">Satisfied</span>
+                                    <span style="color: #CBD5E1;">•</span>
+                                    <span style="font-size: 1.5rem; font-weight: 900; color: #475569;" ng-bind="reportData.summary.satisfaction.neutral || 0">0</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; color: #475569;">Neutral</span>
+                                    <span style="color: #CBD5E1;">•</span>
+                                    <span style="font-size: 1.5rem; font-weight: 900; color: #991B1B;" ng-bind="reportData.summary.satisfaction.unsatisfied || 0">0</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; color: #991B1B;">Unsatisfied</span>
+                                </div>
+                                <div class="report-kpi-subtext">
+                                    <strong>{{ reportData.summary.satisfaction.totalNotes || 0 }}</strong> total notes & reviews logged
+                                    <span style="color: #64748B;" ng-if="reportData.summary.satisfaction.blank > 0">
+                                        ({{ reportData.summary.satisfaction.blank }} unrated)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- KPI 3: Orders & Customer Volume -->
+                            <div class="report-kpi-card">
+                                <div class="report-kpi-title">Active Orders & Customers</div>
+                                <div class="report-kpi-num">{{ reportData.summary.totalOrdersInPeriod || 0 }}</div>
+                                <div class="report-kpi-subtext">
+                                    Orders placed by <strong>{{ reportData.summary.totalCustomersInPeriod || 0 }}</strong> customers in this period
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Report Type Selection Navigation -->
+                        <div class="reports-type-nav">
+                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'milestones'}" ng-click="setReportSubTab('milestones')">
+                                Follow-ups & Milestones
+                            </button>
+                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'satisfaction'}" ng-click="setReportSubTab('satisfaction')">
+                                Customer Satisfaction & Notes
+                            </button>
+                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'products'}" ng-click="setReportSubTab('products')">
+                                Product Insights & Reviews
+                            </button>
+                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'customers'}" ng-click="setReportSubTab('customers')">
+                                Customer Directory Summary
+                            </button>
+                        </div>
+
+                        <!-- =================================================== -->
+                        <!-- REPORT TYPE 1: FOLLOW-UPS & MILESTONES             -->
+                        <!-- =================================================== -->
+                        <div ng-show="reportSubTab === 'milestones'" style="display: flex; flex-direction: column; gap: 20px;">
+                            <!-- Milestone Health Matrix -->
+                            <div>
+                                <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin-bottom: 10px;">Milestone Performance Matrix:</h3>
+                                <div class="table-responsive">
+                                    <table class="comic-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Milestone Name</th>
+                                                <th class="nowrap" style="text-align: center;">Total Scheduled</th>
+                                                <th class="nowrap" style="text-align: center;">Completed</th>
+                                                <th class="nowrap" style="text-align: center;">Pending Contact</th>
+                                                <th class="nowrap" style="text-align: right;">Completion Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="m in reportData.milestones track by m.presetName">
+                                                <td><strong ng-bind="m.presetName"></strong></td>
+                                                <td class="nowrap" style="text-align: center;" ng-bind="m.total"></td>
+                                                <td class="nowrap" style="text-align: center;">
+                                                    <span style="font-weight: 800; color: #166534;" ng-bind="m.completed"></span>
+                                                </td>
+                                                <td class="nowrap" style="text-align: center;">
+                                                    <span style="font-weight: 800; color: m.pending > 0 ? '#991B1B' : '#64748B';" ng-bind="m.pending"></span>
+                                                </td>
+                                                <td class="nowrap" style="text-align: right;">
+                                                    <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="m.completionRate + '%'"></strong>
+                                                </td>
+                                            </tr>
+                                            <tr ng-if="!reportData.milestones || reportData.milestones.length === 0">
+                                                <td colspan="5" style="text-align: center; padding: 20px; color: #64748B;">
+                                                    No milestone checks recorded for the selected period.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Pending Follow-ups Queue -->
+                            <div style="margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                                    <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin: 0;">
+                                        Pending Follow-ups Queue (Needing Contact):
+                                        <span style="font-size: 0.85rem; color: #64748B; font-weight: 700;" ng-bind="'(' + getFilteredReportPending().length + ' items)'"></span>
+                                    </h3>
+                                    <div class="filter-search-box" style="width: 280px;">
+                                        <input type="search" class="comic-search-bar" placeholder="Filter pending by name, phone, order..." ng-model="reportFilters.searchPending">
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="comic-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Customer Details</th>
+                                                <th class="nowrap col-phone">Phone</th>
+                                                <th class="nowrap">Order #</th>
+                                                <th>Ordered Items</th>
+                                                <th class="nowrap">Pending Milestone</th>
+                                                <th class="nowrap">Days Since Order</th>
+                                                <th class="nowrap" style="text-align: right;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="p in getFilteredReportPending() track by p.checkId">
+                                                <td>
+                                                    <strong style="color: #0F172A;" ng-bind="p.customerName"></strong>
+                                                    <div style="font-size: 0.78rem; color: #64748B;" ng-bind="p.customerCity"></div>
+                                                </td>
+                                                <td class="nowrap col-phone"><strong ng-bind="p.customerPhone"></strong></td>
+                                                <td class="nowrap"><strong style="color: #0F172A;" ng-bind="p.orderNumber"></strong></td>
+                                                <td><span style="font-size: 0.85rem;" ng-bind="p.itemsSummary"></span></td>
+                                                <td class="nowrap">
+                                                    <span class="comic-tag tag-primary" style="background-color: #FEF2F2; color: #991B1B; border: 1.5px solid #000;" ng-bind="p.presetName"></span>
+                                                </td>
+                                                <td class="nowrap"><strong ng-bind="p.daysSinceOrder + ' days ago'"></strong></td>
+                                                <td class="nowrap" style="text-align: right;">
+                                                    <button type="button" class="comic-btn" style="padding: 4px 10px; font-size: 0.78rem;" ng-click="jumpFromReportToOrder(p)">
+                                                        Open Order Log ➔
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr ng-if="getFilteredReportPending().length === 0">
+                                                <td colspan="7" style="text-align: center; padding: 22px; color: #166534; font-weight: 800;">
+                                                    All follow-ups for this period have been completed!
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- =================================================== -->
+                        <!-- REPORT TYPE 2: CUSTOMER SATISFACTION & NOTES       -->
+                        <!-- =================================================== -->
+                        <div ng-show="reportSubTab === 'satisfaction'" style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- Filter Toolbar for Satisfaction Level -->
+                            <div class="comic-filter-toolbar" style="margin-bottom: 4px;">
+                                <div class="filter-left-controls">
+                                    <span style="font-size: 0.82rem; font-weight: 900; color: #475569;">Scale Filter:</span>
+                                    <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'all'}" ng-click="reportFilters.satisfactionFilter = 'all'">
+                                        All Notes
+                                    </button>
+                                    <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'SATISFIED'}" ng-click="reportFilters.satisfactionFilter = 'SATISFIED'">
+                                        Satisfied Only
+                                    </button>
+                                    <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'NEUTRAL'}" ng-click="reportFilters.satisfactionFilter = 'NEUTRAL'">
+                                        Neutral Only
+                                    </button>
+                                    <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'UNSATISFIED'}" ng-click="reportFilters.satisfactionFilter = 'UNSATISFIED'">
+                                        Unsatisfied Only
+                                    </button>
+                                    <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'BLANK'}" ng-click="reportFilters.satisfactionFilter = 'BLANK'">
+                                        Unrated / Blank Only
+                                    </button>
+                                </div>
+
+                                <div class="filter-search-box">
+                                    <input type="search" class="comic-search-bar" placeholder="Search customer, order, note text, agent..." ng-model="reportFilters.searchNotes">
+                                </div>
+                            </div>
+
+                            <!-- Detailed Notes & Satisfaction Table -->
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer Details</th>
+                                            <th class="nowrap col-phone">Phone</th>
+                                            <th class="nowrap">Order #</th>
+                                            <th class="nowrap">Milestone</th>
+                                            <th class="nowrap">Satisfaction</th>
+                                            <th>Note & Feedback Details</th>
+                                            <th class="nowrap">Proof Photo</th>
+                                            <th class="nowrap">Logged By</th>
+                                            <th class="nowrap">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="n in getFilteredReportNotes() track by n.id">
+                                            <td><strong style="color: #0F172A;" ng-bind="n.customerName"></strong></td>
+                                            <td class="nowrap col-phone"><span ng-bind="n.customerPhone"></span></td>
+                                            <td class="nowrap"><strong ng-bind="n.orderNumber"></strong></td>
+                                            <td class="nowrap"><span style="font-weight: 700; color: #475569;" ng-bind="n.presetName"></span></td>
+                                            <td class="nowrap">
+                                                <span class="sat-badge sat-badge-satisfied" ng-if="n.satisfaction === 'SATISFIED'">Satisfied</span>
+                                                <span class="sat-badge sat-badge-neutral" ng-if="n.satisfaction === 'NEUTRAL'">Neutral</span>
+                                                <span class="sat-badge sat-badge-unsatisfied" ng-if="n.satisfaction === 'UNSATISFIED'">Unsatisfied</span>
+                                                <span class="sat-badge sat-badge-blank" ng-if="!n.satisfaction || n.satisfaction === 'BLANK'">Blank</span>
+                                            </td>
+                                            <td>
+                                                <span style="font-size: 0.88rem; line-height: 1.4;" ng-bind="n.note || '-'"></span>
+                                            </td>
+                                            <td class="nowrap">
+                                                <img ng-if="n.hasImage" ng-src="{{n.imageUrl}}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000; cursor: pointer;" ng-click="previewImage(n.imageUrl)" title="Click to view full photo" alt="Photo">
+                                                <span ng-if="!n.hasImage" style="color: #94A3B8; font-size: 0.8rem;">-</span>
+                                            </td>
+                                            <td class="nowrap"><span style="font-weight: 700;" ng-bind="n.checkedBy"></span></td>
+                                            <td class="nowrap"><span style="font-size: 0.8rem; color: #64748B;" ng-bind="n.date ? (n.date | date:'yyyy-MM-dd') : '-'"></span></td>
+                                        </tr>
+                                        <tr ng-if="getFilteredReportNotes().length === 0">
+                                            <td colspan="9" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                                No customer notes match the selected criteria.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- =================================================== -->
+                        <!-- REPORT TYPE 3: PRODUCT INSIGHTS & REVIEWS          -->
+                        <!-- =================================================== -->
+                        <div ng-show="reportSubTab === 'products'" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin: 0;">
+                                    Product Ordered Volume & Follow-up Sentiment:
+                                </h3>
+                                <div class="filter-search-box" style="width: 280px;">
+                                    <input type="search" class="comic-search-bar" placeholder="Search product name..." ng-model="reportFilters.searchProducts">
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th class="nowrap" style="text-align: center;">Total Orders</th>
+                                            <th class="nowrap" style="text-align: center;">Satisfied Reviews</th>
+                                            <th class="nowrap" style="text-align: center;">Neutral Reviews</th>
+                                            <th class="nowrap" style="text-align: center;">Unsatisfied Reviews</th>
+                                            <th class="nowrap" style="text-align: right;">Total Notes Logged</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="p in getFilteredReportProducts() track by p.productName">
+                                            <td>
+                                                <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="p.productName"></strong>
+                                            </td>
+                                            <td class="nowrap" style="text-align: center;">
+                                                <strong style="font-size: 0.92rem;" ng-bind="p.orderCount + ' Orders'"></strong>
+                                            </td>
+                                            <td class="nowrap" style="text-align: center;">
+                                                <span class="sat-badge sat-badge-satisfied" ng-bind="p.satisfiedCount"></span>
+                                            </td>
+                                            <td class="nowrap" style="text-align: center;">
+                                                <span class="sat-badge sat-badge-neutral" ng-bind="p.neutralCount"></span>
+                                            </td>
+                                            <td class="nowrap" style="text-align: center;">
+                                                <span class="sat-badge sat-badge-unsatisfied" ng-bind="p.unsatisfiedCount"></span>
+                                            </td>
+                                            <td class="nowrap" style="text-align: right;">
+                                                <strong style="color: #0F172A;" ng-bind="p.notesCount"></strong>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="getFilteredReportProducts().length === 0">
+                                            <td colspan="6" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                                No products found for the selected period.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- =================================================== -->
+                        <!-- REPORT TYPE 4: CUSTOMER DIRECTORY SUMMARY          -->
+                        <!-- =================================================== -->
+                        <div ng-show="reportSubTab === 'customers'" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin: 0;">
+                                    Customer Activity & Follow-up Completion:
+                                </h3>
+                                <div class="filter-search-box" style="width: 280px;">
+                                    <input type="search" class="comic-search-bar" placeholder="Search customer by name, phone, city..." ng-model="reportFilters.searchCustomers">
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="nowrap" style="width: 80px;">ID</th>
+                                            <th>Customer Name</th>
+                                            <th class="nowrap col-phone">Phone Number</th>
+                                            <th>City</th>
+                                            <th class="nowrap" style="text-align: center;">Orders in Period</th>
+                                            <th class="nowrap">Total Spent</th>
+                                            <th class="nowrap" style="text-align: center;">Pending Checks</th>
+                                            <th class="nowrap" style="text-align: right;">Follow-up Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="c in getFilteredReportCustomers() track by c.id">
+                                            <td class="nowrap"><strong style="color: #475569;" ng-bind="'#' + c.id"></strong></td>
+                                            <td><strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="c.name"></strong></td>
+                                            <td class="nowrap col-phone"><strong ng-bind="c.phoneNumber"></strong></td>
+                                            <td><span ng-bind="c.city"></span></td>
+                                            <td class="nowrap" style="text-align: center;">
+                                                <strong ng-bind="c.totalOrders"></strong>
+                                            </td>
+                                            <td class="nowrap">
+                                                <strong style="color: #0F172A;" ng-bind="'$' + (c.totalSpent | number:2)"></strong>
+                                            </td>
+                                            <td class="nowrap" style="text-align: center;">
+                                                <span style="font-weight: 800; color: c.pendingFollowups > 0 ? '#991B1B' : '#166534';" ng-bind="c.pendingFollowups"></span>
+                                            </td>
+                                            <td class="nowrap" style="text-align: right;">
+                                                <span class="comic-tag tag-primary" ng-if="c.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
+                                                    ✓ All Done
+                                                </span>
+                                                <span class="comic-tag tag-primary" ng-if="!c.allFollowupsCompleted" style="background-color: #FEF2F2; color: #991B1B; font-weight: 800;">
+                                                    Pending
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="getFilteredReportCustomers().length === 0">
+                                            <td colspan="8" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                                No customer records found for the selected period.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
             </main>
         </div>
     </div>
@@ -1686,6 +2093,27 @@
                 <div class="form-group">
                     <label class="form-label">Note / Details</label>
                     <textarea class="comic-input" rows="3" placeholder="Enter follow-up note..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Customer Satisfaction Scale (Optional) -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin: 0;">Customer Satisfaction Scale (Optional)</label>
+                        <button type="button" class="scale-clear-btn" ng-show="editingFollowup.satisfaction" ng-click="editingFollowup.satisfaction = null">
+                            Clear / Blank
+                        </button>
+                    </div>
+                    <div class="satisfaction-scale-bar">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingFollowup.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Attached Proof Image File Upload -->
@@ -1757,6 +2185,27 @@
                     <textarea class="comic-input" rows="4" placeholder="Enter full details of the note or customer feedback..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
                 </div>
 
+                <!-- Customer Satisfaction Scale (Optional) -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin: 0;">Customer Satisfaction Scale (Optional)</label>
+                        <button type="button" class="scale-clear-btn" ng-show="newCustomerFeedback.satisfaction" ng-click="newCustomerFeedback.satisfaction = null">
+                            Clear / Blank
+                        </button>
+                    </div>
+                    <div class="satisfaction-scale-bar">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': newCustomerFeedback.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': newCustomerFeedback.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': newCustomerFeedback.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Attached Proof / Note Image File Upload -->
                 <div class="form-group">
                     <label class="form-label">Attach Photo / Screenshot</label>
@@ -1816,6 +2265,27 @@
                 <div class="form-group">
                     <label class="form-label">Note & Feedback Details</label>
                     <textarea class="comic-input" rows="4" placeholder="Enter note details..." ng-model="editingCustomerFeedback.content" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Customer Satisfaction Scale (Optional) -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin: 0;">Customer Satisfaction Scale (Optional)</label>
+                        <button type="button" class="scale-clear-btn" ng-show="editingCustomerFeedback.satisfaction" ng-click="editingCustomerFeedback.satisfaction = null">
+                            Clear / Blank
+                        </button>
+                    </div>
+                    <div class="satisfaction-scale-bar">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingCustomerFeedback.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingCustomerFeedback.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingCustomerFeedback.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Attached Proof / Note Image File Upload -->

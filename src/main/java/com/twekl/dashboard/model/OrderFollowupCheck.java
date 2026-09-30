@@ -39,6 +39,9 @@ public class OrderFollowupCheck {
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
+    @Column(name = "satisfaction", length = 30)
+    private String satisfaction;
+
     @Column(name = "checked_by")
     private String checkedBy;
 
@@ -57,7 +60,7 @@ public class OrderFollowupCheck {
         this.isCompleted = false;
     }
 
-    public OrderFollowupCheck(Long id, Long orderId, Long presetId, String presetName, Integer durationValue, String durationUnit, Boolean isCompleted, String note, String imageUrl, String checkedBy, LocalDateTime checkedAt, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public OrderFollowupCheck(Long id, Long orderId, Long presetId, String presetName, Integer durationValue, String durationUnit, Boolean isCompleted, String note, String imageUrl, String satisfaction, String checkedBy, LocalDateTime checkedAt, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.orderId = orderId;
         this.presetId = presetId;
@@ -67,6 +70,7 @@ public class OrderFollowupCheck {
         this.isCompleted = isCompleted != null ? isCompleted : false;
         this.note = note;
         this.imageUrl = imageUrl;
+        this.satisfaction = satisfaction;
         this.checkedBy = checkedBy;
         this.checkedAt = checkedAt;
         this.createdAt = createdAt;
@@ -100,6 +104,9 @@ public class OrderFollowupCheck {
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
+    public String getSatisfaction() { return satisfaction; }
+    public void setSatisfaction(String satisfaction) { this.satisfaction = satisfaction; }
+
     public String getCheckedBy() { return checkedBy; }
     public void setCheckedBy(String checkedBy) { this.checkedBy = checkedBy; }
 
@@ -126,6 +133,7 @@ public class OrderFollowupCheck {
         private Boolean isCompleted = false;
         private String note;
         private String imageUrl;
+        private String satisfaction;
         private String checkedBy;
         private LocalDateTime checkedAt;
         private LocalDateTime createdAt;
@@ -140,13 +148,14 @@ public class OrderFollowupCheck {
         public Builder isCompleted(Boolean isCompleted) { this.isCompleted = isCompleted; return this; }
         public Builder note(String note) { this.note = note; return this; }
         public Builder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }
+        public Builder satisfaction(String satisfaction) { this.satisfaction = satisfaction; return this; }
         public Builder checkedBy(String checkedBy) { this.checkedBy = checkedBy; return this; }
         public Builder checkedAt(LocalDateTime checkedAt) { this.checkedAt = checkedAt; return this; }
         public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
         public OrderFollowupCheck build() {
-            return new OrderFollowupCheck(id, orderId, presetId, presetName, durationValue, durationUnit, isCompleted, note, imageUrl, checkedBy, checkedAt, createdAt, updatedAt);
+            return new OrderFollowupCheck(id, orderId, presetId, presetName, durationValue, durationUnit, isCompleted, note, imageUrl, satisfaction, checkedBy, checkedAt, createdAt, updatedAt);
         }
     }
 }

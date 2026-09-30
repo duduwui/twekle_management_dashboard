@@ -92,11 +92,12 @@ public class SecurityConfig {
                 // User Management Endpoints
                 .requestMatchers("/api/users/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "PERMISSION_MANAGE_USERS")
                 
-                // Customer Follow-up, Orders, Presets & Dashboard Stats
+                // Customer Follow-up, Orders, Presets, Dashboard Stats & Reports
                 .requestMatchers("/api/customers/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/orders/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/time-filters/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/stats/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/api/reports/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 
                 // All other API endpoints require authenticated session
                 .requestMatchers("/api/**").authenticated()

@@ -204,6 +204,7 @@ public class CustomerService {
             if (updateData.getIsCompleted() != null) c.setIsCompleted(updateData.getIsCompleted());
             if (updateData.getNote() != null) c.setNote(updateData.getNote());
             if (updateData.getImageUrl() != null) c.setImageUrl(updateData.getImageUrl());
+            c.setSatisfaction(updateData.getSatisfaction());
             if (updateData.getCheckedBy() != null) c.setCheckedBy(updateData.getCheckedBy());
             if (Boolean.TRUE.equals(c.getIsCompleted())) {
                 if (c.getCheckedAt() == null) c.setCheckedAt(LocalDateTime.now());
@@ -268,6 +269,7 @@ public class CustomerService {
             if (update.getContent() != null) fb.setContent(update.getContent());
             if (update.getImageUrl() != null) fb.setImageUrl(update.getImageUrl());
             if (update.getAuthorName() != null) fb.setAuthorName(update.getAuthorName());
+            fb.setSatisfaction(update.getSatisfaction());
             if (update.getOrderId() != null) {
                 fb.setOrderId(update.getOrderId());
                 orderRepository.findById(update.getOrderId()).ifPresent(o -> {

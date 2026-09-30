@@ -63,6 +63,20 @@ public class DataInitializer implements CommandLineRunner {
             log.warn("Notice updating table column image_url: {}", e.getMessage());
         }
 
+        try {
+            jdbcTemplate.execute("ALTER TABLE order_followup_checks ADD COLUMN satisfaction VARCHAR(30) NULL");
+            log.info("Successfully ensured order_followup_checks.satisfaction column exists");
+        } catch (Exception e) {
+            log.debug("Column satisfaction already exists in order_followup_checks");
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE customer_feedbacks ADD COLUMN satisfaction VARCHAR(30) NULL");
+            log.info("Successfully ensured customer_feedbacks.satisfaction column exists");
+        } catch (Exception e) {
+            log.debug("Column satisfaction already exists in customer_feedbacks");
+        }
+
         if (timeFilterPresetRepository.count() == 0) {
             log.info("Seeding Dynamic Time Filter Presets...");
             timeFilterPresetRepository.save(TimeFilterPreset.builder().name("24 Hours Ago").durationValue(24).durationUnit("HOURS").isActive(true).build());

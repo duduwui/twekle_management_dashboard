@@ -33,6 +33,9 @@ public class CustomerFeedback {
     @Column(columnDefinition = "LONGTEXT")
     private String imageUrl;
 
+    @Column(length = 30)
+    private String satisfaction; // "SATISFIED", "NEUTRAL", "UNSATISFIED", or null
+
     private LocalDateTime createdAt;
 
     public CustomerFeedback() {
@@ -43,7 +46,7 @@ public class CustomerFeedback {
         this.status = "FOLLOWED_UP";
     }
 
-    public CustomerFeedback(Long id, Long customerId, String customerName, Long orderId, String orderNumber, String orderSummary, String authorName, String feedbackType, String content, Integer rating, String status, LocalDateTime createdAt) {
+    public CustomerFeedback(Long id, Long customerId, String customerName, Long orderId, String orderNumber, String orderSummary, String authorName, String feedbackType, String content, Integer rating, String status, String satisfaction, LocalDateTime createdAt) {
         this.id = id;
         this.customerId = customerId;
         this.customerName = customerName;
@@ -55,6 +58,7 @@ public class CustomerFeedback {
         this.content = content;
         this.rating = (rating != null) ? rating : 5;
         this.status = (status != null) ? status : "FOLLOWED_UP";
+        this.satisfaction = satisfaction;
         this.createdAt = (createdAt != null) ? createdAt : LocalDateTime.now();
     }
 
@@ -104,6 +108,9 @@ public class CustomerFeedback {
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
+    public String getSatisfaction() { return satisfaction; }
+    public void setSatisfaction(String satisfaction) { this.satisfaction = satisfaction; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -124,6 +131,7 @@ public class CustomerFeedback {
         private String content;
         private Integer rating = 5;
         private String status = "FOLLOWED_UP";
+        private String satisfaction;
         private String imageUrl;
         private LocalDateTime createdAt;
 
@@ -138,11 +146,12 @@ public class CustomerFeedback {
         public CustomerFeedbackBuilder content(String content) { this.content = content; return this; }
         public CustomerFeedbackBuilder rating(Integer rating) { this.rating = rating; return this; }
         public CustomerFeedbackBuilder status(String status) { this.status = status; return this; }
+        public CustomerFeedbackBuilder satisfaction(String satisfaction) { this.satisfaction = satisfaction; return this; }
         public CustomerFeedbackBuilder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }
         public CustomerFeedbackBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
 
         public CustomerFeedback build() {
-            CustomerFeedback fb = new CustomerFeedback(id, customerId, customerName, orderId, orderNumber, orderSummary, authorName, feedbackType, content, rating, status, createdAt);
+            CustomerFeedback fb = new CustomerFeedback(id, customerId, customerName, orderId, orderNumber, orderSummary, authorName, feedbackType, content, rating, status, satisfaction, createdAt);
             fb.setImageUrl(imageUrl);
             return fb;
         }

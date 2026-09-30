@@ -2247,4 +2247,221 @@ section.comic-card {
   gap: 10px;
 }
 
+/* ========================================================= */
+/* SATISFACTION SCALE BUTTONS & BADGES (ZERO EMOJIS / STARS)  */
+/* ========================================================= */
+.satisfaction-scale-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.scale-opt-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border: 2px solid var(--border-black);
+  background: #FFFFFF;
+  color: #0F172A;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.scale-opt-btn:hover {
+  background: #F1F5F9;
+  transform: translateY(-1px);
+}
+
+.scale-opt-btn.active-scale-satisfied {
+  background: #0F172A;
+  color: #FFFFFF;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.scale-opt-btn.active-scale-neutral {
+  background: #475569;
+  color: #FFFFFF;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.scale-opt-btn.active-scale-unsatisfied {
+  background: #1E293B;
+  color: #FFFFFF;
+  box-shadow: 2px 2px 0px #000000;
+  border-color: #000000;
+}
+
+.scale-clear-btn {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #64748B;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 2px 4px;
+}
+
+.scale-clear-btn:hover {
+  color: #000000;
+}
+
+/* Professional Satisfaction Status Badges */
+.sat-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  border: 1.5px solid var(--border-black);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.sat-badge-satisfied {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+.sat-badge-neutral {
+  background-color: #F8FAFC;
+  color: #475569;
+}
+
+.sat-badge-unsatisfied {
+  background-color: #FEF2F2;
+  color: #991B1B;
+}
+
+.sat-badge-blank {
+  background-color: transparent;
+  color: #94A3B8;
+  border-style: dashed;
+}
+
+/* ========================================================= */
+/* DEDICATED REPORTS DASHBOARD & TYPE SELECTOR               */
+/* ========================================================= */
+.reports-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reports-period-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #FFFFFF;
+  border: 2px solid var(--border-black);
+  border-radius: var(--radius-comic);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.reports-period-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.report-period-pill {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border: 2px solid var(--border-black);
+  background: #FFFFFF;
+  color: #0F172A;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.report-period-pill:hover {
+  background: #F1F5F9;
+}
+
+.report-period-pill.active {
+  background: #0F172A;
+  color: #FFFFFF;
+  box-shadow: 1.5px 1.5px 0px #000000;
+}
+
+.reports-type-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--border-black);
+  padding-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.report-type-btn {
+  padding: 8px 16px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  border: 2px solid var(--border-black);
+  background: #FFFFFF;
+  color: #0F172A;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #000000;
+  transition: all 0.12s ease;
+}
+
+.report-type-btn:hover {
+  background: #F8FAFC;
+  transform: translateY(-1px);
+}
+
+.report-type-btn.active {
+  background: #0F172A;
+  color: #FFFFFF;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.report-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.report-kpi-card {
+  background: #FFFFFF;
+  border: 2px solid var(--border-black);
+  border-radius: var(--radius-comic);
+  padding: 16px;
+  box-shadow: 2.5px 2.5px 0px #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-kpi-title {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-kpi-num {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.report-kpi-subtext {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+
 

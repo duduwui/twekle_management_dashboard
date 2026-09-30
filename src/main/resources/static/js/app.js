@@ -1021,12 +1021,43 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.userModules = [];
     $scope.selectedCustomer = null;
 
-    // New Follow-up Note / Compliment Model
+    // New Follow-up Note Model
     $scope.newCustomerFeedback = {
-        feedbackType: 'COMPLIMENT',
+        feedbackType: 'NOTE',
         content: '',
-        rating: 5,
-        authorName: 'Agent Follow-up'
+        satisfaction: null,
+        imageUrl: '',
+        authorName: 'Follow-up Agent'
+    };
+
+    // Reports Dashboard State
+    $scope.reportPeriod = 'all';
+    $scope.reportSubTab = 'milestones';
+    $scope.reportLoading = false;
+    $scope.reportFilters = {
+        dateFrom: null,
+        dateTo: null,
+        satisfactionFilter: 'all',
+        searchNotes: '',
+        searchProducts: '',
+        searchCustomers: '',
+        searchPending: ''
+    };
+    $scope.reportData = {
+        summary: {
+            totalFollowupsDue: 0,
+            finishedFollowups: 0,
+            pendingFollowups: 0,
+            completionRate: 0,
+            totalOrdersInPeriod: 0,
+            totalCustomersInPeriod: 0,
+            satisfaction: { satisfied: 0, neutral: 0, unsatisfied: 0, blank: 0, totalNotes: 0 }
+        },
+        milestones: [],
+        pendingFollowups: [],
+        satisfactionNotes: [],
+        products: [],
+        customerSummary: []
     };
 
     // New Order Model
@@ -1148,6 +1179,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             if (path.startsWith('/admins')) path = '/admin/admins' + path.substring(7);
             else if (path.startsWith('/users')) path = '/admin/users' + path.substring(6);
             else if (path.startsWith('/roles') || path.startsWith('/role-templates')) path = '/admin/role-templates';
+            else if (path.startsWith('/reports')) path = '/admin/reports' + path.substring(8);
             else if (path.startsWith('/customers') || path.startsWith('/followups') || path.startsWith('/followup')) {
                 var suffix = path.replace(/^\/(customers|followups|followup)/, '');
                 path = '/admin/followups' + suffix;
@@ -1183,6 +1215,17 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         var section = parts[0] || 'admins';
         var action = parts[1] || 'list';
         var id = parts[2] ? parseInt(parts[2], 10) : null;
+
+        if (section === 'reports') {
+            $scope.currentTab = 'reports';
+            if (action && ['milestones', 'satisfaction', 'products', 'customers'].indexOf(action) !== -1) {
+                $scope.reportSubTab = action;
+            } else {
+                $scope.reportSubTab = 'milestones';
+            }
+            $scope.loadReport();
+            return;
+        }
 
         if (section === 'admins') {
             $scope.currentTab = 'admins';
@@ -1291,6 +1334,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             $scope.loadCustomers($scope.customerTimeFilter);
             $scope.loadCustomerStats();
             $scope.updateUrl('/admin/followups');
+        } else if (tabName === 'reports') {
+            $scope.loadReport();
+            $scope.updateUrl('/admin/reports');
         }
     };
 
@@ -2194,6 +2240,156 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         return days + ' Days Ago';
     };
 
+    // =========================================================
+    // SATISFACTION SCALE & REPORT MANAGEMENT
+    // =========================================================
+    $scope.toggleSatisfaction = function(target, val) {
+        if (!target) return;
+        if (target.satisfaction === val) {
+            target.satisfaction = null; // deselect back to blank
+        } else {
+            target.satisfaction = val;
+        }
+    };
+
+    $scope.formatDateForApi = function(d) {
+        if (!d) return '';
+        if (typeof d === 'string') return d;
+        var y = d.getFullYear();
+        var m = ('0' + (d.getMonth() + 1)).slice(-2);
+        var day = ('0' + d.getDate()).slice(-2);
+        return y + '-' + m + '-' + day;
+    };
+
+    $scope.loadReport = function(period) {
+        if (period) $scope.reportPeriod = period;
+        $scope.reportLoading = true;
+        var url = '/api/reports/followups?period=' + encodeURIComponent($scope.reportPeriod);
+        if ($scope.reportPeriod === 'custom' && $scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) {
+            url += '&dateFrom=' + encodeURIComponent($scope.formatDateForApi($scope.reportFilters.dateFrom)) + 
+                   '&dateTo=' + encodeURIComponent($scope.formatDateForApi($scope.reportFilters.dateTo));
+        }
+        return $http.get(url).then(function(res) {
+            $scope.reportData = res.data;
+            $scope.reportLoading = false;
+        }, function() {
+            $scope.reportLoading = false;
+            $scope.showToast('Failed to load report analytics', 'error');
+        });
+    };
+
+    $scope.applyCustomReportRange = function() {
+        if (!$scope.reportFilters.dateFrom || !$scope.reportFilters.dateTo) {
+            $scope.showToast('Please select both From and To dates', 'error');
+            return;
+        }
+        $scope.reportPeriod = 'custom';
+        $scope.loadReport('custom');
+    };
+
+    $scope.setReportSubTab = function(subTab) {
+        $scope.reportSubTab = subTab;
+        $scope.updateUrl('/admin/reports/' + subTab);
+    };
+
+    $scope.getFilteredReportPending = function() {
+        if (!$scope.reportData || !$scope.reportData.pendingFollowups) return [];
+        var q = ($scope.reportFilters.searchPending || '').toLowerCase().trim();
+        if (!q) return $scope.reportData.pendingFollowups;
+        return $scope.reportData.pendingFollowups.filter(function(item) {
+            return (item.customerName && item.customerName.toLowerCase().indexOf(q) !== -1) ||
+                   (item.customerPhone && item.customerPhone.indexOf(q) !== -1) ||
+                   (item.orderNumber && item.orderNumber.toLowerCase().indexOf(q) !== -1) ||
+                   (item.presetName && item.presetName.toLowerCase().indexOf(q) !== -1);
+        });
+    };
+
+    $scope.getFilteredReportNotes = function() {
+        if (!$scope.reportData || !$scope.reportData.satisfactionNotes) return [];
+        var q = ($scope.reportFilters.searchNotes || '').toLowerCase().trim();
+        var sat = $scope.reportFilters.satisfactionFilter || 'all';
+        return $scope.reportData.satisfactionNotes.filter(function(item) {
+            if (sat !== 'all') {
+                if (sat === 'BLANK') {
+                    if (item.satisfaction && item.satisfaction !== 'BLANK') return false;
+                } else if (item.satisfaction !== sat) {
+                    return false;
+                }
+            }
+            if (!q) return true;
+            return (item.customerName && item.customerName.toLowerCase().indexOf(q) !== -1) ||
+                   (item.customerPhone && item.customerPhone.indexOf(q) !== -1) ||
+                   (item.orderNumber && item.orderNumber.toLowerCase().indexOf(q) !== -1) ||
+                   (item.note && item.note.toLowerCase().indexOf(q) !== -1) ||
+                   (item.checkedBy && item.checkedBy.toLowerCase().indexOf(q) !== -1);
+        });
+    };
+
+    $scope.getFilteredReportProducts = function() {
+        if (!$scope.reportData || !$scope.reportData.products) return [];
+        var q = ($scope.reportFilters.searchProducts || '').toLowerCase().trim();
+        if (!q) return $scope.reportData.products;
+        return $scope.reportData.products.filter(function(item) {
+            return item.productName && item.productName.toLowerCase().indexOf(q) !== -1;
+        });
+    };
+
+    $scope.getFilteredReportCustomers = function() {
+        if (!$scope.reportData || !$scope.reportData.customerSummary) return [];
+        var q = ($scope.reportFilters.searchCustomers || '').toLowerCase().trim();
+        if (!q) return $scope.reportData.customerSummary;
+        return $scope.reportData.customerSummary.filter(function(item) {
+            return (item.name && item.name.toLowerCase().indexOf(q) !== -1) ||
+                   (item.phoneNumber && item.phoneNumber.indexOf(q) !== -1) ||
+                   (item.city && item.city.toLowerCase().indexOf(q) !== -1);
+        });
+    };
+
+    $scope.jumpFromReportToOrder = function(item) {
+        if (!item || !item.customerId) return;
+        $http.get('/api/customers/' + item.customerId).then(function(res) {
+            $scope.openCustomerOrder(res.data, item.orderId, item.presetName);
+        });
+    };
+
+    $scope.exportReportCsv = function() {
+        if (!$scope.reportData) return;
+        var csvRows = [];
+        var filename = 'Twekl_Report_' + $scope.reportSubTab + '_' + $scope.reportPeriod + '.csv';
+
+        if ($scope.reportSubTab === 'milestones') {
+            csvRows.push(['Milestone Name', 'Total Due', 'Completed', 'Pending', 'Completion Rate %'].join(','));
+            ($scope.reportData.milestones || []).forEach(function(m) {
+                csvRows.push(['"' + m.presetName + '"', m.total, m.completed, m.pending, m.completionRate + '%'].join(','));
+            });
+        } else if ($scope.reportSubTab === 'satisfaction') {
+            csvRows.push(['Customer Name', 'Phone', 'Order #', 'Milestone', 'Satisfaction', 'Note Details', 'Checked By', 'Date'].join(','));
+            $scope.getFilteredReportNotes().forEach(function(n) {
+                var safeNote = (n.note || '').replace(/"/g, '""');
+                csvRows.push(['"' + (n.customerName || '') + '"', '"' + (n.customerPhone || '') + '"', '"' + (n.orderNumber || '') + '"', '"' + (n.presetName || '') + '"', '"' + (n.satisfaction || '') + '"', '"' + safeNote + '"', '"' + (n.checkedBy || '') + '"', '"' + (n.date || '') + '"'].join(','));
+            });
+        } else if ($scope.reportSubTab === 'products') {
+            csvRows.push(['Product Name', 'Order Count', 'Satisfied Notes', 'Neutral Notes', 'Unsatisfied Notes', 'Total Notes'].join(','));
+            $scope.getFilteredReportProducts().forEach(function(p) {
+                csvRows.push(['"' + (p.productName || '') + '"', p.orderCount, p.satisfiedCount, p.neutralCount, p.unsatisfiedCount, p.notesCount].join(','));
+            });
+        } else if ($scope.reportSubTab === 'customers') {
+            csvRows.push(['Customer Name', 'Phone', 'City', 'Total Orders', 'Total Spent', 'Pending Follow-ups', 'Status'].join(','));
+            $scope.getFilteredReportCustomers().forEach(function(c) {
+                csvRows.push(['"' + (c.name || '') + '"', '"' + (c.phoneNumber || '') + '"', '"' + (c.city || '') + '"', c.totalOrders, c.totalSpent, c.pendingFollowups, c.allFollowupsCompleted ? 'Completed' : 'Pending'].join(','));
+            });
+        }
+
+        var blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        $scope.showToast('Report exported as CSV');
+    };
+
     $scope.refreshAllData = function() {
         $scope.loadAdmins();
         $scope.loadUsers();
@@ -2201,6 +2397,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.loadCustomers();
         $scope.loadCustomerStats();
         $scope.loadTimeFilterPresets();
+        if ($scope.currentTab === 'reports') {
+            $scope.loadReport();
+        }
     };
 
     // Initialize application

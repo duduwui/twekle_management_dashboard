@@ -159,7 +159,7 @@ body {
 }
 
 /* =========================================================
-   TEENAGE ENGINEERING [EP-133 K.O. II] - SIDEBAR TAB BUTTONS
+   COMIC NEO-BRUTALIST - SIDEBAR NAVIGATION & BUTTONS
    ========================================================= */
 .nav-item {
   display: flex;
@@ -167,86 +167,75 @@ body {
   justify-content: space-between;
   width: 100%;
   padding: 10px 14px;
-  border-radius: 10px;
-  border: none;
+  border-radius: 9px;
+  border: 2.5px solid #000000;
   outline: none;
-  background-color: #545251;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 4px 6px,
-              #a8a6a4 1.5px 1.5px 1px 0px inset,
-              #383635 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFFFFF;
+  color: #000000;
+  box-shadow: 3.5px 3.5px 0px #000000;
   font-size: 0.92rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: 0.1s ease-in-out;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
   text-align: left;
   font-family: inherit;
   box-sizing: border-box;
+  text-decoration: none;
 }
 
 .nav-item span {
-  color: #FFFFFF !important;
+  color: #000000;
 }
 
 .nav-item:hover {
-  background-color: #615F5E;
-  box-shadow: rgba(0, 0, 0, 0.4) 0 5px 8px,
-              #BDBBB9 1.5px 1.5px 1.5px 0px inset,
-              #383635 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FEF08A;
+  color: #000000;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #000000;
 }
 
 .nav-item:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px,
-              inset 0.5px 0.5px 4px #000000,
-              #545251 -3.2px -3.2px 8px 0px inset;
-  transform: translateY(1px);
-  color: #FFFFFF !important;
+  transform: translate(2px, 2px);
+  box-shadow: 1.5px 1.5px 0px #000000;
 }
 
-/* Active Selected Tab - Teenage Engineering [EP-133] Hero Keycap */
+/* Active Selected Tab - Comic Sunburst Yellow Pop */
 .nav-item.active {
-  background-color: #d42a02;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 4px 6px,
-              #fb702c 2px 2px 6px 0px inset,
-              #8f1c01 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFE600;
+  color: #000000;
+  border: 2.5px solid #000000;
+  box-shadow: 4px 4px 0px #000000;
   font-weight: 900;
 }
 
 .nav-item.active:hover {
-  background-color: #df3208;
-  box-shadow: rgba(0, 0, 0, 0.4) 0 5px 8px,
-              #fc8448 2px 2px 6px 0px inset,
-              #8f1c01 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFDE00;
+  transform: translate(-2px, -2px);
+  box-shadow: 5.5px 5.5px 0px #000000;
 }
 
 .nav-item.active:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px,
-              inset 0.5px 0.5px 4px #000000,
-              #d42a02 -3.2px -3.2px 8px 0px inset;
-  transform: translateY(1px);
-  color: #FFFFFF !important;
+  transform: translate(2px, 2px);
+  box-shadow: 1.5px 1.5px 0px #000000;
 }
 
+/* Comic Nav Badges */
 .nav-badge {
   font-size: 0.72rem;
   font-weight: 800;
   padding: 2px 7px;
   border-radius: 6px;
-  background-color: #242221;
-  color: #FFFFFF !important;
-  box-shadow: inset 0.5px 0.5px 2px #000000, rgba(255, 255, 255, 0.15) 0 1px 0;
+  background-color: #000000;
+  color: #FFFFFF;
+  border: 1.5px solid #000000;
   font-family: inherit;
   letter-spacing: 0.02em;
 }
 
 .nav-item.active .nav-badge {
-  background-color: #781400;
-  color: #FFFFFF !important;
-  box-shadow: inset 0.5px 0.5px 3px #000000, rgba(255, 255, 255, 0.2) 0 1px 0;
+  background-color: #000000;
+  color: #FFE600;
+  font-weight: 900;
 }
 
 /* Category Accordion */
@@ -263,59 +252,51 @@ body {
   justify-content: space-between;
   width: 100%;
   padding: 10px 14px;
-  border-radius: 10px;
-  border: none;
+  border-radius: 9px;
+  border: 2.5px solid #000000;
   outline: none;
-  background-color: #545251;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 4px 6px,
-              #a8a6a4 1.5px 1.5px 1px 0px inset,
-              #383635 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFFFFF;
+  color: #000000;
+  box-shadow: 3.5px 3.5px 0px #000000;
   font-size: 0.92rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: 0.1s ease-in-out;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
   text-align: left;
   font-family: inherit;
   box-sizing: border-box;
 }
 
 .nav-category-toggle span {
-  color: #FFFFFF !important;
+  color: #000000;
 }
 
 .nav-category-toggle:hover {
-  background-color: #615F5E;
-  box-shadow: rgba(0, 0, 0, 0.4) 0 5px 8px,
-              #BDBBB9 1.5px 1.5px 1.5px 0px inset,
-              #383635 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FEF08A;
+  color: #000000;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #000000;
 }
 
 .nav-category-toggle:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px,
-              inset 0.5px 0.5px 4px #000000,
-              #545251 -3.2px -3.2px 8px 0px inset;
-  transform: translateY(1px);
-  color: #FFFFFF !important;
+  transform: translate(2px, 2px);
+  box-shadow: 1.5px 1.5px 0px #000000;
 }
 
 .nav-category-toggle.active-category {
-  background-color: #403E3D;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 3px 5px,
-              #8E8C8A 1.5px 1.5px 1px 0px inset,
-              #262524 -3px -3px 5px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #E0F2FE;
+  color: #000000;
+  border: 2.5px solid #000000;
+  box-shadow: 3.5px 3.5px 0px #000000;
   font-weight: 900;
 }
 
 .category-arrow {
   display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 800;
+  font-size: 0.72rem;
+  font-weight: 900;
   transition: transform 0.2s ease;
-  color: #FFFFFF !important;
+  color: #000000;
 }
 
 .category-arrow.expanded {
@@ -328,77 +309,67 @@ body {
   gap: 5px;
   padding-left: 8px;
   margin-top: 3px;
-  border-left: 2px dashed rgba(255, 255, 255, 0.3);
+  border-left: 2.5px solid #000000;
   margin-left: 10px;
 }
 
+/* Comic Sub-item Buttons */
 .nav-sub-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
+  border-radius: 7px;
+  border: 2px solid #000000;
   outline: none;
-  background-color: #444241;
-  box-shadow: rgba(0, 0, 0, 0.3) 0 3px 4px,
-              #888684 1px 1px 1px 0px inset,
-              #2C2A29 -2.5px -2.5px 4px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFFFFF;
+  color: #000000;
+  box-shadow: 2.5px 2.5px 0px #000000;
   font-size: 0.85rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
   cursor: pointer;
-  transition: 0.1s ease-in-out;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
   text-align: left;
   font-family: inherit;
   box-sizing: border-box;
+  text-decoration: none;
 }
 
 .nav-sub-item span {
-  color: #FFFFFF !important;
+  color: #000000;
 }
 
 .nav-sub-item:hover {
-  background-color: #52504F;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 4px 6px,
-              #9E9C9A 1px 1px 1px 0px inset,
-              #2C2A29 -2.5px -2.5px 4px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FEF08A;
+  color: #000000;
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3.5px 3.5px 0px #000000;
 }
 
 .nav-sub-item:active {
-  box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 0px,
-              inset 0.5px 0.5px 3px #000000,
-              #444241 -2.5px -2.5px 4px 0px inset;
-  transform: translateY(1px);
-  color: #FFFFFF !important;
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
+/* Active Comic Sub-item */
 .nav-sub-item.active {
-  background-color: #d42a02;
-  box-shadow: rgba(0, 0, 0, 0.3) 0 3px 5px,
-              #fb702c 1.5px 1.5px 4px 0px inset,
-              #8f1c01 -2.5px -2.5px 4px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFE600;
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
   font-weight: 900;
 }
 
 .nav-sub-item.active:hover {
-  background-color: #df3208;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 4px 6px,
-              #fc8448 1.5px 1.5px 4px 0px inset,
-              #8f1c01 -2.5px -2.5px 4px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #FFDE00;
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4px 4px 0px #000000;
 }
 
 .nav-sub-item.active:active {
-  box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 0px,
-              inset 0.5px 0.5px 3px #000000,
-              #d42a02 -2.5px -2.5px 4px 0px inset;
-  transform: translateY(1px);
-  color: #FFFFFF !important;
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
 .nav-badge-sm {
@@ -406,23 +377,23 @@ body {
   font-weight: 800;
   padding: 1px 6px;
   border-radius: 5px;
-  background-color: #242221;
-  color: #FFFFFF !important;
-  box-shadow: inset 0.5px 0.5px 2px #000000, rgba(255, 255, 255, 0.15) 0 1px 0;
+  background-color: #000000;
+  color: #FFFFFF;
+  border: 1px solid #000000;
   font-family: inherit;
 }
 
 .nav-sub-item.active .nav-badge-sm {
-  background-color: #781400;
-  color: #FFFFFF !important;
-  box-shadow: inset 0.5px 0.5px 2px #000000, rgba(255, 255, 255, 0.2) 0 1px 0;
+  background-color: #000000;
+  color: #FFE600;
+  font-weight: 900;
 }
 
 /* Sidebar Bottom User Profile / Credentials */
 .sidebar-footer {
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-top: 2px solid #000000;
   width: 100%;
   flex-shrink: 0;
 }
@@ -431,9 +402,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+  border-radius: 9px;
   padding: 10px 12px;
   gap: 8px;
 }
@@ -448,7 +420,7 @@ body {
 .sidebar-user-name {
   font-size: 0.88rem;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #000000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -457,18 +429,17 @@ body {
 .sidebar-user-role {
   font-size: 0.7rem;
   font-weight: 800;
-  color: #E6F7F3;
+  color: #047857;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .sidebar-logout-btn {
-  background-color: #545251;
-  box-shadow: rgba(0, 0, 0, 0.3) 0 3px 4px,
-              #a8a6a4 1px 1px 1px 0px inset,
-              #383635 -2.5px -2.5px 4px 0px inset;
-  color: #FFFFFF !important;
-  border-radius: 8px;
+  background-color: #FEE2E2;
+  border: 2px solid #000000;
+  box-shadow: 2.5px 2.5px 0px #000000;
+  color: #991B1B;
+  border-radius: 7px;
   padding: 6px 10px;
   font-size: 0.78rem;
   font-weight: 800;
@@ -476,70 +447,62 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
-  border: none;
   outline: none;
-  transition: 0.1s ease-in-out;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
   font-family: inherit;
   flex-shrink: 0;
 }
 
 .sidebar-logout-btn span,
 .sidebar-logout-btn svg {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
+  color: #991B1B;
+  stroke: #991B1B;
 }
 
 .sidebar-logout-btn:hover {
-  background-color: #d42a02;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 3px 5px,
-              #fb702c 1.5px 1.5px 4px 0px inset,
-              #8f1c01 -2.5px -2.5px 4px 0px inset;
-  color: #FFFFFF !important;
+  background-color: #EF4444;
+  color: #FFFFFF;
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4px 4px 0px #000000;
+}
+
+.sidebar-logout-btn:hover span,
+.sidebar-logout-btn:hover svg {
+  color: #FFFFFF;
+  stroke: #FFFFFF;
 }
 
 .sidebar-logout-btn:active {
-  box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 0px,
-              inset 0.5px 0.5px 3px #000000,
-              #d42a02 -2px -2px 3px 0px inset;
-  transform: translateY(1px);
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
 .sidebar-login-btn {
   width: 100%;
-  background-color: #545251;
-  box-shadow: rgba(0, 0, 0, 0.35) 0 4px 6px,
-              #a8a6a4 1.5px 1.5px 1px 0px inset,
-              #383635 -3.2px -3.2px 6px 0px inset;
-  color: #FFFFFF !important;
-  border-radius: 10px;
-  border: none;
+  background-color: #FFE600;
+  border: 2.5px solid #000000;
+  box-shadow: 3.5px 3.5px 0px #000000;
+  color: #000000;
+  border-radius: 9px;
   outline: none;
   padding: 10px;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
-  transition: 0.1s ease-in-out;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
   font-family: inherit;
   text-align: center;
 }
 
 .sidebar-login-btn:hover {
-  background-color: #615F5E;
-  box-shadow: rgba(0, 0, 0, 0.4) 0 5px 8px,
-              #BDBBB9 1.5px 1.5px 1.5px 0px inset,
-              #383635 -3.2px -3.2px 6px 0px inset;
+  background-color: #FFDE00;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #000000;
 }
 
 .sidebar-login-btn:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px,
-              inset 0.5px 0.5px 4px #000000,
-              #545251 -3.2px -3.2px 8px 0px inset;
-  transform: translateY(1px);
-}
-
-.sidebar-login-btn:hover {
-  background: #E6F7F3;
-  color: var(--primary-dark);
+  transform: translate(2px, 2px);
+  box-shadow: 1.5px 1.5px 0px #000000;
 }
 
 /* =========================================================

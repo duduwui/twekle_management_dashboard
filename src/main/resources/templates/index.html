@@ -134,6 +134,25 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Sidebar Bottom User Profile / Credentials -->
+            <div class="sidebar-footer" ng-if="auth.authenticated">
+                <div class="sidebar-user-card">
+                    <div class="sidebar-user-details">
+                        <span class="sidebar-user-name" ng-bind="auth.username"></span>
+                        <span class="sidebar-user-role" ng-bind="auth.role"></span>
+                    </div>
+                    <button type="button" class="sidebar-logout-btn" ng-click="logout()" title="Logout">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+            <div class="sidebar-footer" ng-if="!auth.authenticated">
+                <button type="button" class="sidebar-login-btn" ng-click="openLoginModal()">
+                    <span>Log In</span>
+                </button>
+            </div>
         </aside>
 
         <!-- Main Content Wrapper -->
@@ -150,19 +169,6 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'products'">Reports — Product Insights</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'customers'">Reports — Customer Directory</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; !reportSubTab">Reports</h1>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);" ng-if="auth.authenticated">
-                        <span style="color: var(--text-muted);">Logged in as:</span>
-                        <strong style="color: var(--primary-dark); margin-left: 4px;" ng-bind="auth.username"></strong>
-                        <span class="comic-tag tag-primary" style="margin-left: 6px; font-size: 0.75rem;" ng-bind="auth.role"></span>
-                    </div>
-                    <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.8rem;" ng-if="auth.authenticated" ng-click="logout()">
-                        Logout
-                    </button>
-                    <button type="button" class="comic-btn" style="padding: 5px 14px; font-size: 0.8rem;" ng-if="!auth.authenticated" ng-click="openLoginModal()">
-                        Log In
-                    </button>
                 </div>
             </header>
 
@@ -1786,53 +1792,6 @@
                                 </div>
                             </div>
 
-                            <!-- Pending Follow-ups Queue -->
-                            <div style="margin-top: 10px;">
-                                <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin: 0 0 10px;">
-                                    Pending Follow-ups Queue (Needing Contact):
-                                    <span style="font-size: 0.85rem; color: #64748B; font-weight: 700;" ng-bind="'(' + getFilteredReportPending().length + ' items)'"></span>
-                                </h3>
-
-                                <div class="table-responsive">
-                                    <table class="comic-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Customer Details</th>
-                                                <th class="nowrap col-phone">Phone</th>
-                                                <th class="nowrap">Order #</th>
-                                                <th>Ordered Items</th>
-                                                <th class="nowrap">Pending Milestone</th>
-                                                <th class="nowrap">Days Since Order</th>
-                                                <th class="nowrap" style="text-align: right;">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr ng-repeat="p in getFilteredReportPending() track by p.checkId">
-                                                <td>
-                                                    <strong style="color: #0F172A;" ng-bind="p.customerName"></strong>
-                                                </td>
-                                                <td class="nowrap col-phone"><strong ng-bind="p.customerPhone"></strong></td>
-                                                <td class="nowrap"><strong style="color: #0F172A;" ng-bind="p.orderNumber"></strong></td>
-                                                <td><span style="font-size: 0.85rem;" ng-bind="p.itemsSummary"></span></td>
-                                                <td class="nowrap">
-                                                    <span class="comic-tag tag-primary" style="background-color: #FEF2F2; color: #991B1B; border: 1.5px solid #000;" ng-bind="p.presetName"></span>
-                                                </td>
-                                                <td class="nowrap"><strong ng-bind="p.daysSinceOrder + ' days ago'"></strong></td>
-                                                <td class="nowrap" style="text-align: right;">
-                                                    <button type="button" class="comic-btn" style="padding: 4px 10px; font-size: 0.78rem;" ng-click="jumpFromReportToOrder(p)">
-                                                        Open Logs & Feedbacks ➔
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr ng-if="getFilteredReportPending().length === 0">
-                                                <td colspan="7" style="text-align: center; padding: 22px; color: #166534; font-weight: 800;">
-                                                    All follow-ups for this period have been completed!
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- =================================================== -->

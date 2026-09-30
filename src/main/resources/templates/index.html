@@ -1124,15 +1124,10 @@
                                     <tr ng-repeat="cust in getPagedCustomers() track by cust.id"
                                         ng-class="getCustomerRowClass(cust)">
                                         <td class="nowrap">
-                                            <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'#' + cust.id"></strong>
+                                            <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="'#' + cust.id"></strong>
                                         </td>
                                         <td>
-                                            <div>
-                                                <strong style="font-size: 0.98rem; color: var(--primary-dark);" ng-bind="cust.name"></strong>
-                                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-                                                    <span ng-bind="cust.city || 'Erbil'"></span> • <span ng-bind="cust.email || '-'"></span>
-                                                </div>
-                                            </div>
+                                            <strong style="font-size: 0.98rem; color: #0F172A;" ng-bind="cust.name"></strong>
                                         </td>
                                         <td class="col-phone nowrap">
                                             <strong style="font-size: 0.92rem; white-space: nowrap;" ng-bind="cust.phoneNumber"></strong>
@@ -1815,7 +1810,6 @@
                                             <tr ng-repeat="p in getFilteredReportPending() track by p.checkId">
                                                 <td>
                                                     <strong style="color: #0F172A;" ng-bind="p.customerName"></strong>
-                                                    <div style="font-size: 0.78rem; color: #64748B;" ng-bind="p.customerCity"></div>
                                                 </td>
                                                 <td class="nowrap col-phone"><strong ng-bind="p.customerPhone"></strong></td>
                                                 <td class="nowrap"><strong style="color: #0F172A;" ng-bind="p.orderNumber"></strong></td>

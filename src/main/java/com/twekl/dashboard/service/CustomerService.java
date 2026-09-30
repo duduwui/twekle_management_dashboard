@@ -160,13 +160,22 @@ public class CustomerService {
                     if (earliestMinutesUntilDue != Long.MAX_VALUE) {
                         if (earliestMinutesUntilDue < 60) {
                             c.setNextPendingFollowup("Fresh Order (Due in " + earliestMinutesUntilDue + "m)");
-                        } else {
+                        } else if (earliestMinutesUntilDue < 1440) {
                             long h = earliestMinutesUntilDue / 60;
                             long m = earliestMinutesUntilDue % 60;
                             if (m > 0) {
                                 c.setNextPendingFollowup("Fresh Order (Due in " + h + "h " + m + "m)");
                             } else {
                                 c.setNextPendingFollowup("Fresh Order (Due in " + h + "h)");
+                            }
+                        } else {
+                            long days = earliestMinutesUntilDue / 1440;
+                            long remMin = earliestMinutesUntilDue % 1440;
+                            long h = remMin / 60;
+                            if (h > 0) {
+                                c.setNextPendingFollowup("Fresh Order (Due in " + days + "d " + h + "h)");
+                            } else {
+                                c.setNextPendingFollowup("Fresh Order (Due in " + days + "d)");
                             }
                         }
                     } else {

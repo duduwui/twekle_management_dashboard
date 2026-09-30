@@ -68,12 +68,12 @@ body {
 }
 
 /* =========================================================
-   SIDEBAR - Modern Clean Minimalist UI
+   SIDEBAR - Bold Green LifeCare Modern Style
    ========================================================= */
 .sidebar {
   width: 260px;
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
+  background-color: #35B89F;
+  border-right: 1px solid #208773;
   display: flex;
   flex-direction: column;
   padding: 24px 18px;
@@ -82,6 +82,7 @@ body {
   top: 0;
   height: 100vh;
   z-index: 50;
+  box-shadow: 4px 0 20px rgba(32, 135, 115, 0.15);
 }
 
 .brand-section {
@@ -89,7 +90,7 @@ body {
   align-items: center;
   gap: 12px;
   padding-bottom: 24px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .brand-logo-img {
@@ -97,7 +98,8 @@ body {
   width: 42px;
   object-fit: cover;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(53, 184, 159, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
@@ -109,15 +111,16 @@ body {
 
 .brand-title {
   font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--text-main);
+  font-weight: 900;
+  color: #FFFFFF;
   letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .brand-subtitle {
   font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--primary-color);
+  font-weight: 900;
+  color: #E6F7F3;
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
@@ -131,8 +134,8 @@ body {
 
 .nav-label {
   font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--text-light);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   padding: 0 8px;
@@ -140,18 +143,18 @@ body {
   margin-bottom: 4px;
 }
 
-/* Modern Navigation Items */
+/* Modern Navigation Items on Bold Green Sidebar */
 .nav-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 11px 14px;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
-  color: var(--text-body);
-  background-color: transparent;
-  border: 1px solid transparent;
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   transition: all 0.15s ease;
   cursor: pointer;
@@ -160,28 +163,30 @@ body {
 }
 
 .nav-item:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
 .nav-item.active {
-  background-color: #0F172A;
-  color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  background-color: #FFFFFF;
+  color: #0F172A;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .nav-badge {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  background-color: #F1F5F9;
-  color: #475569;
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
 }
 
 .nav-item.active .nav-badge {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #FFFFFF;
+  background-color: #E6F7F3;
+  color: #0F172A;
 }
 
 /* Category Accordion */
@@ -198,10 +203,10 @@ body {
   justify-content: space-between;
   padding: 11px 14px;
   font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--text-body);
-  background-color: transparent;
-  border: 1px solid transparent;
+  font-weight: 700;
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -210,21 +215,21 @@ body {
 }
 
 .nav-category-toggle:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
 }
 
 .nav-category-toggle.active-category {
-  background-color: var(--bg-hover);
-  color: var(--text-main);
-  font-weight: 700;
+  background-color: rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
+  font-weight: 800;
 }
 
 .category-arrow {
   display: inline-block;
   font-size: 0.72rem;
   transition: transform 0.2s ease;
-  color: var(--text-light);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .category-arrow.expanded {
@@ -237,7 +242,7 @@ body {
   gap: 4px;
   padding-left: 12px;
   margin-top: 2px;
-  border-left: 2px solid var(--border-subtle);
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
   margin-left: 14px;
 }
 
@@ -247,9 +252,9 @@ body {
   justify-content: space-between;
   padding: 9px 12px;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
-  color: var(--text-muted);
+  color: #E6F7F3;
   background-color: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -260,23 +265,29 @@ body {
 }
 
 .nav-sub-item:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
 }
 
 .nav-sub-item.active {
-  background-color: var(--primary-light);
-  color: var(--primary-dark);
-  font-weight: 700;
+  background-color: #FFFFFF;
+  color: #0F172A;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .nav-badge-sm {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 800;
   padding: 1px 6px;
   border-radius: var(--radius-full);
-  background-color: #F1F5F9;
-  color: #64748B;
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.nav-sub-item.active .nav-badge-sm {
+  background-color: #E6F7F3;
+  color: #0F172A;
 }
 
 /* =========================================================
@@ -492,8 +503,8 @@ textarea.comic-input:focus {
    FILTER TOOLBARS (Clean Modern Style)
    ========================================================= */
 .comic-filter-toolbar {
-  background-color: #FFFFFF;
-  border: 1px solid var(--border-color);
+  background-color: #E6F7F3;
+  border: 1px solid #99F6E4;
   border-radius: var(--radius-lg);
   padding: 14px 20px;
   display: flex;
@@ -501,7 +512,7 @@ textarea.comic-input:focus {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 4px 20px -2px rgba(53, 184, 159, 0.1);
 }
 
 .filter-left-controls {
@@ -512,9 +523,9 @@ textarea.comic-input:focus {
 }
 
 .filter-date-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0F172A;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

@@ -92,15 +92,47 @@
                     <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
                 </button>
 
-                <!-- Group 4: Reports -->
-                <button type="button" 
-                        class="nav-item" 
-                        ng-class="{'active': currentTab === 'reports'}" 
-                        ng-click="setTab('reports')" 
-                        style="margin-top: 6px;">
-                    <span>Reports</span>
-                    <span class="nav-badge" ng-bind="reportData.summary.totalFollowupsDue || 0">0</span>
-                </button>
+                <!-- Group 4: Reports Accordion -->
+                <div class="nav-category-group" style="margin-top: 6px;">
+                    <button type="button"
+                            class="nav-category-toggle"
+                            ng-class="{'active-category': currentTab === 'reports'}"
+                            ng-click="toggleCategory('reports')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="category-arrow" ng-class="{'expanded': isCategoryOpen('reports')}">▶</span>
+                            <span>Reports</span>
+                        </div>
+                        <span class="nav-badge" ng-bind="reportData.summary.totalFollowupsDue || 0">0</span>
+                    </button>
+
+                    <!-- Reports 4 Sub-tabs -->
+                    <div class="nav-sub-items" ng-show="isCategoryOpen('reports')">
+                        <button type="button"
+                                class="nav-sub-item"
+                                ng-class="{'active': currentTab === 'reports' && reportSubTab === 'milestones'}"
+                                ng-click="setTab('reports'); setReportSubTab('milestones')">
+                            <span>Follow-ups &amp; Milestones</span>
+                        </button>
+                        <button type="button"
+                                class="nav-sub-item"
+                                ng-class="{'active': currentTab === 'reports' && reportSubTab === 'satisfaction'}"
+                                ng-click="setTab('reports'); setReportSubTab('satisfaction')">
+                            <span>Satisfaction &amp; Notes</span>
+                        </button>
+                        <button type="button"
+                                class="nav-sub-item"
+                                ng-class="{'active': currentTab === 'reports' && reportSubTab === 'products'}"
+                                ng-click="setTab('reports'); setReportSubTab('products')">
+                            <span>Product Insights</span>
+                        </button>
+                        <button type="button"
+                                class="nav-sub-item"
+                                ng-class="{'active': currentTab === 'reports' && reportSubTab === 'customers'}"
+                                ng-click="setTab('reports'); setReportSubTab('customers')">
+                            <span>Customer Directory</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </aside>
 
@@ -113,7 +145,11 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'users'">Users & Permissions</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'time-filters'">Time Filters</h1>
-                    <h1 class="header-page-title" ng-show="currentTab === 'reports'">Follow-up Insights & Reports</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'milestones'">Reports — Follow-ups &amp; Milestones</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'satisfaction'">Reports — Satisfaction &amp; Notes</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'products'">Reports — Product Insights</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'customers'">Reports — Customer Directory</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; !reportSubTab">Reports</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);" ng-if="auth.authenticated">
@@ -1712,16 +1748,10 @@
                         </div>
 
                         <!-- ═══ ACCORDION REPORT GROUPS ═══ -->
-                        <div class="report-accordion-groups">
 
                         <!-- ══ Group 1: Follow-ups & Milestones ══ -->
-                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'milestones'}">
-                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'milestones' ? '' : 'milestones')">
-                                <span>Follow-ups &amp; Milestones</span>
-                                <span class="report-accordion-chevron">{{ reportSubTab === 'milestones' ? '▲' : '▼' }}</span>
-                            </button>
                             <!-- group 1 filter bar -->
-                            <div class="report-accordion-filters" ng-show="reportSubTab === 'milestones'">
+                        <div class="comic-filter-toolbar" style="margin-bottom: 12px;" ng-show="reportSubTab === 'milestones'">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
                                     <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
@@ -1738,7 +1768,7 @@
                                     <input type="search" class="comic-search-bar" placeholder="Filter by name, phone, order..." ng-model="reportFilters.searchPending">
                                 </div>
                             </div>
-                        <div ng-show="reportSubTab === 'milestones'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div ng-show="reportSubTab === 'milestones'" style="display: flex; flex-direction: column; gap: 16px; padding-top: 4px;">
                             <!-- Milestone Health Matrix -->
                             <div>
                                 <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin-bottom: 10px;">Milestone Performance Matrix:</h3>
@@ -1832,17 +1862,11 @@
                             </div>
                         </div>
 
-                        </div><!-- /accordion group 1 -->
 
                         <!-- ══ Group 2: Customer Satisfaction & Notes ══ -->
-                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'satisfaction'}">
-                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'satisfaction' ? '' : 'satisfaction')">
-                                <span>Customer Satisfaction &amp; Notes</span>
-                                <span class="report-accordion-chevron">{{ reportSubTab === 'satisfaction' ? '▲' : '▼' }}</span>
-                            </button>
-                        <div ng-show="reportSubTab === 'satisfaction'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div ng-show="reportSubTab === 'satisfaction'" style="display: flex; flex-direction: column; gap: 16px; padding-top: 4px;">
                             <!-- Group 2 filter bar -->
-                            <div class="report-accordion-filters">
+                        <div class="comic-filter-toolbar" style="margin-bottom: 12px;">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
                                     <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()">
@@ -1920,17 +1944,10 @@
                             </div>
                         </div>
 
-                        </div><!-- /satisfaction body -->
-                        </div><!-- /accordion group 2 -->
 
                         <!-- ══ Group 3: Product Insights & Reviews ══ -->
-                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'products'}">
-                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'products' ? '' : 'products')">
-                                <span>Product Insights &amp; Reviews</span>
-                                <span class="report-accordion-chevron">{{ reportSubTab === 'products' ? '▲' : '▼' }}</span>
-                            </button>
                             <!-- Group 3 filter bar -->
-                            <div class="report-accordion-filters" ng-show="reportSubTab === 'products'">
+                        <div class="comic-filter-toolbar" style="margin-bottom: 12px;" ng-show="reportSubTab === 'products'">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
                                     <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()">
@@ -1943,7 +1960,7 @@
                                     <input type="search" class="comic-search-bar" placeholder="Search product name..." ng-model="reportFilters.searchProducts">
                                 </div>
                             </div>
-                        <div ng-show="reportSubTab === 'products'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div ng-show="reportSubTab === 'products'" style="display: flex; flex-direction: column; gap: 16px; padding-top: 4px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                             </div>
 
@@ -1990,17 +2007,10 @@
                             </div>
                         </div>
 
-                        </div><!-- /products body -->
-                        </div><!-- /accordion group 3 -->
 
                         <!-- ══ Group 4: Customer Directory Summary ══ -->
-                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'customers'}">
-                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'customers' ? '' : 'customers')">
-                                <span>Customer Directory Summary</span>
-                                <span class="report-accordion-chevron">{{ reportSubTab === 'customers' ? '▲' : '▼' }}</span>
-                            </button>
                             <!-- Group 4 filter bar -->
-                            <div class="report-accordion-filters" ng-show="reportSubTab === 'customers'">
+                        <div class="comic-filter-toolbar" style="margin-bottom: 12px;" ng-show="reportSubTab === 'customers'">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
                                     <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()">
@@ -2013,7 +2023,7 @@
                                     <input type="search" class="comic-search-bar" placeholder="Search customer by name, phone, city..." ng-model="reportFilters.searchCustomers">
                                 </div>
                             </div>
-                        <div ng-show="reportSubTab === 'customers'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div ng-show="reportSubTab === 'customers'" style="display: flex; flex-direction: column; gap: 16px; padding-top: 4px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
 
                             <div class="table-responsive">
@@ -2063,8 +2073,7 @@
                                 </table>
                             </div><!-- /customers table -->
                         </div><!-- /customers accordion-body -->
-                        </div><!-- /accordion group 4 -->
-                        </div><!-- /report-accordion-groups -->
+                        </div><!-- /reports container -->
 
                     </div><!-- /reports-dashboard -->
                 </section>

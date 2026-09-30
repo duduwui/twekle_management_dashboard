@@ -1382,7 +1382,8 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
             $scope.loadTimeFilterPresets();
             $scope.updateUrl('/admin/time-filters');
         } else if (tabName === 'reports') {
-            $scope.loadReport();
+            $scope.categories.reports = true; // auto-open the Reports sidebar group
+            $scope.loadReport($scope.reportPeriod);
             $scope.updateUrl('/admin/reports');
         }
     };

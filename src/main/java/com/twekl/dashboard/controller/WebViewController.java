@@ -27,7 +27,13 @@ public class WebViewController {
         "/admins", 
         "/admins/**", 
         "/customers", 
-        "/customers/**"
+        "/customers/**",
+        "/time-filters",
+        "/time-filters/**",
+        "/filters",
+        "/filters/**",
+        "/reports",
+        "/reports/**"
     })
     public String index(Model model) {
         LocalDate today = LocalDate.now();

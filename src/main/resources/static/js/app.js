@@ -363,73 +363,84 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         return false;
     }
 
-    // Dynamic Time Filter Preset Matcher Helper (Admins & Users creation dates)
+    function getPresetTargetDays(preset) {
+        if (!preset) return 0;
+        var val = parseFloat(preset.durationValue) || 1;
+        var unit = (preset.durationUnit || 'HOURS').toUpperCase();
+        if (unit === 'HOURS') return val / 24;
+        if (unit === 'DAYS') return val;
+        if (unit === 'WEEKS') return val * 7;
+        if (unit === 'MONTHS') return val * 30;
+        return val;
+    }
+
+    // Dynamic Time Filter Preset Matcher Helper (Admins, Users, Orders, Feedback dates)
     function matchesPreset(itemDateStr, preset) {
         if (!preset) return true;
-        if (!itemDateStr) return true;
+        if (!itemDateStr) return false;
         var itemTime = new Date(itemDateStr).getTime();
         if (isNaN(itemTime)) return true;
-        var totalHours = 24;
-        var val = preset.durationValue || 24;
-        var unit = (preset.durationUnit || 'HOURS').toUpperCase();
-        if (unit === 'HOURS') totalHours = val;
-        else if (unit === 'DAYS') totalHours = val * 24;
-        else if (unit === 'WEEKS') totalHours = val * 24 * 7;
-        else if (unit === 'MONTHS') totalHours = val * 24 * 30;
-
+        
+        var targetDays = getPresetTargetDays(preset);
+        var totalHours = targetDays * 24;
+        var pName = (preset.name || '').toLowerCase();
         var cutoff = Date.now() - (totalHours * 3600 * 1000);
+
+        if (pName.includes('dormant') || pName.includes('30+') || pName.includes('older')) {
+            return itemTime <= cutoff;
+        }
         return itemTime >= cutoff;
     }
 
-    // Dynamic Time Filter Preset Matcher for Customers (Recency & Follow-up Interval Buckets)
+    // Dynamic Time Filter Preset Matcher for Customers (Milestones & Recency Horizons)
     function matchesCustomerPreset(c, preset) {
         if (!preset) return true;
         
-        // Compute days ago from customer record
-        var daysAgo = c.daysSinceLastOrder;
+        // Always calculate real days ago from last order date
+        var daysAgo = null;
         var itemDateStr = c.lastOrderDate || c.createdAt;
         if (itemDateStr) {
             var itemTime = new Date(itemDateStr).getTime();
             if (!isNaN(itemTime)) {
                 var diffMs = Date.now() - itemTime;
-                var calculatedDays = Math.max(0, Math.floor(diffMs / (1000 * 3600 * 24)));
-                if (daysAgo == null || isNaN(daysAgo)) {
-                    daysAgo = calculatedDays;
-                }
+                daysAgo = Math.max(0, Math.floor(diffMs / (1000 * 3600 * 24)));
             }
         }
-        if (daysAgo == null || isNaN(daysAgo)) daysAgo = 0;
+        if (daysAgo == null && c.daysSinceLastOrder != null && !isNaN(c.daysSinceLastOrder)) {
+            daysAgo = c.daysSinceLastOrder;
+        }
+        if (daysAgo == null) daysAgo = 0;
 
-        var val = parseInt(preset.durationValue, 10) || 24;
+        var targetDays = getPresetTargetDays(preset);
+        var pName = (preset.name || '').toLowerCase();
         var unit = (preset.durationUnit || 'HOURS').toUpperCase();
-        var targetDays = val;
 
-        if (unit === 'HOURS') {
-            targetDays = val / 24;
-        } else if (unit === 'DAYS') {
-            targetDays = val;
-        } else if (unit === 'WEEKS') {
-            targetDays = val * 7;
-        } else if (unit === 'MONTHS') {
-            targetDays = val * 30;
+        // 1. Check if customer has a pending checkpoint milestone matching this preset
+        var cFollow = (c.nextPendingFollowup || '').toLowerCase();
+        var milestoneMatches = false;
+        if (cFollow && cFollow !== '-' && cFollow !== 'all done') {
+            var cleanPreset = pName.replace(/last |ago|review|dormant|\+/g, '').trim();
+            milestoneMatches = cFollow.includes(pName) || pName.includes(cFollow) ||
+                               (cleanPreset && cFollow.includes(cleanPreset));
         }
 
-        var presetNameLower = (preset.name || '').toLowerCase();
-
-        // 1. Hours / 24 Hours / 1 Day recency bucket
-        if (unit === 'HOURS' || targetDays <= 1 || presetNameLower.includes('24') || presetNameLower.includes('hour')) {
-            return daysAgo <= 1;
+        // 2. Dormant / older accounts (e.g. "30+ Days Dormant", "dormant")
+        if (pName.includes('dormant') || pName.includes('30+') || pName.includes('older')) {
+            return milestoneMatches || (daysAgo >= Math.floor(targetDays * 0.8));
         }
 
-        // 2. Dormant / 30+ Days bucket
-        if (targetDays >= 28 || presetNameLower.includes('dormant') || presetNameLower.includes('30+')) {
-            return daysAgo >= 25;
+        // 3. Horizon filters (e.g. "last 24 hours", "last 7 days", "last 30 days", "last 2 months", "within...")
+        if (pName.startsWith('last') || pName.startsWith('past') || pName.startsWith('within') || unit === 'HOURS' || targetDays <= 1) {
+            var maxHorizonDays = Math.max(1, Math.ceil(targetDays));
+            return milestoneMatches || (daysAgo <= maxHorizonDays);
         }
 
-        // 3. Milestone Buckets (e.g. 7 Days Ago = ~1 week, 2 Weeks Ago = ~14 days)
-        var minDays = Math.max(2, Math.floor(targetDays * 0.7));
-        var maxDays = Math.ceil(targetDays * 1.3) + 1;
-        return daysAgo >= minDays && daysAgo <= maxDays;
+        // 4. Milestone Recency Bucket (e.g. "3 Days Ago", "7 Days Ago", "2 Weeks Ago", "60 Days Review")
+        var minDays = Math.max(1, Math.round(targetDays * 0.6));
+        var maxDays = Math.round(targetDays * 1.4) + 1;
+        var recencyBucket = (daysAgo >= minDays && daysAgo <= maxDays);
+
+        return milestoneMatches || recencyBucket || (daysAgo <= Math.ceil(targetDays));
     }
 
     // Filtered Admins DataTable
@@ -1034,10 +1045,12 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.reportPeriod = 'all';
     $scope.reportSubTab = 'milestones';
     $scope.reportLoading = false;
+    $scope.selectedReportPreset = null;
     $scope.reportFilters = {
         dateFrom: null,
         dateTo: null,
         satisfactionFilter: 'all',
+        milestoneFilter: 'all',
         searchNotes: '',
         searchProducts: '',
         searchCustomers: '',
@@ -1227,6 +1240,12 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             return;
         }
 
+        if (section === 'time-filters' || section === 'filters') {
+            $scope.currentTab = 'time-filters';
+            $scope.loadTimeFilterPresets();
+            return;
+        }
+
         if (section === 'admins') {
             $scope.currentTab = 'admins';
             $scope.adminView = action;
@@ -1334,6 +1353,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             $scope.loadCustomers($scope.customerTimeFilter);
             $scope.loadCustomerStats();
             $scope.updateUrl('/admin/followups');
+        } else if (tabName === 'time-filters' || tabName === 'filters') {
+            $scope.currentTab = 'time-filters';
+            $scope.loadTimeFilterPresets();
+            $scope.updateUrl('/admin/time-filters');
         } else if (tabName === 'reports') {
             $scope.loadReport();
             $scope.updateUrl('/admin/reports');
@@ -1354,6 +1377,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     $scope.setAdminView = function(view, admin) {
+        if (view === 'filters') {
+            $scope.setTab('time-filters');
+            return;
+        }
+
         $scope.currentTab = 'admins';
         $scope.adminView = view || 'list';
 
@@ -1370,9 +1398,6 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 status: 'ACTIVE'
             };
             $scope.updateUrl('/admin/admins/create');
-        } else if (view === 'filters') {
-            $scope.loadTimeFilterPresets();
-            $scope.updateUrl('/admin/admins/filters');
         } else if (view === 'inspect' || view === 'delete') {
             if (targetAdmin) {
                 $scope.selectedAdmin = targetAdmin;
@@ -2262,7 +2287,12 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     $scope.loadReport = function(period) {
-        if (period) $scope.reportPeriod = period;
+        if (period) {
+            $scope.reportPeriod = period;
+            if (period !== 'custom') {
+                $scope.selectedReportPreset = null;
+            }
+        }
         $scope.reportLoading = true;
         var url = '/api/reports/followups?period=' + encodeURIComponent($scope.reportPeriod);
         if ($scope.reportPeriod === 'custom' && $scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) {
@@ -2278,11 +2308,28 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         });
     };
 
+    $scope.selectReportPreset = function(preset) {
+        if (!preset) {
+            $scope.selectedReportPreset = null;
+            $scope.loadReport('all');
+            return;
+        }
+        $scope.selectedReportPreset = preset;
+        var targetDays = getPresetTargetDays(preset);
+        var now = new Date();
+        var from = new Date(now.getTime() - (targetDays * 24 * 3600 * 1000));
+        $scope.reportFilters.dateFrom = from;
+        $scope.reportFilters.dateTo = now;
+        $scope.reportPeriod = 'custom';
+        $scope.loadReport('custom');
+    };
+
     $scope.applyCustomReportRange = function() {
         if (!$scope.reportFilters.dateFrom || !$scope.reportFilters.dateTo) {
             $scope.showToast('Please select both From and To dates', 'error');
             return;
         }
+        $scope.selectedReportPreset = null;
         $scope.reportPeriod = 'custom';
         $scope.loadReport('custom');
     };
@@ -2308,6 +2355,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         if (!$scope.reportData || !$scope.reportData.satisfactionNotes) return [];
         var q = ($scope.reportFilters.searchNotes || '').toLowerCase().trim();
         var sat = $scope.reportFilters.satisfactionFilter || 'all';
+        var ms = $scope.reportFilters.milestoneFilter || 'all';
         return $scope.reportData.satisfactionNotes.filter(function(item) {
             if (sat !== 'all') {
                 if (sat === 'BLANK') {
@@ -2316,12 +2364,15 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                     return false;
                 }
             }
+            if (ms !== 'all') {
+                if (item.presetName !== ms) return false;
+            }
             if (!q) return true;
             return (item.customerName && item.customerName.toLowerCase().indexOf(q) !== -1) ||
                    (item.customerPhone && item.customerPhone.indexOf(q) !== -1) ||
                    (item.orderNumber && item.orderNumber.toLowerCase().indexOf(q) !== -1) ||
-                   (item.note && item.note.toLowerCase().indexOf(q) !== -1) ||
-                   (item.checkedBy && item.checkedBy.toLowerCase().indexOf(q) !== -1);
+                   (item.presetName && item.presetName.toLowerCase().indexOf(q) !== -1) ||
+                   (item.note && item.note.toLowerCase().indexOf(q) !== -1);
         });
     };
 
@@ -2363,10 +2414,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 csvRows.push(['"' + m.presetName + '"', m.total, m.completed, m.pending, m.completionRate + '%'].join(','));
             });
         } else if ($scope.reportSubTab === 'satisfaction') {
-            csvRows.push(['Customer Name', 'Phone', 'Order #', 'Milestone', 'Satisfaction', 'Note Details', 'Checked By', 'Date'].join(','));
+            csvRows.push(['Customer Name', 'Phone', 'Order #', 'Milestone', 'Satisfaction', 'Note Details', 'Date'].join(','));
             $scope.getFilteredReportNotes().forEach(function(n) {
                 var safeNote = (n.note || '').replace(/"/g, '""');
-                csvRows.push(['"' + (n.customerName || '') + '"', '"' + (n.customerPhone || '') + '"', '"' + (n.orderNumber || '') + '"', '"' + (n.presetName || '') + '"', '"' + (n.satisfaction || '') + '"', '"' + safeNote + '"', '"' + (n.checkedBy || '') + '"', '"' + (n.date || '') + '"'].join(','));
+                csvRows.push(['"' + (n.customerName || '') + '"', '"' + (n.customerPhone || '') + '"', '"' + (n.orderNumber || '') + '"', '"' + (n.presetName || '') + '"', '"' + (n.satisfaction || '') + '"', '"' + safeNote + '"', '"' + (n.date || '') + '"'].join(','));
             });
         } else if ($scope.reportSubTab === 'products') {
             csvRows.push(['Product Name', 'Order Count', 'Satisfied Notes', 'Neutral Notes', 'Unsatisfied Notes', 'Total Notes'].join(','));

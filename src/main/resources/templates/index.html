@@ -82,7 +82,17 @@
                     <span class="nav-badge" ng-bind="customers.length">0</span>
                 </button>
 
-                <!-- Group 3: Reports -->
+                <!-- Group 3: Time Filters (Dedicated Tab) -->
+                <button type="button" 
+                        class="nav-item" 
+                        ng-class="{'active': currentTab === 'time-filters'}" 
+                        ng-click="setTab('time-filters')" 
+                        style="margin-top: 6px;">
+                    <span>Time Filters</span>
+                    <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
+                </button>
+
+                <!-- Group 4: Reports -->
                 <button type="button" 
                         class="nav-item" 
                         ng-class="{'active': currentTab === 'reports'}" 
@@ -102,6 +112,7 @@
                     <h1 class="header-page-title" ng-show="currentTab === 'admins'">Admin Management</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'users'">Users & Permissions</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'time-filters'">Time Filters</h1>
                     <h1 class="header-page-title" ng-show="currentTab === 'reports'">Follow-up Insights & Reports</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -130,14 +141,11 @@
                     <!-- 1.1 ADMIN LIST PAGE (DEFAULT) -->
                     <div ng-show="adminView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
-                        <!-- Clean Admin Toolbar (+ Create Admin + Time Filter Rules & Live Search) -->
+                        <!-- Clean Admin Toolbar (+ Create Admin & Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <button type="button" class="comic-btn-sm" ng-click="setAdminView('create')">
                                     + Create Admin
-                                </button>
-                                <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')">
-                                    Time Filter Rules ({{timeFilterPresets.length}})
                                 </button>
                             </div>
 
@@ -468,112 +476,6 @@
                                     <button type="button" class="page-btn" ng-disabled="deleteAdminDt.currentPage === 1" ng-click="setDeleteAdminPage(deleteAdminDt.currentPage - 1)">« Prev</button>
                                     <button type="button" class="page-btn" ng-repeat="p in getDeleteAdminPageNumbers(getFilteredDeleteAdmins().length)" ng-class="{'active': deleteAdminDt.currentPage === p}" ng-click="setDeleteAdminPage(p)" ng-bind="p"></button>
                                     <button type="button" class="page-btn" ng-disabled="deleteAdminDt.currentPage === getTotalDeleteAdminPages(getFilteredDeleteAdmins().length)" ng-click="setDeleteAdminPage(deleteAdminDt.currentPage + 1)">Next »</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 1.5 DYNAMIC TIME FILTER PRESETS MANAGEMENT (ADMIN ONLY) -->
-                    <div ng-show="adminView === 'filters'" style="display: flex; flex-direction: column; gap: 22px;">
-                        <div class="action-page-header">
-                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
-                                ← Back to Admins List
-                            </button>
-                        </div>
-
-                        <!-- Create New Dynamic Time Filter Form -->
-                        <div class="comic-form-box">
-                            <div style="font-size: 1rem; font-weight: 900; margin-bottom: 12px; color: var(--primary-dark);">
-                                Create New Custom Time Filter Rule:
-                            </div>
-                            <div class="form-grid-3">
-                                <div class="form-group">
-                                    <label class="form-label">Rule Display Name</label>
-                                    <input type="text" class="comic-input" placeholder="e.g. Last 20 Hours, 2 Weeks Ago" ng-model="newPreset.name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Duration Value (Number)</label>
-                                    <input type="number" class="comic-input" placeholder="e.g. 20, 14, 2" ng-model="newPreset.durationValue" min="1" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Duration Unit</label>
-                                    <select class="comic-input" ng-model="newPreset.durationUnit">
-                                        <option value="HOURS">Hours</option>
-                                        <option value="DAYS">Days</option>
-                                        <option value="WEEKS">Weeks</option>
-                                        <option value="MONTHS">Months</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 14px;">
-                                <button type="button" class="comic-btn" ng-click="createTimeFilterPreset()">+ Add Dynamic Filter Rule</button>
-                            </div>
-                        </div>
-
-                        <!-- Existing Dynamic Filter Rules Table -->
-                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
-                            <div class="card-header-flex" style="margin-bottom: 24px;">
-                                <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
-                                <input type="search" name="search_filter_rules_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-input" style="width: 260px;" placeholder="Search filter rules..." ng-model="filterRulesDt.search">
-                            </div>
-                            <div class="table-responsive">
-                                <table class="comic-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="comic-sortable-th" style="width: 100px;" ng-click="sortFilterRulesBy('id')">
-                                                Rule ID <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('id')"></span>
-                                            </th>
-                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('name')">
-                                                Filter Name <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('name')"></span>
-                                            </th>
-                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('durationValue')">
-                                                Duration Period <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('durationValue')"></span>
-                                            </th>
-                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('isActive')">
-                                                Status <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('isActive')"></span>
-                                            </th>
-                                            <th style="text-align: right;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="preset in getPagedFilterRules() track by preset.id">
-                                            <td><strong style="color: var(--primary-dark);" ng-bind="'#' + preset.id"></strong></td>
-                                            <td><strong style="font-size: 0.95rem;" ng-bind="preset.name"></strong></td>
-                                            <td><span style="font-weight: 700; color: var(--text-muted);" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span></td>
-                                            <td>
-                                                <div style="display: flex; align-items: center; gap: 8px;">
-                                                    <label class="comic-switch">
-                                                        <input type="checkbox" ng-checked="preset.isActive" ng-click="toggleTimeFilterPreset(preset)">
-                                                        <span class="comic-slider"></span>
-                                                    </label>
-                                                    <span class="comic-tag" ng-class="preset.isActive ? 'tag-primary' : 'tag-muted'" ng-bind="preset.isActive ? 'ACTIVE' : 'INACTIVE'"></span>
-                                                </div>
-                                            </td>
-                                            <td style="text-align: right;">
-                                                <button type="button" class="comic-btn-danger" ng-click="deleteTimeFilterPreset(preset)">
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr ng-if="getFilteredFilterRules().length === 0">
-                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
-                                                No custom filter rules match the search query.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Filter Rules Pagination Footer -->
-                            <div class="datatable-footer" ng-if="getFilteredFilterRules().length > 0">
-                                <div class="datatable-info">
-                                    Showing {{ (filterRulesDt.currentPage - 1) * filterRulesDt.pageSize + 1 }} to {{ filterRulesDt.currentPage * filterRulesDt.pageSize > getFilteredFilterRules().length ? getFilteredFilterRules().length : filterRulesDt.currentPage * filterRulesDt.pageSize }} of {{ getFilteredFilterRules().length }} entries
-                                </div>
-                                <div class="datatable-pagination">
-                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === 1" ng-click="setFilterRulePage(filterRulesDt.currentPage - 1)">« Prev</button>
-                                    <button type="button" class="page-btn" ng-repeat="p in getFilterRulePageNumbers(getFilteredFilterRules().length)" ng-class="{'active': filterRulesDt.currentPage === p}" ng-click="setFilterRulePage(p)" ng-bind="p"></button>
-                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === getTotalFilterRulePages(getFilteredFilterRules().length)" ng-click="setFilterRulePage(filterRulesDt.currentPage + 1)">Next »</button>
                                 </div>
                             </div>
                         </div>
@@ -1223,6 +1125,9 @@
                                             <strong style="font-size: 0.95rem; color: var(--text-main); white-space: nowrap;" ng-bind="cust.totalOrders + ' Orders'"></strong>
                                         </td>
                                         <td class="nowrap">
+                                            <strong style="font-size: 0.95rem; color: var(--text-main); white-space: nowrap;" ng-bind="(cust.totalSpent || 0 | currency:'$':2)"></strong>
+                                        </td>
+                                        <td class="nowrap">
                                             <span class="comic-tag tag-primary" ng-if="cust.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
                                                 ✓ All Done
                                             </span>
@@ -1648,7 +1553,127 @@
                 </section>
 
                 <!-- ======================================================= -->
-                <!-- PAGE 5: FOLLOW-UP INSIGHTS & REPORTING                  -->
+                <!-- PAGE 5: DYNAMIC TIME FILTER PRESETS (DEDICATED TAB)     -->
+                <!-- ======================================================= -->
+                <section class="comic-card page-slide-fade" ng-show="currentTab === 'time-filters'">
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        
+                        <!-- Header banner -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--border-black); padding-bottom: 14px;">
+                            <div>
+                                <h2 style="font-size: 1.2rem; font-weight: 900; color: #0F172A; margin: 0 0 4px 0;">Time Filter Presets & Milestone Rules</h2>
+                                <p style="font-size: 0.85rem; color: #64748B; margin: 0; font-weight: 600;">
+                                    Configure operational time filter presets, recency intervals, and automated checkpoint milestones used across customer follow-ups and reports.
+                                </p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="comic-tag tag-primary" style="font-size: 0.82rem; padding: 4px 10px;">
+                                    Total Rules: {{ timeFilterPresets.length }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Create New Dynamic Time Filter Form -->
+                        <div class="comic-form-box">
+                            <div style="font-size: 0.98rem; font-weight: 900; margin-bottom: 12px; color: var(--primary-dark);">
+                                Create New Time Filter Preset:
+                            </div>
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">Rule Display Name</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. Last 48 Hours, 10 Days Follow-up" ng-model="newPreset.name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Duration Value (Number)</label>
+                                    <input type="number" class="comic-input" placeholder="e.g. 48, 10, 2" ng-model="newPreset.durationValue" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Duration Unit</label>
+                                    <select class="comic-input" ng-model="newPreset.durationUnit">
+                                        <option value="HOURS">Hours</option>
+                                        <option value="DAYS">Days</option>
+                                        <option value="WEEKS">Weeks</option>
+                                        <option value="MONTHS">Months</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 14px;">
+                                <button type="button" class="comic-btn" ng-click="createTimeFilterPreset()">+ Add Time Filter Preset</button>
+                            </div>
+                        </div>
+
+                        <!-- Existing Dynamic Filter Rules Table -->
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
+                            <div class="card-header-flex" style="margin-bottom: 12px;">
+                                <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
+                                <input type="search" name="search_filter_rules_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-input" style="width: 260px;" placeholder="Search filter rules..." ng-model="filterRulesDt.search">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="comic-sortable-th" style="width: 100px;" ng-click="sortFilterRulesBy('id')">
+                                                Rule ID <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('id')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('name')">
+                                                Filter Name <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('name')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('durationValue')">
+                                                Duration Period <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('durationValue')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('isActive')">
+                                                Status <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('isActive')"></span>
+                                            </th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="preset in getPagedFilterRules() track by preset.id">
+                                            <td><strong style="color: var(--primary-dark);" ng-bind="'#' + preset.id"></strong></td>
+                                            <td><strong style="font-size: 0.95rem;" ng-bind="preset.name"></strong></td>
+                                            <td><span style="font-weight: 700; color: var(--text-muted);" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span></td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <label class="comic-switch">
+                                                        <input type="checkbox" ng-checked="preset.isActive" ng-click="toggleTimeFilterPreset(preset)">
+                                                        <span class="comic-slider"></span>
+                                                    </label>
+                                                    <span class="comic-tag" ng-class="preset.isActive ? 'tag-primary' : 'tag-muted'" ng-bind="preset.isActive ? 'ACTIVE' : 'INACTIVE'"></span>
+                                                </div>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-danger" ng-click="deleteTimeFilterPreset(preset)">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="getFilteredFilterRules().length === 0">
+                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No custom filter rules match the search query.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Filter Rules Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredFilterRules().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (filterRulesDt.currentPage - 1) * filterRulesDt.pageSize + 1 }} to {{ filterRulesDt.currentPage * filterRulesDt.pageSize > getFilteredFilterRules().length ? getFilteredFilterRules().length : filterRulesDt.currentPage * filterRulesDt.pageSize }} of {{ getFilteredFilterRules().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === 1" ng-click="setFilterRulePage(filterRulesDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getFilterRulePageNumbers(getFilteredFilterRules().length)" ng-class="{'active': filterRulesDt.currentPage === p}" ng-click="setFilterRulePage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === getTotalFilterRulePages(getFilteredFilterRules().length)" ng-click="setFilterRulePage(filterRulesDt.currentPage + 1)">Next »</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ======================================================= -->
+                <!-- PAGE 6: FOLLOW-UP INSIGHTS & REPORTING                  -->
                 <!-- ======================================================= -->
                 <section class="comic-card page-slide-fade" ng-show="currentTab === 'reports'">
                     <div class="reports-dashboard">
@@ -1657,17 +1682,25 @@
                         <div class="reports-period-bar">
                             <div class="reports-period-pills">
                                 <span style="font-size: 0.82rem; font-weight: 900; color: #475569; text-transform: uppercase; margin-right: 4px;">Time Horizon:</span>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'daily'}" ng-click="loadReport('daily')">
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'daily' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('daily');">
                                     Daily (Today)
                                 </button>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'weekly'}" ng-click="loadReport('weekly')">
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'weekly' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('weekly');">
                                     Weekly (7 Days)
                                 </button>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'monthly'}" ng-click="loadReport('monthly')">
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'monthly' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('monthly');">
                                     Monthly (30 Days)
                                 </button>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'all'}" ng-click="loadReport('all')">
+                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'all' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('all');">
                                     All Time
+                                </button>
+                                <button type="button" 
+                                        class="report-period-pill" 
+                                        ng-repeat="p in timeFilterPresets track by p.id" 
+                                        ng-if="p.isActive && p.name !== 'last 24 hours' && p.name !== 'last 7 days' && p.name !== 'last 30 days'" 
+                                        ng-class="{'active': selectedReportPreset && selectedReportPreset.id === p.id}" 
+                                        ng-click="selectReportPreset(p)" 
+                                        ng-bind="p.name">
                                 </button>
                             </div>
 
@@ -1868,10 +1901,17 @@
                                     <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'BLANK'}" ng-click="reportFilters.satisfactionFilter = 'BLANK'">
                                         Unrated / Blank Only
                                     </button>
+
+                                    <!-- Milestone Preset Filter Dropdown -->
+                                    <span style="font-size: 0.82rem; font-weight: 900; color: #475569; margin-left: 8px;">Milestone:</span>
+                                    <select class="comic-input" style="padding: 3px 8px; font-size: 0.8rem; width: auto;" ng-model="reportFilters.milestoneFilter">
+                                        <option value="all">All Milestones</option>
+                                        <option ng-repeat="p in timeFilterPresets track by p.id" ng-value="p.name" ng-bind="p.name"></option>
+                                    </select>
                                 </div>
 
                                 <div class="filter-search-box">
-                                    <input type="search" class="comic-search-bar" placeholder="Search customer, order, note text, agent..." ng-model="reportFilters.searchNotes">
+                                    <input type="search" class="comic-search-bar" placeholder="Search customer, order, note text..." ng-model="reportFilters.searchNotes">
                                 </div>
                             </div>
 
@@ -1887,7 +1927,6 @@
                                             <th class="nowrap">Satisfaction</th>
                                             <th>Note & Feedback Details</th>
                                             <th class="nowrap">Proof Photo</th>
-                                            <th class="nowrap">Logged By</th>
                                             <th class="nowrap">Date</th>
                                         </tr>
                                     </thead>
@@ -1910,11 +1949,10 @@
                                                 <img ng-if="n.hasImage" ng-src="{{n.imageUrl}}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000; cursor: pointer;" ng-click="previewImage(n.imageUrl)" title="Click to view full photo" alt="Photo">
                                                 <span ng-if="!n.hasImage" style="color: #94A3B8; font-size: 0.8rem;">-</span>
                                             </td>
-                                            <td class="nowrap"><span style="font-weight: 700;" ng-bind="n.checkedBy"></span></td>
                                             <td class="nowrap"><span style="font-size: 0.8rem; color: #64748B;" ng-bind="n.date ? (n.date | date:'yyyy-MM-dd') : '-'"></span></td>
                                         </tr>
                                         <tr ng-if="getFilteredReportNotes().length === 0">
-                                            <td colspan="9" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                            <td colspan="8" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
                                                 No customer notes match the selected criteria.
                                             </td>
                                         </tr>

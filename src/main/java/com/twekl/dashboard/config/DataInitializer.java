@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -669,6 +671,36 @@ public class DataInitializer implements CommandLineRunner {
                 followupCheckRepository.save(chk);
             }
         }
+        
+        // 6. Ensure all customers have realistically spread order dates and synchronized stats
+        List<Customer> allCusts = customerRepository.findAll();
+        int[] baseDays = {0, 1, 3, 5, 7, 14, 22, 35, 45, 55};
+        for (int i = 0; i < allCusts.size(); i++) {
+            Customer cust = allCusts.get(i);
+            List<CustomerOrder> custOrders = orderRepository.findByCustomerIdOrderByOrderDateDesc(cust.getId());
+            if (!custOrders.isEmpty()) {
+                if (cust.getId() >= 8) {
+                    int bDay = baseDays[Math.abs(i - 7) % baseDays.length];
+                    for (int j = 0; j < custOrders.size(); j++) {
+                        CustomerOrder o = custOrders.get(j);
+                        int orderDaysAgo = (j == 0) ? bDay : (bDay + 5 * (j + 1) + (i % 3));
+                        LocalDateTime oDate = (orderDaysAgo == 0) ? now.minusHours(4 + (i * 2)) : now.minusDays(orderDaysAgo).minusHours(2);
+                        o.setOrderDate(oDate);
+                        orderRepository.save(o);
+                    }
+                }
+                
+                CustomerOrder latest = custOrders.get(0);
+                cust.setLastOrderDate(latest.getOrderDate());
+                long diff = ChronoUnit.DAYS.between(latest.getOrderDate().toLocalDate(), LocalDate.now());
+                cust.setDaysSinceLastOrder((int) Math.max(0, diff));
+                cust.setTotalOrders(custOrders.size());
+                double sum = custOrders.stream().mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
+                cust.setTotalSpent(sum);
+                customerRepository.save(cust);
+            }
+        }
+
         log.info("2-month rich operational data seeding and enrichment completed successfully!");
     }
 }

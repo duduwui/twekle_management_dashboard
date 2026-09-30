@@ -78,6 +78,8 @@ public class CustomerService {
                 c.setTotalSpent(sum);
                 if (orders.get(0).getOrderDate() != null) {
                     c.setLastOrderDate(orders.get(0).getOrderDate());
+                    long diffDays = java.time.temporal.ChronoUnit.DAYS.between(orders.get(0).getOrderDate().toLocalDate(), java.time.LocalDate.now());
+                    c.setDaysSinceLastOrder((int) Math.max(0, diffDays));
                 }
 
                 // Check remaining follow-up checks across all customer orders

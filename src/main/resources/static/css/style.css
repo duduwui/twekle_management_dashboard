@@ -2225,6 +2225,47 @@ section.comic-card {
   }
 }
 
+.filter-modal-3col-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .filter-modal-3col-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filter-modal-col {
+  display: flex;
+  flex-direction: column;
+  background: #F8FAFC;
+  border: 2px solid var(--border-black);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.filter-col-heading {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border-black);
+}
+
+.filter-col-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
 .filter-preset-card-simple {
   background: #FFFFFF;
   border: 2px solid var(--border-black);

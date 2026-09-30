@@ -210,12 +210,104 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
         } else if ($scope.filterModalContext === 'feedback') {
             $scope.pendingTimePreset = $scope.selectedFeedbackTimePreset ? angular.copy($scope.selectedFeedbackTimePreset) : null;
         } else if ($scope.filterModalContext === 'report') {
-            $scope.pendingTimePreset = $scope.selectedReportPreset ? angular.copy($scope.selectedReportPreset) : null;
+            $scope.openReportFilterModal();
+            return;
         } else {
             $scope.pendingTimePreset = $scope.selectedTimePreset ? angular.copy($scope.selectedTimePreset) : null;
         }
         
         $scope.showBigFilterModal = true;
+    };
+
+    // =========================================================
+    // 3-COLUMN COMPREHENSIVE REPORT FILTERS MODAL
+    // =========================================================
+    $scope.showReportFilterModal = false;
+    $scope.pendingReportFilters = {
+        preset: null,
+        dateFrom: null,
+        dateTo: null,
+        satisfaction: 'all',
+        milestone: 'all'
+    };
+
+    $scope.openReportFilterModal = function() {
+        $scope.pendingReportFilters = {
+            preset: $scope.selectedReportPreset ? angular.copy($scope.selectedReportPreset) : null,
+            dateFrom: $scope.reportFilters.dateFrom ? new Date($scope.reportFilters.dateFrom) : null,
+            dateTo: $scope.reportFilters.dateTo ? new Date($scope.reportFilters.dateTo) : null,
+            satisfaction: $scope.reportFilters.satisfactionFilter || 'all',
+            milestone: $scope.reportFilters.milestoneFilter || 'all'
+        };
+        $scope.showReportFilterModal = true;
+    };
+
+    $scope.closeReportFilterModal = function() {
+        $scope.showReportFilterModal = false;
+    };
+
+    $scope.selectPendingReportPreset = function(preset) {
+        $scope.pendingReportFilters.preset = preset;
+        if (preset) {
+            var targetDays = getPresetTargetDays(preset);
+            var now = new Date();
+            var from = new Date(now.getTime() - (targetDays * 24 * 3600 * 1000));
+            $scope.pendingReportFilters.dateFrom = from;
+            $scope.pendingReportFilters.dateTo = now;
+        } else {
+            $scope.pendingReportFilters.dateFrom = null;
+            $scope.pendingReportFilters.dateTo = null;
+        }
+    };
+
+    $scope.isPendingReportPresetSelected = function(preset) {
+        if (!preset && !$scope.pendingReportFilters.preset) return true;
+        if (preset && $scope.pendingReportFilters.preset && preset.id === $scope.pendingReportFilters.preset.id) return true;
+        return false;
+    };
+
+    $scope.resetReportFilterModal = function() {
+        $scope.pendingReportFilters = {
+            preset: null,
+            dateFrom: null,
+            dateTo: null,
+            satisfaction: 'all',
+            milestone: 'all'
+        };
+    };
+
+    $scope.confirmApplyReportFilterModal = function() {
+        $scope.selectedReportPreset = $scope.pendingReportFilters.preset;
+        $scope.reportFilters.dateFrom = $scope.pendingReportFilters.dateFrom;
+        $scope.reportFilters.dateTo = $scope.pendingReportFilters.dateTo;
+        $scope.reportFilters.satisfactionFilter = $scope.pendingReportFilters.satisfaction || 'all';
+        $scope.reportFilters.milestoneFilter = $scope.pendingReportFilters.milestone || 'all';
+
+        if ($scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) {
+            $scope.reportPeriod = 'custom';
+            $scope.loadReport('custom');
+        } else {
+            $scope.selectedReportPreset = null;
+            $scope.reportPeriod = 'all';
+            $scope.loadReport('all');
+        }
+        $scope.showReportFilterModal = false;
+        $scope.showToast('Filters applied');
+    };
+
+    $scope.isReportFiltered = function() {
+        return !!($scope.selectedReportPreset || 
+                  ($scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) ||
+                  ($scope.reportFilters.satisfactionFilter && $scope.reportFilters.satisfactionFilter !== 'all') ||
+                  ($scope.reportFilters.milestoneFilter && $scope.reportFilters.milestoneFilter !== 'all'));
+    };
+
+    $scope.clearReportDates = function() {
+        $scope.reportFilters.dateFrom = null;
+        $scope.reportFilters.dateTo = null;
+        $scope.selectedReportPreset = null;
+        $scope.reportPeriod = 'all';
+        $scope.loadReport('all');
     };
 
     $scope.closeFilterModal = function() {

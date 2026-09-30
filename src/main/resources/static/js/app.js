@@ -1797,6 +1797,19 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         }
     };
 
+    $scope.goToFeedbackForCheck = function(order, check, $event) {
+        if ($event) $event.stopPropagation();
+        var customer = $scope.selectedCustomer || (order ? order.customer : null);
+        $scope.setCustomerView('feedback', customer);
+        if (order && order.id) {
+            $scope.expandedOrders[order.id] = true;
+            $scope.loadOrderFollowups(order.id);
+            $timeout(function() {
+                $scope.openEditFollowupModal(order, check);
+            }, 120);
+        }
+    };
+
     $scope.goToFeedbackForOrder = function(order, $event) {
         if ($event) $event.stopPropagation();
         var customer = $scope.selectedCustomer || (order ? order.customer : null);

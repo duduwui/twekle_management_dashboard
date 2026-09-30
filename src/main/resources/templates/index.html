@@ -1712,7 +1712,7 @@
                 <!-- ======================================================= -->
                 <!-- PAGE 6: FOLLOW-UP INSIGHTS & REPORTING                  -->
                 <!-- ======================================================= -->
-                                                <section class="comic-card page-slide-fade" ng-show="currentTab === 'reports'">
+                                                                <section class="comic-card page-slide-fade" ng-show="currentTab === 'reports'">
                     <div class="reports-dashboard">
 
                         <!-- =================================================== -->
@@ -1721,7 +1721,12 @@
                         <div ng-show="reportSubTab === 'milestones'" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="comic-filter-toolbar" style="margin-bottom: 12px;">
                                 <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
-                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                                         <span>Filters</span>
                                         <span ng-if="isReportFiltered()" class="nav-badge-sm" style="background: #FFFFFF; color: #000000; border: 1.5px solid #000000; margin-left: 2px;">•</span>
@@ -1730,9 +1735,6 @@
                                     <!-- Active Filter Badges -->
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
                                         <span ng-bind="selectedReportPreset.name"></span> ✕
-                                    </span>
-                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.dateFrom && reportFilters.dateTo && !selectedReportPreset" ng-click="clearReportDates()" title="Click to clear date range">
-                                        <span ng-bind="(reportFilters.dateFrom | date:'yyyy-MM-dd') + ' to ' + (reportFilters.dateTo | date:'yyyy-MM-dd')"></span> ✕
                                     </span>
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="reportFilters.satisfactionFilter = 'all'" title="Click to clear scale">
                                         <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
@@ -1845,7 +1847,12 @@
                         <div ng-show="reportSubTab === 'satisfaction'" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="comic-filter-toolbar" style="margin-bottom: 12px;">
                                 <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
-                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                                         <span>Filters</span>
                                         <span ng-if="isReportFiltered()" class="nav-badge-sm" style="background: #FFFFFF; color: #000000; border: 1.5px solid #000000; margin-left: 2px;">•</span>
@@ -1854,9 +1861,6 @@
                                     <!-- Active Filter Badges -->
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
                                         <span ng-bind="selectedReportPreset.name"></span> ✕
-                                    </span>
-                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.dateFrom && reportFilters.dateTo && !selectedReportPreset" ng-click="clearReportDates()" title="Click to clear date range">
-                                        <span ng-bind="(reportFilters.dateFrom | date:'yyyy-MM-dd') + ' to ' + (reportFilters.dateTo | date:'yyyy-MM-dd')"></span> ✕
                                     </span>
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="reportFilters.satisfactionFilter = 'all'" title="Click to clear scale">
                                         <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
@@ -1924,7 +1928,12 @@
                         <div ng-show="reportSubTab === 'products'" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="comic-filter-toolbar" style="margin-bottom: 12px;">
                                 <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
-                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                                         <span>Filters</span>
                                         <span ng-if="isReportFiltered()" class="nav-badge-sm" style="background: #FFFFFF; color: #000000; border: 1.5px solid #000000; margin-left: 2px;">•</span>
@@ -1933,9 +1942,6 @@
                                     <!-- Active Filter Badges -->
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
                                         <span ng-bind="selectedReportPreset.name"></span> ✕
-                                    </span>
-                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.dateFrom && reportFilters.dateTo && !selectedReportPreset" ng-click="clearReportDates()" title="Click to clear date range">
-                                        <span ng-bind="(reportFilters.dateFrom | date:'yyyy-MM-dd') + ' to ' + (reportFilters.dateTo | date:'yyyy-MM-dd')"></span> ✕
                                     </span>
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="reportFilters.satisfactionFilter = 'all'" title="Click to clear scale">
                                         <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
@@ -2003,7 +2009,12 @@
                         <div ng-show="reportSubTab === 'customers'" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="comic-filter-toolbar" style="margin-bottom: 12px;">
                                 <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
-                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                                         <span>Filters</span>
                                         <span ng-if="isReportFiltered()" class="nav-badge-sm" style="background: #FFFFFF; color: #000000; border: 1.5px solid #000000; margin-left: 2px;">•</span>
@@ -2012,9 +2023,6 @@
                                     <!-- Active Filter Badges -->
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
                                         <span ng-bind="selectedReportPreset.name"></span> ✕
-                                    </span>
-                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.dateFrom && reportFilters.dateTo && !selectedReportPreset" ng-click="clearReportDates()" title="Click to clear date range">
-                                        <span ng-bind="(reportFilters.dateFrom | date:'yyyy-MM-dd') + ' to ' + (reportFilters.dateTo | date:'yyyy-MM-dd')"></span> ✕
                                     </span>
                                     <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="reportFilters.satisfactionFilter = 'all'" title="Click to clear scale">
                                         <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕

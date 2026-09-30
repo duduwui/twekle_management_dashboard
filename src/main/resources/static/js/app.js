@@ -1073,7 +1073,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             completionRate: 0,
             totalOrdersInPeriod: 0,
             totalCustomersInPeriod: 0,
-            satisfaction: { satisfied: 0, neutral: 0, unsatisfied: 0, blank: 0, totalNotes: 0 }
+            satisfaction: { satisfied: 0, neutral: 0, unsatisfied: 0, totalNotes: 0 }
         },
         milestones: [],
         pendingFollowups: [],
@@ -2180,9 +2180,6 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.openEditFollowupModal = function(order, check) {
         $scope.editingFollowupOrder = order;
         $scope.editingFollowup = angular.copy(check);
-        if (!$scope.editingFollowup.satisfaction) {
-            $scope.editingFollowup.satisfaction = 'NEUTRAL';
-        }
         $scope.showEditFollowupModal = true;
     };
 
@@ -2373,9 +2370,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         var ms = $scope.reportFilters.milestoneFilter || 'all';
         return $scope.reportData.satisfactionNotes.filter(function(item) {
             if (sat !== 'all') {
-                if (sat === 'BLANK') {
-                    if (item.satisfaction && item.satisfaction !== 'BLANK') return false;
-                } else if (item.satisfaction !== sat) {
+                if (item.satisfaction !== sat) {
                     return false;
                 }
             }
@@ -2385,7 +2380,6 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             if (!q) return true;
             return (item.customerName && item.customerName.toLowerCase().indexOf(q) !== -1) ||
                    (item.customerPhone && item.customerPhone.indexOf(q) !== -1) ||
-                   (item.orderNumber && item.orderNumber.toLowerCase().indexOf(q) !== -1) ||
                    (item.presetName && item.presetName.toLowerCase().indexOf(q) !== -1) ||
                    (item.note && item.note.toLowerCase().indexOf(q) !== -1);
         });
@@ -2429,10 +2423,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 csvRows.push(['"' + m.presetName + '"', m.total, m.completed, m.pending, m.completionRate + '%'].join(','));
             });
         } else if ($scope.reportSubTab === 'satisfaction') {
-            csvRows.push(['Customer Name', 'Phone', 'Order #', 'Milestone', 'Satisfaction', 'Note Details', 'Date'].join(','));
+            csvRows.push(['Customer Name', 'Phone', 'Milestone', 'Satisfaction', 'Note Details', 'Date'].join(','));
             $scope.getFilteredReportNotes().forEach(function(n) {
                 var safeNote = (n.note || '').replace(/"/g, '""');
-                csvRows.push(['"' + (n.customerName || '') + '"', '"' + (n.customerPhone || '') + '"', '"' + (n.orderNumber || '') + '"', '"' + (n.presetName || '') + '"', '"' + (n.satisfaction || '') + '"', '"' + safeNote + '"', '"' + (n.date || '') + '"'].join(','));
+                csvRows.push(['"' + (n.customerName || '') + '"', '"' + (n.customerPhone || '') + '"', '"' + (n.presetName || '') + '"', '"' + (n.satisfaction || '') + '"', '"' + safeNote + '"', '"' + (n.date || '') + '"'].join(','));
             });
         } else if ($scope.reportSubTab === 'products') {
             csvRows.push(['Product Name', 'Order Count', 'Satisfied Notes', 'Neutral Notes', 'Unsatisfied Notes', 'Total Notes'].join(','));

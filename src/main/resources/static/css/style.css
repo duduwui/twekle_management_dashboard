@@ -1965,7 +1965,7 @@ body {
 
 .followup-check-card {
   display: grid;
-  grid-template-columns: 180px 60px 1fr 60px 140px;
+  grid-template-columns: 180px 60px minmax(0, 1fr) 60px 140px;
   gap: 12px;
   align-items: center;
   background-color: #FFFFFF;
@@ -1974,6 +1974,7 @@ body {
   padding: 10px 14px;
   box-shadow: 2px 2px 0px #000000;
   transition: all 0.15s ease;
+  overflow: hidden;
 }
 
 .followup-check-card:hover {
@@ -2065,6 +2066,8 @@ section.comic-card {
   font-size: 0.82rem;
   color: var(--text-main);
   line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .check-note-text {
@@ -2074,12 +2077,30 @@ section.comic-card {
   border: 1px solid #CBD5E1;
   font-weight: 600;
   color: #1E293B;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-height: 52px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .check-note-empty {
   color: #94A3B8;
   font-style: italic;
   font-size: 0.78rem;
+}
+
+.report-note-cell {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  max-width: 320px;
+  min-width: 180px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-height: 52px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 4px;
 }
 
 .check-col-images {

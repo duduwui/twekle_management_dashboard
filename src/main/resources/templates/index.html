@@ -1208,17 +1208,17 @@
                                             <th class="comic-sortable-th" ng-click="sortOrdersBy('itemsSummary')">
                                                 Item Name <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
                                             </th>
-                                            <th class="comic-sortable-th nowrap" style="width: 130px;" ng-click="sortOrdersBy('orderNumber')">
-                                                Order # <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderNumber')"></span>
-                                            </th>
                                             <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('totalAmount')">
                                                 Price <span class="sort-indicator" ng-bind="getOrderSortIndicator('totalAmount')"></span>
                                             </th>
                                             <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('orderStatus')">
                                                 Status <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderStatus')"></span>
                                             </th>
-                                            <th class="comic-sortable-th nowrap" style="width: 150px;" ng-click="sortOrdersBy('orderDate')">
-                                                Date & Time <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderDate')"></span>
+                                            <th class="comic-sortable-th nowrap" style="width: 120px;" ng-click="sortOrdersBy('orderDate')">
+                                                Order Date <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderDate')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th nowrap" style="width: 100px;">
+                                                Order Time
                                             </th>
                                             <th style="text-align: right; width: 135px;" class="nowrap">Action</th>
                                         </tr>
@@ -1242,16 +1242,16 @@
                                                 <strong style="color: var(--text-main); font-size: 0.92rem;" ng-bind="order.itemsSummary || 'Standard Products'"></strong>
                                             </td>
                                             <td class="nowrap">
-                                                <span class="comic-tag" style="background-color: #F1F5F9; color: #0F172A; font-weight: 800; border: 1.5px solid #000;" ng-bind="order.orderNumber"></span>
-                                            </td>
-                                            <td class="nowrap">
                                                 <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'$' + (order.totalAmount | number:2)"></strong>
                                             </td>
                                             <td class="nowrap">
                                                 <span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span>
                                             </td>
                                             <td class="nowrap">
-                                                <span style="font-weight: 700; color: #334155;" ng-bind="order.orderDate | date:'yyyy-MM-dd HH:mm'"></span>
+                                                <span style="font-weight: 700; color: #334155;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span>
+                                            </td>
+                                            <td class="nowrap">
+                                                <span style="font-weight: 700; color: #64748B;" ng-bind="order.orderDate | date:'HH:mm'"></span>
                                             </td>
                                             <td style="text-align: right;" class="nowrap">
                                                 <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
@@ -1270,7 +1270,7 @@
                                                             <strong style="font-size: 0.95rem; color: #1E1B4B;">Follow-up Checklist ({{ (orderFollowups[order.id] || []).length }} Checkpoints)</strong>
                                                         </div>
                                                         <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
-                                                            Order {{order.orderNumber}}
+                                                            Order #{{order.id}}
                                                         </span>
                                                     </div>
 
@@ -1595,7 +1595,6 @@
                         <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
                             <div class="card-header-flex" style="margin-bottom: 12px;">
                                 <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
-                                <input type="search" name="search_filter_rules_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-input" style="width: 260px;" placeholder="Search filter rules..." ng-model="filterRulesDt.search">
                             </div>
                             <div class="table-responsive">
                                 <table class="comic-table">
@@ -1727,9 +1726,6 @@
                                 </div>
                                 <div class="report-kpi-subtext">
                                     <strong>{{ reportData.summary.satisfaction.totalNotes || 0 }}</strong> total notes & reviews logged
-                                    <span style="color: #64748B;" ng-if="reportData.summary.satisfaction.blank > 0">
-                                        ({{ reportData.summary.satisfaction.blank }} unrated)
-                                    </span>
                                 </div>
                             </div>
 
@@ -1841,7 +1837,7 @@
                                                 <td class="nowrap"><strong ng-bind="p.daysSinceOrder + ' days ago'"></strong></td>
                                                 <td class="nowrap" style="text-align: right;">
                                                     <button type="button" class="comic-btn" style="padding: 4px 10px; font-size: 0.78rem;" ng-click="jumpFromReportToOrder(p)">
-                                                        Open Order Log ➔
+                                                        Open Logs & Feedbacks ➔
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1876,9 +1872,6 @@
                                     <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'UNSATISFIED'}" ng-click="reportFilters.satisfactionFilter = 'UNSATISFIED'">
                                         Unsatisfied Only
                                     </button>
-                                    <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'BLANK'}" ng-click="reportFilters.satisfactionFilter = 'BLANK'">
-                                        Unrated / Blank Only
-                                    </button>
 
                                     <!-- Milestone Preset Filter Dropdown -->
                                     <span style="font-size: 0.82rem; font-weight: 900; color: #475569; margin-left: 8px;">Milestone:</span>
@@ -1900,7 +1893,6 @@
                                         <tr>
                                             <th>Customer Details</th>
                                             <th class="nowrap col-phone">Phone</th>
-                                            <th class="nowrap">Order #</th>
                                             <th class="nowrap">Milestone</th>
                                             <th class="nowrap">Satisfaction</th>
                                             <th>Note & Feedback Details</th>
@@ -1912,16 +1904,14 @@
                                         <tr ng-repeat="n in getFilteredReportNotes() track by n.id">
                                             <td><strong style="color: #0F172A;" ng-bind="n.customerName"></strong></td>
                                             <td class="nowrap col-phone"><span ng-bind="n.customerPhone"></span></td>
-                                            <td class="nowrap"><strong ng-bind="n.orderNumber"></strong></td>
                                             <td class="nowrap"><span style="font-weight: 700; color: #475569;" ng-bind="n.presetName"></span></td>
                                             <td class="nowrap">
                                                 <span class="sat-badge sat-badge-satisfied" ng-if="n.satisfaction === 'SATISFIED'">Satisfied</span>
-                                                <span class="sat-badge sat-badge-neutral" ng-if="n.satisfaction === 'NEUTRAL'">Neutral</span>
+                                                <span class="sat-badge sat-badge-neutral" ng-if="n.satisfaction === 'NEUTRAL' || !n.satisfaction">Neutral</span>
                                                 <span class="sat-badge sat-badge-unsatisfied" ng-if="n.satisfaction === 'UNSATISFIED'">Unsatisfied</span>
-                                                <span class="sat-badge sat-badge-blank" ng-if="!n.satisfaction || n.satisfaction === 'BLANK'">Blank</span>
                                             </td>
                                             <td>
-                                                <span style="font-size: 0.88rem; line-height: 1.4;" ng-bind="n.note || '-'"></span>
+                                                <div class="report-note-cell" ng-bind="n.note || '-'"></div>
                                             </td>
                                             <td class="nowrap">
                                                 <img ng-if="n.hasImage" ng-src="{{n.imageUrl}}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000; cursor: pointer;" ng-click="previewImage(n.imageUrl)" title="Click to view full photo" alt="Photo">
@@ -1930,7 +1920,7 @@
                                             <td class="nowrap"><span style="font-size: 0.8rem; color: #64748B;" ng-bind="n.date ? (n.date | date:'yyyy-MM-dd') : '-'"></span></td>
                                         </tr>
                                         <tr ng-if="getFilteredReportNotes().length === 0">
-                                            <td colspan="8" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                            <td colspan="7" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
                                                 No customer notes match the selected criteria.
                                             </td>
                                         </tr>
@@ -2101,15 +2091,15 @@
 
                 <!-- Customer Satisfaction Scale (Satisfied, Neutral, Unsatisfied) -->
                 <div class="form-group">
-                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale</label>
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
                     <div class="satisfaction-scale-bar">
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="editingFollowup.satisfaction = 'SATISFIED'">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
                             Satisfied
                         </button>
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': (!editingFollowup.satisfaction || editingFollowup.satisfaction === 'NEUTRAL')}" ng-click="editingFollowup.satisfaction = 'NEUTRAL'">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingFollowup.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
                             Neutral
                         </button>
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="editingFollowup.satisfaction = 'UNSATISFIED'">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
                             Unsatisfied
                         </button>
                     </div>
@@ -2186,12 +2176,7 @@
 
                 <!-- Customer Satisfaction Scale (Optional) -->
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <label class="form-label" style="margin: 0;">Customer Satisfaction Scale (Optional)</label>
-                        <button type="button" class="scale-clear-btn" ng-show="newCustomerFeedback.satisfaction" ng-click="newCustomerFeedback.satisfaction = null">
-                            Clear / Blank
-                        </button>
-                    </div>
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
                     <div class="satisfaction-scale-bar">
                         <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': newCustomerFeedback.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'SATISFIED')">
                             Satisfied
@@ -2268,12 +2253,7 @@
 
                 <!-- Customer Satisfaction Scale (Optional) -->
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <label class="form-label" style="margin: 0;">Customer Satisfaction Scale (Optional)</label>
-                        <button type="button" class="scale-clear-btn" ng-show="editingCustomerFeedback.satisfaction" ng-click="editingCustomerFeedback.satisfaction = null">
-                            Clear / Blank
-                        </button>
-                    </div>
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
                     <div class="satisfaction-scale-bar">
                         <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingCustomerFeedback.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'SATISFIED')">
                             Satisfied

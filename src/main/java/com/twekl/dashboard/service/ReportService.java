@@ -110,7 +110,6 @@ public class ReportService {
         long satisfiedCount = 0;
         long neutralCount = 0;
         long unsatisfiedCount = 0;
-        long blankNotesCount = 0;
         int totalNotesWithContent = 0;
 
         for (OrderFollowupCheck chk : checksInPeriod) {
@@ -122,12 +121,11 @@ public class ReportService {
                 totalNotesWithContent++;
                 if ("SATISFIED".equalsIgnoreCase(sat)) {
                     satisfiedCount++;
-                } else if ("NEUTRAL".equalsIgnoreCase(sat)) {
-                    neutralCount++;
                 } else if ("UNSATISFIED".equalsIgnoreCase(sat)) {
                     unsatisfiedCount++;
                 } else {
-                    blankNotesCount++;
+                    // Default / unspecified scale is NEUTRAL
+                    neutralCount++;
                 }
             }
         }
@@ -147,8 +145,8 @@ public class ReportService {
             String sat = fb.getSatisfaction();
             if (sat != null) {
                 if ("SATISFIED".equalsIgnoreCase(sat)) satisfiedCount++;
-                else if ("NEUTRAL".equalsIgnoreCase(sat)) neutralCount++;
                 else if ("UNSATISFIED".equalsIgnoreCase(sat)) unsatisfiedCount++;
+                else neutralCount++;
             }
         }
 
@@ -164,7 +162,6 @@ public class ReportService {
         satisfactionSummary.put("satisfied", satisfiedCount);
         satisfactionSummary.put("neutral", neutralCount);
         satisfactionSummary.put("unsatisfied", unsatisfiedCount);
-        satisfactionSummary.put("blank", blankNotesCount);
         satisfactionSummary.put("totalNotes", totalNotesWithContent);
         summary.put("satisfaction", satisfactionSummary);
 
@@ -250,7 +247,7 @@ public class ReportService {
                     nItem.put("customerPhone", cust != null ? cust.getPhoneNumber() : "-");
                     nItem.put("presetName", c.getPresetName());
                     nItem.put("itemsSummary", order.getItemsSummary() != null ? order.getItemsSummary() : "-");
-                    nItem.put("satisfaction", c.getSatisfaction() != null ? c.getSatisfaction() : "BLANK");
+                    nItem.put("satisfaction", c.getSatisfaction() != null ? c.getSatisfaction() : "NEUTRAL");
                     nItem.put("note", c.getNote() != null ? c.getNote() : "");
                     nItem.put("hasImage", c.getImageUrl() != null && !c.getImageUrl().trim().isEmpty());
                     nItem.put("imageUrl", c.getImageUrl());

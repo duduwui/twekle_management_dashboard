@@ -125,6 +125,9 @@ public class ReportService {
         int totalNotesWithContent = 0;
 
         for (OrderFollowupCheck chk : checksInPeriod) {
+            if (!Boolean.TRUE.equals(chk.getIsCompleted())) {
+                continue;
+            }
             String sat = chk.getSatisfaction();
             boolean hasNote = (chk.getNote() != null && !chk.getNote().trim().isEmpty()) 
                     || (chk.getImageUrl() != null && !chk.getImageUrl().trim().isEmpty());
@@ -136,7 +139,6 @@ public class ReportService {
                 } else if ("UNSATISFIED".equalsIgnoreCase(sat)) {
                     unsatisfiedCount++;
                 } else {
-                    // Default / unspecified scale is NEUTRAL
                     neutralCount++;
                 }
             }
@@ -240,13 +242,16 @@ public class ReportService {
             }
         }
 
-        // 4. Detailed Notes & Satisfaction Ledger
+        // 4. Detailed Notes & Satisfaction Ledger (Only Completed Follow-ups)
         List<Map<String, Object>> notesLedger = new ArrayList<>();
         for (CustomerOrder order : filteredOrders) {
             List<OrderFollowupCheck> checks = orderChecksMap.getOrDefault(order.getId(), Collections.emptyList());
             Customer cust = customerMap.get(order.getCustomerId());
 
             for (OrderFollowupCheck c : checks) {
+                if (!Boolean.TRUE.equals(c.getIsCompleted())) {
+                    continue;
+                }
                 boolean hasContent = (c.getNote() != null && !c.getNote().trim().isEmpty()) 
                         || (c.getImageUrl() != null && !c.getImageUrl().trim().isEmpty())
                         || (c.getSatisfaction() != null && !c.getSatisfaction().trim().isEmpty());
@@ -259,9 +264,10 @@ public class ReportService {
                     nItem.put("customerId", order.getCustomerId());
                     nItem.put("customerName", cust != null ? cust.getName() : "Unknown");
                     nItem.put("customerPhone", cust != null ? cust.getPhoneNumber() : "-");
+                    nItem.put("customerCity", cust != null ? cust.getCity() : "Erbil");
                     nItem.put("presetName", c.getPresetName());
                     nItem.put("itemsSummary", order.getItemsSummary() != null ? order.getItemsSummary() : "-");
-                    nItem.put("satisfaction", c.getSatisfaction() != null ? c.getSatisfaction() : "NEUTRAL");
+                    nItem.put("satisfaction", c.getSatisfaction() != null ? c.getSatisfaction() : "SATISFIED");
                     nItem.put("note", c.getNote() != null ? c.getNote() : "");
                     nItem.put("hasImage", c.getImageUrl() != null && !c.getImageUrl().trim().isEmpty());
                     nItem.put("imageUrl", c.getImageUrl());

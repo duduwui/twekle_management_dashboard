@@ -72,6 +72,8 @@
                     </div>
                 </div>
 
+                <div class="nav-divider"></div>
+
                 <!-- Group 2: Follow-ups -->
                 <button type="button" 
                         class="nav-item" 
@@ -81,6 +83,8 @@
                     <span class="nav-badge" ng-bind="customers.length">0</span>
                 </button>
 
+                <div class="nav-divider"></div>
+
                 <!-- Group 3: Time Filters (Dedicated Tab) -->
                 <button type="button" 
                         class="nav-item" 
@@ -89,6 +93,8 @@
                     <span>Time Filters</span>
                     <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
                 </button>
+
+                <div class="nav-divider"></div>
 
                 <!-- Group 4: Reports Accordion -->
                 <div class="nav-category-group">
@@ -1655,8 +1661,8 @@
                                             <th class="comic-sortable-th" ng-click="sortFilterRulesBy('name')">
                                                 Filter Name <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('name')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('durationValue')">
-                                                Duration Period <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('durationValue')"></span>
+                                            <th class="comic-sortable-th" ng-click="sortFilterRulesBy('duration')">
+                                                Duration Period <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('duration')"></span>
                                             </th>
                                             <th class="comic-sortable-th" ng-click="sortFilterRulesBy('isActive')">
                                                 Status <span class="sort-indicator" ng-bind="getFilterRuleSortIndicator('isActive')"></span>

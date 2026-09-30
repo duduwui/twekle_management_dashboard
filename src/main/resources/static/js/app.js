@@ -99,9 +99,28 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
     };
     $scope.showPresetManager = false; // toggle admin manager section in picker modal
 
+    $scope.toDurationMinutes = function(preset) {
+        if (!preset) return 0;
+        var val = parseInt(preset.durationValue, 10) || 0;
+        var unit = (preset.durationUnit || 'HOURS').toUpperCase();
+        if (unit.indexOf('MIN') === 0) return val;
+        if (unit.indexOf('HOUR') === 0) return val * 60;
+        if (unit.indexOf('DAY') === 0) return val * 24 * 60;
+        if (unit.indexOf('WEEK') === 0) return val * 7 * 24 * 60;
+        if (unit.indexOf('MONTH') === 0) return val * 30 * 24 * 60;
+        return val * 60;
+    };
+
     $scope.loadTimeFilterPresets = function() {
         return $http.get('/api/time-filters').then(function(res) {
-            $scope.timeFilterPresets = res.data || [];
+            var arr = res.data || [];
+            arr.sort(function(a, b) {
+                var minA = $scope.toDurationMinutes(a);
+                var minB = $scope.toDurationMinutes(b);
+                if (minA !== minB) return minA - minB;
+                return (a.id || 0) - (b.id || 0);
+            });
+            $scope.timeFilterPresets = arr;
         });
     };
 
@@ -1039,10 +1058,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
     };
 
     // =========================================================
-    // 6. DYNAMIC FILTER RULES DATATABLE CONTROLS
+    // 6. DYNAMIC FILTER RULES DATATABLE CONTROLS (AUTO-SORTED SOONEST TO LATEST)
     // =========================================================
     $scope.filterRulesDt = {
-        sortField: 'id',
+        sortField: 'duration',
         sortReverse: false,
         currentPage: 1,
         pageSize: 8,
@@ -1070,6 +1089,14 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
             }
             return true;
         }).sort(function(a, b) {
+            if ($scope.filterRulesDt.sortField === 'duration' || $scope.filterRulesDt.sortField === 'durationValue') {
+                var minA = $scope.toDurationMinutes(a);
+                var minB = $scope.toDurationMinutes(b);
+                if (minA !== minB) {
+                    return $scope.filterRulesDt.sortReverse ? (minB - minA) : (minA - minB);
+                }
+                return (a.id || 0) - (b.id || 0);
+            }
             var valA = a[$scope.filterRulesDt.sortField];
             var valB = b[$scope.filterRulesDt.sortField];
             if (valA == null) valA = '';

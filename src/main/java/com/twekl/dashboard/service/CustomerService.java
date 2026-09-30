@@ -306,6 +306,10 @@ public class CustomerService {
             }
         }
 
+        // Sort result by duration ascending (soonest to latest)
+        result.sort(Comparator.comparingLong((OrderFollowupCheck c) -> toMinutes(c.getDurationValue(), c.getDurationUnit()))
+                .thenComparing(c -> c.getId() != null ? c.getId() : 0L));
+
         return result;
     }
 

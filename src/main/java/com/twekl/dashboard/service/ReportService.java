@@ -94,12 +94,16 @@ public class ReportService {
         List<OrderFollowupCheck> checksInPeriod = new ArrayList<>();
         Map<Long, List<OrderFollowupCheck>> orderChecksMap = new HashMap<>();
 
-        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc();
+        List<TimeFilterPreset> activePresets = new ArrayList<>(timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc());
+        activePresets.sort(Comparator.comparingLong((TimeFilterPreset p) -> CustomerService.toMinutes(p.getDurationValue(), p.getDurationUnit()))
+                .thenComparing(p -> p.getId() != null ? p.getId() : 0L));
         Set<Long> activePresetIds = activePresets.stream().map(TimeFilterPreset::getId).collect(Collectors.toSet());
         Set<String> activePresetNames = activePresets.stream().map(p -> p.getName().trim().toLowerCase()).collect(Collectors.toSet());
 
         for (CustomerOrder order : filteredOrders) {
-            List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderIdOrderByIdAsc(order.getId());
+            List<OrderFollowupCheck> checks = new ArrayList<>(followupCheckRepository.findByOrderIdOrderByIdAsc(order.getId()));
+            checks.sort(Comparator.comparingLong((OrderFollowupCheck c) -> CustomerService.toMinutes(c.getDurationValue(), c.getDurationUnit()))
+                    .thenComparing(c -> c.getId() != null ? c.getId() : 0L));
             orderChecksMap.put(order.getId(), checks);
             for (OrderFollowupCheck chk : checks) {
                 boolean isPresetActive = (chk.getPresetId() != null && activePresetIds.contains(chk.getPresetId()))

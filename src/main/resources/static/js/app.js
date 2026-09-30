@@ -2247,7 +2247,14 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
 
     $scope.loadOrderFollowups = function(orderId) {
         return $http.get('/api/orders/' + orderId + '/followups').then(function(res) {
-            $scope.orderFollowups[orderId] = res.data || [];
+            var checks = res.data || [];
+            checks.sort(function(a, b) {
+                var minA = $scope.toDurationMinutes(a);
+                var minB = $scope.toDurationMinutes(b);
+                if (minA !== minB) return minA - minB;
+                return (a.id || 0) - (b.id || 0);
+            });
+            $scope.orderFollowups[orderId] = checks;
         });
     };
 

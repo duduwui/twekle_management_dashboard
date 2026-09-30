@@ -1576,6 +1576,11 @@ body {
   background-color: #FEE2E2 !important;
 }
 
+.comic-table tbody tr.row-idle,
+.comic-table tbody tr.order-row-idle {
+  background-color: #FFFFFF !important;
+}
+
 .comic-table tbody tr.row-completed:hover,
 .comic-table tbody tr.order-row-completed:hover {
   background-color: #BBF7D0 !important;
@@ -1584,6 +1589,11 @@ body {
 .comic-table tbody tr.row-pending:hover,
 .comic-table tbody tr.order-row-pending:hover {
   background-color: #FECACA !important;
+}
+
+.comic-table tbody tr.row-idle:hover,
+.comic-table tbody tr.order-row-idle:hover {
+  background-color: #F8FAFC !important;
 }
 
 /* Spotlight Highlight for Target Milestone Checkpoint */
@@ -1938,6 +1948,18 @@ body {
 }
 
 .order-row-clickable:hover {
+  background-color: #F8FAFC;
+}
+
+.order-row-clickable.order-row-completed:hover {
+  background-color: #BBF7D0 !important;
+}
+
+.order-row-clickable.order-row-pending:hover {
+  background-color: #FECACA !important;
+}
+
+.order-row-clickable.order-row-idle:hover {
   background-color: #F8FAFC !important;
 }
 

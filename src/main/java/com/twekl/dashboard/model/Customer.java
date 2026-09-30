@@ -44,6 +44,12 @@ public class Customer {
     @Transient
     private Integer remainingFollowupsCount = 0;
 
+    @Transient
+    private String followupStatus = "IDLE"; // "IDLE", "ALERT", "DONE"
+
+    @Transient
+    private Long hoursSinceLastOrder = 0L;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -131,6 +137,12 @@ public class Customer {
 
     public Integer getRemainingFollowupsCount() { return remainingFollowupsCount; }
     public void setRemainingFollowupsCount(Integer remainingFollowupsCount) { this.remainingFollowupsCount = remainingFollowupsCount; }
+
+    public String getFollowupStatus() { return followupStatus; }
+    public void setFollowupStatus(String followupStatus) { this.followupStatus = followupStatus; }
+
+    public Long getHoursSinceLastOrder() { return hoursSinceLastOrder; }
+    public void setHoursSinceLastOrder(Long hoursSinceLastOrder) { this.hoursSinceLastOrder = hoursSinceLastOrder; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -56,6 +56,18 @@ public class OrderFollowupCheck {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Transient
+    private Boolean isDue = false;
+
+    @Transient
+    private Long hoursUntilDue = 0L;
+
+    @Transient
+    private Long orderAgeHours = 0L;
+
+    @Transient
+    private Boolean isPresetActive = true;
+
     public OrderFollowupCheck() {
         this.isCompleted = false;
     }
@@ -118,6 +130,18 @@ public class OrderFollowupCheck {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Boolean getIsDue() { return isDue; }
+    public void setIsDue(Boolean isDue) { this.isDue = isDue; }
+
+    public Long getHoursUntilDue() { return hoursUntilDue; }
+    public void setHoursUntilDue(Long hoursUntilDue) { this.hoursUntilDue = hoursUntilDue; }
+
+    public Long getOrderAgeHours() { return orderAgeHours; }
+    public void setOrderAgeHours(Long orderAgeHours) { this.orderAgeHours = orderAgeHours; }
+
+    public Boolean getIsPresetActive() { return isPresetActive; }
+    public void setIsPresetActive(Boolean isPresetActive) { this.isPresetActive = isPresetActive; }
 
     public static Builder builder() {
         return new Builder();

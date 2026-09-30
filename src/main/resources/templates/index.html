@@ -1086,7 +1086,7 @@
                                 </thead>
                                 <tbody>
                                     <tr ng-repeat="cust in getPagedCustomers() track by cust.id"
-                                        ng-class="cust.allFollowupsCompleted ? 'row-completed' : 'row-pending'">
+                                        ng-class="getCustomerRowClass(cust)">
                                         <td class="nowrap">
                                             <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'#' + cust.id"></strong>
                                         </td>
@@ -1108,17 +1108,25 @@
                                             <strong style="font-size: 0.95rem; color: var(--text-main); white-space: nowrap;" ng-bind="(cust.totalSpent || 0 | currency:'$':2)"></strong>
                                         </td>
                                         <td class="nowrap">
-                                            <span class="comic-tag tag-primary" ng-if="cust.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
+                                            <!-- Completed -->
+                                            <span class="comic-tag tag-primary" ng-if="cust.followupStatus === 'DONE' || cust.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
                                                 ✓ All Done
                                             </span>
+                                            <!-- Alert / Due Follow-up -->
                                             <button type="button" 
                                                     class="comic-milestone-link-btn" 
-                                                    ng-if="!cust.allFollowupsCompleted && cust.totalOrders > 0" 
+                                                    ng-if="cust.followupStatus === 'ALERT' && cust.totalOrders > 0" 
                                                     ng-click="openCustomerOrder(cust, cust.nextPendingOrderId, cust.nextPendingFollowup, $event)"
                                                     title="Open Order Checklist & Highlight Milestone">
                                                 <span>{{ cust.nextPendingFollowup || 'Pending' }}</span>
                                                 <span class="milestone-arrow">➔</span>
                                             </button>
+                                            <!-- Idle / Grace Period (Not due yet) -->
+                                            <span class="comic-tag" 
+                                                  ng-if="(cust.followupStatus === 'IDLE' || (!cust.allFollowupsCompleted && cust.followupStatus !== 'ALERT')) && cust.totalOrders > 0" 
+                                                  style="background-color: #F8FAFC; color: #475569; border: 1.5px solid #CBD5E1; font-weight: 700;">
+                                                ⏱ {{ cust.nextPendingFollowup || 'Fresh (Grace Period)' }}
+                                            </span>
                                             <span ng-if="!cust.totalOrders || cust.totalOrders === 0" style="color: var(--text-muted); font-weight: 700;">-</span>
                                         </td>
                                         <td style="text-align: right;" class="nowrap">
@@ -1251,7 +1259,10 @@
                                                 <span style="font-weight: 700; color: #334155;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span>
                                             </td>
                                             <td class="nowrap">
-                                                <span style="font-weight: 700; color: #64748B;" ng-bind="order.orderDate | date:'HH:mm'"></span>
+                                                <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <span style="font-weight: 700; color: #64748B;" ng-bind="order.orderDate | date:'HH:mm'"></span>
+                                                    <span class="comic-tag" style="background-color: #F1F5F9; color: #0F172A; font-weight: 800; font-size: 0.72rem; padding: 2px 6px;" ng-bind="formatOrderAge(order)"></span>
+                                                </div>
                                             </td>
                                             <td style="text-align: right;" class="nowrap">
                                                 <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
@@ -1282,7 +1293,13 @@
                                                             <!-- 1. Milestone info -->
                                                             <div class="check-col-milestone">
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
-                                                                <span class="comic-tag" style="background-color: #F59E0B; color: #000000; font-size: 0.68rem; font-weight: 900; margin-top: 3px; display: inline-block; width: fit-content;" ng-if="isMilestoneHighlighted(check)">Target Milestone</span>
+                                                                <div style="margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap;">
+                                                                    <span class="comic-tag" style="background-color: #DCFCE7; color: #166534; font-size: 0.68rem; font-weight: 900;" ng-if="check.isCompleted">✓ Completed</span>
+                                                                    <span class="comic-tag" style="background-color: #FEE2E2; color: #991B1B; font-size: 0.68rem; font-weight: 900;" ng-if="!check.isCompleted && check.isDue">⚡ Due Now</span>
+                                                                    <span class="comic-tag" style="background-color: #F8FAFC; color: #64748B; font-size: 0.68rem; font-weight: 700; border: 1px solid #CBD5E1;" ng-if="!check.isCompleted && !check.isDue && check.isPresetActive !== false">⏱ In {{ check.hoursUntilDue || 1 }}h</span>
+                                                                    <span class="comic-tag" style="background-color: #F1F5F9; color: #94A3B8; font-size: 0.68rem; font-weight: 700;" ng-if="check.isPresetActive === false">Inactive Filter</span>
+                                                                    <span class="comic-tag" style="background-color: #F59E0B; color: #000000; font-size: 0.68rem; font-weight: 900;" ng-if="isMilestoneHighlighted(check)">Target Milestone</span>
+                                                                </div>
                                                             </div>
 
                                                             <!-- 2. Status Check Yes/No toggle -->

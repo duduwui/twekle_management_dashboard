@@ -27,6 +27,15 @@ public class CustomerOrder {
     private String paymentMethod;
     private String orderStatus = "DELIVERED"; // "DELIVERED", "COMPLETED", "SHIPPED", "PROCESSING"
 
+    @Transient
+    private String followupStatus = "IDLE"; // "IDLE", "ALERT", "DONE"
+
+    @Transient
+    private Boolean isFullyFollowedUp = false;
+
+    @Transient
+    private Long ageHours = 0L;
+
     private LocalDateTime createdAt;
 
     public CustomerOrder() {
@@ -81,6 +90,15 @@ public class CustomerOrder {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getFollowupStatus() { return followupStatus; }
+    public void setFollowupStatus(String followupStatus) { this.followupStatus = followupStatus; }
+
+    public Boolean getIsFullyFollowedUp() { return isFullyFollowedUp; }
+    public void setIsFullyFollowedUp(Boolean isFullyFollowedUp) { this.isFullyFollowedUp = isFullyFollowedUp; }
+
+    public Long getAgeHours() { return ageHours; }
+    public void setAgeHours(Long ageHours) { this.ageHours = ageHours; }
 
     // Builder pattern
     public static CustomerOrderBuilder builder() {

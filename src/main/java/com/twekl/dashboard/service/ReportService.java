@@ -94,10 +94,22 @@ public class ReportService {
         List<OrderFollowupCheck> checksInPeriod = new ArrayList<>();
         Map<Long, List<OrderFollowupCheck>> orderChecksMap = new HashMap<>();
 
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc();
+        Set<Long> activePresetIds = activePresets.stream().map(TimeFilterPreset::getId).collect(Collectors.toSet());
+        Set<String> activePresetNames = activePresets.stream().map(p -> p.getName().trim().toLowerCase()).collect(Collectors.toSet());
+
         for (CustomerOrder order : filteredOrders) {
             List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderIdOrderByIdAsc(order.getId());
             orderChecksMap.put(order.getId(), checks);
-            checksInPeriod.addAll(checks);
+            for (OrderFollowupCheck chk : checks) {
+                boolean isPresetActive = (chk.getPresetId() != null && activePresetIds.contains(chk.getPresetId()))
+                        || (chk.getPresetName() != null && activePresetNames.contains(chk.getPresetName().trim().toLowerCase()));
+                boolean isDue = isPresetActive && CustomerService.isMilestoneDue(order.getOrderDate(), chk.getDurationValue(), chk.getDurationUnit());
+                chk.setIsDue(isDue);
+                if (Boolean.TRUE.equals(chk.getIsCompleted()) || isDue) {
+                    checksInPeriod.add(chk);
+                }
+            }
         }
 
         // 1. Overall Summary Metrics
@@ -165,8 +177,8 @@ public class ReportService {
         satisfactionSummary.put("totalNotes", totalNotesWithContent);
         summary.put("satisfaction", satisfactionSummary);
 
-        // 2. Milestone Performance Breakdown
-        List<TimeFilterPreset> presets = timeFilterPresetRepository.findAll();
+        // 2. Milestone Performance Breakdown (Only Active Presets)
+        List<TimeFilterPreset> presets = activePresets;
         Map<String, int[]> presetCounts = new LinkedHashMap<>(); // [total, completed]
 
         for (TimeFilterPreset p : presets) {
@@ -175,8 +187,7 @@ public class ReportService {
 
         for (OrderFollowupCheck c : checksInPeriod) {
             String name = c.getPresetName();
-            if (name != null) {
-                presetCounts.putIfAbsent(name, new int[]{0, 0});
+            if (name != null && presetCounts.containsKey(name)) {
                 presetCounts.get(name)[0]++;
                 if (Boolean.TRUE.equals(c.getIsCompleted())) {
                     presetCounts.get(name)[1]++;
@@ -200,14 +211,17 @@ public class ReportService {
             milestoneList.add(item);
         }
 
-        // 3. Pending Follow-ups List (Needing Contact)
+        // 3. Pending Follow-ups List (Needing Contact - Only Active Presets Due)
         List<Map<String, Object>> pendingList = new ArrayList<>();
         for (CustomerOrder order : filteredOrders) {
             List<OrderFollowupCheck> checks = orderChecksMap.getOrDefault(order.getId(), Collections.emptyList());
             Customer cust = customerMap.get(order.getCustomerId());
 
             for (OrderFollowupCheck c : checks) {
-                if (!Boolean.TRUE.equals(c.getIsCompleted())) {
+                boolean isPresetActive = (c.getPresetId() != null && activePresetIds.contains(c.getPresetId()))
+                        || (c.getPresetName() != null && activePresetNames.contains(c.getPresetName().trim().toLowerCase()));
+                boolean isDue = isPresetActive && CustomerService.isMilestoneDue(order.getOrderDate(), c.getDurationValue(), c.getDurationUnit());
+                if (!Boolean.TRUE.equals(c.getIsCompleted()) && isDue) {
                     Map<String, Object> pItem = new LinkedHashMap<>();
                     pItem.put("checkId", c.getId());
                     pItem.put("orderId", order.getId());
@@ -331,7 +345,13 @@ public class ReportService {
             cData.put("totalSpent", (double) cData.getOrDefault("totalSpent", 0.0) + amt);
 
             List<OrderFollowupCheck> checks = orderChecksMap.getOrDefault(order.getId(), Collections.emptyList());
-            long pendingInOrder = checks.stream().filter(c -> !Boolean.TRUE.equals(c.getIsCompleted())).count();
+            long pendingInOrder = checks.stream()
+                    .filter(c -> {
+                        boolean isPresetActive = (c.getPresetId() != null && activePresetIds.contains(c.getPresetId()))
+                                || (c.getPresetName() != null && activePresetNames.contains(c.getPresetName().trim().toLowerCase()));
+                        return isPresetActive && !Boolean.TRUE.equals(c.getIsCompleted()) && CustomerService.isMilestoneDue(order.getOrderDate(), c.getDurationValue(), c.getDurationUnit());
+                    })
+                    .count();
             cData.put("pendingFollowups", (int) cData.getOrDefault("pendingFollowups", 0) + (int) pendingInOrder);
         }
 

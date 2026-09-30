@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -69,6 +70,24 @@ public class CustomerService {
         return list;
     }
 
+    public static long toMinutes(Integer durationValue, String durationUnit) {
+        if (durationValue == null) durationValue = 24;
+        String u = durationUnit != null ? durationUnit.trim().toUpperCase() : "HOURS";
+        if (u.startsWith("MIN")) return durationValue;
+        if (u.startsWith("HOUR")) return durationValue * 60L;
+        if (u.startsWith("DAY")) return durationValue * 24L * 60L;
+        if (u.startsWith("WEEK")) return durationValue * 7L * 24L * 60L;
+        if (u.startsWith("MONTH")) return durationValue * 30L * 24L * 60L;
+        return durationValue * 60L;
+    }
+
+    public static boolean isMilestoneDue(LocalDateTime orderDate, Integer durationValue, String durationUnit) {
+        if (orderDate == null) return false;
+        long ageMinutes = Math.max(0, java.time.Duration.between(orderDate, LocalDateTime.now()).toMinutes());
+        long thresholdMinutes = toMinutes(durationValue, durationUnit);
+        return ageMinutes >= thresholdMinutes;
+    }
+
     private void syncCustomerOrderTotals(List<Customer> customers) {
         for (Customer c : customers) {
             List<CustomerOrder> orders = orderRepository.findByCustomerIdOrderByOrderDateDesc(c.getId());
@@ -80,44 +99,65 @@ public class CustomerService {
                     c.setLastOrderDate(orders.get(0).getOrderDate());
                     long diffDays = java.time.temporal.ChronoUnit.DAYS.between(orders.get(0).getOrderDate().toLocalDate(), java.time.LocalDate.now());
                     c.setDaysSinceLastOrder((int) Math.max(0, diffDays));
+                    long diffHours = java.time.Duration.between(orders.get(0).getOrderDate(), LocalDateTime.now()).toHours();
+                    c.setHoursSinceLastOrder(Math.max(0, diffHours));
                 }
 
-                // Check remaining follow-up checks across all customer orders
-                int remainingCount = 0;
-                int totalChecksCount = 0;
+                int duePendingCount = 0;
+                int completedCount = 0;
                 String closestPendingMilestone = null;
                 Long closestPendingOrderId = null;
                 String closestPendingOrderNumber = null;
+                long earliestHoursUntilDue = Long.MAX_VALUE;
 
                 for (CustomerOrder o : orders) {
                     List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
                     for (OrderFollowupCheck chk : checks) {
-                        totalChecksCount++;
-                        if (!Boolean.TRUE.equals(chk.getIsCompleted())) {
-                            remainingCount++;
+                        if (Boolean.TRUE.equals(chk.getIsCompleted())) {
+                            completedCount++;
+                        } else if (Boolean.TRUE.equals(chk.getIsDue())) {
+                            duePendingCount++;
                             if (closestPendingMilestone == null) {
                                 closestPendingMilestone = chk.getPresetName();
                                 closestPendingOrderId = o.getId();
                                 closestPendingOrderNumber = o.getOrderNumber();
                             }
+                        } else {
+                            if (chk.getHoursUntilDue() != null && chk.getHoursUntilDue() > 0 && chk.getHoursUntilDue() < earliestHoursUntilDue) {
+                                earliestHoursUntilDue = chk.getHoursUntilDue();
+                            }
                         }
                     }
                 }
 
-                boolean allCompleted = (totalChecksCount > 0 && remainingCount == 0);
-                c.setAllFollowupsCompleted(allCompleted);
-                c.setRemainingFollowupsCount(remainingCount);
-                c.setNextPendingOrderId(closestPendingOrderId);
-                c.setNextPendingOrderNumber(closestPendingOrderNumber);
-
-                if (allCompleted) {
+                if (duePendingCount > 0) {
+                    c.setFollowupStatus("ALERT");
+                    c.setAllFollowupsCompleted(false);
+                    c.setRemainingFollowupsCount(duePendingCount);
+                    c.setNextPendingOrderId(closestPendingOrderId);
+                    c.setNextPendingOrderNumber(closestPendingOrderNumber);
+                    c.setNextPendingFollowup(closestPendingMilestone != null ? closestPendingMilestone : "Follow-up Due");
+                } else if (completedCount > 0) {
+                    c.setFollowupStatus("DONE");
+                    c.setAllFollowupsCompleted(true);
+                    c.setRemainingFollowupsCount(0);
+                    c.setNextPendingOrderId(null);
+                    c.setNextPendingOrderNumber(null);
                     c.setNextPendingFollowup("All Done");
-                } else if (closestPendingMilestone != null) {
-                    c.setNextPendingFollowup(closestPendingMilestone);
                 } else {
-                    c.setNextPendingFollowup("Pending Follow-up");
+                    c.setFollowupStatus("IDLE");
+                    c.setAllFollowupsCompleted(false);
+                    c.setRemainingFollowupsCount(0);
+                    c.setNextPendingOrderId(null);
+                    c.setNextPendingOrderNumber(null);
+                    if (earliestHoursUntilDue != Long.MAX_VALUE) {
+                        c.setNextPendingFollowup("Fresh Order (Due in " + earliestHoursUntilDue + "h)");
+                    } else {
+                        c.setNextPendingFollowup("Fresh Order (Idle)");
+                    }
                 }
             } else {
+                c.setFollowupStatus("IDLE");
                 c.setAllFollowupsCompleted(false);
                 c.setRemainingFollowupsCount(0);
                 c.setNextPendingFollowup("-");
@@ -128,7 +168,26 @@ public class CustomerService {
     }
 
     public List<CustomerOrder> getCustomerOrders(Long customerId) {
-        return orderRepository.findByCustomerIdOrderByOrderDateDesc(customerId);
+        List<CustomerOrder> orders = orderRepository.findByCustomerIdOrderByOrderDateDesc(customerId);
+        for (CustomerOrder o : orders) {
+            List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
+            boolean hasDuePending = checks.stream().anyMatch(chk -> Boolean.TRUE.equals(chk.getIsDue()) && !Boolean.TRUE.equals(chk.getIsCompleted()));
+            boolean hasCompleted = checks.stream().anyMatch(chk -> Boolean.TRUE.equals(chk.getIsCompleted()));
+            long ageHours = Math.max(0, java.time.Duration.between(o.getOrderDate() != null ? o.getOrderDate() : o.getCreatedAt(), LocalDateTime.now()).toHours());
+            o.setAgeHours(ageHours);
+
+            if (hasDuePending) {
+                o.setFollowupStatus("ALERT");
+                o.setIsFullyFollowedUp(false);
+            } else if (hasCompleted) {
+                o.setFollowupStatus("DONE");
+                o.setIsFullyFollowedUp(true);
+            } else {
+                o.setFollowupStatus("IDLE");
+                o.setIsFullyFollowedUp(false);
+            }
+        }
+        return orders;
     }
 
     public CustomerOrder addCustomerOrder(Long customerId, CustomerOrder order) {
@@ -144,6 +203,7 @@ public class CustomerService {
             c.setTotalSpent(c.getTotalSpent() != null ? c.getTotalSpent() + (order.getTotalAmount() != null ? order.getTotalAmount() : 0.0) : order.getTotalAmount());
             c.setLastOrderDate(order.getOrderDate());
             c.setDaysSinceLastOrder(0);
+            c.setHoursSinceLastOrder(0L);
             c.setStatus("FOLLOW_UP_24H");
             customerRepository.save(c);
         });
@@ -156,10 +216,8 @@ public class CustomerService {
 
     public List<OrderFollowupCheck> getOrderFollowupChecks(Long orderId) {
         List<OrderFollowupCheck> existing = followupCheckRepository.findByOrderIdOrderByIdAsc(orderId);
-        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByIsActiveTrueOrderByIdAsc();
-        if (activePresets.isEmpty()) {
-            activePresets = timeFilterPresetRepository.findAllByOrderByIdAsc();
-        }
+        List<TimeFilterPreset> allPresets = timeFilterPresetRepository.findAllByOrderByIdAsc();
+        Map<Long, TimeFilterPreset> presetMap = allPresets.stream().collect(Collectors.toMap(TimeFilterPreset::getId, p -> p, (a, b) -> a));
 
         Map<Long, OrderFollowupCheck> existingByPresetId = new HashMap<>();
         Map<String, OrderFollowupCheck> existingByPresetName = new HashMap<>();
@@ -168,17 +226,29 @@ public class CustomerService {
             if (c.getPresetName() != null) existingByPresetName.put(c.getPresetName().trim().toLowerCase(), c);
         }
 
+        Optional<CustomerOrder> orderOpt = orderRepository.findById(orderId);
+        LocalDateTime orderDate = orderOpt.map(CustomerOrder::getOrderDate).orElse(null);
+        if (orderDate == null) {
+            orderDate = LocalDateTime.now();
+        }
+
         List<OrderFollowupCheck> result = new ArrayList<>();
-        for (TimeFilterPreset p : activePresets) {
+        // 1. Process all ACTIVE presets
+        for (TimeFilterPreset p : allPresets) {
+            if (!Boolean.TRUE.equals(p.getIsActive())) continue;
+
             OrderFollowupCheck match = existingByPresetId.get(p.getId());
             if (match == null && p.getName() != null) {
                 match = existingByPresetName.get(p.getName().trim().toLowerCase());
             }
+
             if (match != null) {
+                match.setPresetId(p.getId());
                 match.setPresetName(p.getName());
                 match.setDurationValue(p.getDurationValue());
                 match.setDurationUnit(p.getDurationUnit());
-                result.add(followupCheckRepository.save(match));
+                enrichCheck(match, orderDate, true);
+                result.add(match);
             } else {
                 OrderFollowupCheck newCheck = OrderFollowupCheck.builder()
                         .orderId(orderId)
@@ -191,10 +261,40 @@ public class CustomerService {
                         .imageUrl("")
                         .checkedBy("")
                         .build();
-                result.add(followupCheckRepository.save(newCheck));
+                newCheck = followupCheckRepository.save(newCheck);
+                enrichCheck(newCheck, orderDate, true);
+                result.add(newCheck);
             }
         }
+
+        // 2. Also keep any existing checkpoint that has been completed (or has notes/images)
+        // even if its preset was deactivated, so user never loses their saved completion/review work!
+        for (OrderFollowupCheck c : existing) {
+            boolean alreadyInResult = result.stream().anyMatch(r -> r.getId().equals(c.getId()));
+            if (!alreadyInResult && (Boolean.TRUE.equals(c.getIsCompleted()) || (c.getNote() != null && !c.getNote().trim().isEmpty()))) {
+                TimeFilterPreset p = c.getPresetId() != null ? presetMap.get(c.getPresetId()) : null;
+                boolean isActive = (p != null && Boolean.TRUE.equals(p.getIsActive()));
+                enrichCheck(c, orderDate, isActive);
+                result.add(c);
+            }
+        }
+
         return result;
+    }
+
+    private void enrichCheck(OrderFollowupCheck chk, LocalDateTime orderDate, boolean isPresetActive) {
+        chk.setIsPresetActive(isPresetActive);
+        long ageMinutes = Math.max(0, java.time.Duration.between(orderDate != null ? orderDate : LocalDateTime.now(), LocalDateTime.now()).toMinutes());
+        long thresholdMinutes = toMinutes(chk.getDurationValue(), chk.getDurationUnit());
+        boolean isDue = isPresetActive && (ageMinutes >= thresholdMinutes);
+        chk.setIsDue(isDue);
+        chk.setOrderAgeHours(ageMinutes / 60L);
+        if (isPresetActive && !isDue) {
+            long minLeft = thresholdMinutes - ageMinutes;
+            chk.setHoursUntilDue(Math.max(1L, minLeft / 60L));
+        } else {
+            chk.setHoursUntilDue(0L);
+        }
     }
 
     public List<OrderFollowupCheck> initFollowupChecksForOrder(Long orderId) {

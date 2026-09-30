@@ -2212,13 +2212,20 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
         return days + 'd ' + remHours + 'h old';
     };
 
-    // Format minutes until due as a human-readable countdown
+    // Format minutes until due — shows days for long milestones, hours for medium, minutes for short
     $scope.formatCountdown = function(minutesUntilDue) {
         if (!minutesUntilDue || minutesUntilDue <= 0) return '';
         if (minutesUntilDue < 60) return minutesUntilDue + 'm';
-        var h = Math.floor(minutesUntilDue / 60);
-        var m = minutesUntilDue % 60;
-        return m > 0 ? (h + 'h ' + m + 'm') : (h + 'h');
+        var totalHours = Math.floor(minutesUntilDue / 60);
+        var remMins = minutesUntilDue % 60;
+        if (totalHours < 24) {
+            return remMins > 0 ? (totalHours + 'h ' + remMins + 'm') : (totalHours + 'h');
+        }
+        // >= 1 day: show days + remaining hours
+        var days = Math.floor(totalHours / 24);
+        var remHours = totalHours % 24;
+        if (remHours === 0) return days + 'd';
+        return days + 'd ' + remHours + 'h';
     };
 
     $scope.toggleFollowupCheck = function(order, check) {

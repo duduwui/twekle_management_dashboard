@@ -1259,10 +1259,7 @@
                                                 <span style="font-weight: 700; color: #334155;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span>
                                             </td>
                                             <td class="nowrap">
-                                                <div style="display: flex; align-items: center; gap: 6px;">
-                                                    <span style="font-weight: 700; color: #64748B;" ng-bind="order.orderDate | date:'HH:mm'"></span>
-                                                    <span class="comic-tag" style="background-color: #F1F5F9; color: #0F172A; font-weight: 800; font-size: 0.72rem; padding: 2px 6px;" ng-bind="formatOrderAge(order)"></span>
-                                                </div>
+                                                <span style="font-weight: 700; color: #64748B;" ng-bind="order.orderDate | date:'HH:mm'"></span>
                                             </td>
                                             <td style="text-align: right;" class="nowrap">
                                                 <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
@@ -1294,9 +1291,9 @@
                                                             <div class="check-col-milestone">
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
                                                                 <div style="margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap;">
-                                                                    <span class="comic-tag" style="background-color: #DCFCE7; color: #166534; font-size: 0.68rem; font-weight: 900;" ng-if="check.isCompleted">✓ Completed</span>
-                                                                    <span class="comic-tag" style="background-color: #FEE2E2; color: #991B1B; font-size: 0.68rem; font-weight: 900;" ng-if="!check.isCompleted && check.isDue">⚡ Due Now</span>
-                                                                    <span class="comic-tag" style="background-color: #F8FAFC; color: #64748B; font-size: 0.68rem; font-weight: 700; border: 1px solid #CBD5E1;" ng-if="!check.isCompleted && !check.isDue && check.isPresetActive !== false">Due in {{ formatCountdown(check.minutesUntilDue) || (check.hoursUntilDue + 'h') }}</span>
+                                                                    <span class="comic-tag" style="background-color: #DCFCE7; color: #166534; font-size: 0.68rem; font-weight: 900;" ng-if="check.isCompleted">Completed</span>
+                                                                    <span class="comic-tag" style="background-color: #FEE2E2; color: #991B1B; font-size: 0.7rem; font-weight: 900;" ng-if="!check.isCompleted && check.isDue">⚡ {{ formatOrderAge(order) }}</span>
+                                                                    <span class="comic-tag" style="background-color: #F8FAFC; color: #64748B; font-size: 0.68rem; font-weight: 700; border: 1px solid #CBD5E1;" ng-if="!check.isCompleted && !check.isDue && check.isPresetActive !== false">Due in {{ formatCountdown(check.minutesUntilDue) }}</span>
                                                                     <span class="comic-tag" style="background-color: #F1F5F9; color: #94A3B8; font-size: 0.68rem; font-weight: 700;" ng-if="check.isPresetActive === false">Inactive Filter</span>
                                                                     <span class="comic-tag" style="background-color: #F59E0B; color: #000000; font-size: 0.68rem; font-weight: 900;" ng-if="isMilestoneHighlighted(check)">Target Milestone</span>
                                                                 </div>
@@ -1714,68 +1711,34 @@
                             </div>
                         </div>
 
-                        <!-- 3 Executive Summary KPI Cards -->
-                        <div class="report-kpi-grid">
-                            <!-- KPI 1: Follow-up Velocity -->
-                            <div class="report-kpi-card">
-                                <div class="report-kpi-title">Follow-up Completion Rate</div>
-                                <div class="report-kpi-num">{{ reportData.summary.completionRate || 0 }}%</div>
-                                <div class="report-kpi-subtext">
-                                    <strong>{{ reportData.summary.finishedFollowups || 0 }}</strong> completed of <strong>{{ reportData.summary.totalFollowupsDue || 0 }}</strong> checks due
-                                    <span style="color: #991B1B; margin-left: 4px;" ng-if="reportData.summary.pendingFollowups > 0">
-                                        ({{ reportData.summary.pendingFollowups }} pending)
+                        <!-- ═══ ACCORDION REPORT GROUPS ═══ -->
+                        <div class="report-accordion-groups">
+
+                        <!-- ══ Group 1: Follow-ups & Milestones ══ -->
+                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'milestones'}">
+                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'milestones' ? '' : 'milestones')">
+                                <span>Follow-ups &amp; Milestones</span>
+                                <span class="report-accordion-chevron">{{ reportSubTab === 'milestones' ? '▲' : '▼' }}</span>
+                            </button>
+                            <!-- group 1 filter bar -->
+                            <div class="report-accordion-filters" ng-show="reportSubTab === 'milestones'">
+                                <div class="filter-left-controls">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedReportPreset}" ng-click="openFilterModal('report')" title="Select Time Filter Preset">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                                    </button>
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear">
+                                        <span ng-bind="selectedReportPreset.name"></span> ✕
                                     </span>
                                 </div>
-                            </div>
-
-                            <!-- KPI 2: Customer Satisfaction Breakdown -->
-                            <div class="report-kpi-card">
-                                <div class="report-kpi-title">Customer Satisfaction</div>
-                                <div style="display: flex; gap: 8px; align-items: baseline; margin: 4px 0;">
-                                    <span style="font-size: 1.5rem; font-weight: 900; color: #0F172A;" ng-bind="reportData.summary.satisfaction.satisfied || 0">0</span>
-                                    <span style="font-size: 0.8rem; font-weight: 800; color: #475569;">Satisfied</span>
-                                    <span style="color: #CBD5E1;">•</span>
-                                    <span style="font-size: 1.5rem; font-weight: 900; color: #475569;" ng-bind="reportData.summary.satisfaction.neutral || 0">0</span>
-                                    <span style="font-size: 0.8rem; font-weight: 800; color: #475569;">Neutral</span>
-                                    <span style="color: #CBD5E1;">•</span>
-                                    <span style="font-size: 1.5rem; font-weight: 900; color: #991B1B;" ng-bind="reportData.summary.satisfaction.unsatisfied || 0">0</span>
-                                    <span style="font-size: 0.8rem; font-weight: 800; color: #991B1B;">Unsatisfied</span>
-                                </div>
-                                <div class="report-kpi-subtext">
-                                    <strong>{{ reportData.summary.satisfaction.totalNotes || 0 }}</strong> total notes & reviews logged
+                                <div class="filter-search-box" style="min-width:220px;">
+                                    <input type="search" class="comic-search-bar" placeholder="Filter by name, phone, order..." ng-model="reportFilters.searchPending">
                                 </div>
                             </div>
-
-                            <!-- KPI 3: Orders & Customer Volume -->
-                            <div class="report-kpi-card">
-                                <div class="report-kpi-title">Active Orders & Customers</div>
-                                <div class="report-kpi-num">{{ reportData.summary.totalOrdersInPeriod || 0 }}</div>
-                                <div class="report-kpi-subtext">
-                                    Orders placed by <strong>{{ reportData.summary.totalCustomersInPeriod || 0 }}</strong> customers in this period
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Report Type Selection Navigation -->
-                        <div class="reports-type-nav">
-                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'milestones'}" ng-click="setReportSubTab('milestones')">
-                                Follow-ups & Milestones
-                            </button>
-                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'satisfaction'}" ng-click="setReportSubTab('satisfaction')">
-                                Customer Satisfaction & Notes
-                            </button>
-                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'products'}" ng-click="setReportSubTab('products')">
-                                Product Insights & Reviews
-                            </button>
-                            <button type="button" class="report-type-btn" ng-class="{'active': reportSubTab === 'customers'}" ng-click="setReportSubTab('customers')">
-                                Customer Directory Summary
-                            </button>
-                        </div>
-
-                        <!-- =================================================== -->
-                        <!-- REPORT TYPE 1: FOLLOW-UPS & MILESTONES             -->
-                        <!-- =================================================== -->
-                        <div ng-show="reportSubTab === 'milestones'" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div ng-show="reportSubTab === 'milestones'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 20px;">
                             <!-- Milestone Health Matrix -->
                             <div>
                                 <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin-bottom: 10px;">Milestone Performance Matrix:</h3>
@@ -1869,14 +1832,25 @@
                             </div>
                         </div>
 
-                        <!-- =================================================== -->
-                        <!-- REPORT TYPE 2: CUSTOMER SATISFACTION & NOTES       -->
-                        <!-- =================================================== -->
-                        <div ng-show="reportSubTab === 'satisfaction'" style="display: flex; flex-direction: column; gap: 16px;">
-                            <!-- Filter Toolbar for Satisfaction Level -->
-                            <div class="comic-filter-toolbar" style="margin-bottom: 4px;">
+                        </div><!-- /accordion group 1 -->
+
+                        <!-- ══ Group 2: Customer Satisfaction & Notes ══ -->
+                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'satisfaction'}">
+                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'satisfaction' ? '' : 'satisfaction')">
+                                <span>Customer Satisfaction &amp; Notes</span>
+                                <span class="report-accordion-chevron">{{ reportSubTab === 'satisfaction' ? '▲' : '▼' }}</span>
+                            </button>
+                        <div ng-show="reportSubTab === 'satisfaction'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- Group 2 filter bar -->
+                            <div class="report-accordion-filters">
                                 <div class="filter-left-controls">
-                                    <span style="font-size: 0.82rem; font-weight: 900; color: #475569;">Scale Filter:</span>
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedReportPreset}" ng-click="openFilterModal('report')" title="Filter preset"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></button>
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)"><span ng-bind="selectedReportPreset.name"></span> ✕</span>
+                                    <span style="font-size: 0.82rem; font-weight: 900; color: #475569; margin-left:6px;">Scale:</span>
                                     <button type="button" class="report-period-pill" ng-class="{'active': reportFilters.satisfactionFilter === 'all'}" ng-click="reportFilters.satisfactionFilter = 'all'">
                                         All Notes
                                     </button>
@@ -1946,17 +1920,31 @@
                             </div>
                         </div>
 
-                        <!-- =================================================== -->
-                        <!-- REPORT TYPE 3: PRODUCT INSIGHTS & REVIEWS          -->
-                        <!-- =================================================== -->
-                        <div ng-show="reportSubTab === 'products'" style="display: flex; flex-direction: column; gap: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin: 0;">
-                                    Product Ordered Volume & Follow-up Sentiment:
-                                </h3>
-                                <div class="filter-search-box" style="width: 280px;">
+                        </div><!-- /satisfaction body -->
+                        </div><!-- /accordion group 2 -->
+
+                        <!-- ══ Group 3: Product Insights & Reviews ══ -->
+                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'products'}">
+                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'products' ? '' : 'products')">
+                                <span>Product Insights &amp; Reviews</span>
+                                <span class="report-accordion-chevron">{{ reportSubTab === 'products' ? '▲' : '▼' }}</span>
+                            </button>
+                            <!-- Group 3 filter bar -->
+                            <div class="report-accordion-filters" ng-show="reportSubTab === 'products'">
+                                <div class="filter-left-controls">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedReportPreset}" ng-click="openFilterModal('report')" title="Filter preset"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></button>
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)"><span ng-bind="selectedReportPreset.name"></span> ✕</span>
+                                </div>
+                                <div class="filter-search-box" style="min-width:220px;">
                                     <input type="search" class="comic-search-bar" placeholder="Search product name..." ng-model="reportFilters.searchProducts">
                                 </div>
+                            </div>
+                        <div ng-show="reportSubTab === 'products'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                             </div>
 
                             <div class="table-responsive">
@@ -2002,18 +1990,31 @@
                             </div>
                         </div>
 
-                        <!-- =================================================== -->
-                        <!-- REPORT TYPE 4: CUSTOMER DIRECTORY SUMMARY          -->
-                        <!-- =================================================== -->
-                        <div ng-show="reportSubTab === 'customers'" style="display: flex; flex-direction: column; gap: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <h3 style="font-size: 1rem; font-weight: 900; color: #0F172A; margin: 0;">
-                                    Customer Activity & Follow-up Completion:
-                                </h3>
-                                <div class="filter-search-box" style="width: 280px;">
+                        </div><!-- /products body -->
+                        </div><!-- /accordion group 3 -->
+
+                        <!-- ══ Group 4: Customer Directory Summary ══ -->
+                        <div class="report-accordion-group" ng-class="{'report-accordion-open': reportSubTab === 'customers'}">
+                            <button type="button" class="report-accordion-header" ng-click="setReportSubTab(reportSubTab === 'customers' ? '' : 'customers')">
+                                <span>Customer Directory Summary</span>
+                                <span class="report-accordion-chevron">{{ reportSubTab === 'customers' ? '▲' : '▼' }}</span>
+                            </button>
+                            <!-- Group 4 filter bar -->
+                            <div class="report-accordion-filters" ng-show="reportSubTab === 'customers'">
+                                <div class="filter-left-controls">
+                                    <span class="filter-date-label">From:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()">
+                                    <span class="filter-date-label">To:</span>
+                                    <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedReportPreset}" ng-click="openFilterModal('report')" title="Filter preset"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></button>
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)"><span ng-bind="selectedReportPreset.name"></span> ✕</span>
+                                </div>
+                                <div class="filter-search-box" style="min-width:220px;">
                                     <input type="search" class="comic-search-bar" placeholder="Search customer by name, phone, city..." ng-model="reportFilters.searchCustomers">
                                 </div>
                             </div>
+                        <div ng-show="reportSubTab === 'customers'" class="report-accordion-body" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
 
                             <div class="table-responsive">
                                 <table class="comic-table">
@@ -2060,10 +2061,12 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
+                            </div><!-- /customers table -->
+                        </div><!-- /customers accordion-body -->
+                        </div><!-- /accordion group 4 -->
+                        </div><!-- /report-accordion-groups -->
 
-                    </div>
+                    </div><!-- /reports-dashboard -->
                 </section>
 
             </main>

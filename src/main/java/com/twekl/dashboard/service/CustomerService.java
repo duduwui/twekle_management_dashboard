@@ -107,6 +107,7 @@ public class CustomerService {
 
                 int duePendingCount = 0;
                 int completedCount = 0;
+                int idleGraceCount = 0; // checks not yet due (still in grace period)
                 String closestPendingMilestone = null;
                 Long closestPendingOrderId = null;
                 String closestPendingOrderNumber = null;
@@ -125,6 +126,8 @@ public class CustomerService {
                                 closestPendingOrderNumber = o.getOrderNumber();
                             }
                         } else {
+                            // Not completed and not yet due — order is still in grace period
+                            idleGraceCount++;
                             if (chk.getMinutesUntilDue() != null && chk.getMinutesUntilDue() > 0 && chk.getMinutesUntilDue() < earliestMinutesUntilDue) {
                                 earliestMinutesUntilDue = chk.getMinutesUntilDue();
                             }
@@ -139,7 +142,8 @@ public class CustomerService {
                     c.setNextPendingOrderId(closestPendingOrderId);
                     c.setNextPendingOrderNumber(closestPendingOrderNumber);
                     c.setNextPendingFollowup(closestPendingMilestone != null ? closestPendingMilestone : "Follow-up Due");
-                } else if (completedCount > 0) {
+                } else if (completedCount > 0 && idleGraceCount == 0) {
+                    // All checkpoints across all orders are complete — truly DONE
                     c.setFollowupStatus("DONE");
                     c.setAllFollowupsCompleted(true);
                     c.setRemainingFollowupsCount(0);
@@ -147,6 +151,7 @@ public class CustomerService {
                     c.setNextPendingOrderNumber(null);
                     c.setNextPendingFollowup("All Done");
                 } else {
+                    // Has fresh IDLE grace-period orders (possibly alongside old completed ones)
                     c.setFollowupStatus("IDLE");
                     c.setAllFollowupsCompleted(false);
                     c.setRemainingFollowupsCount(0);

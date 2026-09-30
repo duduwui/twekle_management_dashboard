@@ -320,7 +320,28 @@ public class DataInitializer implements CommandLineRunner {
                 .presetName("last 30 days").durationValue(30).durationUnit("DAYS")
                 .isCompleted(false).note("").build());
 
-            log.info("Seeded 9 customers, 10 orders, 27 checkpoints — full lifecycle: fresh, alert, done, multi-order, issue-resolved.");
+            // ═══════════════════════════════════════════════════════════════════
+            // Customer 10: BRAND NEW FRESH CUSTOMER (Starts from Zero / Fresh Order Today)
+            //   Order placed 5 minutes ago -> 0 Completed Checkpoints
+            //   Countdown shows ~23h 55m remaining for initial 24h milestone
+            // ═══════════════════════════════════════════════════════════════════
+            Customer c10 = customerRepository.save(new Customer(null,
+                "Al-Noor Smart Solutions", "+964 750 888 1234", "orders@alnoortech.iq",
+                "Erbil", 1, 1250.0, now.minusMinutes(5), 0, "ACTIVE"));
+            CustomerOrder o10 = orderRepository.save(new CustomerOrder(null, c10.getId(),
+                "ORD-010", now.minusMinutes(5),
+                "Twekl Smart POS V2 + Barcode Scanner & Cloud Sync", 1250.0, "CASH_ON_DELIVERY", "DELIVERED"));
+            followupCheckRepository.save(OrderFollowupCheck.builder().orderId(o10.getId()).presetId(8L)
+                .presetName("last 24 hours").durationValue(24).durationUnit("HOURS")
+                .isCompleted(false).note("").build());
+            followupCheckRepository.save(OrderFollowupCheck.builder().orderId(o10.getId()).presetId(9L)
+                .presetName("last 7 days").durationValue(7).durationUnit("DAYS")
+                .isCompleted(false).note("").build());
+            followupCheckRepository.save(OrderFollowupCheck.builder().orderId(o10.getId()).presetId(10L)
+                .presetName("last 30 days").durationValue(30).durationUnit("DAYS")
+                .isCompleted(false).note("").build());
+
+            log.info("Seeded 10 customers, 11 orders, 30 checkpoints — full lifecycle: fresh zero-start, alert, done, multi-order, issue-resolved.");
         }
 
         log.info("System initialization complete. Super admin, role templates, time filters, and customer lifecycle dataset active.");

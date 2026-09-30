@@ -543,24 +543,6 @@
                             </div>
                         </div>
 
-                        <!-- Role Template Presets Bar -->
-                        <div class="comic-form-box" style="background-color: #F8FAFC; padding: 14px 18px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                                <div style="font-size: 0.92rem; font-weight: 800; color: #000000;">
-                                    Role Templates & Presets (Click to apply permissions below):
-                                </div>
-                                <div class="role-template-pills-row">
-                                    <button type="button" 
-                                            class="role-pill-btn" 
-                                            ng-repeat="role in roles track by role.id"
-                                            ng-class="{'active': selectedCreateRole && selectedCreateRole.id === role.id}"
-                                            ng-click="applyRoleToCreateForm(role)"
-                                            title="Apply {{role.name}} preset to permissions">
-                                        <span ng-bind="role.name"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- 2. 3-Module CRUD Matrix -->
                         <div>
@@ -573,7 +555,6 @@
                                         <div class="module-title-group">
                                             <h3 class="module-title" style="color: #000000; font-weight: 900;" ng-bind="mod.moduleNameEn"></h3>
                                         </div>
-                                        <span class="module-tag" style="background-color: #E2E8F0; color: #000000; border: 2px solid #000000;" ng-bind="mod.moduleKey"></span>
                                     </div>
 
                                     <p class="module-desc" style="color: #334155; font-weight: 600;" ng-bind="mod.descriptionEn"></p>
@@ -818,7 +799,6 @@
                                     <div class="module-title-group">
                                         <h3 class="module-title" ng-bind="mod.moduleNameEn"></h3>
                                     </div>
-                                    <span class="module-tag" ng-style="{'background-color': mod.badgeColor || '#35B89F'}" ng-bind="mod.moduleKey"></span>
                                 </div>
 
                                 <p class="module-desc" ng-bind="mod.descriptionEn"></p>
@@ -1083,25 +1063,25 @@
                             <table class="comic-table">
                                 <thead>
                                     <tr>
-                                        <th class="comic-sortable-th nowrap" style="width: 75px;" ng-click="sortBy('id')">
+                                        <th class="comic-sortable-th nowrap" style="width: 65px;" ng-click="sortBy('id')">
                                              ID <span class="sort-indicator" ng-bind="getSortIndicator('id')"></span>
                                         </th>
                                         <th class="comic-sortable-th" ng-click="sortBy('name')">
-                                            Customer Details <span class="sort-indicator" ng-bind="getSortIndicator('name')"></span>
+                                             Customer Details <span class="sort-indicator" ng-bind="getSortIndicator('name')"></span>
                                         </th>
-                                        <th class="comic-sortable-th col-phone nowrap" ng-click="sortBy('phoneNumber')">
-                                            Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
+                                        <th class="comic-sortable-th col-phone nowrap" style="width: 140px;" ng-click="sortBy('phoneNumber')">
+                                             Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
                                         </th>
-                                        <th class="comic-sortable-th nowrap" ng-click="sortBy('totalOrders')">
-                                            Order Count <span class="sort-indicator" ng-bind="getSortIndicator('totalOrders')"></span>
+                                        <th class="comic-sortable-th nowrap" style="width: 95px;" ng-click="sortBy('totalOrders')">
+                                             Order Count <span class="sort-indicator" ng-bind="getSortIndicator('totalOrders')"></span>
                                         </th>
-                                        <th class="comic-sortable-th nowrap" ng-click="sortBy('totalSpent')">
-                                            Total Spend <span class="sort-indicator" ng-bind="getSortIndicator('totalSpent')"></span>
+                                        <th class="comic-sortable-th nowrap" style="width: 105px;" ng-click="sortBy('totalSpent')">
+                                             Total Spend <span class="sort-indicator" ng-bind="getSortIndicator('totalSpent')"></span>
                                         </th>
-                                        <th class="comic-sortable-th nowrap" ng-click="sortBy('remainingFollowupsCount')">
-                                            Remaining Order Follow-ups <span class="sort-indicator" ng-bind="getSortIndicator('remainingFollowupsCount')"></span>
+                                        <th class="comic-sortable-th nowrap" style="width: 165px;" ng-click="sortBy('remainingFollowupsCount')">
+                                             Remaining Follow-ups <span class="sort-indicator" ng-bind="getSortIndicator('remainingFollowupsCount')"></span>
                                         </th>
-                                        <th style="text-align: right;" class="nowrap">Page Actions</th>
+                                        <th style="text-align: right; width: 150px;" class="nowrap">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1142,13 +1122,9 @@
                                             <span ng-if="!cust.totalOrders || cust.totalOrders === 0" style="color: var(--text-muted); font-weight: 700;">-</span>
                                         </td>
                                         <td style="text-align: right;" class="nowrap">
-                                            <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem; margin-right: 8px;" ng-click="setCustomerView('orders', cust)">
+                                            <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="setCustomerView('orders', cust)">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                                Orders Log
-                                            </button>
-                                            <button type="button" class="comic-btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="setCustomerView('feedback', cust)">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                                Feedback
+                                                Logs and Feedbacks
                                             </button>
                                         </td>
                                     </tr>
@@ -1192,7 +1168,7 @@
 
                         <!-- Orders Filter Toolbar & DataTable -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Customer Purchase Ledger & Order Follow-ups:</div>
+                            <div style="font-size: 1.15rem; font-weight: 900;">Customer Logs & Feedbacks:</div>
 
                             <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
                             <div class="comic-filter-toolbar">
@@ -1226,23 +1202,25 @@
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortOrdersBy('orderNumber')">
-                                                Order Number <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderNumber')"></span>
+                                            <th class="comic-sortable-th nowrap" style="width: 70px;" ng-click="sortOrdersBy('id')">
+                                                ID <span class="sort-indicator" ng-bind="getOrderSortIndicator('id')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('orderDate')">
-                                                Order Date <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderDate')"></span>
-                                            </th>
-                                            <th>Order Time</th>
                                             <th class="comic-sortable-th" ng-click="sortOrdersBy('itemsSummary')">
-                                                Items / Product Summary <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
+                                                Item Name <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('totalAmount')">
-                                                Total Price <span class="sort-indicator" ng-bind="getOrderSortIndicator('totalAmount')"></span>
+                                            <th class="comic-sortable-th nowrap" style="width: 130px;" ng-click="sortOrdersBy('orderNumber')">
+                                                Order # <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderNumber')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('orderStatus')">
+                                            <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('totalAmount')">
+                                                Price <span class="sort-indicator" ng-bind="getOrderSortIndicator('totalAmount')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('orderStatus')">
                                                 Status <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderStatus')"></span>
                                             </th>
-                                            <th style="text-align: right;">Action</th>
+                                            <th class="comic-sortable-th nowrap" style="width: 150px;" ng-click="sortOrdersBy('orderDate')">
+                                                Date & Time <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderDate')"></span>
+                                            </th>
+                                            <th style="text-align: right; width: 135px;" class="nowrap">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1251,20 +1229,30 @@
                                             class="order-row-clickable" 
                                             ng-class="getOrderFollowupStatusClass(order)"
                                             ng-click="toggleOrderExpand(order, $event)">
-                                            <td>
-                                                <div style="display: flex; align-items: center;">
+                                            <td class="nowrap">
+                                                <div style="display: flex; align-items: center; gap: 6px;">
                                                     <button type="button" class="order-expand-toggle-btn" title="Toggle Follow-up List">
                                                         <span ng-if="!isOrderExpanded(order.id)">▶</span>
                                                         <span ng-if="isOrderExpanded(order.id)">▼</span>
                                                     </button>
-                                                    <strong style="color: var(--primary-dark);" ng-bind="order.orderNumber"></strong>
+                                                    <strong style="color: var(--primary-dark); font-size: 0.92rem;" ng-bind="'#' + order.id"></strong>
                                                 </div>
                                             </td>
-                                            <td><span style="font-weight: 700;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span></td>
-                                            <td><span style="color: var(--text-muted); font-weight: 700;" ng-bind="order.orderDate | date:'HH:mm'"></span></td>
-                                            <td><strong ng-bind="order.itemsSummary"></strong></td>
-                                            <td><strong style="color: var(--primary-dark);" ng-bind="'$' + (order.totalAmount | number:2)"></strong></td>
-                                            <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
+                                            <td>
+                                                <strong style="color: var(--text-main); font-size: 0.92rem;" ng-bind="order.itemsSummary || 'Standard Products'"></strong>
+                                            </td>
+                                            <td class="nowrap">
+                                                <span class="comic-tag" style="background-color: #F1F5F9; color: #0F172A; font-weight: 800; border: 1.5px solid #000;" ng-bind="order.orderNumber"></span>
+                                            </td>
+                                            <td class="nowrap">
+                                                <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'$' + (order.totalAmount | number:2)"></strong>
+                                            </td>
+                                            <td class="nowrap">
+                                                <span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span>
+                                            </td>
+                                            <td class="nowrap">
+                                                <span style="font-weight: 700; color: #334155;" ng-bind="order.orderDate | date:'yyyy-MM-dd HH:mm'"></span>
+                                            </td>
                                             <td style="text-align: right;" class="nowrap">
                                                 <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
                                                     <span ng-if="!isOrderExpanded(order.id)">View Follow-ups</span>
@@ -1678,43 +1666,33 @@
                 <section class="comic-card page-slide-fade" ng-show="currentTab === 'reports'">
                     <div class="reports-dashboard">
 
-                        <!-- Top Time Period & Export Control Bar -->
-                        <div class="reports-period-bar">
-                            <div class="reports-period-pills">
-                                <span style="font-size: 0.82rem; font-weight: 900; color: #475569; text-transform: uppercase; margin-right: 4px;">Time Horizon:</span>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'daily' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('daily');">
-                                    Daily (Today)
+                        <!-- Top Filter Toolbar (Date Range + Filter Icon + Active Preset Tag + Export CSV) -->
+                        <div class="comic-filter-toolbar" style="margin-bottom: 20px;">
+                            <div class="filter-left-controls">
+                                <span class="filter-date-label">From:</span>
+                                <input type="date" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                                <span class="filter-date-label">To:</span>
+                                <input type="date" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+                                
+                                <!-- Filter Preset Selector Icon Button -->
+                                <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedReportPreset}" ng-click="openFilterModal('report')" title="Select Time Filter Preset">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                    </svg>
                                 </button>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'weekly' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('weekly');">
-                                    Weekly (7 Days)
-                                </button>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'monthly' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('monthly');">
-                                    Monthly (30 Days)
-                                </button>
-                                <button type="button" class="report-period-pill" ng-class="{'active': reportPeriod === 'all' && !selectedReportPreset}" ng-click="selectReportPreset(null); loadReport('all');">
-                                    All Time
-                                </button>
-                                <button type="button" 
-                                        class="report-period-pill" 
-                                        ng-repeat="p in timeFilterPresets track by p.id" 
-                                        ng-if="p.isActive && p.name !== 'last 24 hours' && p.name !== 'last 7 days' && p.name !== 'last 30 days'" 
-                                        ng-class="{'active': selectedReportPreset && selectedReportPreset.id === p.id}" 
-                                        ng-click="selectReportPreset(p)" 
-                                        ng-bind="p.name">
-                                </button>
+
+                                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear filter">
+                                    <span ng-bind="selectedReportPreset.name"></span> ✕
+                                </span>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 0.78rem; font-weight: 800; color: #64748B;">From:</span>
-                                    <input type="date" class="comic-date-input" style="padding: 4px 8px; font-size: 0.8rem;" ng-model="reportFilters.dateFrom">
-                                    <span style="font-size: 0.78rem; font-weight: 800; color: #64748B;">To:</span>
-                                    <input type="date" class="comic-date-input" style="padding: 4px 8px; font-size: 0.8rem;" ng-model="reportFilters.dateTo">
-                                    <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="applyCustomReportRange()">
-                                        Apply
-                                    </button>
-                                </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
                                 <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="exportReportCsv()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
                                     Export CSV
                                 </button>
                             </div>
@@ -2115,40 +2093,23 @@
                 <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
             </div>
             <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-                <!-- Milestone Status Checkbox -->
-                <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; padding: 12px 16px; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic);">
-                    <div>
-                        <strong style="font-size: 0.92rem;">Mark as Completed</strong>
-                        <div style="font-size: 0.78rem; color: var(--text-muted);">Indicates whether this checkpoint was done</div>
-                    </div>
-                    <label class="comic-switch">
-                        <input type="checkbox" ng-model="editingFollowup.isCompleted">
-                        <span class="comic-slider"></span>
-                    </label>
-                </div>
-
                 <!-- Follow-up Note Textarea -->
                 <div class="form-group">
                     <label class="form-label">Note / Details</label>
                     <textarea class="comic-input" rows="3" placeholder="Enter follow-up note..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
                 </div>
 
-                <!-- Customer Satisfaction Scale (Optional) -->
+                <!-- Customer Satisfaction Scale (Satisfied, Neutral, Unsatisfied) -->
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <label class="form-label" style="margin: 0;">Customer Satisfaction Scale (Optional)</label>
-                        <button type="button" class="scale-clear-btn" ng-show="editingFollowup.satisfaction" ng-click="editingFollowup.satisfaction = null">
-                            Clear / Blank
-                        </button>
-                    </div>
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale</label>
                     <div class="satisfaction-scale-bar">
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="editingFollowup.satisfaction = 'SATISFIED'">
                             Satisfied
                         </button>
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingFollowup.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': (!editingFollowup.satisfaction || editingFollowup.satisfaction === 'NEUTRAL')}" ng-click="editingFollowup.satisfaction = 'NEUTRAL'">
                             Neutral
                         </button>
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="editingFollowup.satisfaction = 'UNSATISFIED'">
                             Unsatisfied
                         </button>
                     </div>

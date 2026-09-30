@@ -194,6 +194,8 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             $scope.pendingTimePreset = $scope.selectedOrderTimePreset ? angular.copy($scope.selectedOrderTimePreset) : null;
         } else if ($scope.filterModalContext === 'feedback') {
             $scope.pendingTimePreset = $scope.selectedFeedbackTimePreset ? angular.copy($scope.selectedFeedbackTimePreset) : null;
+        } else if ($scope.filterModalContext === 'report') {
+            $scope.pendingTimePreset = $scope.selectedReportPreset ? angular.copy($scope.selectedReportPreset) : null;
         } else {
             $scope.pendingTimePreset = $scope.selectedTimePreset ? angular.copy($scope.selectedTimePreset) : null;
         }
@@ -235,6 +237,13 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 $scope.showToast('Applied order filter: ' + $scope.pendingTimePreset.name);
             } else {
                 $scope.showToast('Order filter set to All Time');
+            }
+        } else if ($scope.filterModalContext === 'report') {
+            $scope.selectReportPreset($scope.pendingTimePreset);
+            if ($scope.pendingTimePreset) {
+                $scope.showToast('Applied report filter: ' + $scope.pendingTimePreset.name);
+            } else {
+                $scope.showToast('Report filter set to All Time');
             }
         } else if ($scope.filterModalContext === 'feedback') {
             $scope.selectedFeedbackTimePreset = $scope.pendingTimePreset;
@@ -1870,15 +1879,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     $scope.goToFeedbackForCheck = function(order, check, $event) {
         if ($event) $event.stopPropagation();
-        var customer = $scope.selectedCustomer || (order ? order.customer : null);
-        $scope.setCustomerView('feedback', customer);
-        if (order && order.id) {
-            $scope.expandedOrders[order.id] = true;
-            $scope.loadOrderFollowups(order.id);
-            $timeout(function() {
-                $scope.openEditFollowupModal(order, check);
-            }, 120);
-        }
+        $scope.openEditFollowupModal(order, check);
     };
 
     $scope.goToFeedbackForOrder = function(order, $event) {
@@ -2179,6 +2180,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.openEditFollowupModal = function(order, check) {
         $scope.editingFollowupOrder = order;
         $scope.editingFollowup = angular.copy(check);
+        if (!$scope.editingFollowup.satisfaction) {
+            $scope.editingFollowup.satisfaction = 'NEUTRAL';
+        }
         $scope.showEditFollowupModal = true;
     };
 
@@ -2229,10 +2233,16 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         if (!$scope.editingFollowup || !$scope.editingFollowupOrder) return;
         var order = $scope.editingFollowupOrder;
         var check = $scope.editingFollowup;
+        check.isCompleted = true; // Auto-mark completed upon saving note/sentiment/image
+        if (!check.satisfaction) {
+            check.satisfaction = 'NEUTRAL';
+        }
         $http.put('/api/orders/' + order.id + '/followups/' + check.id, check).then(function(res) {
-            $scope.showToast('Follow-up note & details saved successfully');
+            $scope.showToast('Follow-up checkpoint saved successfully');
             $scope.closeEditFollowupModal();
             $scope.loadOrderFollowups(order.id);
+            $scope.loadCustomers();
+            $scope.loadCustomerStats();
         }, function(err) {
             $scope.showToast('Failed to save follow-up details', 'error');
         });
@@ -2311,6 +2321,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     $scope.selectReportPreset = function(preset) {
         if (!preset) {
             $scope.selectedReportPreset = null;
+            $scope.reportFilters.dateFrom = null;
+            $scope.reportFilters.dateTo = null;
+            $scope.reportPeriod = 'all';
             $scope.loadReport('all');
             return;
         }
@@ -2324,15 +2337,17 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.loadReport('custom');
     };
 
-    $scope.applyCustomReportRange = function() {
-        if (!$scope.reportFilters.dateFrom || !$scope.reportFilters.dateTo) {
-            $scope.showToast('Please select both From and To dates', 'error');
-            return;
+    $scope.applyReportDateFilter = function() {
+        if ($scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) {
+            $scope.selectedReportPreset = null;
+            $scope.reportPeriod = 'custom';
+            $scope.loadReport('custom');
+        } else if (!$scope.reportFilters.dateFrom && !$scope.reportFilters.dateTo) {
+            $scope.selectReportPreset(null);
         }
-        $scope.selectedReportPreset = null;
-        $scope.reportPeriod = 'custom';
-        $scope.loadReport('custom');
     };
+
+    $scope.applyCustomReportRange = $scope.applyReportDateFilter;
 
     $scope.setReportSubTab = function(subTab) {
         $scope.reportSubTab = subTab;

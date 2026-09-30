@@ -59,8 +59,8 @@ body {
    ========================================================= */
 .sidebar {
   width: 270px;
-  background-color: var(--bg-card);
-  border-right: 2px solid var(--border-black);
+  background-color: #E6F7F3;
+  border-right: 2.5px solid var(--border-black);
   display: flex;
   flex-direction: column;
   padding: 28px 20px;
@@ -104,7 +104,7 @@ body {
 .brand-subtitle {
   font-size: 0.7rem;
   font-weight: 800;
-  color: var(--primary-color);
+  color: var(--primary-dark);
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
@@ -119,7 +119,7 @@ body {
 .nav-label {
   font-size: 0.75rem;
   font-weight: 900;
-  color: var(--text-muted);
+  color: #0F172A;
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 0 4px;
@@ -205,15 +205,16 @@ body {
 }
 
 .nav-category-toggle.active-category {
-  border-color: var(--primary-color);
-  background-color: #F0FDF9;
+  border-color: #000000;
+  background-color: #FFFFFF;
+  box-shadow: var(--shadow-comic-md);
 }
 
 .category-arrow {
   display: inline-block;
   font-size: 0.75rem;
   transition: transform 0.2s ease;
-  color: var(--primary-color);
+  color: #0F172A;
 }
 
 .category-arrow.expanded {
@@ -226,7 +227,7 @@ body {
   gap: 6px;
   padding-left: 12px;
   margin-top: 4px;
-  border-left: 3px solid #CBD5E1;
+  border-left: 3px solid #0F172A;
   margin-left: 14px;
 }
 

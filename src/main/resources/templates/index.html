@@ -76,8 +76,7 @@
                 <button type="button" 
                         class="nav-item" 
                         ng-class="{'active': currentTab === 'customers'}" 
-                        ng-click="setTab('customers')" 
-                        style="margin-top: 6px;">
+                        ng-click="setTab('customers')">
                     <span>Follow-ups</span>
                     <span class="nav-badge" ng-bind="customers.length">0</span>
                 </button>
@@ -86,14 +85,13 @@
                 <button type="button" 
                         class="nav-item" 
                         ng-class="{'active': currentTab === 'time-filters'}" 
-                        ng-click="setTab('time-filters')" 
-                        style="margin-top: 6px;">
+                        ng-click="setTab('time-filters')">
                     <span>Time Filters</span>
                     <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
                 </button>
 
                 <!-- Group 4: Reports Accordion -->
-                <div class="nav-category-group" style="margin-top: 6px;">
+                <div class="nav-category-group">
                     <button type="button"
                             class="nav-category-toggle"
                             ng-class="{'active-category': currentTab === 'reports'}"

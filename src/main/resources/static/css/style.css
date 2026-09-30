@@ -1121,7 +1121,7 @@ body {
 .module-title {
   font-size: 1.15rem;
   font-weight: 900;
-  color: var(--text-main);
+  color: #000000 !important;
   letter-spacing: -0.3px;
   margin: 0;
 }
@@ -1134,7 +1134,8 @@ body {
   border: 2px solid var(--border-black);
   border-radius: 6px;
   box-shadow: 2px 2px 0px var(--border-black);
-  color: #FFFFFF;
+  background-color: #E2E8F0;
+  color: #000000 !important;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -1563,53 +1564,22 @@ body {
   box-shadow: inset 4px 0 0 var(--primary-color);
 }
 
-/* =========================================================
-   VISIBLE ROW STATUS STYLES (CUSTOMER FOLLOW-UP & ORDER LOG ONLY)
-   ========================================================= */
-/* Completed Follow-ups -> Visible Green */
+/* Clean Table Row Hover & Soft Highlights */
 .comic-table tbody tr.row-completed,
 .comic-table tbody tr.order-row-completed {
-  background-color: #F0FDF4 !important;
-  box-shadow: inset 6px 0 0 #22C55E !important;
+  background-color: #FFFFFF;
 }
 
-.comic-table tbody tr.row-completed td:first-child,
-.comic-table tbody tr.order-row-completed td:first-child {
-  border-left: 6px solid #22C55E !important;
+.comic-table tbody tr.row-pending,
+.comic-table tbody tr.order-row-pending {
+  background-color: #FFFFFF;
 }
 
 .comic-table tbody tr.row-completed:hover,
-.comic-table tbody tr.order-row-completed:hover {
-  background-color: #DCFCE7 !important;
-  box-shadow: inset 8px 0 0 #16A34A !important;
-}
-
-.comic-table tbody tr.row-completed strong,
-.comic-table tbody tr.order-row-completed strong {
-  color: #166534;
-}
-
-/* Pending Follow-ups -> Visible Red */
-.comic-table tbody tr.row-pending,
-.comic-table tbody tr.order-row-pending {
-  background-color: #FEF2F2 !important;
-  box-shadow: inset 6px 0 0 #EF4444 !important;
-}
-
-.comic-table tbody tr.row-pending td:first-child,
-.comic-table tbody tr.order-row-pending td:first-child {
-  border-left: 6px solid #EF4444 !important;
-}
-
+.comic-table tbody tr.order-row-completed:hover,
 .comic-table tbody tr.row-pending:hover,
 .comic-table tbody tr.order-row-pending:hover {
-  background-color: #FEE2E2 !important;
-  box-shadow: inset 8px 0 0 #DC2626 !important;
-}
-
-.comic-table tbody tr.row-pending strong,
-.comic-table tbody tr.order-row-pending strong {
-  color: #991B1B;
+  background-color: #F8FAFC !important;
 }
 
 /* Comic Status Badges */
@@ -1949,22 +1919,14 @@ body {
 }
 
 /* Order Follow-up Status Highlights */
-.order-row-pending {
-  background-color: #FFFBFB;
-  border-left: 4px solid #EF4444;
-}
-
-.order-row-pending:hover {
-  background-color: #FEF2F2 !important;
-}
-
+.order-row-pending,
 .order-row-completed {
-  background-color: #F6FEF9;
-  border-left: 4px solid #22C55E;
+  background-color: #FFFFFF;
 }
 
+.order-row-pending:hover,
 .order-row-completed:hover {
-  background-color: #DCFCE7 !important;
+  background-color: #F8FAFC !important;
 }
 
 .order-followup-tree-box {

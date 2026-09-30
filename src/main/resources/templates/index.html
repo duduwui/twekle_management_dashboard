@@ -126,7 +126,7 @@
                                     + Create Admin
                                 </button>
                                 <button type="button" class="comic-btn-secondary-sm" ng-click="setAdminView('filters')">
-                                    ⚙ Time Filter Rules ({{timeFilterPresets.length}})
+                                    Time Filter Rules ({{timeFilterPresets.length}})
                                 </button>
                             </div>
 
@@ -321,7 +321,7 @@
                                 </div>
                                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
                                     <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 14px; box-shadow: 2px 2px 0px var(--border-black);">
-                                        <span style="font-size: 1.2rem;">👑</span>
+                                        <div class="crud-unified-badge active" style="font-size: 0.82rem;">SA</div>
                                         <div>
                                             <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">Super Administrator</div>
                                             <strong style="font-size: 0.88rem;" ng-style="{'color': selectedAdmin.superAdmin ? 'var(--primary-dark)' : 'var(--text-muted)'}" ng-bind="selectedAdmin.superAdmin ? 'Yes (Full System Access)' : 'No (Standard Access)'"></strong>
@@ -329,7 +329,7 @@
                                     </div>
 
                                     <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 14px; box-shadow: 2px 2px 0px var(--border-black);">
-                                        <span style="font-size: 1.2rem;">🛡️</span>
+                                        <div class="crud-unified-badge" style="font-size: 0.82rem;">RM</div>
                                         <div>
                                             <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">Role Management</div>
                                             <strong style="font-size: 0.88rem;" ng-style="{'color': (selectedAdmin.canCreateRoles || selectedAdmin.superAdmin) ? 'var(--primary-dark)' : 'var(--text-muted)'}" ng-bind="(selectedAdmin.canCreateRoles || selectedAdmin.superAdmin) ? 'Granted (Create/Edit Roles)' : 'Restricted'"></strong>
@@ -337,7 +337,7 @@
                                     </div>
 
                                     <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 12px 14px; box-shadow: 2px 2px 0px var(--border-black);">
-                                        <span style="font-size: 1.2rem;">👥</span>
+                                        <div class="crud-unified-badge" style="font-size: 0.82rem;">UM</div>
                                         <div>
                                             <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">User Management</div>
                                             <strong style="font-size: 0.88rem;" ng-style="{'color': (selectedAdmin.canManageUsers || selectedAdmin.superAdmin) ? 'var(--primary-dark)' : 'var(--text-muted)'}" ng-bind="(selectedAdmin.canManageUsers || selectedAdmin.superAdmin) ? 'Granted (Manage Users & Perms)' : 'Restricted'"></strong>
@@ -582,13 +582,13 @@
                                     class="role-view-btn" 
                                     ng-class="{'active': userView === 'create'}" 
                                     ng-click="setUserView('create')">
-                                ➕ Create & Configure User
+                                Create & Configure User
                             </button>
                             <button type="button" 
                                     class="role-view-btn" 
                                     ng-class="{'active': userView === 'list'}" 
                                     ng-click="setUserView('list')">
-                                📋 All Users Directory ({{users.length}})
+                                All Users Directory ({{users.length}})
                             </button>
                         </div>
 
@@ -597,12 +597,12 @@
                         </div>
                     </div>
 
-                    <!-- 2.1 CREATE USER + ROLE TEMPLATE & CRUD MODULE PERMISSIONS PAGE -->
+                    <!-- 2.1 CREATE USER + CRUD MODULE PERMISSIONS PAGE -->
                     <div ng-show="userView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
                         
                         <!-- 1. Multilingual Names & User Credentials Box -->
                         <div class="comic-form-box">
-                            <div style="font-size: 1.05rem; font-weight: 900; color: var(--text-main); margin-bottom: 2px;">
+                            <div style="font-size: 1.05rem; font-weight: 900; color: #000000; margin-bottom: 2px;">
                                 1. User Profile & Multilingual Names
                             </div>
                             
@@ -627,107 +627,29 @@
                                     <label class="form-label">Account Password <span style="color: #DC2626;">*</span></label>
                                     <input type="password" class="comic-input" placeholder="••••••••" ng-model="newUser.password" required>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">User Phone Number</label>
-                                    <input type="text" class="comic-input" placeholder="+964 750 000 0000" ng-model="newUser.phoneNumber">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Account Status</label>
-                                    <select class="comic-input" ng-model="newUser.status">
-                                        <option value="ACTIVE">ACTIVE</option>
-                                        <option value="INACTIVE">INACTIVE</option>
-                                    </select>
-                                </div>
                             </div>
                         </div>
 
-                        <!-- 2. Role Templates Selector & Quick Applicator Box -->
-                        <div class="comic-form-box" style="background-color: #F8FAFC;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <div>
-                                    <div style="font-size: 1.05rem; font-weight: 900; color: var(--text-main);">
-                                        2. Role Templates Directory & Presets
-                                    </div>
-                                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
-                                        Click any template pill to instantly apply its permission set to the modules below
-                                    </div>
-                                </div>
-                                <button type="button" class="comic-btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" ng-click="toggleAddRoleForm()">
-                                    <span ng-if="!showAddRoleForm">+ New Role Template</span>
-                                    <span ng-if="showAddRoleForm">✕ Close Template Form</span>
-                                </button>
-                            </div>
-
-                            <!-- Inline Role Template Creation Form (NO phone number field) -->
-                            <div class="comic-form-box" ng-show="showAddRoleForm" style="margin-top: 12px; border-color: var(--primary-color);">
-                                <div style="font-size: 0.95rem; font-weight: 900; color: var(--primary-dark);">Define New Role Template:</div>
-                                <div class="form-grid-3" style="margin-top: 6px;">
-                                    <div class="form-group">
-                                        <label class="form-label">Template Role Name</label>
-                                        <input type="text" class="comic-input" placeholder="e.g. Sales Specialist" ng-model="newRole.name">
-                                    </div>
-                                </div>
-                                <div class="comic-checkboxes-row" style="margin-top: 8px;">
-                                    <label class="comic-checkbox-label">
-                                        <input type="checkbox" ng-model="newRole.canCreate">
-                                        <span>Create (C)</span>
-                                    </label>
-                                    <label class="comic-checkbox-label">
-                                        <input type="checkbox" ng-model="newRole.canRead">
-                                        <span>Read (R)</span>
-                                    </label>
-                                    <label class="comic-checkbox-label">
-                                        <input type="checkbox" ng-model="newRole.canUpdate">
-                                        <span>Update (U)</span>
-                                    </label>
-                                    <label class="comic-checkbox-label">
-                                        <input type="checkbox" ng-model="newRole.canDelete">
-                                        <span>Delete (D)</span>
-                                    </label>
-                                </div>
-                                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
-                                    <button type="button" class="comic-btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" ng-click="toggleAddRoleForm()">Cancel</button>
-                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="createRole()">Save Role Template</button>
-                                </div>
-                            </div>
-
-                            <!-- Role Template Pills Grid -->
-                            <div class="role-template-pills-row" style="margin-top: 10px;">
-                                <button type="button" 
-                                        class="role-pill-btn" 
-                                        ng-repeat="role in roles track by role.id"
-                                        ng-class="{'active': selectedCreateRole && selectedCreateRole.id === role.id}"
-                                        ng-click="applyRoleToCreateForm(role)"
-                                        title="Click to apply {{role.name}} permissions">
-                                    <span>🛡️</span>
-                                    <span ng-bind="role.name"></span>
-                                    <span style="font-size: 0.72rem; opacity: 0.8;" ng-bind="'(' + (role.canCreate?'C':'') + (role.canRead?'R':'') + (role.canUpdate?'U':'') + (role.canDelete?'D':'') + ')'"></span>
-                                    <span class="search-clear-btn" style="width: 16px; height: 16px; font-size: 0.65rem; margin-left: 4px;" ng-click="deleteRole(role); $event.stopPropagation();" title="Delete Template">✕</span>
-                                </button>
-                                <span ng-if="roles.length === 0" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">No role templates created yet. Use the button above to add one.</span>
-                            </div>
-                        </div>
-
-                        <!-- 3. 3-Module CRUD Matrix -->
+                        <!-- 2. 3-Module CRUD Matrix -->
                         <div>
-                            <div style="font-size: 1.05rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px;">
-                                3. Module Permissions Matrix (Configure Direct Switches)
+                            <div style="font-size: 1.05rem; font-weight: 900; color: #000000; margin-bottom: 12px;">
+                                2. Module Permissions Matrix (Configure Direct Switches)
                             </div>
                             <div class="module-cards-grid">
                                 <div class="comic-module-card" ng-repeat="mod in createFormModules track by mod.moduleKey">
                                     <div class="module-card-header">
                                         <div class="module-title-group">
-                                            <h3 class="module-title" ng-bind="mod.moduleNameEn"></h3>
+                                            <h3 class="module-title" style="color: #000000; font-weight: 900;" ng-bind="mod.moduleNameEn"></h3>
                                         </div>
-                                        <span class="module-tag" ng-bind="mod.moduleKey"></span>
+                                        <span class="module-tag" style="background-color: #E2E8F0; color: #000000; border: 2px solid #000000;" ng-bind="mod.moduleKey"></span>
                                     </div>
 
-                                    <p class="module-desc" ng-bind="mod.descriptionEn"></p>
+                                    <p class="module-desc" style="color: #334155; font-weight: 600;" ng-bind="mod.descriptionEn"></p>
 
                                     <!-- 4 Direct CRUD Switches -->
                                     <div class="crud-switches-box">
                                         <div class="crud-switch-row">
-                                            <div class="crud-switch-label">
+                                            <div class="crud-switch-label" style="color: #000000; font-weight: 800;">
                                                 <span class="crud-unified-badge" ng-class="{'active': mod.canCreate}">C</span>
                                                 <span>Create</span>
                                             </div>
@@ -738,7 +660,7 @@
                                         </div>
 
                                         <div class="crud-switch-row">
-                                            <div class="crud-switch-label">
+                                            <div class="crud-switch-label" style="color: #000000; font-weight: 800;">
                                                 <span class="crud-unified-badge" ng-class="{'active': mod.canRead}">R</span>
                                                 <span>Read</span>
                                             </div>
@@ -749,7 +671,7 @@
                                         </div>
 
                                         <div class="crud-switch-row">
-                                            <div class="crud-switch-label">
+                                            <div class="crud-switch-label" style="color: #000000; font-weight: 800;">
                                                 <span class="crud-unified-badge" ng-class="{'active': mod.canUpdate}">U</span>
                                                 <span>Update</span>
                                             </div>
@@ -760,7 +682,7 @@
                                         </div>
 
                                         <div class="crud-switch-row">
-                                            <div class="crud-switch-label">
+                                            <div class="crud-switch-label" style="color: #000000; font-weight: 800;">
                                                 <span class="crud-unified-badge" ng-class="{'active': mod.canDelete}">D</span>
                                                 <span>Delete</span>
                                             </div>
@@ -772,8 +694,8 @@
                                     </div>
 
                                     <div class="module-quick-actions">
-                                        <button type="button" class="preset-btn" ng-click="setCreateFormFullCrud(mod)">Full CRUD</button>
-                                        <button type="button" class="preset-btn" ng-click="setCreateFormReadOnly(mod)">Read Only</button>
+                                        <button type="button" class="preset-btn" style="color: #000000; font-weight: 800;" ng-click="setCreateFormFullCrud(mod)">Full CRUD</button>
+                                        <button type="button" class="preset-btn" style="color: #000000; font-weight: 800;" ng-click="setCreateFormReadOnly(mod)">Read Only</button>
                                         <button type="button" class="preset-btn-danger" ng-click="setCreateFormRevoke(mod)">Revoke</button>
                                     </div>
                                 </div>
@@ -950,7 +872,6 @@
                                             ng-repeat="role in roles track by role.id"
                                             ng-click="applyRoleToInspectedUser(role)"
                                             title="Apply {{role.name}} to this user">
-                                        <span>🛡️</span>
                                         <span ng-bind="role.name"></span>
                                     </button>
                                 </div>
@@ -1424,10 +1345,13 @@
                                             <td><strong ng-bind="order.itemsSummary"></strong></td>
                                             <td><strong style="color: var(--primary-dark);" ng-bind="'$' + (order.totalAmount | number:2)"></strong></td>
                                             <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
-                                            <td style="text-align: right;">
+                                            <td style="text-align: right;" class="nowrap">
                                                 <button type="button" class="comic-btn-secondary-sm" ng-click="toggleOrderExpand(order, $event)">
                                                     <span ng-if="!isOrderExpanded(order.id)">View Follow-ups</span>
                                                     <span ng-if="isOrderExpanded(order.id)">Hide Follow-ups</span>
+                                                </button>
+                                                <button type="button" class="comic-btn-sm" style="margin-left: 6px;" ng-click="goToComplimentsForOrder(order, $event)" title="Jump to Compliments for this Order">
+                                                    Compliments ➔
                                                 </button>
                                             </td>
                                         </tr>
@@ -1445,7 +1369,7 @@
                                                         </span>
                                                     </div>
 
-                                                    <!-- Milestone Checklist Items (View-Only Note & Image) -->
+                                                    <!-- Milestone Checklist Items (View-Only Note & Image + Direct Link to Compliments) -->
                                                     <div class="followup-tree-list">
                                                         <div class="followup-check-card" ng-repeat="check in orderFollowups[order.id] || [] track by check.id">
                                                             <!-- 1. Milestone info -->
@@ -1480,6 +1404,13 @@
                                                                     <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
                                                                 </div>
                                                                 <span class="check-no-image" ng-if="!check.imageUrl">No image</span>
+                                                            </div>
+
+                                                            <!-- 5. Direct Link to Add / Edit Note & Photo in Compliments -->
+                                                            <div class="check-col-action">
+                                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="goToComplimentsForCheck(order, check, $event)" title="Add or edit note & photo for this checkpoint in Compliments">
+                                                                    + Note / Photo ➔
+                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1620,10 +1551,13 @@
                                             <td><strong ng-bind="order.itemsSummary"></strong></td>
                                             <td><strong style="color: var(--primary-dark);" ng-bind="'$' + (order.totalAmount | number:2)"></strong></td>
                                             <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
-                                            <td style="text-align: right;">
+                                            <td style="text-align: right;" class="nowrap">
                                                 <button type="button" class="comic-btn-sm" ng-click="toggleOrderExpand(order, $event)">
-                                                    <span ng-if="!isOrderExpanded(order.id)">📝 Add / Edit Notes</span>
+                                                    <span ng-if="!isOrderExpanded(order.id)">Add / Edit Notes</span>
                                                     <span ng-if="isOrderExpanded(order.id)">Hide Notes Tree</span>
+                                                </button>
+                                                <button type="button" class="comic-btn-secondary-sm" style="margin-left: 6px;" ng-click="goToOrderLogForOrder(order, $event)" title="View in Order Log">
+                                                    Order Log ➔
                                                 </button>
                                             </td>
                                         </tr>

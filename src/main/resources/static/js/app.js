@@ -1760,6 +1760,43 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         }
     };
 
+    $scope.goToComplimentsForCheck = function(order, check, $event) {
+        if ($event) $event.stopPropagation();
+        var customer = $scope.selectedCustomer || (order ? order.customer : null);
+        $scope.setCustomerView('feedback', customer);
+        if (order && order.id) {
+            $scope.expandedOrders[order.id] = true;
+            $scope.loadOrderFollowups(order.id);
+            $timeout(function() {
+                $scope.openEditFollowupModal(order, check);
+            }, 150);
+        }
+    };
+
+    $scope.goToComplimentsForOrder = function(order, $event) {
+        if ($event) $event.stopPropagation();
+        var customer = $scope.selectedCustomer || (order ? order.customer : null);
+        $scope.setCustomerView('feedback', customer);
+        if (order && order.id) {
+            $timeout(function() {
+                $scope.expandedOrders[order.id] = true;
+                $scope.loadOrderFollowups(order.id);
+            }, 100);
+        }
+    };
+
+    $scope.goToOrderLogForOrder = function(order, $event) {
+        if ($event) $event.stopPropagation();
+        var customer = $scope.selectedCustomer || (order ? order.customer : null);
+        $scope.setCustomerView('orders', customer);
+        if (order && order.id) {
+            $timeout(function() {
+                $scope.expandedOrders[order.id] = true;
+                $scope.loadOrderFollowups(order.id);
+            }, 100);
+        }
+    };
+
     $scope.loadCustomerStats = function() {
         return $http.get('/api/customers/stats').then(function(res) {
             $scope.customerStats = res.data;

@@ -19,7 +19,7 @@
 
 ## 2. Workspaces & Git Syncing Workflow
 
-Always maintain parity between these two local directories:
+Always maintain parity between these two local local directories:
 1. **Active Primary Workspace:** `/home/emz/.gemini/antigravity/scratch/twekl-dashboard`
 2. **Desktop Mirror & Export:** `/home/emz/Desktop/twekl-dashboard`
 
@@ -81,24 +81,28 @@ All dashboard pages **must** use clean, standard URLs via the HTML5 History API 
 - In the main Follow-ups table, the **"Remaining Follow-ups"** column dynamically displays only the milestone duration (e.g. `24 Hours Ago`, `1 Week Ago`, or `✓ All Done` with no `(ORD-...)` suffix).
 - The milestone badge is a clickable interactive button (`.comic-milestone-link-btn`). Clicking it immediately opens that customer's **Orders Log** and **auto-expands that specific pending order checklist**.
 
-### 2. View-Only Order Log vs. Compliments Tree (Real-Time Sync):
-- **Section 4.2 (Order Log):** View-only audit mode. Users can toggle status checkboxes (✔ / ✖) and view existing notes / photos, but cannot edit them here.
+### 2. View-Only Order Log vs. Compliments Tree & Cross-Navigation:
+- **Section 4.2 (Order Log):** View-only audit mode. Users can toggle status checkboxes (✔ / ✖) and view existing notes / photos.
+  - Each milestone card has a direct `+ Note / Photo ➔` button that seamlessly transitions the user to the Compliments & Reviews view, expands that order, and opens the note/photo modal immediately for that specific checkpoint.
+  - Order row includes a `Compliments ➔` button for quick switching.
 - **Section 4.3 (Compliments / Reviews & Notes):** Exact replica tree of the Order Log. Checkpoints feature a `+ Add / Edit Note & Photo` button to upload notes and proof photos.
+  - Order row includes an `Order Log ➔` button to jump back to audit mode.
 - **Data Synchronization:** Both Section 4.2 and Section 4.3 read from and write to the same `order_followup_checks` database table. Any status mark, note, or photo edit is automatically synchronized in real time between both views.
 
-### 3. Unified Users & Role Permissions Tab:
-- Users and Role Templates are unified under a single sidebar tab: **Users & Permissions** (`/admin/users`).
-- **Top Segmented Switcher:** Seamlessly switches between `[ ➕ Create & Configure User ]` and `[ 📋 All Users Directory ]`.
+### 3. Unified Users & Permissions Tab:
+- Users and Role configuration are unified under **Users & Permissions** (`/admin/users`).
+- **Top Segmented Switcher:** `[ Create & Configure User ]` and `[ All Users Directory ]` (no distracting emoji clutter).
 - **User Profile Creation:**
   - Multilingual user names: **English**, **Arabic (`dir="rtl"`)**, and **Kurdish (`dir="rtl"`)**.
-  - Password, User Phone Number (strictly for user profiles, **never in role templates**), and Status switch.
-  - **Role Template Selector Pills:** Clicking a role template pill instantly populates the 3-module CRUD matrix below. Also includes a `+ New Role Template` modal.
-  - **3-Module Matrix:** Software, Sales, and Product Management with granular Create, Read, Update, Delete switches and preset buttons (`Full CRUD`, `Read Only`, `Revoke`).
-- **All Users Directory:** Clean DataTable with Date Range filters, dynamic Time Filter presets modal, live search, multilingual name badges, and action modals (`Permissions Matrix`, `Edit`, `Delete`).
+  - Password (phone number and status inputs removed from create form to streamline user onboarding).
+  - **3-Module Matrix:** Software, Sales, and Product Management with individual Create, Read, Update, Delete switches and preset buttons (`Full CRUD`, `Read Only`, `Revoke`).
+  - Module cards feature clear, high-contrast dark text and tags (`#000000` / `#0F172A`) for maximum readability.
+- **All Users Directory:** Clean DataTable with Date Range filters, dynamic Time Filter presets modal, search, multilingual name badges, and action modals (`Permissions Matrix`, `Edit`, `Delete`).
 
-### 4. Table Column Formatting & No Horizontal Scrolling:
-- Column widths and table padding (`10px 13px`) are optimized so tables fit 100% on standard desktop screens without horizontal side-scrolling.
-- Phone numbers, counts, dates, prices, and status badges must **always remain on a single line** (`white-space: nowrap !important;`).
+### 4. Table Formatting & Eye-Comfort Design:
+- Column widths and table padding (`10px 13px`) fit 100% of standard desktop screens without horizontal side-scrolling.
+- Removed harsh red/green thick inset borders and tinted backgrounds from table rows for a calm, comfortable visual experience.
+- Phone numbers, counts, dates, prices, and status badges remain strictly on a single line (`white-space: nowrap !important;`).
 - Use classes: `.nowrap`, `.col-phone`, `.col-num`, `.col-date`, `.col-action`.
 
 ### 5. Comic / Neobrutalism Design Rules:

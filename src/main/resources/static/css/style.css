@@ -1564,25 +1564,25 @@ body {
   box-shadow: inset 4px 0 0 var(--primary-color);
 }
 
-/* Clean Table Row Hover & Soft Status Tint Highlights (No harsh borders) */
+/* Clean Table Row Hover & Soft Status Tint Highlights (Bolder & Clear) */
 .comic-table tbody tr.row-completed,
 .comic-table tbody tr.order-row-completed {
-  background-color: #F4FDF7 !important;
+  background-color: #DCFCE7 !important;
 }
 
 .comic-table tbody tr.row-pending,
 .comic-table tbody tr.order-row-pending {
-  background-color: #FFF8F8 !important;
+  background-color: #FEE2E2 !important;
 }
 
 .comic-table tbody tr.row-completed:hover,
 .comic-table tbody tr.order-row-completed:hover {
-  background-color: #E8F8EE !important;
+  background-color: #BBF7D0 !important;
 }
 
 .comic-table tbody tr.row-pending:hover,
 .comic-table tbody tr.order-row-pending:hover {
-  background-color: #FEEEEE !important;
+  background-color: #FECACA !important;
 }
 
 /* Spotlight Highlight for Target Milestone Checkpoint */
@@ -1940,16 +1940,6 @@ body {
   background-color: #F8FAFC !important;
 }
 
-/* Order Follow-up Status Highlights */
-.order-row-pending,
-.order-row-completed {
-  background-color: #FFFFFF;
-}
-
-.order-row-pending:hover,
-.order-row-completed:hover {
-  background-color: #F8FAFC !important;
-}
 
 .order-followup-tree-box {
   padding: 16px 20px;

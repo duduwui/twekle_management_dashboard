@@ -133,8 +133,8 @@
                             <!-- Live Search Bar -->
                             <div class="filter-search-box">
                                 <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="text" class="comic-search-bar" placeholder="Search administrators..." ng-model="filters.search">
-                                <button type="button" class="search-clear-btn" ng-show="filters.search" ng-click="filters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
+                                <input type="search" name="search_admin_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search administrators..." ng-model="adminFilters.search">
+                                <button type="button" class="search-clear-btn" ng-show="adminFilters.search" ng-click="adminFilters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
                             </div>
                         </div>
 
@@ -504,7 +504,7 @@
                         <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
                             <div class="card-header-flex" style="margin-bottom: 24px;">
                                 <div style="font-size: 1.05rem; font-weight: 900;">Active & Configured Filter Rules:</div>
-                                <input type="text" class="comic-input" style="width: 260px;" placeholder="Search filter rules..." ng-model="filterRulesDt.search">
+                                <input type="search" name="search_filter_rules_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-input" style="width: 260px;" placeholder="Search filter rules..." ng-model="filterRulesDt.search">
                             </div>
                             <div class="table-responsive">
                                 <table class="comic-table">
@@ -736,9 +736,9 @@
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <span class="filter-date-label">From:</span>
-                                <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <input type="date" class="comic-date-input" ng-model="userFilters.dateFrom" title="Start Date">
                                 <span class="filter-date-label">To:</span>
-                                <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
+                                <input type="date" class="comic-date-input" ng-model="userFilters.dateTo" title="End Date">
                                 
                                 <!-- Big Filter Preset Selector Button -->
                                 <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="openFilterModal('user')" title="Select Time Filter Preset">
@@ -762,8 +762,8 @@
                             <!-- Live Search Bar -->
                             <div class="filter-search-box">
                                 <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="text" class="comic-search-bar" placeholder="Search users by name, phone..." ng-model="filters.search">
-                                <button type="button" class="search-clear-btn" ng-show="filters.search" ng-click="filters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
+                                <input type="search" name="search_user_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search users by name, phone..." ng-model="userFilters.search">
+                                <button type="button" class="search-clear-btn" ng-show="userFilters.search" ng-click="userFilters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
                             </div>
                         </div>
 
@@ -1141,9 +1141,9 @@
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <span class="filter-date-label">From:</span>
-                                <input type="date" class="comic-date-input" ng-model="filters.dateFrom" title="Start Date">
+                                <input type="date" class="comic-date-input" ng-model="customerFilters.dateFrom" title="Start Date">
                                 <span class="filter-date-label">To:</span>
-                                <input type="date" class="comic-date-input" ng-model="filters.dateTo" title="End Date">
+                                <input type="date" class="comic-date-input" ng-model="customerFilters.dateTo" title="End Date">
                                 
                                 <!-- Big Filter Preset Selector Button -->
                                 <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="openFilterModal('customer')" title="Select Time Filter Preset">
@@ -1160,8 +1160,8 @@
                             <!-- Live Search Bar -->
                             <div class="filter-search-box">
                                 <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="text" class="comic-search-bar" placeholder="Search customers by name, phone, city..." ng-model="filters.search">
-                                <button type="button" class="search-clear-btn" ng-show="filters.search" ng-click="filters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
+                                <input type="search" name="search_customer_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search customers by name, phone, city..." ng-model="customerFilters.search">
+                                <button type="button" class="search-clear-btn" ng-show="customerFilters.search" ng-click="customerFilters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
                             </div>
                         </div>
 
@@ -1318,7 +1318,7 @@
                                 <!-- Live Search Bar -->
                                 <div class="filter-search-box">
                                     <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" class="comic-search-bar" placeholder="Search orders, items, status..." ng-model="orderFilters.search">
+                                    <input type="search" name="search_orders_audit_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search orders, items, status..." ng-model="orderFilters.search">
                                     <button type="button" class="search-clear-btn" ng-show="orderFilters.search" ng-click="orderFilters.search = ''; orderDt.currentPage = 1;" title="Clear search">✕</button>
                                 </div>
                             </div>
@@ -1519,7 +1519,7 @@
                                 <!-- Live Search Bar -->
                                 <div class="filter-search-box">
                                     <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" class="comic-search-bar" placeholder="Search orders, items, notes..." ng-model="orderFilters.search">
+                                    <input type="search" name="search_feedback_orders_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search orders, items, notes..." ng-model="orderFilters.search">
                                     <button type="button" class="search-clear-btn" ng-show="orderFilters.search" ng-click="orderFilters.search = ''; orderDt.currentPage = 1;" title="Clear search">✕</button>
                                 </div>
                             </div>

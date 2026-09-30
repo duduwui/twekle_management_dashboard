@@ -63,12 +63,27 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     // =========================================================
-    // FILTER TOOLBAR & PAGINATION STATE
+    // FILTER TOOLBAR & PAGINATION STATE (ISOLATED PER TAB)
     // =========================================================
     $scope.filters = {
         search: '',
-        dateFrom: '',
-        dateTo: ''
+        dateFrom: null,
+        dateTo: null
+    };
+    $scope.adminFilters = {
+        search: '',
+        dateFrom: null,
+        dateTo: null
+    };
+    $scope.userFilters = {
+        search: '',
+        dateFrom: null,
+        dateTo: null
+    };
+    $scope.customerFilters = {
+        search: '',
+        dateFrom: null,
+        dateTo: null
     };
 
     // =========================================================
@@ -420,7 +435,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Admins DataTable
     $scope.getFilteredAdmins = function() {
         if (!$scope.admins) return [];
-        var q = $scope.filters.search;
+        var q = $scope.adminFilters.search;
         return $scope.admins.filter(function(a) {
             // Flexible Search filter across admin attributes
             if (q && !searchMatch([a.username, a.phoneNumber, a.status, a.superAdmin ? 'super admin' : 'administrator', '#' + a.id].join(' '), q)) {
@@ -429,7 +444,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             // Dynamic Time Filter Preset
             if (!matchesPreset(a.createdAt, $scope.selectedTimePreset)) return false;
             // Date Range
-            if (!isWithinDateRange(a.createdAt, $scope.filters.dateFrom, $scope.filters.dateTo)) return false;
+            if (!isWithinDateRange(a.createdAt, $scope.adminFilters.dateFrom, $scope.adminFilters.dateTo)) return false;
             return true;
         }).sort(function(a, b) {
             var valA = a[$scope.dt.sortField];
@@ -453,7 +468,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Users DataTable
     $scope.getFilteredUsers = function() {
         if (!$scope.users) return [];
-        var q = $scope.filters.search;
+        var q = $scope.userFilters.search;
         return $scope.users.filter(function(u) {
             // Flexible Search filter across multi-lingual user attributes
             if (q && !searchMatch([u.usernameEn, u.usernameAr, u.usernameKu, u.phoneNumber, u.status, '#' + u.id].join(' '), q)) {
@@ -462,7 +477,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             // Dynamic Time Filter Preset
             if (!matchesPreset(u.createdAt, $scope.selectedTimePreset)) return false;
             // Date Range
-            if (!isWithinDateRange(u.createdAt, $scope.filters.dateFrom, $scope.filters.dateTo)) return false;
+            if (!isWithinDateRange(u.createdAt, $scope.userFilters.dateFrom, $scope.userFilters.dateTo)) return false;
             return true;
         }).sort(function(a, b) {
             var valA = a[$scope.dt.sortField];
@@ -514,7 +529,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     // Filtered Customers DataTable
     $scope.getFilteredCustomers = function() {
         if (!$scope.customers) return [];
-        var q = $scope.filters.search;
+        var q = $scope.customerFilters.search;
         return $scope.customers.filter(function(c) {
             // Flexible Search filter across customer name, phone, email, city, status
             if (q && !searchMatch([c.name, c.phoneNumber, c.email, c.city, c.status, '#' + c.id].join(' '), q)) {
@@ -523,7 +538,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
             // Dynamic Time Filter Preset (Smart Recency Bucketing)
             if (!matchesCustomerPreset(c, $scope.selectedTimePreset)) return false;
             // Date Range
-            if (!isWithinDateRange(c.lastOrderDate || c.createdAt, $scope.filters.dateFrom, $scope.filters.dateTo)) return false;
+            if (!isWithinDateRange(c.lastOrderDate || c.createdAt, $scope.customerFilters.dateFrom, $scope.customerFilters.dateTo)) return false;
             return true;
         }).sort(function(a, b) {
             var valA = a[$scope.dt.sortField];
@@ -1254,6 +1269,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         $scope.currentTab = tabName;
         $scope.dt.currentPage = 1;
         $scope.filters.search = '';
+        $scope.adminFilters.search = '';
+        $scope.userFilters.search = '';
+        $scope.customerFilters.search = '';
         if (tabName === 'admins') {
             $scope.adminView = 'list';
             $scope.categories.admin = true;

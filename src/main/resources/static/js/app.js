@@ -1411,6 +1411,57 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
         status: 'ACTIVE'
     };
 
+    // User Create Form Module Permissions Configuration
+    $scope.createFormModules = [
+        { moduleKey: 'SOFTWARE_MANAGEMENT', moduleNameEn: 'Software Management', descriptionEn: 'Core application settings, API configs & system parameters', canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+        { moduleKey: 'SALES_MANAGEMENT', moduleNameEn: 'Sales Management', descriptionEn: 'Orders, invoices, pricing catalogs & payment gateways', canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+        { moduleKey: 'PRODUCT_MANAGEMENT', moduleNameEn: 'Product Management', descriptionEn: 'Inventory, SKU logs, stock levels & warehouse dispatching', canCreate: false, canRead: true, canUpdate: false, canDelete: false }
+    ];
+
+    $scope.selectedCreateRole = null;
+    $scope.applyRoleToCreateForm = function(role) {
+        $scope.selectedCreateRole = role;
+        $scope.createFormModules.forEach(function(mod) {
+            mod.canCreate = role.canCreate;
+            mod.canRead = role.canRead;
+            mod.canUpdate = role.canUpdate;
+            mod.canDelete = role.canDelete;
+        });
+        $scope.showToast('Applied role template "' + role.name + '" to permissions');
+    };
+
+    $scope.toggleCreateModuleField = function(mod, field) {
+        if (field === 'canCreate') mod.canCreate = !mod.canCreate;
+        else if (field === 'canRead') mod.canRead = !mod.canRead;
+        else if (field === 'canUpdate') mod.canUpdate = !mod.canUpdate;
+        else if (field === 'canDelete') mod.canDelete = !mod.canDelete;
+    };
+
+    $scope.setCreateFormFullCrud = function(mod) {
+        mod.canCreate = true; mod.canRead = true; mod.canUpdate = true; mod.canDelete = true;
+    };
+    $scope.setCreateFormReadOnly = function(mod) {
+        mod.canCreate = false; mod.canRead = true; mod.canUpdate = false; mod.canDelete = false;
+    };
+    $scope.setCreateFormRevoke = function(mod) {
+        mod.canCreate = false; mod.canRead = false; mod.canUpdate = false; mod.canDelete = false;
+    };
+
+    $scope.applyRoleToInspectedUser = function(role) {
+        if (!$scope.selectedUser || !$scope.userModules) return;
+        $scope.userModules.forEach(function(mod) {
+            ['canCreate', 'canRead', 'canUpdate', 'canDelete'].forEach(function(f) {
+                var val = role[f];
+                var paramField = f.replace('can', '').toLowerCase();
+                $http.patch('/api/users/' + $scope.selectedUser.id + '/modules/' + mod.moduleKey + '/toggle?field=' + paramField + '&value=' + val)
+                    .then(function() {
+                        mod[f] = val;
+                    });
+            });
+        });
+        $scope.showToast('Applied template "' + role.name + '" to user ' + $scope.selectedUser.usernameEn);
+    };
+
     $scope.setUserView = function(view, user) {
         $scope.currentTab = 'users';
         $scope.userView = view || 'list';
@@ -1426,8 +1477,16 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 phoneNumber: '',
                 status: 'ACTIVE'
             };
+            $scope.createFormModules = [
+                { moduleKey: 'SOFTWARE_MANAGEMENT', moduleNameEn: 'Software Management', descriptionEn: 'Core application settings, API configs & system parameters', canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+                { moduleKey: 'SALES_MANAGEMENT', moduleNameEn: 'Sales Management', descriptionEn: 'Orders, invoices, pricing catalogs & payment gateways', canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+                { moduleKey: 'PRODUCT_MANAGEMENT', moduleNameEn: 'Product Management', descriptionEn: 'Inventory, SKU logs, stock levels & warehouse dispatching', canCreate: false, canRead: true, canUpdate: false, canDelete: false }
+            ];
+            $scope.selectedCreateRole = null;
+            $scope.loadRoles();
             $scope.updateUrl('/admin/users/create');
         } else if (view === 'inspect' || view === 'update' || view === 'delete') {
+            $scope.loadRoles();
             if (targetUser) {
                 $scope.selectedUser = targetUser;
                 $scope.editingUser = angular.copy(targetUser);
@@ -1437,6 +1496,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 $scope.updateUrl('/admin/users/' + view);
             }
         } else {
+            $scope.loadRoles();
             $scope.updateUrl('/admin/users');
         }
     };
@@ -1472,13 +1532,24 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     $scope.createUser = function() {
         if (!$scope.newUser.usernameEn || !$scope.newUser.password) {
-            $scope.showToast('Username and password are required', 'error');
+            $scope.showToast('English username and password are required', 'error');
             return;
         }
         $http.post('/api/users', $scope.newUser).then(function(res) {
-            $scope.showToast('User created successfully');
-            $scope.loadUsers().then(function() {
-                $scope.setUserView('inspect', res.data);
+            var created = res.data;
+            var updatePromises = [];
+            $scope.createFormModules.forEach(function(mod) {
+                ['canCreate', 'canRead', 'canUpdate', 'canDelete'].forEach(function(f) {
+                    var val = mod[f];
+                    var paramField = f.replace('can', '').toLowerCase();
+                    updatePromises.push($http.patch('/api/users/' + created.id + '/modules/' + mod.moduleKey + '/toggle?field=' + paramField + '&value=' + val));
+                });
+            });
+            Promise.all(updatePromises).finally(function() {
+                $scope.showToast('User "' + created.usernameEn + '" created with configured permissions!');
+                $scope.loadUsers().then(function() {
+                    $scope.setUserView('inspect', created);
+                });
             });
         }, function(err) {
             var errorMsg = err.data && err.data.fieldErrors ? JSON.stringify(err.data.fieldErrors) : (err.data && err.data.message ? err.data.message : 'Failed to create user');
@@ -1596,7 +1667,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     // =========================================================
-    // ROLE TEMPLATES MANAGEMENT (Dedicated Page)
+    // ROLE TEMPLATES MANAGEMENT (Unified / Inline)
     // =========================================================
     $scope.newRole = {
         name: '',
@@ -1619,7 +1690,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
 
     $scope.createRole = function() {
         if (!$scope.newRole.name || $scope.newRole.name.trim() === '') {
-            $scope.showToast('Role name is required', 'error');
+            $scope.showToast('Role template name is required', 'error');
             return;
         }
         $http.post('/api/roles', $scope.newRole).then(function() {
@@ -1654,8 +1725,9 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
     };
 
     $scope.deleteRole = function(role) {
+        if (!confirm('Are you sure you want to delete role template "' + role.name + '"?')) return;
         $http.delete('/api/roles/' + role.id).then(function() {
-            $scope.showToast('Role deleted');
+            $scope.showToast('Role template deleted');
             $scope.loadRoles();
         });
     };
@@ -1674,6 +1746,18 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$window',
                 $scope.selectedCustomer = $scope.customers[0];
             }
         });
+    };
+
+    $scope.openCustomerOrder = function(customer, orderId, $event) {
+        if ($event) $event.stopPropagation();
+        if (!customer) return;
+        $scope.setCustomerView('orders', customer);
+        if (orderId) {
+            $timeout(function() {
+                $scope.expandedOrders[orderId] = true;
+                $scope.loadOrderFollowups(orderId);
+            }, 100);
+        }
     };
 
     $scope.loadCustomerStats = function() {

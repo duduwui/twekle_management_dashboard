@@ -43,16 +43,16 @@
                 <div class="nav-category-group">
                     <button type="button" 
                             class="nav-category-toggle" 
-                            ng-class="{'active-category': currentTab === 'admins' || currentTab === 'users' || currentTab === 'roles'}"
+                            ng-class="{'active-category': currentTab === 'admins' || currentTab === 'users'}"
                             ng-click="toggleCategory('admin')">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="category-arrow" ng-class="{'expanded': isCategoryOpen('admin')}">▶</span>
                             <span>Administration</span>
                         </div>
-                        <span class="nav-badge" ng-bind="admins.length + users.length + roles.length">0</span>
+                        <span class="nav-badge" ng-bind="admins.length + users.length">0</span>
                     </button>
 
-                    <!-- Administration 3 Sub-tabs (Shown when clicked) -->
+                    <!-- Administration 2 Sub-tabs -->
                     <div class="nav-sub-items" ng-show="isCategoryOpen('admin')">
                         <button type="button" 
                                 class="nav-sub-item" 
@@ -68,14 +68,6 @@
                                 ng-click="setTab('users')">
                             <span>Users & Permissions</span>
                             <span class="nav-badge-sm" ng-bind="users.length">0</span>
-                        </button>
-
-                        <button type="button" 
-                                class="nav-sub-item" 
-                                ng-class="{'active': currentTab === 'roles'}" 
-                                ng-click="setTab('roles')">
-                            <span>Role Templates</span>
-                            <span class="nav-badge-sm" ng-bind="roles.length">0</span>
                         </button>
                     </div>
                 </div>
@@ -98,9 +90,8 @@
             <header class="top-header">
                 <div>
                     <h1 class="header-page-title" ng-show="currentTab === 'admins'">Admin Management</h1>
-                    <h1 class="header-page-title" ng-show="currentTab === 'users'">User Roles & Permissions</h1>
-                    <h1 class="header-page-title" ng-show="currentTab === 'roles'">Role Templates Directory</h1>
-                    <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups & Purchase History</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'users'">Users & Permissions</h1>
+                    <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);" ng-if="auth.authenticated">
@@ -580,11 +571,224 @@
                 </section>
 
                 <!-- ======================================================= -->
-                <!-- PAGE 2: USERS MANAGEMENT & PERMISSIONS                  -->
+                <!-- PAGE 2: USERS & ROLE PERMISSIONS (UNIFIED)              -->
                 <!-- ======================================================= -->
                 <section class="comic-card" ng-show="currentTab === 'users'">
 
-                    <!-- 2.1 USERS LIST PAGE (DEFAULT) -->
+                    <!-- Top View Switcher Toolbar -->
+                    <div class="card-header-flex" style="margin-bottom: 6px; padding-bottom: 12px; border-bottom: 2px solid var(--border-black);">
+                        <div class="role-view-switcher">
+                            <button type="button" 
+                                    class="role-view-btn" 
+                                    ng-class="{'active': userView === 'create'}" 
+                                    ng-click="setUserView('create')">
+                                ➕ Create & Configure User
+                            </button>
+                            <button type="button" 
+                                    class="role-view-btn" 
+                                    ng-class="{'active': userView === 'list'}" 
+                                    ng-click="setUserView('list')">
+                                📋 All Users Directory ({{users.length}})
+                            </button>
+                        </div>
+
+                        <div ng-if="userView === 'inspect' && selectedUser" style="display: flex; align-items: center; gap: 8px;">
+                            <span class="comic-tag tag-primary" style="font-size: 0.85rem;">Inspecting: {{ selectedUser.usernameEn }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 2.1 CREATE USER + ROLE TEMPLATE & CRUD MODULE PERMISSIONS PAGE -->
+                    <div ng-show="userView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
+                        
+                        <!-- 1. Multilingual Names & User Credentials Box -->
+                        <div class="comic-form-box">
+                            <div style="font-size: 1.05rem; font-weight: 900; color: var(--text-main); margin-bottom: 2px;">
+                                1. User Profile & Multilingual Names
+                            </div>
+                            
+                            <!-- Multilingual Name Inputs: English, Arabic, Kurdish -->
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">English Username / Name <span style="color: #DC2626;">*</span></label>
+                                    <input type="text" class="comic-input" placeholder="e.g. aryan_tech" ng-model="newUser.usernameEn" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Arabic Name (الاسم بالعربية)</label>
+                                    <input type="text" class="comic-input" placeholder="مثال: أريان محمود" dir="rtl" ng-model="newUser.usernameAr">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kurdish Name (ناوی بە کوردی)</label>
+                                    <input type="text" class="comic-input" placeholder="وەک: ئاریان مەحمود" dir="rtl" ng-model="newUser.usernameKu">
+                                </div>
+                            </div>
+
+                            <div class="form-grid-3" style="margin-top: 10px;">
+                                <div class="form-group">
+                                    <label class="form-label">Account Password <span style="color: #DC2626;">*</span></label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newUser.password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">User Phone Number</label>
+                                    <input type="text" class="comic-input" placeholder="+964 750 000 0000" ng-model="newUser.phoneNumber">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Account Status</label>
+                                    <select class="comic-input" ng-model="newUser.status">
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="INACTIVE">INACTIVE</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Role Templates Selector & Quick Applicator Box -->
+                        <div class="comic-form-box" style="background-color: #F8FAFC;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <div style="font-size: 1.05rem; font-weight: 900; color: var(--text-main);">
+                                        2. Role Templates Directory & Presets
+                                    </div>
+                                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">
+                                        Click any template pill to instantly apply its permission set to the modules below
+                                    </div>
+                                </div>
+                                <button type="button" class="comic-btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" ng-click="toggleAddRoleForm()">
+                                    <span ng-if="!showAddRoleForm">+ New Role Template</span>
+                                    <span ng-if="showAddRoleForm">✕ Close Template Form</span>
+                                </button>
+                            </div>
+
+                            <!-- Inline Role Template Creation Form (NO phone number field) -->
+                            <div class="comic-form-box" ng-show="showAddRoleForm" style="margin-top: 12px; border-color: var(--primary-color);">
+                                <div style="font-size: 0.95rem; font-weight: 900; color: var(--primary-dark);">Define New Role Template:</div>
+                                <div class="form-grid-3" style="margin-top: 6px;">
+                                    <div class="form-group">
+                                        <label class="form-label">Template Role Name</label>
+                                        <input type="text" class="comic-input" placeholder="e.g. Sales Specialist" ng-model="newRole.name">
+                                    </div>
+                                </div>
+                                <div class="comic-checkboxes-row" style="margin-top: 8px;">
+                                    <label class="comic-checkbox-label">
+                                        <input type="checkbox" ng-model="newRole.canCreate">
+                                        <span>Create (C)</span>
+                                    </label>
+                                    <label class="comic-checkbox-label">
+                                        <input type="checkbox" ng-model="newRole.canRead">
+                                        <span>Read (R)</span>
+                                    </label>
+                                    <label class="comic-checkbox-label">
+                                        <input type="checkbox" ng-model="newRole.canUpdate">
+                                        <span>Update (U)</span>
+                                    </label>
+                                    <label class="comic-checkbox-label">
+                                        <input type="checkbox" ng-model="newRole.canDelete">
+                                        <span>Delete (D)</span>
+                                    </label>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                                    <button type="button" class="comic-btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" ng-click="toggleAddRoleForm()">Cancel</button>
+                                    <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.8rem;" ng-click="createRole()">Save Role Template</button>
+                                </div>
+                            </div>
+
+                            <!-- Role Template Pills Grid -->
+                            <div class="role-template-pills-row" style="margin-top: 10px;">
+                                <button type="button" 
+                                        class="role-pill-btn" 
+                                        ng-repeat="role in roles track by role.id"
+                                        ng-class="{'active': selectedCreateRole && selectedCreateRole.id === role.id}"
+                                        ng-click="applyRoleToCreateForm(role)"
+                                        title="Click to apply {{role.name}} permissions">
+                                    <span>🛡️</span>
+                                    <span ng-bind="role.name"></span>
+                                    <span style="font-size: 0.72rem; opacity: 0.8;" ng-bind="'(' + (role.canCreate?'C':'') + (role.canRead?'R':'') + (role.canUpdate?'U':'') + (role.canDelete?'D':'') + ')'"></span>
+                                    <span class="search-clear-btn" style="width: 16px; height: 16px; font-size: 0.65rem; margin-left: 4px;" ng-click="deleteRole(role); $event.stopPropagation();" title="Delete Template">✕</span>
+                                </button>
+                                <span ng-if="roles.length === 0" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">No role templates created yet. Use the button above to add one.</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. 3-Module CRUD Matrix -->
+                        <div>
+                            <div style="font-size: 1.05rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px;">
+                                3. Module Permissions Matrix (Configure Direct Switches)
+                            </div>
+                            <div class="module-cards-grid">
+                                <div class="comic-module-card" ng-repeat="mod in createFormModules track by mod.moduleKey">
+                                    <div class="module-card-header">
+                                        <div class="module-title-group">
+                                            <h3 class="module-title" ng-bind="mod.moduleNameEn"></h3>
+                                        </div>
+                                        <span class="module-tag" ng-bind="mod.moduleKey"></span>
+                                    </div>
+
+                                    <p class="module-desc" ng-bind="mod.descriptionEn"></p>
+
+                                    <!-- 4 Direct CRUD Switches -->
+                                    <div class="crud-switches-box">
+                                        <div class="crud-switch-row">
+                                            <div class="crud-switch-label">
+                                                <span class="crud-unified-badge" ng-class="{'active': mod.canCreate}">C</span>
+                                                <span>Create</span>
+                                            </div>
+                                            <label class="comic-switch">
+                                                <input type="checkbox" ng-checked="mod.canCreate" ng-click="toggleCreateModuleField(mod, 'canCreate')">
+                                                <span class="comic-slider"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="crud-switch-row">
+                                            <div class="crud-switch-label">
+                                                <span class="crud-unified-badge" ng-class="{'active': mod.canRead}">R</span>
+                                                <span>Read</span>
+                                            </div>
+                                            <label class="comic-switch">
+                                                <input type="checkbox" ng-checked="mod.canRead" ng-click="toggleCreateModuleField(mod, 'canRead')">
+                                                <span class="comic-slider"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="crud-switch-row">
+                                            <div class="crud-switch-label">
+                                                <span class="crud-unified-badge" ng-class="{'active': mod.canUpdate}">U</span>
+                                                <span>Update</span>
+                                            </div>
+                                            <label class="comic-switch">
+                                                <input type="checkbox" ng-checked="mod.canUpdate" ng-click="toggleCreateModuleField(mod, 'canUpdate')">
+                                                <span class="comic-slider"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="crud-switch-row">
+                                            <div class="crud-switch-label">
+                                                <span class="crud-unified-badge" ng-class="{'active': mod.canDelete}">D</span>
+                                                <span>Delete</span>
+                                            </div>
+                                            <label class="comic-switch">
+                                                <input type="checkbox" ng-checked="mod.canDelete" ng-click="toggleCreateModuleField(mod, 'canDelete')">
+                                                <span class="comic-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="module-quick-actions">
+                                        <button type="button" class="preset-btn" ng-click="setCreateFormFullCrud(mod)">Full CRUD</button>
+                                        <button type="button" class="preset-btn" ng-click="setCreateFormReadOnly(mod)">Read Only</button>
+                                        <button type="button" class="preset-btn-danger" ng-click="setCreateFormRevoke(mod)">Revoke</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Action -->
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                            <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel & Return</button>
+                            <button type="button" class="comic-btn" ng-click="createUser()">Save & Create User</button>
+                        </div>
+
+                    </div>
+
+                    <!-- 2.2 ALL USERS DIRECTORY LIST PAGE -->
                     <div ng-show="userView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
                         <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Button + Live Search) -->
@@ -610,7 +814,7 @@
                             <!-- Small Action Button in Toolbar -->
                             <div class="filter-middle-actions">
                                 <button type="button" class="comic-btn-sm" ng-click="setUserView('create')">
-                                    + Create User (C)
+                                    + Create User
                                 </button>
                             </div>
 
@@ -628,7 +832,7 @@
                                 <thead>
                                     <tr>
                                         <th class="comic-sortable-th" ng-click="sortBy('usernameEn')">
-                                            Username <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
+                                            User Profile & Multilingual Names <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
                                         </th>
                                         <th class="comic-sortable-th col-phone nowrap" ng-click="sortBy('phoneNumber')">
                                             Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
@@ -644,10 +848,16 @@
                                         style="cursor: pointer;"
                                         ng-click="setUserView('inspect', user)">
                                         <td>
-                                             <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="user.usernameEn"></strong>
+                                            <div style="display: flex; flex-direction: column; gap: 3px;">
+                                                <strong style="font-size: 0.96rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
+                                                <div style="display: flex; gap: 6px; align-items: center;" ng-if="user.usernameAr || user.usernameKu">
+                                                    <span class="comic-tag tag-muted" style="font-size: 0.72rem; padding: 2px 6px;" ng-if="user.usernameAr" ng-bind="'AR: ' + user.usernameAr"></span>
+                                                    <span class="comic-tag tag-muted" style="font-size: 0.72rem; padding: 2px 6px;" ng-if="user.usernameKu" ng-bind="'KU: ' + user.usernameKu"></span>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td class="col-phone nowrap">
-                                            <span style="color: var(--text-muted); font-weight: 700; white-space: nowrap;" ng-bind="user.phoneNumber || '-'"></span>
+                                            <strong style="color: var(--text-main); font-size: 0.92rem; white-space: nowrap;" ng-bind="user.phoneNumber || '-'"></strong>
                                         </td>
                                         <td>
                                             <div style="display: flex; align-items: center; gap: 8px;" ng-click="$event.stopPropagation()">
@@ -693,61 +903,19 @@
 
                     </div>
 
-                    <!-- 2.2 CREATE USER PAGE (C) -->
-                    <div ng-show="userView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
-                        <div class="action-page-header">
-                            <button type="button" class="back-btn" ng-click="setUserView('list')">
-                                ← Back to Users List
-                            </button>
-                        </div>
-
-                        <!-- Create Form -->
-                        <div class="comic-form-box">
-                            <div class="form-grid-2">
-                                <div class="form-group">
-                                    <label class="form-label">Username (Required)</label>
-                                    <input type="text" class="comic-input" placeholder="e.g. tariq_dev" ng-model="newUser.usernameEn" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Account Password (Required)</label>
-                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newUser.password" required>
-                                </div>
-                            </div>
-
-                            <div class="form-grid-2" style="margin-top: 14px;">
-                                <div class="form-group">
-                                    <label class="form-label">Phone Number</label>
-                                    <input type="text" class="comic-input" placeholder="+964 750 000 0000" ng-model="newUser.phoneNumber">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Account Status</label>
-                                    <select class="comic-input" ng-model="newUser.status">
-                                        <option value="ACTIVE">ACTIVE</option>
-                                        <option value="INACTIVE">INACTIVE</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px;">
-                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel</button>
-                                <button type="button" class="comic-btn" ng-click="createUser()">Save & Create User</button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- 2.3 INSPECT USER & 3-COLUMN CRUD MODULE PERMISSIONS PAGE (R) -->
                     <div ng-show="userView === 'inspect'" style="display: flex; flex-direction: column; gap: 18px;">
                         
                         <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <button type="button" class="back-btn" ng-click="setUserView('list')">
-                                    ← Back to Users List
+                                    ← Back to Users Directory
                                 </button>
                                 <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
-                                    Edit Details (U)
+                                    Edit Details
                                 </button>
                                 <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
-                                    Delete User (D)
+                                    Delete User
                                 </button>
                             </div>
 
@@ -766,6 +934,25 @@
                                             ng-options="u as u.usernameEn for u in users track by u.id"
                                             ng-change="setUserView('inspect', selectedUser)">
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role Template Quick Applicator Bar for Inspected User -->
+                        <div class="comic-form-box" style="background-color: #F8FAFC; padding: 14px 18px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);">
+                                    Apply Role Template to {{selectedUser.usernameEn}}:
+                                </div>
+                                <div class="role-template-pills-row">
+                                    <button type="button" 
+                                            class="role-pill-btn" 
+                                            ng-repeat="role in roles track by role.id"
+                                            ng-click="applyRoleToInspectedUser(role)"
+                                            title="Apply {{role.name}} to this user">
+                                        <span>🛡️</span>
+                                        <span ng-bind="role.name"></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -849,24 +1036,32 @@
                     <div ng-show="userView === 'update'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
                             <button type="button" class="back-btn" ng-click="setUserView('list')">
-                                ← Back to Users List
+                                ← Back to Users Directory
                             </button>
                         </div>
 
                         <!-- Update Form -->
                         <div class="comic-form-box" ng-if="editingUser">
-                            <div class="form-grid-2">
+                            <div class="form-grid-3">
                                 <div class="form-group">
-                                    <label class="form-label">Username (Required)</label>
+                                    <label class="form-label">English Username (Required)</label>
                                     <input type="text" class="comic-input" ng-model="editingUser.usernameEn" required>
                                 </div>
+                                <div class="form-group">
+                                    <label class="form-label">Arabic Name (الاسم بالعربية)</label>
+                                    <input type="text" class="comic-input" dir="rtl" ng-model="editingUser.usernameAr">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kurdish Name (ناوی بە کوردی)</label>
+                                    <input type="text" class="comic-input" dir="rtl" ng-model="editingUser.usernameKu">
+                                </div>
+                            </div>
+
+                            <div class="form-grid-3" style="margin-top: 12px;">
                                 <div class="form-group">
                                     <label class="form-label">New Password (leave empty to keep current)</label>
                                     <input type="password" class="comic-input" placeholder="••••••••" ng-model="editingUser.password">
                                 </div>
-                            </div>
-
-                            <div class="form-grid-2" style="margin-top: 14px;">
                                 <div class="form-group">
                                     <label class="form-label">Phone Number</label>
                                     <input type="text" class="comic-input" ng-model="editingUser.phoneNumber">
@@ -891,7 +1086,7 @@
                     <div ng-show="userView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
                         <div class="action-page-header">
                             <button type="button" class="back-btn" ng-click="setUserView('list')">
-                                ← Back to Users List
+                                ← Back to Users Directory
                             </button>
                         </div>
 
@@ -943,7 +1138,7 @@
                                             <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('usernameEn')">
                                                 Username <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('usernameEn')"></span>
                                             </th>
-                                            <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('phoneNumber')">
+                                            <th class="comic-sortable-th col-phone nowrap" ng-click="sortDeleteUsersBy('phoneNumber')">
                                                 Phone Number <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('phoneNumber')"></span>
                                             </th>
                                             <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('status')">
@@ -957,7 +1152,7 @@
                                             <td>
                                                 <strong ng-bind="user.usernameEn"></strong>
                                             </td>
-                                            <td><span style="color: var(--text-muted);" ng-bind="user.phoneNumber || '-'"></span></td>
+                                            <td class="col-phone nowrap"><span style="color: var(--text-muted); white-space: nowrap;" ng-bind="user.phoneNumber || '-'"></span></td>
                                             <td>
                                                 <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
                                             </td>
@@ -985,118 +1180,6 @@
                                     <button type="button" class="page-btn" ng-disabled="deleteUserDt.currentPage === 1" ng-click="setDeleteUserPage(deleteUserDt.currentPage - 1)">« Prev</button>
                                     <button type="button" class="page-btn" ng-repeat="p in getDeleteUserPageNumbers(getFilteredDeleteUsers().length)" ng-class="{'active': deleteUserDt.currentPage === p}" ng-click="setDeleteUserPage(p)" ng-bind="p"></button>
                                     <button type="button" class="page-btn" ng-disabled="deleteUserDt.currentPage === getTotalDeleteUserPages(getFilteredDeleteUsers().length)" ng-click="setDeleteUserPage(deleteUserDt.currentPage + 1)">Next »</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </section>
-
-                <!-- ======================================================= -->
-                <!-- PAGE 3: ROLE TEMPLATES DIRECTORY                        -->
-                <!-- ======================================================= -->
-                <section class="comic-card" ng-show="currentTab === 'roles'">
-                    
-                    <!-- Modern Filter Toolbar (Action Button + Live Search) -->
-                    <div class="comic-filter-toolbar">
-                        <div class="filter-middle-actions">
-                            <button type="button" class="comic-btn-sm" ng-click="toggleAddRoleForm()">
-                                + Add Role Template
-                            </button>
-                        </div>
-                        <div class="filter-search-box" style="max-width: 320px;">
-                            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input type="text" class="comic-search-bar" placeholder="Search role templates by name..." ng-model="filters.search">
-                            <button type="button" class="search-clear-btn" ng-show="filters.search" ng-click="filters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
-                        </div>
-                    </div>
-
-                    <!-- Inline Add Role Form -->
-                    <div class="comic-form-box" ng-show="showAddRoleForm">
-                        <div class="form-grid-3">
-                            <div class="form-group">
-                                <label class="form-label">Role Name</label>
-                                <input type="text" class="comic-input" placeholder="e.g. Quality Assurance Engineer" ng-model="newRole.name" required>
-                            </div>
-                        </div>
-
-                        <div class="comic-checkboxes-row">
-                            <label class="comic-checkbox-label">
-                                <input type="checkbox" ng-model="newRole.canCreate">
-                                <span>Create</span>
-                            </label>
-                            <label class="comic-checkbox-label">
-                                <input type="checkbox" ng-model="newRole.canRead">
-                                <span>Read</span>
-                            </label>
-                            <label class="comic-checkbox-label">
-                                <input type="checkbox" ng-model="newRole.canUpdate">
-                                <span>Update</span>
-                            </label>
-                            <label class="comic-checkbox-label">
-                                <input type="checkbox" ng-model="newRole.canDelete">
-                                <span>Delete</span>
-                            </label>
-                        </div>
-
-                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;">
-                            <button type="button" class="comic-btn-secondary" ng-click="toggleAddRoleForm()">Cancel</button>
-                            <button type="button" class="comic-btn" ng-click="createRole()">Save Role</button>
-                        </div>
-                    </div>
-
-                    <!-- Role Templates Grid -->
-                    <div class="roles-grid">
-                        <div class="role-card" ng-repeat="role in getFilteredRoles() track by role.id">
-                            <div class="module-card-header">
-                                <h3 class="module-title" ng-bind="role.name"></h3>
-                                <button type="button" class="comic-btn-danger" ng-click="deleteRole(role)">Delete</button>
-                            </div>
-
-                            <!-- 4 Direct CRUD Switches for Role Template -->
-                            <div class="crud-switches-box">
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" ng-class="{'active': role.canCreate}">C</span>
-                                        <span>Create</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" ng-checked="role.canCreate" ng-click="toggleRoleField(role, 'canCreate')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" ng-class="{'active': role.canRead}">R</span>
-                                        <span>Read</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" ng-checked="role.canRead" ng-click="toggleRoleField(role, 'canRead')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" ng-class="{'active': role.canUpdate}">U</span>
-                                        <span>Update</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" ng-checked="role.canUpdate" ng-click="toggleRoleField(role, 'canUpdate')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" ng-class="{'active': role.canDelete}">D</span>
-                                        <span>Delete</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" ng-checked="role.canDelete" ng-click="toggleRoleField(role, 'canDelete')">
-                                        <span class="comic-slider"></span>
-                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -1189,13 +1272,17 @@
                                             <strong style="font-size: 0.95rem; color: var(--text-main); white-space: nowrap;" ng-bind="cust.totalOrders + ' Orders'"></strong>
                                         </td>
                                         <td class="nowrap">
-                                            <strong style="font-size: 0.95rem; color: var(--primary-dark); white-space: nowrap;" ng-bind="'$' + (cust.totalSpent | number:2)"></strong>
-                                        </td>
-                                        <td class="nowrap">
                                             <span class="comic-tag tag-primary" ng-if="cust.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
                                                 ✓ All Done
                                             </span>
-                                            <span class="comic-tag tag-warning" ng-if="!cust.allFollowupsCompleted && cust.totalOrders > 0" ng-bind="cust.nextPendingFollowup || 'Pending'"></span>
+                                            <button type="button" 
+                                                    class="comic-milestone-link-btn" 
+                                                    ng-if="!cust.allFollowupsCompleted && cust.totalOrders > 0" 
+                                                    ng-click="openCustomerOrder(cust, cust.nextPendingOrderId, $event)"
+                                                    title="Open Order Checklist">
+                                                <span>{{ cust.nextPendingFollowup || 'Pending' }}</span>
+                                                <span class="milestone-arrow">➔</span>
+                                            </button>
                                             <span ng-if="!cust.totalOrders || cust.totalOrders === 0" style="color: var(--text-muted); font-weight: 700;">-</span>
                                         </td>
                                         <td style="text-align: right;" class="nowrap">
@@ -1232,7 +1319,7 @@
 
                     </div>
 
-                    <!-- 4.2 DEDICATED CUSTOMER PURCHASE HISTORY / ORDER LOG PAGE (AUDIT VIEW) -->
+                    <!-- 4.2 DEDICATED CUSTOMER PURCHASE HISTORY / ORDER LOG PAGE (VIEW-ONLY AUDIT MODE) -->
                     <div ng-show="customerView === 'orders'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
@@ -1257,14 +1344,14 @@
                             <div style="display: flex; gap: 10px;">
                                 <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('feedback', selectedCustomer)">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                    View Notes & Photos
+                                    Add / Edit Notes & Photos
                                 </button>
                             </div>
                         </div>
 
                         <!-- Orders Filter Toolbar & DataTable -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Complete Customer Purchase Ledger & Follow-up Checks:</div>
+                            <div style="font-size: 1.15rem; font-weight: 900;">Complete Customer Purchase Ledger (Audit View):</div>
 
                             <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
                             <div class="comic-filter-toolbar">
@@ -1345,7 +1432,7 @@
                                             </td>
                                         </tr>
 
-                                        <!-- Expandable Follow-up Checklist Tree for this Order Record -->
+                                        <!-- Expandable Follow-up Checklist Tree for this Order Record (View-Only Audit Mode) -->
                                         <tr ng-if="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
                                             <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
                                                 <div class="order-followup-tree-box">
@@ -1354,25 +1441,25 @@
                                                             <strong style="font-size: 0.95rem; color: #1E1B4B;">Follow-up Checklist ({{ (orderFollowups[order.id] || []).length }} Checkpoints)</strong>
                                                         </div>
                                                         <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
-                                                            Active follow-up rules for Order {{order.orderNumber}}
+                                                            Audit View for Order {{order.orderNumber}}
                                                         </span>
                                                     </div>
 
-                                                    <!-- Milestone Checklist Items -->
+                                                    <!-- Milestone Checklist Items (View-Only Note & Image) -->
                                                     <div class="followup-tree-list">
                                                         <div class="followup-check-card" ng-repeat="check in orderFollowups[order.id] || [] track by check.id">
-                                                            <!-- 1. Milestone info (Single clean title, no redundant badge) -->
+                                                            <!-- 1. Milestone info -->
                                                             <div class="check-col-milestone">
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
                                                             </div>
 
-                                                            <!-- 2. Status Check Yes/No toggle (Clean Symbol Only) -->
+                                                            <!-- 2. Status Check Yes/No toggle -->
                                                             <div class="check-col-status">
                                                                 <button type="button" 
                                                                         class="followup-status-btn" 
                                                                         ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
                                                                         ng-click="toggleFollowupCheck(order, check)"
-                                                                        title="Click to toggle status">
+                                                                        title="Click to toggle completion status">
                                                                     <span ng-if="check.isCompleted">✔</span>
                                                                     <span ng-if="!check.isCompleted">✖</span>
                                                                 </button>
@@ -1381,25 +1468,18 @@
                                                                 </div>
                                                             </div>
 
-                                                            <!-- 3. Details & User Note (Clean plain text, no side accent borders) -->
+                                                            <!-- 3. Details & User Note (View-Only) -->
                                                             <div class="check-col-note">
                                                                 <div class="check-note-text" ng-if="check.note" ng-bind="check.note"></div>
                                                                 <div class="check-note-empty" ng-if="!check.note">No note added</div>
                                                             </div>
 
-                                                            <!-- 4. Attached Images -->
+                                                            <!-- 4. Attached Images (Lightbox Preview) -->
                                                             <div class="check-col-images">
-                                                                <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)" title="Click to view full image">
+                                                                <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)" title="Click to view full image in lightbox">
                                                                     <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
                                                                 </div>
                                                                 <span class="check-no-image" ng-if="!check.imageUrl">No image</span>
-                                                            </div>
-
-                                                            <!-- 5. Edit / Add Details Action -->
-                                                            <div class="check-col-action">
-                                                                <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check)">
-                                                                    Edit Note & Image
-                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1435,7 +1515,7 @@
 
                     </div>
 
-                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE -->
+                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & COMPLIMENTS PAGE (REPLICA TREE OF ORDER LOG WITH INLINE NOTES & PHOTO UPLOAD) -->
                     <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 24px;">
                         
                         <div class="action-page-header">
@@ -1460,127 +1540,179 @@
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <button type="button" class="comic-btn-secondary" ng-click="setCustomerView('orders', selectedCustomer)">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                    View Purchase Orders Log
-                                </button>
-                                <button type="button" class="comic-btn" ng-click="openAddFeedbackModal()">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -2px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                    + Add Order Note & Photo
+                                    View Audit Orders Log
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Feedback Filter Toolbar & Professional DataTable -->
+                        <!-- Orders & Follow-up Tree with Note & Photo Editor (Exact Replica of Order Log) -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Customer Order Notes, Compliments & Photos:</div>
+                            <div style="font-size: 1.15rem; font-weight: 900;">Customer Orders & Follow-up Notes / Photos (Interactive Tree):</div>
 
                             <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
-                                    <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateFrom" title="Start Date">
+                                    <input type="date" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
                                     <span class="filter-date-label">To:</span>
-                                    <input type="date" class="comic-date-input" ng-model="feedbackFilters.dateTo" title="End Date">
+                                    <input type="date" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
                                     
                                     <!-- Big Filter Preset Selector Button -->
-                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedFeedbackTimePreset}" ng-click="openFilterModal('feedback')" title="Select Time Filter Preset">
+                                    <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset}" ng-click="openFilterModal('order')" title="Select Time Filter Preset">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                                         </svg>
                                     </button>
 
-                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedFeedbackTimePreset" ng-click="selectFeedbackTimePreset(null)" title="Click to clear filter">
-                                        <span ng-bind="selectedFeedbackTimePreset.name"></span> ✕
+                                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedOrderTimePreset" ng-click="selectOrderTimePreset(null)" title="Click to clear filter">
+                                        <span ng-bind="selectedOrderTimePreset.name"></span> ✕
                                     </span>
                                 </div>
 
                                 <!-- Live Search Bar -->
                                 <div class="filter-search-box">
                                     <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" class="comic-search-bar" placeholder="Search notes, orders, items..." ng-model="feedbackFilters.search">
-                                    <button type="button" class="search-clear-btn" ng-show="feedbackFilters.search" ng-click="feedbackFilters.search = ''; feedbackDt.currentPage = 1;" title="Clear search">✕</button>
+                                    <input type="text" class="comic-search-bar" placeholder="Search orders, items, notes..." ng-model="orderFilters.search">
+                                    <button type="button" class="search-clear-btn" ng-show="orderFilters.search" ng-click="orderFilters.search = ''; orderDt.currentPage = 1;" title="Clear search">✕</button>
                                 </div>
                             </div>
 
-                            <!-- Feedback DataTable -->
                             <div class="table-responsive">
                                 <table class="comic-table">
                                     <thead>
                                         <tr>
-                                            <th class="comic-sortable-th nowrap" style="width: 140px;" ng-click="sortFeedbacksBy('createdAt')">
-                                                Date & Time <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('createdAt')"></span>
+                                            <th class="comic-sortable-th" style="width: 140px;" ng-click="sortOrdersBy('orderNumber')">
+                                                Order Number <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderNumber')"></span>
                                             </th>
-                                            <th class="comic-sortable-th col-phone nowrap" style="width: 180px;" ng-click="sortFeedbacksBy('customerName')">
-                                                Customer <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('customerName')"></span>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('orderDate')">
+                                                Order Date <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderDate')"></span>
                                             </th>
-                                            <th class="comic-sortable-th nowrap" style="width: 220px;" ng-click="sortFeedbacksBy('orderNumber')">
-                                                Order / Product <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('orderNumber')"></span>
+                                            <th>Order Time</th>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('itemsSummary')">
+                                                Items / Product Summary <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
                                             </th>
-                                            <th>Note & Details</th>
-                                            <th class="nowrap" style="width: 120px;">Attached Photo</th>
-                                            <th class="comic-sortable-th nowrap" style="width: 130px;" ng-click="sortFeedbacksBy('authorName')">
-                                                Logged By <span class="sort-indicator" ng-bind="getFeedbackSortIndicator('authorName')"></span>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('totalAmount')">
+                                                Total Price <span class="sort-indicator" ng-bind="getOrderSortIndicator('totalAmount')"></span>
                                             </th>
-                                            <th class="nowrap" style="text-align: right; width: 140px;">Action</th>
+                                            <th class="comic-sortable-th" ng-click="sortOrdersBy('orderStatus')">
+                                                Status <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderStatus')"></span>
+                                            </th>
+                                            <th style="text-align: right;">Milestone Notes & Photos</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr ng-repeat="fb in getPagedCustomerFeedbacks() track by fb.id">
-                                            <td class="nowrap">
-                                                <span style="font-weight: 700; font-size: 0.85rem;" ng-bind="fb.createdAt | date:'yyyy-MM-dd HH:mm'"></span>
-                                            </td>
-                                            <td class="col-phone nowrap">
-                                                <div>
-                                                    <strong style="color: var(--primary-dark); font-size: 0.92rem;" ng-bind="fb.customerName || selectedCustomer.name"></strong>
-                                                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; margin-top: 2px; white-space: nowrap;" ng-if="selectedCustomer">
-                                                        <span ng-bind="selectedCustomer.phoneNumber"></span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="nowrap">
-                                                <div ng-if="fb.orderNumber">
-                                                    <span class="comic-tag tag-primary" style="font-weight: 800; font-size: 0.8rem;" ng-bind="fb.orderNumber"></span>
-                                                    <div style="font-size: 0.82rem; font-weight: 700; color: #1E293B; margin-top: 4px;" ng-bind="fb.orderSummary"></div>
-                                                </div>
-                                                <div ng-if="!fb.orderNumber">
-                                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; font-style: italic;">General Account Note</span>
-                                                </div>
-                                            </td>
+                                        <!-- Main Order Row -->
+                                        <tr ng-repeat-start="order in getPagedCustomerOrders() track by order.id" 
+                                            class="order-row-clickable" 
+                                            ng-class="getOrderFollowupStatusClass(order)"
+                                            ng-click="toggleOrderExpand(order, $event)">
                                             <td>
-                                                <div style="font-size: 0.9rem; font-weight: 600; line-height: 1.45; color: var(--text-main);" ng-bind="fb.content"></div>
-                                            </td>
-                                            <td class="nowrap">
-                                                <div ng-if="fb.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(fb.imageUrl)" title="Click to view full image">
-                                                    <img ng-src="{{fb.imageUrl}}" class="check-image-thumb" alt="Proof">
+                                                <div style="display: flex; align-items: center;">
+                                                    <button type="button" class="order-expand-toggle-btn" title="Toggle Follow-up List">
+                                                        <span ng-if="!isOrderExpanded(order.id)">▶</span>
+                                                        <span ng-if="isOrderExpanded(order.id)">▼</span>
+                                                    </button>
+                                                    <strong style="color: var(--primary-dark);" ng-bind="order.orderNumber"></strong>
                                                 </div>
-                                                <span class="check-no-image" ng-if="!fb.imageUrl">No photo</span>
                                             </td>
-                                            <td class="nowrap">
-                                                <strong style="color: var(--text-main); font-size: 0.88rem;" ng-bind="fb.authorName || 'Agent'"></strong>
-                                            </td>
-                                            <td style="text-align: right;" class="nowrap">
-                                                <button type="button" class="comic-btn-secondary" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFeedbackModal(fb)">
-                                                    Edit Note & Photo
+                                            <td><span style="font-weight: 700;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span></td>
+                                            <td><span style="color: var(--text-muted); font-weight: 700;" ng-bind="order.orderDate | date:'HH:mm'"></span></td>
+                                            <td><strong ng-bind="order.itemsSummary"></strong></td>
+                                            <td><strong style="color: var(--primary-dark);" ng-bind="'$' + (order.totalAmount | number:2)"></strong></td>
+                                            <td><span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span></td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-sm" ng-click="toggleOrderExpand(order, $event)">
+                                                    <span ng-if="!isOrderExpanded(order.id)">📝 Add / Edit Notes</span>
+                                                    <span ng-if="isOrderExpanded(order.id)">Hide Notes Tree</span>
                                                 </button>
                                             </td>
                                         </tr>
-                                        <tr ng-if="getFilteredCustomerFeedbacks().length === 0">
+
+                                        <!-- Expandable Follow-up Checklist Tree with Inline Note & Photo Upload -->
+                                        <tr ng-if="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
+                                            <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
+                                                <div class="order-followup-tree-box">
+                                                    <div class="followup-tree-header">
+                                                        <div>
+                                                            <strong style="font-size: 0.95rem; color: #1E1B4B;">Follow-up Checkpoints & Note Ledger ({{ (orderFollowups[order.id] || []).length }} Milestones)</strong>
+                                                        </div>
+                                                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+                                                            Add review notes & upload customer proof photos for Order {{order.orderNumber}}
+                                                        </span>
+                                                    </div>
+
+                                                    <!-- Milestone Checklist Items with Add/Edit Note & Image Action -->
+                                                    <div class="followup-tree-list">
+                                                        <div class="followup-check-card" ng-repeat="check in orderFollowups[order.id] || [] track by check.id">
+                                                            <!-- 1. Milestone info -->
+                                                            <div class="check-col-milestone">
+                                                                <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
+                                                            </div>
+
+                                                            <!-- 2. Status Check Yes/No toggle -->
+                                                            <div class="check-col-status">
+                                                                <button type="button" 
+                                                                        class="followup-status-btn" 
+                                                                        ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
+                                                                        ng-click="toggleFollowupCheck(order, check)"
+                                                                        title="Click to toggle status (Synchronized with Order Log)">
+                                                                    <span ng-if="check.isCompleted">✔</span>
+                                                                    <span ng-if="!check.isCompleted">✖</span>
+                                                                </button>
+                                                                <div class="check-meta-info" ng-if="check.isCompleted">
+                                                                    <span ng-bind="check.checkedBy || 'Admin'"></span>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- 3. Details & User Note -->
+                                                            <div class="check-col-note">
+                                                                <div class="check-note-text" ng-if="check.note" ng-bind="check.note"></div>
+                                                                <div class="check-note-empty" ng-if="!check.note">No note added</div>
+                                                            </div>
+
+                                                            <!-- 4. Attached Images -->
+                                                            <div class="check-col-images">
+                                                                <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)" title="Click to view full image">
+                                                                    <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
+                                                                </div>
+                                                                <span class="check-no-image" ng-if="!check.imageUrl">No photo</span>
+                                                            </div>
+
+                                                            <!-- 5. Edit / Add Details Action (Synchronized with Database & Order Log) -->
+                                                            <div class="check-col-action">
+                                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check)">
+                                                                    <span ng-if="!check.note && !check.imageUrl">+ Add Note & Photo</span>
+                                                                    <span ng-if="check.note || check.imageUrl">Edit Note & Photo</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div ng-if="(orderFollowups[order.id] || []).length === 0" style="padding: 16px; text-align: center; color: var(--text-muted); font-weight: 700;">
+                                                            No active follow-up checkpoints configured.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <tr ng-if="getFilteredCustomerOrders().length === 0">
                                             <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
-                                                No notes or compliments match the selected filter criteria.
+                                                No orders match the selected filter criteria.
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <!-- DataTable Pagination Footer for Customer Feedback -->
-                            <div class="datatable-footer" ng-if="getFilteredCustomerFeedbacks().length > 0">
+                            <!-- DataTable Pagination Footer for Customer Orders -->
+                            <div class="datatable-footer" ng-if="getFilteredCustomerOrders().length > 0">
                                 <div class="datatable-info">
-                                    Showing {{ (feedbackDt.currentPage - 1) * feedbackDt.pageSize + 1 }} to {{ feedbackDt.currentPage * feedbackDt.pageSize > getFilteredCustomerFeedbacks().length ? getFilteredCustomerFeedbacks().length : feedbackDt.currentPage * feedbackDt.pageSize }} of {{ getFilteredCustomerFeedbacks().length }} records
+                                    Showing {{ (orderDt.currentPage - 1) * orderDt.pageSize + 1 }} to {{ orderDt.currentPage * orderDt.pageSize > getFilteredCustomerOrders().length ? getFilteredCustomerOrders().length : orderDt.currentPage * orderDt.pageSize }} of {{ getFilteredCustomerOrders().length }} orders
                                 </div>
                                 <div class="datatable-pagination">
-                                    <button type="button" class="page-btn" ng-disabled="feedbackDt.currentPage === 1" ng-click="setFeedbackPage(feedbackDt.currentPage - 1)">« Prev</button>
-                                    <button type="button" class="page-btn" ng-repeat="p in getFeedbackPageNumbers(getFilteredCustomerFeedbacks().length)" ng-class="{'active': feedbackDt.currentPage === p}" ng-click="setFeedbackPage(p)" ng-bind="p"></button>
-                                    <button type="button" class="page-btn" ng-disabled="feedbackDt.currentPage === getTotalFeedbackPages(getFilteredCustomerFeedbacks().length)" ng-click="setFeedbackPage(feedbackDt.currentPage + 1)">Next »</button>
+                                    <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === 1" ng-click="setOrderPage(orderDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getOrderPageNumbers(getFilteredCustomerOrders().length)" ng-class="{'active': orderDt.currentPage === p}" ng-click="setOrderPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === getTotalOrderPages(getFilteredCustomerOrders().length)" ng-click="setOrderPage(orderDt.currentPage + 1)">Next »</button>
                                 </div>
                             </div>
                         </div>

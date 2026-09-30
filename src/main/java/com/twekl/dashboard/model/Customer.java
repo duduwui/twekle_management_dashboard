@@ -36,6 +36,12 @@ public class Customer {
     private String nextPendingFollowup;
 
     @Transient
+    private Long nextPendingOrderId;
+
+    @Transient
+    private String nextPendingOrderNumber;
+
+    @Transient
     private Integer remainingFollowupsCount = 0;
 
     private LocalDateTime createdAt;
@@ -116,6 +122,12 @@ public class Customer {
 
     public String getNextPendingFollowup() { return nextPendingFollowup; }
     public void setNextPendingFollowup(String nextPendingFollowup) { this.nextPendingFollowup = nextPendingFollowup; }
+
+    public Long getNextPendingOrderId() { return nextPendingOrderId; }
+    public void setNextPendingOrderId(Long nextPendingOrderId) { this.nextPendingOrderId = nextPendingOrderId; }
+
+    public String getNextPendingOrderNumber() { return nextPendingOrderNumber; }
+    public void setNextPendingOrderNumber(String nextPendingOrderNumber) { this.nextPendingOrderNumber = nextPendingOrderNumber; }
 
     public Integer getRemainingFollowupsCount() { return remainingFollowupsCount; }
     public void setRemainingFollowupsCount(Integer remainingFollowupsCount) { this.remainingFollowupsCount = remainingFollowupsCount; }

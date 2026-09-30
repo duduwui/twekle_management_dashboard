@@ -64,48 +64,55 @@ All dashboard pages **must** use clean, standard URLs via the HTML5 History API 
 ### Route Mapping:
 - **Main Follow-ups Table:** `/admin/followups`
 - **Customer Orders & Product Log:** `/admin/followups/orders/:id`
-- **Customer Notes & Photos:** `/admin/followups/feedback/:id`
+- **Customer Compliments / Notes & Photos:** `/admin/followups/feedback/:id`
 - **Admin Management:** `/admin/admins`
 - **Admin Actions:** `/admin/admins/create`, `/admin/admins/inspect/:id`, `/admin/admins/delete/:id`
 - **Users & Permissions:** `/admin/users`
 - **User Actions:** `/admin/users/create`, `/admin/users/inspect/:id`, `/admin/users/update/:id`, `/admin/users/delete/:id`
-- **Role Templates:** `/admin/role-templates`
 - **Authentication:** `/login`
 
-> **Backend Mapping:** In [`WebViewController.java`](file:///home/emz/.gemini/antigravity/scratch/twekl-dashboard/src/main/java/com/twekl/dashboard/controller/WebViewController.java) and [`SecurityConfig.java`](file:///home/emz/.gemini/antigravity/scratch/twekl-dashboard/src/main/java/com/twekl/dashboard/config/SecurityConfig.java), all `/admin/**` and SPA paths forward to `index.html` with HTTP 200 so direct reloads and bookmarks never return 404.
+> **Backend Mapping:** In `WebViewController.java` and `SecurityConfig.java`, all `/admin/**` and SPA paths forward to `index.html` with HTTP 200 so direct reloads and bookmarks never return 404 or incomplete chunk errors.
 
 ---
 
-## 5. Coding Conventions & Style Rules
+## 5. UI Architecture & Core Features
 
-### 1. Naming & Labels:
-- Always use **"Follow-ups"** (never "Customer Follow-up" or "Followup").
-- Keep terminology consistent across tables, badges, headers, and navigation.
+### 1. Follow-ups Table & Order Log Integration:
+- In the main Follow-ups table, the **"Remaining Follow-ups"** column dynamically displays only the milestone duration (e.g. `24 Hours Ago`, `1 Week Ago`, or `✓ All Done` with no `(ORD-...)` suffix).
+- The milestone badge is a clickable interactive button (`.comic-milestone-link-btn`). Clicking it immediately opens that customer's **Orders Log** and **auto-expands that specific pending order checklist**.
 
-### 2. Table Column Wrapping (Single-Line Rule):
-- Phone numbers, numeric badge counts, dates, prices, and status pills across **all** tables must **always remain on a single line** (`white-space: nowrap !important;`).
+### 2. View-Only Order Log vs. Compliments Tree (Real-Time Sync):
+- **Section 4.2 (Order Log):** View-only audit mode. Users can toggle status checkboxes (✔ / ✖) and view existing notes / photos, but cannot edit them here.
+- **Section 4.3 (Compliments / Reviews & Notes):** Exact replica tree of the Order Log. Checkpoints feature a `+ Add / Edit Note & Photo` button to upload notes and proof photos.
+- **Data Synchronization:** Both Section 4.2 and Section 4.3 read from and write to the same `order_followup_checks` database table. Any status mark, note, or photo edit is automatically synchronized in real time between both views.
+
+### 3. Unified Users & Role Permissions Tab:
+- Users and Role Templates are unified under a single sidebar tab: **Users & Permissions** (`/admin/users`).
+- **Top Segmented Switcher:** Seamlessly switches between `[ ➕ Create & Configure User ]` and `[ 📋 All Users Directory ]`.
+- **User Profile Creation:**
+  - Multilingual user names: **English**, **Arabic (`dir="rtl"`)**, and **Kurdish (`dir="rtl"`)**.
+  - Password, User Phone Number (strictly for user profiles, **never in role templates**), and Status switch.
+  - **Role Template Selector Pills:** Clicking a role template pill instantly populates the 3-module CRUD matrix below. Also includes a `+ New Role Template` modal.
+  - **3-Module Matrix:** Software, Sales, and Product Management with granular Create, Read, Update, Delete switches and preset buttons (`Full CRUD`, `Read Only`, `Revoke`).
+- **All Users Directory:** Clean DataTable with Date Range filters, dynamic Time Filter presets modal, live search, multilingual name badges, and action modals (`Permissions Matrix`, `Edit`, `Delete`).
+
+### 4. Table Column Formatting & No Horizontal Scrolling:
+- Column widths and table padding (`10px 13px`) are optimized so tables fit 100% on standard desktop screens without horizontal side-scrolling.
+- Phone numbers, counts, dates, prices, and status badges must **always remain on a single line** (`white-space: nowrap !important;`).
 - Use classes: `.nowrap`, `.col-phone`, `.col-num`, `.col-date`, `.col-action`.
 
-### 3. Comic / Neobrutalism UI Rules:
+### 5. Comic / Neobrutalism Design Rules:
 - **Borders:** Crisp black borders (`2px solid #000000` or `var(--border-black)`).
 - **Shadows:** Hard offset shadows (`box-shadow: var(--shadow-comic-md)`).
 - **Palette:** Twekl Teal (`#35B89F` / `#229E86`), Dark Slate (`#0F172A`), Pale Canvas (`#FDFCF7`), and Red Accent (`#EF4444`).
 - **Modals:** Centered card with clean header, structured body, and separate footer buttons.
 
-### 4. Milestone Progression Logic:
-- In the main Follow-ups table, the **"Remaining Order Follow-ups"** column dynamically displays the earliest pending milestone and order number (e.g. `24 Hours Ago (ORD-805)`).
-- As checkpoints are checked off in the purchase history tree, the table advances sequentially to the next pending milestone.
-- When all milestones across all orders are done, the badge displays **`✓ All Done`** (with no remaining count numbers).
-
-### 5. Notes & Image Uploading:
-- Customer notes support attached photos (proof / WhatsApp screenshots).
-- Images are compressed in the browser via HTML5 Canvas before sending as Base64 strings to `LONGTEXT` columns.
-- Clickable thumbnails open a high-res lightbox preview.
-- Do not add star ratings or category tags to notes; keep them simple (Customer profile header, order association, note text, and photo).
-
 ### 6. Dynamic Time Filter Presets:
 - Administrators can configure reusable time filter presets (e.g., *Last 24 Hours*, *Last 7 Days*, *Last 30 Days*, *Last 6 Months*).
 - Presets are selected through a clean 3-column modal popup (`Time Filters`) with straightforward checkboxes and a confirm button.
+
+### 7. Thymeleaf Template Integrity:
+- Never include duplicate HTML attributes (e.g. duplicate `class="..."` or `style="..."` on the same HTML tag) in `index.html` to avoid `ERR_INCOMPLETE_CHUNKED_ENCODING`.
 
 ---
 

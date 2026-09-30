@@ -84,6 +84,8 @@ public class CustomerService {
                 int remainingCount = 0;
                 int totalChecksCount = 0;
                 String closestPendingMilestone = null;
+                Long closestPendingOrderId = null;
+                String closestPendingOrderNumber = null;
 
                 for (CustomerOrder o : orders) {
                     List<OrderFollowupCheck> checks = getOrderFollowupChecks(o.getId());
@@ -92,8 +94,9 @@ public class CustomerService {
                         if (!Boolean.TRUE.equals(chk.getIsCompleted())) {
                             remainingCount++;
                             if (closestPendingMilestone == null) {
-                                String orderSuffix = orders.size() > 1 ? " (" + o.getOrderNumber() + ")" : "";
-                                closestPendingMilestone = chk.getPresetName() + orderSuffix;
+                                closestPendingMilestone = chk.getPresetName();
+                                closestPendingOrderId = o.getId();
+                                closestPendingOrderNumber = o.getOrderNumber();
                             }
                         }
                     }
@@ -102,6 +105,9 @@ public class CustomerService {
                 boolean allCompleted = (totalChecksCount > 0 && remainingCount == 0);
                 c.setAllFollowupsCompleted(allCompleted);
                 c.setRemainingFollowupsCount(remainingCount);
+                c.setNextPendingOrderId(closestPendingOrderId);
+                c.setNextPendingOrderNumber(closestPendingOrderNumber);
+
                 if (allCompleted) {
                     c.setNextPendingFollowup("All Done");
                 } else if (closestPendingMilestone != null) {
@@ -113,6 +119,8 @@ public class CustomerService {
                 c.setAllFollowupsCompleted(false);
                 c.setRemainingFollowupsCount(0);
                 c.setNextPendingFollowup("-");
+                c.setNextPendingOrderId(null);
+                c.setNextPendingOrderNumber(null);
             }
         }
     }

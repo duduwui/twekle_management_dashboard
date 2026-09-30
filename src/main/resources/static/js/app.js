@@ -222,22 +222,19 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
     // =========================================================
     // 3-COLUMN COMPREHENSIVE REPORT FILTERS MODAL
     // =========================================================
+    // =========================================================
+    // COMPREHENSIVE REPORT FILTERS MODAL
+    // =========================================================
     $scope.showReportFilterModal = false;
     $scope.pendingReportFilters = {
         preset: null,
-        dateFrom: null,
-        dateTo: null,
-        satisfaction: 'all',
-        milestone: 'all'
+        satisfaction: 'all'
     };
 
     $scope.openReportFilterModal = function() {
         $scope.pendingReportFilters = {
             preset: $scope.selectedReportPreset ? angular.copy($scope.selectedReportPreset) : null,
-            dateFrom: $scope.reportFilters.dateFrom ? new Date($scope.reportFilters.dateFrom) : null,
-            dateTo: $scope.reportFilters.dateTo ? new Date($scope.reportFilters.dateTo) : null,
-            satisfaction: $scope.reportFilters.satisfactionFilter || 'all',
-            milestone: $scope.reportFilters.milestoneFilter || 'all'
+            satisfaction: $scope.reportFilters.satisfactionFilter || 'all'
         };
         $scope.showReportFilterModal = true;
     };
@@ -248,16 +245,6 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
 
     $scope.selectPendingReportPreset = function(preset) {
         $scope.pendingReportFilters.preset = preset;
-        if (preset) {
-            var targetDays = getPresetTargetDays(preset);
-            var now = new Date();
-            var from = new Date(now.getTime() - (targetDays * 24 * 3600 * 1000));
-            $scope.pendingReportFilters.dateFrom = from;
-            $scope.pendingReportFilters.dateTo = now;
-        } else {
-            $scope.pendingReportFilters.dateFrom = null;
-            $scope.pendingReportFilters.dateTo = null;
-        }
     };
 
     $scope.isPendingReportPresetSelected = function(preset) {
@@ -269,37 +256,24 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
     $scope.resetReportFilterModal = function() {
         $scope.pendingReportFilters = {
             preset: null,
-            dateFrom: null,
-            dateTo: null,
-            satisfaction: 'all',
-            milestone: 'all'
+            satisfaction: 'all'
         };
     };
 
     $scope.confirmApplyReportFilterModal = function() {
-        $scope.selectedReportPreset = $scope.pendingReportFilters.preset;
-        $scope.reportFilters.dateFrom = $scope.pendingReportFilters.dateFrom;
-        $scope.reportFilters.dateTo = $scope.pendingReportFilters.dateTo;
-        $scope.reportFilters.satisfactionFilter = $scope.pendingReportFilters.satisfaction || 'all';
-        $scope.reportFilters.milestoneFilter = $scope.pendingReportFilters.milestone || 'all';
-
-        if ($scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) {
-            $scope.reportPeriod = 'custom';
-            $scope.loadReport('custom');
+        if ($scope.pendingReportFilters.preset) {
+            $scope.selectReportPreset($scope.pendingReportFilters.preset);
         } else {
-            $scope.selectedReportPreset = null;
-            $scope.reportPeriod = 'all';
-            $scope.loadReport('all');
+            $scope.selectReportPreset(null);
         }
+        $scope.reportFilters.satisfactionFilter = $scope.pendingReportFilters.satisfaction || 'all';
         $scope.showReportFilterModal = false;
         $scope.showToast('Filters applied');
     };
 
     $scope.isReportFiltered = function() {
         return !!($scope.selectedReportPreset || 
-                  ($scope.reportFilters.dateFrom && $scope.reportFilters.dateTo) ||
-                  ($scope.reportFilters.satisfactionFilter && $scope.reportFilters.satisfactionFilter !== 'all') ||
-                  ($scope.reportFilters.milestoneFilter && $scope.reportFilters.milestoneFilter !== 'all'));
+                  ($scope.reportFilters.satisfactionFilter && $scope.reportFilters.satisfactionFilter !== 'all'));
     };
 
     $scope.clearReportDates = function() {

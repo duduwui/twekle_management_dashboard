@@ -2344,28 +2344,31 @@
     <!-- 5. CLEAN 3-COLUMN TIME FILTER POPUP MODAL                 -->
     <!-- ========================================================= -->
         <!-- ========================================================= -->
-    <!-- 5. 3-COLUMN COMPREHENSIVE REPORT FILTERS MODAL            -->
+        <!-- ========================================================= -->
+    <!-- 5. COMPREHENSIVE REPORT FILTERS MODAL                     -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showReportFilterModal" ng-click="closeReportFilterModal()">
-        <div class="filter-modal-card" style="max-width: 860px;" ng-click="$event.stopPropagation()">
+        <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
             <!-- Clean Header -->
             <div class="filter-modal-header-simple">
                 <strong class="filter-modal-title-simple">Filters</strong>
                 <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
             </div>
 
-            <!-- 3 Columns Body -->
-            <div class="filter-modal-3col-grid">
-                <!-- Column 1: Time Period & Range -->
-                <div class="filter-modal-col">
-                    <div class="filter-col-heading">Time Period</div>
-                    <div class="filter-col-list">
+            <!-- Body: Time Filters (3-col grid) & Satisfaction Scale -->
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Section 1: Time Filters -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Filters</div>
+                    <div class="filter-presets-grid-3">
+                        <!-- All Time Card -->
                         <div class="filter-preset-card-simple"
                              ng-class="{'selected': isPendingReportPresetSelected(null)}"
                              ng-click="selectPendingReportPreset(null)">
                             <span class="filter-simple-name">All Time</span>
                             <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(null)">✓</span></div>
                         </div>
+                        <!-- Dynamic Presets Cards -->
                         <div class="filter-preset-card-simple"
                              ng-repeat="preset in timeFilterPresets track by preset.id"
                              ng-if="preset.isActive"
@@ -2375,29 +2378,16 @@
                             <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(preset)">✓</span></div>
                         </div>
                     </div>
-                    <div style="margin-top: 12px; padding-top: 10px; border-top: 1.5px dashed #CBD5E1;">
-                        <div style="font-size: 0.76rem; font-weight: 800; color: #64748B; margin-bottom: 6px; text-transform: uppercase;">Custom Date Range</div>
-                        <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 0.78rem; font-weight: 800; color: #475569; width: 38px;">From:</span>
-                                <input type="date" class="comic-date-input" style="width: 100%;" ng-model="pendingReportFilters.dateFrom" title="Start Date">
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 0.78rem; font-weight: 800; color: #475569; width: 38px;">To:</span>
-                                <input type="date" class="comic-date-input" style="width: 100%;" ng-model="pendingReportFilters.dateTo" title="End Date">
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Column 2: Satisfaction Scale -->
-                <div class="filter-modal-col">
-                    <div class="filter-col-heading">Satisfaction Scale</div>
-                    <div class="filter-col-list">
+                <!-- Section 2: Satisfaction Scale -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Satisfaction Scale</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                         <div class="filter-preset-card-simple"
                              ng-class="{'selected': pendingReportFilters.satisfaction === 'all'}"
                              ng-click="pendingReportFilters.satisfaction = 'all'">
-                            <span class="filter-simple-name">All Scales</span>
+                            <span class="filter-simple-name">All</span>
                             <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'all'">✓</span></div>
                         </div>
                         <div class="filter-preset-card-simple"
@@ -2420,27 +2410,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Column 3: Milestone Presets -->
-                <div class="filter-modal-col">
-                    <div class="filter-col-heading">Milestones</div>
-                    <div class="filter-col-list">
-                        <div class="filter-preset-card-simple"
-                             ng-class="{'selected': pendingReportFilters.milestone === 'all'}"
-                             ng-click="pendingReportFilters.milestone = 'all'">
-                            <span class="filter-simple-name">All Milestones</span>
-                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.milestone === 'all'">✓</span></div>
-                        </div>
-                        <div class="filter-preset-card-simple"
-                             ng-repeat="preset in timeFilterPresets track by preset.id"
-                             ng-if="preset.isActive"
-                             ng-class="{'selected': pendingReportFilters.milestone === preset.name}"
-                             ng-click="pendingReportFilters.milestone = preset.name">
-                            <span class="filter-simple-name" ng-bind="preset.name"></span>
-                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.milestone === preset.name">✓</span></div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Clean Footer -->
@@ -2454,7 +2423,7 @@
         </div>
     </div>
 
-<div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
+    <div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
         <div class="filter-modal-card" ng-click="$event.stopPropagation()">
             <!-- Clean Header -->
             <div class="filter-modal-header-simple">

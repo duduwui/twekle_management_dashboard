@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="top-header" th:fragment="header">
+    <div>
+        <h1 class="header-page-title" ng-show="currentTab === 'admins'">Admin Management</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'users'">Users & Permissions</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'customers'">Follow-ups</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'time-filters'">Time Filters</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'milestones'">Reports — Follow-ups &amp; Milestones</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'satisfaction'">Reports — Satisfaction &amp; Notes</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'products'">Reports — Product Insights</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; reportSubTab === 'customers'">Reports — Customer Directory</h1>
+        <h1 class="header-page-title" ng-show="currentTab === 'reports' &amp;&amp; !reportSubTab">Reports</h1>
+    </div>
+</header>
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="modals" th:remove="tag">
+    <!-- ========================================================= -->
+    <!-- 1. ADMIN DELETE CONFIRMATION POPUP MODAL                  -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 460px;">
+            <div class="comic-modal-header" style="background-color: #FEF2F2; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeDeleteAdminModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 22px; font-size: 0.95rem; line-height: 1.5;">
+                <p>Are you sure you want to delete administrator <strong>{{ adminToDelete.username }}</strong>?</p>
+                <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 10px;">Clicking proceed will take you to the dedicated Delete Administrator page to review details and finalize removal.</p>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeDeleteAdminModal()">Cancel</button>
+                <button type="button" class="comic-btn-danger" ng-click="proceedToDeleteAdminPage()">Proceed to Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 2. EDIT / ADD FOLLOW-UP NOTE & IMAGE MODAL                -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 500px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Follow-up: {{ editingFollowup.presetName }}</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Follow-up Note Textarea -->
+                <div class="form-group">
+                    <label class="form-label">Note / Details</label>
+                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up note..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Customer Satisfaction Scale (Satisfied, Neutral, Unsatisfied) -->
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
+                    <div class="satisfaction-scale-bar">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingFollowup.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Attached Proof Image File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Upload Image</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="editingFollowup.imageUrl" ng-click="editingFollowup.imageUrl = ''">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photo Preview if present -->
+                <div ng-if="editingFollowup.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{editingFollowup.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Image ready for save</span>
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Checkpoint</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 3. IMAGE PREVIEW LIGHTBOX MODAL                           -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 650px; background: #0F172A; color: #FFFFFF; border: 2.5px solid #000000;">
+            <div class="comic-modal-header" style="background-color: #1E293B; border-bottom: 2px solid #000000;">
+                <strong style="font-size: 0.95rem; color: #FFFFFF;">Attached Follow-up Photo</strong>
+                <button type="button" class="comic-modal-close" style="color: #FFFFFF;" ng-click="closeImageModal()">&times;</button>
+            </div>
+            <div style="padding: 16px; display: flex; justify-content: center; align-items: center;">
+                <img ng-src="{{previewImageUrl}}" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px; border: 1.5px solid #000;" alt="Full Preview">
+            </div>
+        </div>
+    </div>
+    <!-- ========================================================= -->
+    <!-- 4. ADD CUSTOMER NOTE / FEEDBACK & PHOTO MODAL               -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">+ Add Note & Photo</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeAddFeedbackModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Customer Context Header -->
+                <div style="background: #F8FAFC; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic); padding: 10px 14px;" ng-if="selectedCustomer">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer:</div>
+                    <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="selectedCustomer.name"></strong>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-left: 8px;" ng-bind="selectedCustomer.phoneNumber"></span>
+                </div>
+
+                <!-- Associated Order Selector -->
+                <div class="form-group">
+                    <label class="form-label">Associated Purchase Order / Product Log</label>
+                    <select class="comic-input" ng-model="newCustomerFeedback.orderId" ng-options="order.id as (order.orderNumber + ' — ' + order.itemsSummary) for order in customerOrders">
+                        <option value="">-- General / Not Linked to Specific Order --</option>
+                    </select>
+                </div>
+
+                <!-- Content Textarea -->
+                <div class="form-group">
+                    <label class="form-label">Note & Feedback Details</label>
+                    <textarea class="comic-input" rows="4" placeholder="Enter full details of the note or customer feedback..." ng-model="newCustomerFeedback.content" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Customer Satisfaction Scale (Optional) -->
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
+                    <div class="satisfaction-scale-bar">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': newCustomerFeedback.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': newCustomerFeedback.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': newCustomerFeedback.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(newCustomerFeedback, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Attached Proof / Note Image File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Attach Photo / Screenshot</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleFeedbackImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="newCustomerFeedback.imageUrl" ng-click="clearFeedbackImage()">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photo Preview if present -->
+                <div ng-if="newCustomerFeedback.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{newCustomerFeedback.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Photo attached and ready to save</span>
+                </div>
+
+                <!-- Logged By -->
+                <div class="form-group">
+                    <label class="form-label">Logged By</label>
+                    <input type="text" class="comic-input" placeholder="e.g. Agent Sarah / Customer Care" ng-model="newCustomerFeedback.authorName">
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeAddFeedbackModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="submitCustomerFeedback()">Save Note & Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 4.1 EDIT CUSTOMER NOTE / FEEDBACK & PHOTO MODAL           -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showEditFeedbackModal" ng-click="closeEditFeedbackModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Edit Note & Photo</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeEditFeedbackModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Customer Context Header -->
+                <div style="background: #F8FAFC; border: 1.5px solid var(--border-black); border-radius: var(--radius-comic); padding: 10px 14px;" ng-if="selectedCustomer">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Customer:</div>
+                    <strong style="font-size: 0.95rem; color: var(--primary-dark);" ng-bind="selectedCustomer.name"></strong>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-left: 8px;" ng-bind="selectedCustomer.phoneNumber"></span>
+                </div>
+
+                <!-- Associated Order Selector -->
+                <div class="form-group">
+                    <label class="form-label">Associated Purchase Order / Product Log</label>
+                    <select class="comic-input" ng-model="editingCustomerFeedback.orderId" ng-options="order.id as (order.orderNumber + ' — ' + order.itemsSummary) for order in customerOrders">
+                        <option value="">-- General / Not Linked to Specific Order --</option>
+                    </select>
+                </div>
+
+                <!-- Content Textarea -->
+                <div class="form-group">
+                    <label class="form-label">Note & Feedback Details</label>
+                    <textarea class="comic-input" rows="4" placeholder="Enter note details..." ng-model="editingCustomerFeedback.content" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Customer Satisfaction Scale (Optional) -->
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
+                    <div class="satisfaction-scale-bar">
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingCustomerFeedback.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingCustomerFeedback.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingCustomerFeedback.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingCustomerFeedback, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Attached Proof / Note Image File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Attached Photo / Screenshot</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleEditFeedbackImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="editingCustomerFeedback.imageUrl" ng-click="clearEditFeedbackImage()">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photo Preview if present -->
+                <div ng-if="editingCustomerFeedback.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{editingCustomerFeedback.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Photo attached and ready to save</span>
+                </div>
+
+                <!-- Logged By -->
+                <div class="form-group">
+                    <label class="form-label">Logged By</label>
+                    <input type="text" class="comic-input" placeholder="e.g. Agent Sarah / Customer Care" ng-model="editingCustomerFeedback.authorName">
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeEditFeedbackModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="saveEditFeedback()">Update Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 5. CLEAN 3-COLUMN TIME FILTER POPUP MODAL                 -->
+    <!-- ========================================================= -->
+        <!-- ========================================================= -->
+        <!-- ========================================================= -->
+    <!-- 5. COMPREHENSIVE REPORT FILTERS MODAL                     -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showReportFilterModal" ng-click="closeReportFilterModal()">
+        <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
+            <!-- Clean Header -->
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Filters</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
+            </div>
+
+            <!-- Body: Time Filters (3-col grid) & Satisfaction Scale -->
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Section 1: Time Filters -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Filters</div>
+                    <div class="filter-presets-grid-3">
+                        <!-- All Time Card -->
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingReportPresetSelected(null)}"
+                             ng-click="selectPendingReportPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(null)">✓</span></div>
+                        </div>
+                        <!-- Dynamic Presets Cards -->
+                        <div class="filter-preset-card-simple"
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.isActive"
+                             ng-class="{'selected': isPendingReportPresetSelected(preset)}"
+                             ng-click="selectPendingReportPreset(preset)">
+                            <span class="filter-simple-name" ng-bind="preset.name"></span>
+                            <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(preset)">✓</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Satisfaction Scale -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Satisfaction Scale</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'all'}"
+                             ng-click="pendingReportFilters.satisfaction = 'all'">
+                            <span class="filter-simple-name">All</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'all'">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'SATISFIED'}"
+                             ng-click="pendingReportFilters.satisfaction = 'SATISFIED'">
+                            <span class="filter-simple-name">Satisfied</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'SATISFIED'">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'NEUTRAL'}"
+                             ng-click="pendingReportFilters.satisfaction = 'NEUTRAL'">
+                            <span class="filter-simple-name">Neutral</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'NEUTRAL'">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'UNSATISFIED'}"
+                             ng-click="pendingReportFilters.satisfaction = 'UNSATISFIED'">
+                            <span class="filter-simple-name">Unsatisfied</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'UNSATISFIED'">✓</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clean Footer -->
+            <div class="filter-modal-footer-simple" style="justify-content: space-between;">
+                <button type="button" class="comic-btn-secondary" ng-click="resetReportFilterModal()" style="font-size: 0.82rem;">Reset All</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeReportFilterModal()">Cancel</button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyReportFilterModal()">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
+        <div class="filter-modal-card" ng-click="$event.stopPropagation()">
+            <!-- Clean Header -->
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Time Filters</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
+            </div>
+
+            <!-- 3-Column Clean Presets Grid -->
+            <div style="padding: 18px 20px;">
+                <div class="filter-presets-grid-3">
+                    <!-- All Time Card -->
+                    <div class="filter-preset-card-simple" 
+                         ng-class="{'selected': isPendingPresetSelected(null)}" 
+                         ng-click="selectPendingPreset(null)">
+                        <span class="filter-simple-name">All Time</span>
+                        <div class="filter-simple-check">
+                            <span ng-if="isPendingPresetSelected(null)">✓</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Preset Cards -->
+                    <div class="filter-preset-card-simple" 
+                         ng-repeat="preset in timeFilterPresets track by preset.id"
+                         ng-if="preset.isActive"
+                         ng-class="{'selected': isPendingPresetSelected(preset)}" 
+                         ng-click="selectPendingPreset(preset)">
+                        <span class="filter-simple-name" ng-bind="preset.name"></span>
+                        <div class="filter-simple-check">
+                            <span ng-if="isPendingPresetSelected(preset)">✓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clean Footer -->
+            <div class="filter-modal-footer-simple">
+                <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 6. AUTHENTICATION / LOGIN POPUP MODAL                     -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showLoginModal" ng-click="closeLoginModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 420px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Administrator Login</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeLoginModal()">&times;</button>
+            </div>
+            <form ng-submit="login()">
+                <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="comic-input" placeholder="e.g. twekl_super_admin" ng-model="loginForm.username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="comic-input" placeholder="••••••••" ng-model="loginForm.password" required>
+                    </div>
+                </div>
+                <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeLoginModal()">Cancel</button>
+                    <button type="submit" class="comic-btn">Log In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Comic Toast Alerts -->
+    <div class="toast-container">
+        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
+            <span ng-bind="toast.message"></span>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="scripts" th:remove="tag">
+    <!-- AngularJS (1.8.2) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    
+    <!-- Modular Application Architecture -->
+    <script src="/js/app.module.js?v=3.5"></script>
+    <script src="/js/services/toast.service.js?v=3.5"></script>
+    <script src="/js/services/i18n.service.js?v=3.5"></script>
+    <script src="/js/services/filter.service.js?v=3.5"></script>
+    <script src="/js/services/api.service.js?v=3.5"></script>
+    <script src="/js/controllers/DashboardController.js?v=3.5"></script>
+</div>
+</body>
+</html>

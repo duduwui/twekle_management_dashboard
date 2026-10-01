@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.api.analytics;
 
 import com.twekl.dashboard.repository.AdminRepository;
 import com.twekl.dashboard.repository.AppUserRepository;

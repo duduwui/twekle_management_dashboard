@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

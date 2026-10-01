@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.api.auth;
 
 import com.twekl.dashboard.dto.AuthResponse;
 import com.twekl.dashboard.dto.LoginRequest;

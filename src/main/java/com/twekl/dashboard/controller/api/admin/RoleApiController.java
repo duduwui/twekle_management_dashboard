@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.api.admin;
 
 import com.twekl.dashboard.model.Role;
 import com.twekl.dashboard.service.RoleService;

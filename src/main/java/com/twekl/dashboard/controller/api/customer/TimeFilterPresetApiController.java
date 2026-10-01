@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.api.customer;
 
 import com.twekl.dashboard.model.TimeFilterPreset;
 import com.twekl.dashboard.service.TimeFilterPresetService;

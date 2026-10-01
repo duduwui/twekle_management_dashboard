@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.api.analytics;
 
 import com.twekl.dashboard.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;

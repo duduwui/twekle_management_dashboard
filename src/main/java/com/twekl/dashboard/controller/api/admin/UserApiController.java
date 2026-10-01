@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller;
+package com.twekl.dashboard.controller.api.admin;
 
 import com.twekl.dashboard.dto.CreateUserDto;
 import com.twekl.dashboard.dto.UpdateUserDto;

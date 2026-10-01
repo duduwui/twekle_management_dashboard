@@ -191,15 +191,15 @@ body {
 }
 
 .nav-item.active {
-  background-color: #FFFFFF;
-  color: #0F172A;
+  background-color: rgba(255, 255, 255, 0.20);
+  color: #FFFFFF;
   font-weight: 900;
   border: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
 }
 
 .nav-item.active span {
-  color: #0F172A;
+  color: #FFFFFF;
 }
 
 .nav-badge {
@@ -212,8 +212,8 @@ body {
 }
 
 .nav-item.active .nav-badge {
-  background-color: #E6F7F3;
-  color: #0F172A;
+  background-color: rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
 }
 
 /* Category Accordion */
@@ -310,15 +310,15 @@ body {
 }
 
 .nav-sub-item.active {
-  background-color: #FFFFFF;
-  color: #0F172A;
+  background-color: rgba(255, 255, 255, 0.20);
+  color: #FFFFFF;
   font-weight: 900;
   border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
 }
 
 .nav-sub-item.active span {
-  color: #0F172A;
+  color: #FFFFFF;
 }
 
 .nav-badge-sm {
@@ -331,8 +331,8 @@ body {
 }
 
 .nav-sub-item.active .nav-badge-sm {
-  background-color: #E6F7F3;
-  color: #0F172A;
+  background-color: rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
 }
 
 /* Sidebar Bottom User Profile / Credentials */

@@ -561,10 +561,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
             if (q && !searchMatch([a.username, a.phoneNumber, a.status, a.superAdmin ? 'super admin' : 'administrator', '#' + a.id].join(' '), q)) {
                 return false;
             }
-            // Dynamic Time Filter Preset
-            if (!matchesPreset(a.createdAt, $scope.selectedTimePreset)) return false;
-            // Date Range
-            if (!isWithinDateRange(a.createdAt, $scope.adminFilters.dateFrom, $scope.adminFilters.dateTo)) return false;
+            // Date Range (if explicitly applied)
+            if ($scope.adminFilters.dateFrom || $scope.adminFilters.dateTo) {
+                if (!isWithinDateRange(a.createdAt, $scope.adminFilters.dateFrom, $scope.adminFilters.dateTo)) return false;
+            }
             return true;
         }).sort(function(a, b) {
             var valA = a[$scope.dt.sortField];
@@ -594,10 +594,10 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
             if (q && !searchMatch([u.usernameEn, u.usernameAr, u.usernameKu, u.phoneNumber, u.status, '#' + u.id].join(' '), q)) {
                 return false;
             }
-            // Dynamic Time Filter Preset
-            if (!matchesPreset(u.createdAt, $scope.selectedTimePreset)) return false;
-            // Date Range
-            if (!isWithinDateRange(u.createdAt, $scope.userFilters.dateFrom, $scope.userFilters.dateTo)) return false;
+            // Date Range (if explicitly applied)
+            if ($scope.userFilters.dateFrom || $scope.userFilters.dateTo) {
+                if (!isWithinDateRange(u.createdAt, $scope.userFilters.dateFrom, $scope.userFilters.dateTo)) return false;
+            }
             return true;
         }).sort(function(a, b) {
             var valA = a[$scope.dt.sortField];

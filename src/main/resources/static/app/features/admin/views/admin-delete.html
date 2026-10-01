@@ -1,0 +1,111 @@
+
+                    <!-- 1.4 DELETE ADMINS PAGE -->
+                    <div ng-show="adminView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                ← Back to Admins List
+                            </button>
+                        </div>
+
+                        <!-- Delete Confirmation Card for Selected Admin -->
+                        <div class="inspect-card" ng-if="selectedAdmin" style="border-color: #EF4444;">
+                            <div style="font-size: 1.15rem; font-weight: 900; color: #DC2626;">
+                                Confirm Permanent Deletion of Administrator:
+                            </div>
+                            
+                            <div class="detail-grid-3">
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Username</span>
+                                    <strong class="detail-item-value" ng-bind="selectedAdmin.username"></strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Admin Level</span>
+                                    <span class="detail-item-value" ng-bind="selectedAdmin.superAdmin ? 'Super Administrator' : 'Administrator'"></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Phone Number</span>
+                                    <span class="detail-item-value" ng-bind="selectedAdmin.phoneNumber || 'None'"></span>
+                                </div>
+                            </div>
+
+                            <div style="background-color: #FEF2F2; border: 2px solid #EF4444; border-radius: 8px; padding: 12px 16px; font-weight: 700; font-size: 0.88rem; color: #991B1B;">
+                                Warning: This action cannot be undone. Administrator account "{{selectedAdmin.username}}" will be permanently removed.
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 6px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('list')">Cancel & Go Back</button>
+                                <button type="button" class="comic-btn" style="background-color: #EF4444; color: #FFFFFF;" ng-click="performDeleteAdmin(selectedAdmin)">
+                                    Yes, Delete Administrator
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- All Administrators List -->
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                            <div class="card-header-flex" style="margin-bottom: 24px;">
+                                <div style="font-size: 1.05rem; font-weight: 900;">Select an Administrator to Delete:</div>
+                                <input type="text" class="comic-input" style="width: 260px;" placeholder="Search administrators..." ng-model="deleteAdminDt.search">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('username')">
+                                                Username <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('username')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('phoneNumber')">
+                                                Phone Number <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('phoneNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('superAdmin')">
+                                                Admin Level <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('superAdmin')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteAdminsBy('status')">
+                                                Status <span class="sort-indicator" ng-bind="getDeleteAdminSortIndicator('status')"></span>
+                                            </th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="admin in getPagedDeleteAdmins() track by admin.id" ng-class="{'selected-user-row': selectedAdmin && selectedAdmin.id === admin.id}">
+                                            <td><strong ng-bind="admin.username"></strong></td>
+                                            <td><span style="color: var(--text-muted);" ng-bind="admin.phoneNumber || '-'"></span></td>
+                                            <td>
+                                                <span class="comic-tag" ng-class="admin.superAdmin ? 'tag-primary' : 'tag-muted'">
+                                                    <span ng-if="admin.superAdmin">Super Admin</span>
+                                                    <span ng-if="!admin.superAdmin">Administrator</span>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="comic-tag" ng-class="admin.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="admin.status"></span>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-danger" ng-click="setAdminView('delete', admin)">
+                                                    Select for Deletion
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="getFilteredDeleteAdmins().length === 0">
+                                            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No administrators found.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Delete Admins Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredDeleteAdmins().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (deleteAdminDt.currentPage - 1) * deleteAdminDt.pageSize + 1 }} to {{ deleteAdminDt.currentPage * deleteAdminDt.pageSize > getFilteredDeleteAdmins().length ? getFilteredDeleteAdmins().length : deleteAdminDt.currentPage * deleteAdminDt.pageSize }} of {{ getFilteredDeleteAdmins().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="deleteAdminDt.currentPage === 1" ng-click="setDeleteAdminPage(deleteAdminDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getDeleteAdminPageNumbers(getFilteredDeleteAdmins().length)" ng-class="{'active': deleteAdminDt.currentPage === p}" ng-click="setDeleteAdminPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="deleteAdminDt.currentPage === getTotalDeleteAdminPages(getFilteredDeleteAdmins().length)" ng-click="setDeleteAdminPage(deleteAdminDt.currentPage + 1)">Next »</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+

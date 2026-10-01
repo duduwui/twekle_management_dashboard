@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Tag(name = "Reports", description = "Customer follow-up milestone completion, success rates, and timeline performance analytics")
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping({"/internal/reports", "/api/reports"})
 @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 public class ReportApiController {
 

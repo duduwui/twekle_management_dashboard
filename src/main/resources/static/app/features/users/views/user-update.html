@@ -1,0 +1,50 @@
+
+                    <!-- 2.4 UPDATE USER PAGE (U) -->
+                    <div ng-show="userView === 'update'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                ← Back to Users Directory
+                            </button>
+                        </div>
+
+                        <!-- Update Form -->
+                        <div class="comic-form-box" ng-if="editingUser">
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">English Username (Required)</label>
+                                    <input type="text" class="comic-input" ng-model="editingUser.usernameEn" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Arabic Name (الاسم بالعربية)</label>
+                                    <input type="text" class="comic-input" dir="rtl" ng-model="editingUser.usernameAr">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kurdish Name (ناوی بە کوردی)</label>
+                                    <input type="text" class="comic-input" dir="rtl" ng-model="editingUser.usernameKu">
+                                </div>
+                            </div>
+
+                            <div class="form-grid-3" style="margin-top: 12px;">
+                                <div class="form-group">
+                                    <label class="form-label">New Password (leave empty to keep current)</label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="editingUser.password">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="comic-input" ng-model="editingUser.phoneNumber">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Account Status</label>
+                                    <select class="comic-input" ng-model="editingUser.status">
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="INACTIVE">INACTIVE</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel</button>
+                                <button type="button" class="comic-btn" ng-click="updateUser()">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>

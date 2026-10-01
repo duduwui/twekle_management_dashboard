@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Tag(name = "Analytics", description = "System summary statistics, account totals, and KPI dashboard metrics")
 @RestController
-@RequestMapping("/api/stats")
+@RequestMapping({"/internal/stats", "/api/stats"})
 @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 public class DashboardStatsApiController {
 

@@ -1,0 +1,127 @@
+
+                    <!-- 2.3 INSPECT USER & 3-COLUMN CRUD MODULE PERMISSIONS PAGE (R) -->
+                    <div ng-show="userView === 'inspect'" style="display: flex; flex-direction: column; gap: 18px;">
+                        
+                        <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                    ← Back to Users Directory
+                                </button>
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('update', selectedUser)">
+                                    Edit Details
+                                </button>
+                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', selectedUser)">
+                                    Delete User
+                                </button>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 12px;" ng-if="selectedUser">
+                                <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 2px solid var(--border-black); border-radius: 8px; padding: 6px 14px; box-shadow: 2px 2px 0px var(--border-black);">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">User:</span>
+                                    <strong style="font-size: 0.95rem; color: var(--text-main);" ng-bind="selectedUser.usernameEn"></strong>
+                                    <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
+                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; margin-left: 4px;" ng-if="selectedUser.phoneNumber" ng-bind="'(' + selectedUser.phoneNumber + ')'"></span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted);">Switch:</span>
+                                    <select class="comic-input" 
+                                            style="width: 170px; padding: 5px 10px; font-size: 0.82rem;" 
+                                            ng-model="selectedUser" 
+                                            ng-options="u as u.usernameEn for u in users track by u.id"
+                                            ng-change="setUserView('inspect', selectedUser)">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role Template Quick Applicator Bar for Inspected User -->
+                        <div class="comic-form-box" style="background-color: #F8FAFC; padding: 14px 18px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);">
+                                    Apply Role Template to {{selectedUser.usernameEn}}:
+                                </div>
+                                <div class="role-template-pills-row">
+                                    <button type="button" 
+                                            class="role-pill-btn" 
+                                            ng-repeat="role in roles track by role.id"
+                                            ng-click="applyRoleToInspectedUser(role)"
+                                            title="Apply {{role.name}} to this user">
+                                        <span ng-bind="role.name"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3-COLUMN MODULE PERMISSION CARDS (Software, Sales, Product Management) -->
+                        <div class="module-cards-grid">
+                            <div class="comic-module-card" ng-repeat="mod in userModules track by mod.moduleKey">
+                                <!-- Card Header -->
+                                <div class="module-card-header">
+                                    <div class="module-title-group">
+                                        <h3 class="module-title" ng-bind="mod.moduleNameEn"></h3>
+                                    </div>
+                                </div>
+
+                                <p class="module-desc" ng-bind="mod.descriptionEn"></p>
+
+                                <!-- 4 Direct CRUD Switches -->
+                                <div class="crud-switches-box">
+                                    <!-- Create (C) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canCreate}">C</span>
+                                            <span>Create</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canCreate" ng-click="toggleModuleField(mod, 'canCreate')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Read (R) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canRead}">R</span>
+                                            <span>Read</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canRead" ng-click="toggleModuleField(mod, 'canRead')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Update (U) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canUpdate}">U</span>
+                                            <span>Update</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canUpdate" ng-click="toggleModuleField(mod, 'canUpdate')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Delete (D) -->
+                                    <div class="crud-switch-row">
+                                        <div class="crud-switch-label">
+                                            <span class="crud-unified-badge" ng-class="{'active': mod.canDelete}">D</span>
+                                            <span>Delete</span>
+                                        </div>
+                                        <label class="comic-switch">
+                                            <input type="checkbox" ng-checked="mod.canDelete" ng-click="toggleModuleField(mod, 'canDelete')">
+                                            <span class="comic-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Presets -->
+                                <div class="module-quick-actions">
+                                    <button type="button" class="preset-btn" ng-click="setFullCrud(mod)">Full CRUD</button>
+                                    <button type="button" class="preset-btn" ng-click="setReadOnly(mod)">Read Only</button>
+                                    <button type="button" class="preset-btn-danger" ng-click="revokeModuleAccess(mod)">Revoke</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>

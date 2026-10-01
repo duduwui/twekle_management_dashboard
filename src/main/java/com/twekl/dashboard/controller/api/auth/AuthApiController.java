@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Authentication", description = "User authentication, session verification, and logout operations")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping({"/internal/auth", "/api/auth"})
 public class AuthApiController {
 
     private final AuthService authService;

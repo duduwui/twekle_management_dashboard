@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Users", description = "Enterprise Staff accounts, localized usernames, and granular CRUD permissions")
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping({"/internal/users", "/api/users"})
 public class UserApiController {
 
     private final AppUserService userService;

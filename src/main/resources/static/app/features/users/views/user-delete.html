@@ -1,0 +1,100 @@
+
+                    <!-- 2.5 DELETE USER PAGE (D) -->
+                    <div ng-show="userView === 'delete'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <button type="button" class="back-btn" ng-click="setUserView('list')">
+                                ← Back to Users Directory
+                            </button>
+                        </div>
+
+                        <!-- Delete Confirmation Card -->
+                        <div class="inspect-card" ng-if="selectedUser" style="border-color: #EF4444;">
+                            <div style="font-size: 1.15rem; font-weight: 900; color: #DC2626;">
+                                Confirm Permanent Deletion of User:
+                            </div>
+                            
+                            <div class="detail-grid-3">
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Username</span>
+                                    <strong class="detail-item-value" ng-bind="selectedUser.usernameEn"></strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Status</span>
+                                    <div class="detail-item-value" style="margin-top: 4px;">
+                                        <span class="comic-tag" ng-class="selectedUser.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="selectedUser.status"></span>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-item-label">Phone Number</span>
+                                    <span class="detail-item-value" ng-bind="selectedUser.phoneNumber || 'None'"></span>
+                                </div>
+                            </div>
+
+                            <div style="background-color: #FEF2F2; border: 2px solid #EF4444; border-radius: 8px; padding: 12px 16px; font-weight: 700; font-size: 0.88rem; color: #991B1B;">
+                                Warning: This operation will permanently erase user "{{selectedUser.usernameEn}}" and delete all of their Software, Sales, and Product permission records from the database.
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 6px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setUserView('list')">Cancel & Go Back</button>
+                                <button type="button" class="comic-btn" style="background-color: #EF4444; color: #FFFFFF;" ng-click="performDeleteUser(selectedUser)">
+                                    Yes, Permanently Delete User
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- All Users Selection List -->
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                            <div class="card-header-flex" style="margin-bottom: 24px;">
+                                <div style="font-size: 1.05rem; font-weight: 900;">Select a User to Delete:</div>
+                                <input type="text" class="comic-input" style="width: 260px;" placeholder="Search users to delete..." ng-model="deleteUserDt.search">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="comic-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('usernameEn')">
+                                                Username <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('usernameEn')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th col-phone nowrap" ng-click="sortDeleteUsersBy('phoneNumber')">
+                                                Phone Number <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('phoneNumber')"></span>
+                                            </th>
+                                            <th class="comic-sortable-th" ng-click="sortDeleteUsersBy('status')">
+                                                Status <span class="sort-indicator" ng-bind="getDeleteUserSortIndicator('status')"></span>
+                                            </th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="user in getPagedDeleteUsers() track by user.id" ng-class="{'selected-user-row': selectedUser && selectedUser.id === user.id}">
+                                            <td>
+                                                <strong ng-bind="user.usernameEn"></strong>
+                                            </td>
+                                            <td class="col-phone nowrap"><span style="color: var(--text-muted); white-space: nowrap;" ng-bind="user.phoneNumber || '-'"></span></td>
+                                            <td>
+                                                <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', user)">
+                                                    Select for Deletion
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr ng-if="getFilteredDeleteUsers().length === 0">
+                                            <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
+                                                No users found.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Delete Users Pagination Footer -->
+                            <div class="datatable-footer" ng-if="getFilteredDeleteUsers().length > 0">
+                                <div class="datatable-info">
+                                    Showing {{ (deleteUserDt.currentPage - 1) * deleteUserDt.pageSize + 1 }} to {{ deleteUserDt.currentPage * deleteUserDt.pageSize > getFilteredDeleteUsers().length ? getFilteredDeleteUsers().length : deleteUserDt.currentPage * deleteUserDt.pageSize }} of {{ getFilteredDeleteUsers().length }} entries
+                                </div>
+                                <div class="datatable-pagination">
+                                    <button type="button" class="page-btn" ng-disabled="deleteUserDt.currentPage === 1" ng-click="setDeleteUserPage(deleteUserDt.currentPage - 1)">« Prev</button>
+                                    <button type="button" class="page-btn" ng-repeat="p in getDeleteUserPageNumbers(getFilteredDeleteUsers().length)" ng-class="{'active': deleteUserDt.currentPage === p}" ng-click="setDeleteUserPage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="deleteUserDt.currentPage === getTotalDeleteUserPages(getFilteredDeleteUsers().length)" ng-click="setDeleteUserPage(deleteUserDt.currentPage + 1)">Next »</button>
+                                </div>

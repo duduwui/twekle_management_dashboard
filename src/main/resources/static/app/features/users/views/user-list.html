@@ -1,0 +1,115 @@
+
+                    <!-- 2.2 ALL USERS DIRECTORY LIST PAGE -->
+                    <div ng-show="userView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
+                        
+                        <!-- Clean Filter Toolbar (Date Pickers + Filter Icon Button + Action Button + Live Search) -->
+                        <div class="comic-filter-toolbar">
+                            <div class="filter-left-controls">
+                                <span class="filter-date-label">From:</span>
+                                <input type="date" class="comic-date-input" ng-model="userFilters.dateFrom" title="Start Date">
+                                <span class="filter-date-label">To:</span>
+                                <input type="date" class="comic-date-input" ng-model="userFilters.dateTo" title="End Date">
+                                
+                                <!-- Big Filter Preset Selector Button -->
+                                <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset}" ng-click="openFilterModal('user')" title="Select Time Filter Preset">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                    </svg>
+                                </button>
+
+                                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedTimePreset" ng-click="selectTimePreset(null)" title="Click to clear filter">
+                                    <span ng-bind="selectedTimePreset.name"></span> ✕
+                                </span>
+                            </div>
+
+                            <!-- Small Action Button in Toolbar -->
+                            <div class="filter-middle-actions">
+                                <button type="button" class="comic-btn-sm" ng-click="setUserView('create')">
+                                    + Create User
+                                </button>
+                            </div>
+
+                            <!-- Live Search Bar -->
+                            <div class="filter-search-box">
+                                <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="search" name="search_user_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search users by name, phone..." ng-model="userFilters.search">
+                                <button type="button" class="search-clear-btn" ng-show="userFilters.search" ng-click="userFilters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- Users DataTable with Sortable Columns -->
+                        <div class="table-responsive">
+                            <table class="comic-table">
+                                <thead>
+                                    <tr>
+                                        <th class="comic-sortable-th" ng-click="sortBy('usernameEn')">
+                                            User Profile & Multilingual Names <span class="sort-indicator" ng-bind="getSortIndicator('usernameEn')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th col-phone nowrap" ng-click="sortBy('phoneNumber')">
+                                            Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
+                                        </th>
+                                        <th class="comic-sortable-th" ng-click="sortBy('status')">
+                                            Status <span class="sort-indicator" ng-bind="getSortIndicator('status')"></span>
+                                        </th>
+                                        <th style="text-align: right;" class="nowrap">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="user in getPagedUsers() track by user.id" 
+                                        style="cursor: pointer;"
+                                        ng-click="setUserView('inspect', user)">
+                                        <td>
+                                            <div style="display: flex; flex-direction: column; gap: 3px;">
+                                                <strong style="font-size: 0.96rem; color: var(--primary-dark);" ng-bind="user.usernameEn"></strong>
+                                                <div style="display: flex; gap: 6px; align-items: center;" ng-if="user.usernameAr || user.usernameKu">
+                                                    <span class="comic-tag tag-muted" style="font-size: 0.72rem; padding: 2px 6px;" ng-if="user.usernameAr" ng-bind="'AR: ' + user.usernameAr"></span>
+                                                    <span class="comic-tag tag-muted" style="font-size: 0.72rem; padding: 2px 6px;" ng-if="user.usernameKu" ng-bind="'KU: ' + user.usernameKu"></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="col-phone nowrap">
+                                            <strong style="color: var(--text-main); font-size: 0.92rem; white-space: nowrap;" ng-bind="user.phoneNumber || '-'"></strong>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 8px;" ng-click="$event.stopPropagation()">
+                                                <label class="comic-switch">
+                                                    <input type="checkbox" ng-checked="user.status === 'ACTIVE'" ng-click="toggleUserStatus(user, $event)">
+                                                    <span class="comic-slider"></span>
+                                                </label>
+                                                <span class="comic-tag" ng-class="user.status === 'ACTIVE' ? 'tag-primary' : 'tag-muted'" ng-bind="user.status"></span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right;" ng-click="$event.stopPropagation()">
+                                            <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('inspect', user)">
+                                                Permissions
+                                            </button>
+                                            <button type="button" class="comic-btn-secondary" style="padding: 5px 10px; font-size: 0.78rem; margin-right: 6px;" ng-click="setUserView('update', user)">
+                                                Edit
+                                            </button>
+                                            <button type="button" class="comic-btn-danger" ng-click="setUserView('delete', user)">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr ng-if="getFilteredUsers().length === 0">
+                                        <td colspan="4" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                            No users match the selected filters.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- DataTable Pagination Footer -->
+                        <div class="datatable-footer" ng-if="getFilteredUsers().length > 0">
+                            <div class="datatable-info">
+                                Showing {{ (dt.currentPage - 1) * dt.pageSize + 1 }} to {{ dt.currentPage * dt.pageSize > getFilteredUsers().length ? getFilteredUsers().length : dt.currentPage * dt.pageSize }} of {{ getFilteredUsers().length }} entries
+                            </div>
+                            <div class="datatable-pagination">
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">« Prev</button>
+                                <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredUsers().length)" ng-class="{'active': dt.currentPage === p}" ng-click="setPage(p)" ng-bind="p"></button>
+                                <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredUsers().length)" ng-click="setPage(dt.currentPage + 1)">Next »</button>
+                            </div>
+                        </div>
+
+                    </div>

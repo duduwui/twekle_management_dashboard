@@ -78,33 +78,34 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 
                 // Public Authentication Endpoints
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/internal/auth/**", "/api/auth/**").permitAll()
                 
                 // Super Administrator Sensitive Operations
-                .requestMatchers(HttpMethod.POST, "/api/admins/**").hasRole("SUPER_ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/admins/**").hasRole("SUPER_ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/admins/**").hasRole("SUPER_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/admins/**").hasRole("SUPER_ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/admins/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/internal/admins/**", "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/internal/admins/**", "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/internal/admins/**", "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/internal/admins/**", "/api/admins/**").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/internal/admins/**", "/api/admins/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 
                 // Role Templates & Permission Controls
-                .requestMatchers(HttpMethod.POST, "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
-                .requestMatchers(HttpMethod.PATCH, "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
-                .requestMatchers(HttpMethod.DELETE, "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
-                .requestMatchers(HttpMethod.GET, "/api/roles/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/internal/roles/**", "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
+                .requestMatchers(HttpMethod.PATCH, "/internal/roles/**", "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
+                .requestMatchers(HttpMethod.DELETE, "/internal/roles/**", "/api/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
+                .requestMatchers(HttpMethod.GET, "/internal/roles/**", "/api/roles/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 
                 // User Management Endpoints
-                .requestMatchers("/api/users/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "PERMISSION_MANAGE_USERS")
+                .requestMatchers("/internal/users/**", "/api/users/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "PERMISSION_MANAGE_USERS")
                 
                 // Customer Follow-up, Orders, Presets, Dashboard Stats & Reports
-                .requestMatchers("/api/customers/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/api/orders/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/api/time-filters/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/api/stats/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/api/reports/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/internal/customers/**", "/api/customers/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/internal/orders/**", "/api/orders/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/internal/followups/**", "/api/followups/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/internal/time-filters/**", "/api/time-filters/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/internal/stats/**", "/api/stats/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers("/internal/reports/**", "/api/reports/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 
-                // All other API endpoints require authenticated session
-                .requestMatchers("/api/**").authenticated()
+                // All other internal data and API endpoints require authenticated session
+                .requestMatchers("/internal/**", "/api/**").authenticated()
                 
                 // Any other SPA page routes
                 .anyRequest().permitAll()

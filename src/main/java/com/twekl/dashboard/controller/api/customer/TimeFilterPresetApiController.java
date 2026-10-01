@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Time Filters", description = "Dynamic time filter presets with duration units for customer timeline categorization")
 @RestController
-@RequestMapping("/api/time-filters")
+@RequestMapping({"/internal/time-filters", "/api/time-filters"})
 @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 public class TimeFilterPresetApiController {
 

@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Admins", description = "Super Administrator account operations, search, role delegations, and lifecycle management")
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping({"/internal/admins", "/api/admins"})
 public class AdminApiController {
 
     private final AdminService adminService;

@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Roles", description = "Role templates and global permission presets")
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping({"/internal/roles", "/api/roles"})
 public class RoleApiController {
 
     private final RoleService roleService;

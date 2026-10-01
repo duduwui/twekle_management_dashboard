@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Customers & Follow-ups", description = "Customer CRM Lifecycle, Orders, Feedbacks, and Order Follow-up Checkpoints")
 @RestController
-@RequestMapping("/api")
+@RequestMapping({"/internal", "/api"})
 @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 public class CustomerApiController {
 

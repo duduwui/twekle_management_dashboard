@@ -1,0 +1,47 @@
+
+                    <!-- 1.2 CREATE ADMIN PAGE -->
+                    <div ng-show="adminView === 'create'" style="display: flex; flex-direction: column; gap: 22px;">
+                        <div class="action-page-header">
+                            <button type="button" class="back-btn" ng-click="setAdminView('list')">
+                                ← Back to Admins List
+                            </button>
+                        </div>
+
+                        <!-- Create Admin Form -->
+                        <div class="comic-form-box">
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="comic-input" placeholder="e.g. ops_manager" ng-model="newAdmin.username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="comic-input" placeholder="••••••••" ng-model="newAdmin.password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="comic-input" placeholder="+966 50 123 4567" ng-model="newAdmin.phoneNumber">
+                                </div>
+                            </div>
+
+                            <div class="comic-checkboxes-row">
+                                <label class="comic-checkbox-label">
+                                    <input type="checkbox" ng-model="newAdmin.isSuperAdmin">
+                                    <span>Super Administrator (Full Power)</span>
+                                </label>
+                                <label class="comic-checkbox-label">
+                                    <input type="checkbox" ng-model="newAdmin.canCreateRoles">
+                                    <span>Can Create Role Templates & Perms</span>
+                                </label>
+                                <label class="comic-checkbox-label">
+                                    <input type="checkbox" ng-model="newAdmin.canManageUsers">
+                                    <span>Can Create & Edit Users</span>
+                                </label>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;">
+                                <button type="button" class="comic-btn-secondary" ng-click="setAdminView('list')">Cancel</button>
+                                <button type="button" class="comic-btn" ng-click="createAdmin()">Save & Create Administrator</button>
+                            </div>
+                        </div>
+                    </div>

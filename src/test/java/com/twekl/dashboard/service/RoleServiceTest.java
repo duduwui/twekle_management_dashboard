@@ -1,7 +1,10 @@
 package com.twekl.dashboard.service;
 
-import com.twekl.dashboard.model.Role;
-import com.twekl.dashboard.repository.RoleRepository;
+import com.twekl.dashboard.modules.role.Role;
+import com.twekl.dashboard.modules.role.RoleRepository;
+import com.twekl.dashboard.modules.role.RoleService;
+
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

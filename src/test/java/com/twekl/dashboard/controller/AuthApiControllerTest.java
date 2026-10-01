@@ -1,7 +1,9 @@
 package com.twekl.dashboard.controller;
 
+import com.twekl.dashboard.modules.auth.LoginRequest;
+
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.twekl.dashboard.dto.LoginRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

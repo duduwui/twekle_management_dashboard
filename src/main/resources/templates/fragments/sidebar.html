@@ -48,7 +48,18 @@
 
         <div class="nav-divider"></div>
 
-        <!-- Group 2: Reports Accordion -->
+        <!-- Group 2: Follow-ups -->
+        <button type="button" 
+                class="nav-item" 
+                ng-class="{'active': currentTab === 'customers'}" 
+                ng-click="setTab('customers')">
+            <span>Follow-ups</span>
+            <span class="nav-badge" ng-bind="customers.length">0</span>
+        </button>
+
+        <div class="nav-divider"></div>
+
+        <!-- Group 3: Reports Accordion -->
         <div class="nav-category-group">
             <button type="button"
                     class="nav-category-toggle"
@@ -89,17 +100,6 @@
                 </button>
             </div>
         </div>
-
-        <div class="nav-divider"></div>
-
-        <!-- Group 3: Follow-ups -->
-        <button type="button" 
-                class="nav-item" 
-                ng-class="{'active': currentTab === 'customers'}" 
-                ng-click="setTab('customers')">
-            <span>Follow-ups</span>
-            <span class="nav-badge" ng-bind="customers.length">0</span>
-        </button>
 
         <div class="nav-divider"></div>
 

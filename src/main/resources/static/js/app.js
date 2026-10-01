@@ -2500,9 +2500,11 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
         return $http.get(url).then(function(res) {
             $scope.reportData = res.data;
             $scope.reportLoading = false;
-        }, function() {
+        }, function(err) {
             $scope.reportLoading = false;
-            $scope.showToast('Failed to load report analytics', 'error');
+            if ($scope.auth && $scope.auth.authenticated && err && err.status !== 401 && err.status !== 403) {
+                $scope.showToast('Failed to load report analytics', 'error');
+            }
         });
     };
 
@@ -2648,9 +2650,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
         $scope.loadCustomers();
         $scope.loadCustomerStats();
         $scope.loadTimeFilterPresets();
-        if ($scope.currentTab === 'reports') {
-            $scope.loadReport();
-        }
+        $scope.loadReport($scope.reportPeriod || 'all');
     };
 
     // Initialize application
@@ -2667,9 +2667,7 @@ app.controller('DashboardController', ['$scope', '$http', '$timeout', '$interval
                         Object.keys($scope.orderFollowups || {}).forEach(function(orderId) {
                             $scope.loadOrderFollowups(parseInt(orderId));
                         });
-                        if ($scope.currentTab === 'reports') {
-                            $scope.loadReport($scope.reportPeriod);
-                        }
+                        $scope.loadReport($scope.reportPeriod || 'all');
                     }
                 }, 60000); // every 60 seconds
             } else {

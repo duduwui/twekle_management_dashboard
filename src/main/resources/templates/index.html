@@ -74,29 +74,7 @@
 
                 <div class="nav-divider"></div>
 
-                <!-- Group 2: Follow-ups -->
-                <button type="button" 
-                        class="nav-item" 
-                        ng-class="{'active': currentTab === 'customers'}" 
-                        ng-click="setTab('customers')">
-                    <span>Follow-ups</span>
-                    <span class="nav-badge" ng-bind="customers.length">0</span>
-                </button>
-
-                <div class="nav-divider"></div>
-
-                <!-- Group 3: Time Filters (Dedicated Tab) -->
-                <button type="button" 
-                        class="nav-item" 
-                        ng-class="{'active': currentTab === 'time-filters'}" 
-                        ng-click="setTab('time-filters')">
-                    <span>Time Filters</span>
-                    <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
-                </button>
-
-                <div class="nav-divider"></div>
-
-                <!-- Group 4: Reports Accordion -->
+                <!-- Group 2: Reports Accordion -->
                 <div class="nav-category-group">
                     <button type="button"
                             class="nav-category-toggle"
@@ -137,6 +115,28 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="nav-divider"></div>
+
+                <!-- Group 3: Follow-ups -->
+                <button type="button" 
+                        class="nav-item" 
+                        ng-class="{'active': currentTab === 'customers'}" 
+                        ng-click="setTab('customers')">
+                    <span>Follow-ups</span>
+                    <span class="nav-badge" ng-bind="customers.length">0</span>
+                </button>
+
+                <div class="nav-divider"></div>
+
+                <!-- Group 4: Time Filters (Dedicated Tab) -->
+                <button type="button" 
+                        class="nav-item" 
+                        ng-class="{'active': currentTab === 'time-filters'}" 
+                        ng-click="setTab('time-filters')">
+                    <span>Time Filters</span>
+                    <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
+                </button>
             </div>
 
             <!-- Sidebar Bottom User Profile / Credentials -->
@@ -1176,7 +1176,7 @@
                                             <span class="comic-tag" 
                                                   ng-if="(cust.followupStatus === 'IDLE' || (!cust.allFollowupsCompleted && cust.followupStatus !== 'ALERT')) && cust.totalOrders > 0" 
                                                   style="background-color: #F8FAFC; color: #475569; border: 1.5px solid #CBD5E1; font-weight: 700;">
-                                                ⏱ {{ cust.nextPendingFollowup || 'Fresh (Grace Period)' }}
+                                                <span>{{ cust.nextPendingFollowup || 'Fresh (Grace Period)' }}</span>
                                             </span>
                                             <span ng-if="!cust.totalOrders || cust.totalOrders === 0" style="color: var(--text-muted); font-weight: 700;">-</span>
                                         </td>
@@ -1343,7 +1343,7 @@
                                                                 <strong class="check-milestone-title" ng-bind="check.presetName"></strong>
                                                                 <div style="margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap;">
                                                                     <span class="comic-tag" style="background-color: #DCFCE7; color: #166534; font-size: 0.68rem; font-weight: 900;" ng-if="check.isCompleted">Completed</span>
-                                                                    <span class="comic-tag" style="background-color: #FEE2E2; color: #991B1B; font-size: 0.7rem; font-weight: 900;" ng-if="!check.isCompleted && check.isDue">⚡ {{ formatOrderAge(order) }}</span>
+                                                                    <span class="comic-tag" style="background-color: #FEE2E2; color: #991B1B; font-size: 0.7rem; font-weight: 900;" ng-if="!check.isCompleted && check.isDue">{{ formatOrderAge(order) }}</span>
                                                                     <span class="comic-tag" style="background-color: #F8FAFC; color: #64748B; font-size: 0.68rem; font-weight: 700; border: 1px solid #CBD5E1;" ng-if="!check.isCompleted && !check.isDue && check.isPresetActive !== false">Due in {{ formatCountdown(check.minutesUntilDue) }}</span>
                                                                     <span class="comic-tag" style="background-color: #F1F5F9; color: #94A3B8; font-size: 0.68rem; font-weight: 700;" ng-if="check.isPresetActive === false">Inactive Filter</span>
                                                                     <span class="comic-tag" style="background-color: #F59E0B; color: #000000; font-size: 0.68rem; font-weight: 900;" ng-if="isMilestoneHighlighted(check)">Target Milestone</span>
@@ -2038,10 +2038,10 @@
                                                 <span style="font-weight: 800; color: c.pendingFollowups > 0 ? '#991B1B' : '#166534';" ng-bind="c.pendingFollowups"></span>
                                             </td>
                                             <td class="nowrap" style="text-align: right;">
-                                                <span class="comic-tag tag-primary" ng-if="c.allFollowupsCompleted" style="background-color: #16A34A; color: #FFFFFF; font-weight: 800;">
-                                                    ✓ All Done
+                                                <span ng-if="c.allFollowupsCompleted" style="color: #16A34A; font-weight: 800; font-size: 0.95rem;">
+                                                    All Done
                                                 </span>
-                                                <span class="comic-tag tag-primary" ng-if="!c.allFollowupsCompleted" style="background-color: #FEF2F2; color: #991B1B; font-weight: 800;">
+                                                <span ng-if="!c.allFollowupsCompleted" style="color: #991B1B; font-weight: 800; font-size: 0.95rem;">
                                                     Pending
                                                 </span>
                                             </td>

@@ -18,6 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Authentication", description = "User authentication, session verification, and logout operations")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApiController {
@@ -29,6 +33,7 @@ public class AuthApiController {
         this.authService = authService;
     }
 
+    @Operation(summary = "Authenticate user", description = "Validates credentials and establishes an authenticated HTTP session")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                               HttpServletRequest httpRequest,
@@ -37,6 +42,7 @@ public class AuthApiController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Logout user", description = "Clears security context and invalidates session")
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
         SecurityContextHolder.clearContext();
@@ -47,6 +53,7 @@ public class AuthApiController {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
+    @Operation(summary = "Get current authenticated user info", description = "Returns the session context, username, and role permissions")
     @GetMapping("/current")
     public ResponseEntity<?> getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

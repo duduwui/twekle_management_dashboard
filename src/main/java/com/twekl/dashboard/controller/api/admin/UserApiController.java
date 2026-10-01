@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Users", description = "Enterprise Staff accounts, localized usernames, and granular CRUD permissions")
 @RestController
 @RequestMapping("/api/users")
-
 public class UserApiController {
 
     private final AppUserService userService;
@@ -27,7 +30,7 @@ public class UserApiController {
         this.userService = userService;
     }
 
-    @GetMapping
+    @Operation(summary = "List all staff users", description = "Retrieves all user accounts with multilingual username support and keyword search")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<List<AppUser>> getAllUsers(@RequestParam(value = "query", required = false) String query) {
         if (query != null && !query.trim().isEmpty()) {
@@ -36,6 +39,7 @@ public class UserApiController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @Operation(summary = "Get user by ID", description = "Retrieves staff user details")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> getUserById(@PathVariable Long id) {
@@ -44,12 +48,14 @@ public class UserApiController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Get user module permissions", description = "Retrieves granular module CRUD matrix assigned to this user")
     @GetMapping("/{id}/modules")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<List<ModulePermission>> getUserModules(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getPermissionsForUser(id));
     }
 
+    @Operation(summary = "Create staff user", description = "Provisions a new staff user with multilingual metadata and default module permissions")
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> createUser(@Valid @RequestBody CreateUserDto dto) {
@@ -66,6 +72,7 @@ public class UserApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @Operation(summary = "Update staff user", description = "Modifies user username translations, contact details, and status")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserDto dto) {
@@ -85,6 +92,7 @@ public class UserApiController {
         return ResponseEntity.ok(updated);
     }
 
+    @Operation(summary = "Toggle user module permission", description = "Toggles individual CRUD flag (canCreate, canRead, canUpdate, canDelete) for a module")
     @PatchMapping("/{userId}/modules/{moduleKey}/toggle")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<ModulePermission> toggleModulePermission(@PathVariable Long userId,
@@ -95,6 +103,7 @@ public class UserApiController {
         return ResponseEntity.ok(updated);
     }
 
+    @Operation(summary = "Add custom module for user", description = "Adds a custom module permission row for a specific user")
     @PostMapping("/{userId}/modules")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<ModulePermission> addCustomModule(@PathVariable Long userId, @Valid @RequestBody ModulePermission module) {
@@ -102,6 +111,7 @@ public class UserApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(added);
     }
 
+    @Operation(summary = "Toggle user active status", description = "Switches staff user state between ACTIVE and INACTIVE")
     @PatchMapping("/{id}/toggle-status")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<AppUser> toggleStatus(@PathVariable Long id) {
@@ -109,6 +119,7 @@ public class UserApiController {
         return ResponseEntity.ok(toggled);
     }
 
+    @Operation(summary = "Delete staff user", description = "Permanently removes user account and associated permission records")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_MANAGE_USERS')")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long id) {

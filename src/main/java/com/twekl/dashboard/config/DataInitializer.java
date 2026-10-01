@@ -20,7 +20,6 @@ public class DataInitializer implements CommandLineRunner {
     private final CustomerOrderRepository orderRepository;
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
-    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @Autowired
     public DataInitializer(AdminRepository adminRepository, 
@@ -29,8 +28,7 @@ public class DataInitializer implements CommandLineRunner {
                            CustomerRepository customerRepository,
                            CustomerOrderRepository orderRepository,
                            OrderFollowupCheckRepository followupCheckRepository,
-                           org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-                           org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+                           org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
         this.roleRepository = roleRepository;
         this.timeFilterPresetRepository = timeFilterPresetRepository;
@@ -38,32 +36,10 @@ public class DataInitializer implements CommandLineRunner {
         this.orderRepository = orderRepository;
         this.followupCheckRepository = followupCheckRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
-        try {
-            jdbcTemplate.execute("ALTER TABLE order_followup_checks MODIFY COLUMN image_url LONGTEXT");
-            log.info("Successfully ensured order_followup_checks.image_url is LONGTEXT");
-        } catch (Exception e) {
-            log.warn("Notice updating table column image_url: {}", e.getMessage());
-        }
-
-        try {
-            jdbcTemplate.execute("ALTER TABLE order_followup_checks ADD COLUMN satisfaction VARCHAR(30) NULL");
-            log.info("Successfully ensured order_followup_checks.satisfaction column exists");
-        } catch (Exception e) {
-            log.debug("Column satisfaction already exists in order_followup_checks");
-        }
-
-        try {
-            jdbcTemplate.execute("ALTER TABLE customer_feedbacks ADD COLUMN satisfaction VARCHAR(30) NULL");
-            log.info("Successfully ensured customer_feedbacks.satisfaction column exists");
-        } catch (Exception e) {
-            log.debug("Column satisfaction already exists in customer_feedbacks");
-        }
-
         if (timeFilterPresetRepository.count() == 0) {
             log.info("Seeding Dynamic Time Filter Presets...");
             timeFilterPresetRepository.save(TimeFilterPreset.builder().name("last 24 hours").durationValue(24).durationUnit("HOURS").isActive(true).build());

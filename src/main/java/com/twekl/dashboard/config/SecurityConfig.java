@@ -73,6 +73,10 @@ public class SecurityConfig {
                 // Static web resources & web landing / SPA routes
                 .requestMatchers("/", "/index.html", "/login", "/admin/**", "/followups/**", "/users/**", "/roles/**", "/role-templates/**", "/admins/**", "/customers/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 
+                // OpenAPI 3.0 / Swagger UI Documentation & Actuator Probes
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                
                 // Public Authentication Endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 

@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Roles", description = "Role templates and global permission presets")
 @RestController
 @RequestMapping("/api/roles")
-
 public class RoleApiController {
 
     private final RoleService roleService;
@@ -23,12 +26,13 @@ public class RoleApiController {
         this.roleService = roleService;
     }
 
-    @GetMapping
+    @Operation(summary = "List all roles", description = "Retrieves all pre-configured role permission templates")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<List<Role>> getAllRoles() {
         return ResponseEntity.ok(roleService.getAllRoles());
     }
 
+    @Operation(summary = "Create role template", description = "Defines a new role template with CRUD permission defaults")
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<?> createRole(@RequestBody Role role) {
@@ -39,6 +43,7 @@ public class RoleApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @Operation(summary = "Toggle role permission", description = "Modifies individual permission flag for this role template")
     @PatchMapping("/{id}/toggle")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<?> toggleRolePermission(@PathVariable Long id,
@@ -48,6 +53,7 @@ public class RoleApiController {
         return ResponseEntity.ok(updated);
     }
 
+    @Operation(summary = "Delete role template", description = "Deletes a role template by its ID")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERMISSION_CREATE_ROLES')")
     public ResponseEntity<?> deleteRole(@PathVariable Long id) {

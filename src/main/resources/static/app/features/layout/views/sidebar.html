@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
 <aside class="sidebar" th:fragment="sidebar">
     <div class="brand-section">
         <img src="/images/twekl-logo.png" alt="Twekl Logo" class="brand-logo-img">
@@ -20,7 +23,6 @@
                     <span class="category-arrow" ng-class="{'expanded': isCategoryOpen('admin')}">▶</span>
                     <span>Administration</span>
                 </div>
-                <span class="nav-badge" ng-bind="admins.length + users.length">0</span>
             </button>
 
             <!-- Administration 2 Sub-tabs -->
@@ -30,7 +32,6 @@
                         ng-class="{'active': currentTab === 'admins'}" 
                         ng-click="setTab('admins')">
                     <span>Admin Management</span>
-                    <span class="nav-badge-sm" ng-bind="admins.length">0</span>
                 </button>
 
                 <button type="button" 
@@ -38,7 +39,6 @@
                         ng-class="{'active': currentTab === 'users'}" 
                         ng-click="setTab('users')">
                     <span>Users & Permissions</span>
-                    <span class="nav-badge-sm" ng-bind="users.length">0</span>
                 </button>
             </div>
         </div>
@@ -51,7 +51,6 @@
                 ng-class="{'active': currentTab === 'customers'}" 
                 ng-click="setTab('customers')">
             <span>Follow-ups</span>
-            <span class="nav-badge" ng-bind="customers.length">0</span>
         </button>
 
         <div class="nav-divider"></div>
@@ -66,7 +65,6 @@
                     <span class="category-arrow" ng-class="{'expanded': isCategoryOpen('reports')}">▶</span>
                     <span>Reports</span>
                 </div>
-                <span class="nav-badge" ng-bind="reportData.summary.totalFollowupsDue || 0">0</span>
             </button>
 
             <!-- Reports 4 Sub-tabs -->
@@ -106,7 +104,6 @@
                 ng-class="{'active': currentTab === 'time-filters'}" 
                 ng-click="setTab('time-filters')">
             <span>Time Filters</span>
-            <span class="nav-badge" ng-bind="timeFilterPresets.length">0</span>
         </button>
     </div>
 
@@ -129,3 +126,5 @@
         </button>
     </div>
 </aside>
+</body>
+</html>

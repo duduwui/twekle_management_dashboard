@@ -1,10 +1,9 @@
 package com.twekl.dashboard.service;
 
-import com.twekl.dashboard.modules.role.Role;
-import com.twekl.dashboard.modules.role.RoleRepository;
-import com.twekl.dashboard.modules.role.RoleService;
-
-
+import com.twekl.dashboard.modules.role.dto.RoleDto;
+import com.twekl.dashboard.modules.role.entity.Role;
+import com.twekl.dashboard.modules.role.repository.RoleRepository;
+import com.twekl.dashboard.modules.role.service.RoleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,22 +32,16 @@ public class RoleServiceTest {
 
     @BeforeEach
     public void setUp() {
-        testRole = Role.builder()
-                .id(1L)
-                .name("Support Specialist")
-                .canRead(true)
-                .canCreate(false)
-                .canUpdate(true)
-                .canDelete(false)
-                .build();
+        testRole = new Role("Support Specialist", false, true, false, false);
+        testRole.setId(1L);
     }
 
     @Test
-    @DisplayName("getAllRoles should return list of roles from repository")
-    public void testGetAllRoles() {
+    @DisplayName("Should return all role templates")
+    public void testFindAll() {
         when(roleRepository.findAll()).thenReturn(List.of(testRole));
 
-        List<Role> roles = roleService.getAllRoles();
+        List<Role> roles = roleService.findAll();
 
         assertNotNull(roles);
         assertEquals(1, roles.size());
@@ -57,28 +50,37 @@ public class RoleServiceTest {
     }
 
     @Test
-    @DisplayName("createRole should save and return new role")
-    public void testCreateRole() {
-        when(roleRepository.save(any(Role.class))).thenReturn(testRole);
+    @DisplayName("Should find role template by ID")
+    public void testFindById_Success() {
+        when(roleRepository.findById(1L)).thenReturn(Optional.of(testRole));
 
-        Role created = roleService.createRole(testRole);
+        Optional<Role> found = roleService.findById(1L);
 
-        assertNotNull(created);
-        assertEquals("Support Specialist", created.getName());
-        verify(roleRepository, times(1)).save(testRole);
+        assertTrue(found.isPresent());
+        assertEquals("Support Specialist", found.get().getName());
+        verify(roleRepository, times(1)).findById(1L);
     }
 
     @Test
-    @DisplayName("toggleRolePermission should update specified boolean field")
-    public void testToggleRolePermission() {
-        when(roleRepository.findById(1L)).thenReturn(Optional.of(testRole));
-        when(roleRepository.save(any(Role.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    @DisplayName("Should create a new role template successfully")
+    public void testCreateRole_Success() {
+        RoleDto dto = new RoleDto("Sales Executive", true, true, true, false);
 
-        Role updated = roleService.toggleRolePermission(1L, "canDelete", true);
+        when(roleRepository.existsByName("Sales Executive")).thenReturn(false);
+        when(roleRepository.save(any(Role.class))).thenAnswer(invocation -> {
+            Role r = invocation.getArgument(0);
+            r.setId(2L);
+            return r;
+        });
 
-        assertNotNull(updated);
-        assertTrue(updated.isCanDelete());
-        verify(roleRepository, times(1)).findById(1L);
-        verify(roleRepository, times(1)).save(testRole);
+        Role created = roleService.createRole(dto);
+
+        assertNotNull(created);
+        assertEquals("Sales Executive", created.getName());
+        assertTrue(created.isCanCreate());
+        assertTrue(created.isCanRead());
+        assertTrue(created.isCanUpdate());
+        assertFalse(created.isCanDelete());
+        verify(roleRepository, times(1)).save(any(Role.class));
     }
 }

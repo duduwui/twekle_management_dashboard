@@ -1,8 +1,6 @@
 package com.twekl.dashboard.common.config;
 
-import com.twekl.dashboard.modules.auth.CustomUserDetailsService;
-import com.twekl.dashboard.modules.customer.Customer;
-import com.twekl.dashboard.modules.role.Role;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +25,12 @@ import org.springframework.security.web.context.SecurityContextRepository;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
 
     @Autowired
-    public SecurityConfig(CustomUserDetailsService userDetailsService,
+    public SecurityConfig(UserDetailsService userDetailsService,
                           RestAuthenticationEntryPoint authenticationEntryPoint,
                           RestAccessDeniedHandler accessDeniedHandler) {
         this.userDetailsService = userDetailsService;

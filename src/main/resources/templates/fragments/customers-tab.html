@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="customersTab" th:remove="tag">
-    <section class="comic-card" ng-show="currentTab === 'customers'">
+    <section class="comic-card" ng-show="currentTab === 'customers'" ng-controller="FollowupController">
         <!-- 3.1 Customer Follow-up Directory -->
         <div ng-include="'/app/features/followups/views/followup-list.html'"></div>
 

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="adminTab" th:remove="tag">
-    <section class="comic-card" ng-show="currentTab === 'admins'">
+    <section class="comic-card" ng-show="currentTab === 'admins'" ng-controller="AdminController">
         <!-- 1.1 Admin List Page -->
         <div ng-include="'/app/features/admin/views/admin-list.html'"></div>
 

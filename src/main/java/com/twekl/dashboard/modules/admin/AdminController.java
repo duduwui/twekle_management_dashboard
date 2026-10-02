@@ -11,10 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Admins", description = "Super Administrator account operations, search, role delegations, and lifecycle management")
 @RestController
 @RequestMapping({"/internal/admins", "/api/admins"})
 public class AdminController {
@@ -26,8 +23,7 @@ public class AdminController {
         this.adminService = adminService;
     }
 
-    @Operation(summary = "List all admins", description = "Retrieves all administrators with optional search keyword filtering")
-    @GetMapping
+        @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Admin>> getAllAdmins(@RequestParam(value = "query", required = false) String query) {
         if (query != null && !query.trim().isEmpty()) {
@@ -36,8 +32,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllAdmins());
     }
 
-    @Operation(summary = "Get admin by ID", description = "Retrieves an administrator's profile details")
-    @GetMapping("/{id}")
+        @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Admin> getAdminById(@PathVariable Long id) {
         return adminService.getAdminById(id)
@@ -45,7 +40,6 @@ public class AdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Create admin", description = "Provisions a new administrator account (Super Admin only)")
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Admin> createAdmin(@Valid @RequestBody CreateAdminDto dto) {
@@ -63,8 +57,7 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @Operation(summary = "Update admin", description = "Modifies administrator settings, contact info, and status")
-    @PutMapping("/{id}")
+        @PutMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Admin> updateAdmin(@PathVariable Long id, @Valid @RequestBody UpdateAdminDto dto) {
         Admin admin = new Admin();
@@ -90,16 +83,14 @@ public class AdminController {
         return ResponseEntity.ok(updated);
     }
 
-    @Operation(summary = "Toggle admin active status", description = "Switches between ACTIVE and INACTIVE state")
-    @PatchMapping("/{id}/toggle-status")
+        @PatchMapping("/{id}/toggle-status")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Admin> toggleStatus(@PathVariable Long id) {
         Admin toggled = adminService.toggleAdminStatus(id);
         return ResponseEntity.ok(toggled);
     }
 
-    @Operation(summary = "Delete admin", description = "Permanently removes an administrator account")
-    @DeleteMapping("/{id}")
+        @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Map<String, Object>> deleteAdmin(@PathVariable Long id) {
         adminService.deleteAdmin(id);

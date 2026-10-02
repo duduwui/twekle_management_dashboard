@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="tweklApp" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head}"></head>
-<body ng-controller="DashboardController" ng-cloak>
+<body ng-controller="LayoutController" ng-cloak>
 
     <div class="app-container">
-        <!-- Sidebar Navigation Fragment -->
+        <!-- Sidebar Navigation Fragment (Clean - No Badge Numbers) -->
         <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
 
         <!-- Main Content Wrapper -->
@@ -12,21 +12,21 @@
             <!-- Top Header Fragment -->
             <header th:replace="~{fragments/header :: header}"></header>
 
-            <!-- Page Body -->
+            <!-- Page Body (Micro-Modular Feature Tabs) -->
             <main class="page-body">
-                <!-- Page 1: Admin Management -->
+                <!-- Tab 1: Admin Management -->
                 <div th:replace="~{fragments/admin-tab :: adminTab}"></div>
 
-                <!-- Page 2: Users & Permissions -->
+                <!-- Tab 2: Users & Permissions -->
                 <div th:replace="~{fragments/users-tab :: usersTab}"></div>
 
-                <!-- Page 3: Follow-ups / Customers -->
+                <!-- Tab 3: Follow-ups / Customers -->
                 <div th:replace="~{fragments/customers-tab :: customersTab}"></div>
 
-                <!-- Page 4: Time Filters -->
+                <!-- Tab 4: Time Filters -->
                 <div th:replace="~{fragments/time-filters-tab :: timeFiltersTab}"></div>
 
-                <!-- Page 5: Reports -->
+                <!-- Tab 5: Reports -->
                 <div th:replace="~{fragments/reports-tab :: reportsTab}"></div>
             </main>
         </div>

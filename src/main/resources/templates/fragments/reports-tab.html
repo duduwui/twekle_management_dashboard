@@ -2,18 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="reportsTab" th:remove="tag">
-    <section class="comic-card page-slide-fade" ng-show="currentTab === 'reports'">
-        <!-- 4.1 Follow-ups & Milestones Report -->
-        <div ng-include="'/app/features/reports/views/report-milestones.html'"></div>
+    <section class="comic-card" ng-show="currentTab === 'reports'" ng-controller="ReportController">
+        <!-- 5.1 Report Navigation Directory -->
+        <div ng-include="'/app/features/reports/views/report-directory.html'"></div>
 
-        <!-- 4.2 Satisfaction & Sentiment Report -->
-        <div ng-include="'/app/features/reports/views/report-satisfaction.html'"></div>
-
-        <!-- 4.3 Product Insights Report -->
+        <!-- 5.2 Product Performance Report -->
         <div ng-include="'/app/features/reports/views/report-products.html'"></div>
 
-        <!-- 4.4 Customer Directory Summary Report -->
-        <div ng-include="'/app/features/reports/views/report-directory.html'"></div>
+        <!-- 5.3 Customer Satisfaction Report -->
+        <div ng-include="'/app/features/reports/views/report-satisfaction.html'"></div>
+
+        <!-- 5.4 Milestone Timeline Report -->
+        <div ng-include="'/app/features/reports/views/report-milestones.html'"></div>
     </section>
 </div>
 </body>

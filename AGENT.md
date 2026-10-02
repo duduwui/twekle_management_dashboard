@@ -8,18 +8,20 @@
 
 | Layer | Technology | Details |
 |---|---|---|
-| **Backend** | Spring Boot 3.3.4 (Java 21) | Spring Data JPA, Spring Security 6, Thymeleaf, Lombok, Maven |
-| **Frontend** | AngularJS 1.8.2 + Modern JS | Single Page App (SPA) architecture within Thymeleaf |
-| **Styling** | Comic / Neobrutalism CSS | Custom CSS (`style.css`), unified Twekl Teal theme, bold borders, retro comic buttons |
-| **Database** | MySQL 8.0 (Docker) | Container: `twekl-mysql` (port 3306), db: `twekl_db`, user: `twekl` |
-| **Routing** | HTML5 History API | Standard clean URLs without `#` hash (e.g. `/admin/followups`, `/admin/users`) |
+| **Backend** | Pure Spring MVC 6.1.13 + Jakarta EE 10 | **ZERO Spring Boot**. Embedded Apache Tomcat 10.1.30, `AppInitializer.java`, `WebMvcConfig.java`, `SecurityConfig.java`, Hibernate 6.5.3, Lombok, Maven WAR packaging |
+| **Frontend** | AngularJS 1.8.2 (Action-Level Micro-Nested) | Single Page Application (SPA) architecture within Thymeleaf. Every action/sub-feature is in its own isolated micro-file |
+| **Services** | Super-Micro Angular Services (`static/app/services/`) | Single-responsibility, 15–30 line services communicating strictly via `/internal/*` |
+| **Styling** | Comic / Neobrutalism CSS | Custom CSS (`style.css`), unified Twekl Teal theme, bold black borders, hard offset shadows |
+| **Database** | MySQL 8.0 (Docker) | Container: `twekl-mysql` (port 3306), db: `twekl_db`, user: `twekl_user`, pass: `twekl_pass_2026` |
+| **Authentication** | Session-Based (Stateful) | `HttpSession` with `JSESSIONID` cookies; strictly NO JWT / Bearer tokens |
+| **Routing** | HTML5 History API | Clean URLs without `#` hash (e.g. `/admin/followups`, `/admin/users`, `/admin/admins`) |
 | **Git Remote** | GitHub Repository | `https://github.com/duduwui/twekle_management_dashboard.git` (`main` branch) |
 
 ---
 
 ## 2. Workspaces & Git Syncing Workflow
 
-Always maintain parity between these two local local directories:
+Always maintain parity between these two local directories:
 1. **Active Primary Workspace:** `/home/emz/.gemini/antigravity/scratch/twekl-dashboard`
 2. **Desktop Mirror & Export:** `/home/emz/Desktop/twekl-dashboard`
 
@@ -36,9 +38,6 @@ rsync -av --delete --exclude='.git' --exclude='target' /home/emz/.gemini/antigra
 git add -A
 git commit -m "feat: <description>"
 git push origin main
-
-# 4. Fast-forward / sync Desktop repo
-cd /home/emz/Desktop/twekl-dashboard && git pull --rebase origin main
 ```
 
 ---
@@ -49,15 +48,61 @@ cd /home/emz/Desktop/twekl-dashboard && git pull --rebase origin main
 The database runs as a Docker container named `twekl-mysql`.
 - **Start Database:** `docker start twekl-mysql`
 - **Check Status:** `docker ps`
-- **Database Connection:** `jdbc:mysql://localhost:3306/twekl_db` (User: `twekl`, Pass: `twekl_pass`)
+- **Database Connection:** `jdbc:mysql://localhost:3306/twekl_db` (User: `twekl_user`, Pass: `twekl_pass_2026`)
 
-### Running the Application:
-- **Run Backend:** `mvn spring-boot:run` (runs on `http://localhost:8080`)
+### Running the Application (Pure Spring MVC on Tomcat 10):
+- **Run Backend:** `mvn compile exec:java` (launches `com.twekl.dashboard.TomcatServer` on `http://localhost:8080`)
 - **Default Super Admin:** Username: `twekl_super_admin`, Password: `Super@2026`
 
 ---
 
-## 4. URL & Routing Standards (Crucial Rule: No `#` Hash)
+## 4. Frontend Architecture: Action-Level Micro-Nesting
+
+To guarantee extreme maintainability, clean debugging, and zero cognitive load:
+1. **Zero Monoliths:** No multi-thousand-line or 100+ line catch-all controllers.
+2. **Single Responsibility Files:** Each micro-controller handles exactly **one** single action or view (e.g. Create Admin, Delete Admin, List Admins, Inspect Admin).
+3. **Super-Micro Services:** Services are thin API callers (15-30 lines) returning `$http` promises for `/internal/*` endpoints.
+
+```text
+src/main/resources/static/app/
+├── app.module.js                              # Module definition & 401/403 interceptors
+├── app.controller.js                          # Root coordinator (< 10 lines)
+├── services/                                  # Super-micro API service callers (~20 lines each)
+│   ├── auth.service.js
+│   ├── admin.service.js
+│   ├── user.service.js
+│   ├── customer.service.js
+│   ├── followup.service.js
+│   ├── time-filter.service.js
+│   ├── report.service.js
+│   ├── role.service.js
+│   ├── toast.service.js
+│   ├── filter-helper.service.js
+│   └── i18n.service.js
+└── features/                                  # Domain features with micro-actions & views
+    ├── admin/
+    │   ├── admin.controller.js                # Micro-controller (or action-specific controllers)
+    │   └── views/                             # Sub-views (list, create, inspect, delete)
+    ├── users/
+    │   ├── user.controller.js
+    │   └── views/
+    ├── followups/
+    │   ├── followup.controller.js
+    │   └── views/
+    ├── time-filters/
+    │   ├── time-filter.controller.js
+    │   └── views/
+    ├── reports/
+    │   ├── report.controller.js
+    │   └── views/
+    └── layout/
+        ├── layout.controller.js
+        └── views/
+```
+
+---
+
+## 5. URL & Routing Standards (Crucial Rule: No `#` Hash)
 
 All dashboard pages **must** use clean, standard URLs via the HTML5 History API (`window.history.pushState` / `popstate`). Never revert to AngularJS hash `#` routing.
 
@@ -71,99 +116,19 @@ All dashboard pages **must** use clean, standard URLs via the HTML5 History API 
 - **User Actions:** `/admin/users/create`, `/admin/users/inspect/:id`, `/admin/users/update/:id`, `/admin/users/delete/:id`
 - **Authentication:** `/login`
 
-> **Backend Mapping:** In `WebViewController.java` and `SecurityConfig.java`, all `/admin/**` and SPA paths forward to `index.html` with HTTP 200 so direct reloads and bookmarks never return 404 or incomplete chunk errors.
-
 ---
 
-## 5. UI Architecture & Core Features
+## 6. Comic / Neobrutalism Design Rules
 
-### 1. Follow-ups Table & Order Log Integration:
-- In the main Follow-ups table, the **"Remaining Follow-ups"** column dynamically displays only the milestone duration (e.g. `24 Hours Ago`, `1 Week Ago`, or `✓ All Done` with no `(ORD-...)` suffix).
-- The milestone badge is a clickable interactive button (`.comic-milestone-link-btn`). Clicking it immediately opens that customer's **Orders Log** and **auto-expands that specific pending order checklist**.
-
-### 2. View-Only Order Log vs. Compliments Tree & Cross-Navigation:
-- **Section 4.2 (Order Log):** View-only audit mode. Users can toggle status checkboxes (✔ / ✖) and view existing notes / photos.
-  - Each milestone card has a direct `+ Note / Photo ➔` button that seamlessly transitions the user to the Compliments & Reviews view, expands that order, and opens the note/photo modal immediately for that specific checkpoint.
-  - Order row includes a `Compliments ➔` button for quick switching.
-- **Section 4.3 (Compliments / Reviews & Notes):** Exact replica tree of the Order Log. Checkpoints feature a `+ Add / Edit Note & Photo` button to upload notes and proof photos.
-  - Order row includes an `Order Log ➔` button to jump back to audit mode.
-- **Data Synchronization:** Both Section 4.2 and Section 4.3 read from and write to the same `order_followup_checks` database table. Any status mark, note, or photo edit is automatically synchronized in real time between both views.
-
-### 3. Unified Users & Permissions Tab:
-- Users and Role configuration are unified under **Users & Permissions** (`/admin/users`).
-- **Top Segmented Switcher:** `[ Create & Configure User ]` and `[ All Users Directory ]` (no distracting emoji clutter).
-- **User Profile Creation:**
-  - Multilingual user names: **English**, **Arabic (`dir="rtl"`)**, and **Kurdish (`dir="rtl"`)**.
-  - Password (phone number and status inputs removed from create form to streamline user onboarding).
-  - **3-Module Matrix:** Software, Sales, and Product Management with individual Create, Read, Update, Delete switches and preset buttons (`Full CRUD`, `Read Only`, `Revoke`).
-  - Module cards feature clear, high-contrast dark text and tags (`#000000` / `#0F172A`) for maximum readability.
-- **All Users Directory:** Clean DataTable with Date Range filters, dynamic Time Filter presets modal, search, multilingual name badges, and action modals (`Permissions Matrix`, `Edit`, `Delete`).
-
-### 4. Table Formatting & Eye-Comfort Design:
-- Column widths and table padding (`10px 13px`) fit 100% of standard desktop screens without horizontal side-scrolling.
-- Removed harsh red/green thick inset borders and tinted backgrounds from table rows for a calm, comfortable visual experience.
-- Phone numbers, counts, dates, prices, and status badges remain strictly on a single line (`white-space: nowrap !important;`).
-- Use classes: `.nowrap`, `.col-phone`, `.col-num`, `.col-date`, `.col-action`.
-
-### 5. Comic / Neobrutalism Design Rules:
 - **Borders:** Crisp black borders (`2px solid #000000` or `var(--border-black)`).
 - **Shadows:** Hard offset shadows (`box-shadow: var(--shadow-comic-md)`).
 - **Palette:** Twekl Teal (`#35B89F` / `#229E86`), Dark Slate (`#0F172A`), Pale Canvas (`#FDFCF7`), and Red Accent (`#EF4444`).
-- **Modals:** Centered card with clean header, structured body, and separate footer buttons.
-
-### 6. Dynamic Time Filter Presets:
-- Administrators can configure reusable time filter presets (e.g., *Last 24 Hours*, *Last 7 Days*, *Last 30 Days*, *Last 6 Months*).
-- Presets are selected through a clean 3-column modal popup (`Time Filters`) with straightforward checkboxes and a confirm button.
-
-### 7. Thymeleaf Template Integrity:
-- Never include duplicate HTML attributes (e.g. duplicate `class="..."` or `style="..."` on the same HTML tag) in `index.html` to avoid `ERR_INCOMPLETE_CHUNKED_ENCODING`.
-
----
-
-## 6. Project Directory Layout
-
-```text
-twekl-dashboard/
-├── pom.xml                                    # Maven Build Configuration
-├── AGENT.md                                   # Architecture & Agent Rules (This File)
-├── src/main/java/com/twekl/dashboard/
-│   ├── config/
-│   │   ├── SecurityConfig.java                # Spring Security rules & SPA route permissions
-│   │   ├── DataInitializer.java               # Database seeding & LONGTEXT migrations
-│   │   └── RestAuthenticationEntryPoint.java  # 401/403 handlers
-│   ├── controller/
-│   │   ├── WebViewController.java             # SPA route controller (forwards to index.html)
-│   │   ├── AuthApiController.java             # Login/Logout & session endpoints
-│   │   ├── AdminApiController.java            # Administrator CRUD
-│   │   ├── UserApiController.java             # Users & 3-Module permission CRUD
-│   │   ├── RoleApiController.java             # Role template CRUD
-│   │   ├── CustomerApiController.java         # Customers, Orders, Feedback & Follow-ups
-│   │   └── TimeFilterPresetApiController.java # Dynamic time filter presets
-│   ├── model/                                 # JPA Entities
-│   │   ├── AdminUser.java
-│   │   ├── User.java
-│   │   ├── RoleTemplate.java
-│   │   ├── Customer.java
-│   │   ├── CustomerOrder.java
-│   │   ├── OrderFollowupCheck.java
-│   │   ├── CustomerFeedback.java
-│   │   └── TimeFilterPreset.java
-│   ├── repository/                            # Spring Data JPA Repositories
-│   └── service/                               # Business Logic & Totals Syncing
-└── src/main/resources/
-    ├── application.properties                 # Server port (8080) & MySQL config
-    ├── templates/
-    │   └── index.html                         # SPA Main HTML & Modals
-    └── static/
-        ├── css/style.css                      # Comic / Neobrutalism Design System
-        ├── js/app.js                          # AngularJS 1.8.2 Controller & API Logic
-        └── images/                            # Twekl brand logo & assets
-```
+- **Tables:** Single-line data cells (`white-space: nowrap !important;`), calm background colors, zero numeric badge noise in sidebar.
 
 ---
 
 ## 7. Working With the User (Best Practices)
 
-- **Be Direct & Proactive:** Execute commands, compile with Maven, and restart servers autonomously.
-- **Maintain Code Integrity:** Do not remove existing docstrings, features, or routes unless explicitly asked.
-- **Keep Both Workspaces Synced:** Always push clean commits to `origin/main` and ensure `/home/emz/Desktop/twekl-dashboard` is mirrored.
+- **Be Direct, Honest & Precise:** Always verify the codebase state directly before answering.
+- **Micro-Nesting First:** Break down any complex logic or controllers into micro-action units.
+- **Synchronize Workspaces:** Keep `/home/emz/Desktop/twekl-dashboard` and scratch workspace in 100% sync.

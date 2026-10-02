@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="usersTab" th:remove="tag">
-    <section class="comic-card" ng-show="currentTab === 'users'">
+    <section class="comic-card" ng-show="currentTab === 'users'" ng-controller="UserController">
         <!-- 2.1 User List Page -->
         <div ng-include="'/app/features/users/views/user-list.html'"></div>
 

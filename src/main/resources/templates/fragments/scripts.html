@@ -2,27 +2,104 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="scripts" th:remove="tag">
-    <!-- AngularJS (1.8.2) -->
+    <!-- AngularJS Core Library (1.8.2) -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     
-    <!-- AngularJS Core Application Module -->
-    <script src="/app/app.module.js?v=4.0"></script>
+    <!-- Core Application Module -->
+    <script src="/app/app.module.js?v=6.0"></script>
     
-    <!-- Internal Data Services -->
-    <script src="/app/services/toast.service.js?v=4.0"></script>
-    <script src="/app/services/i18n.service.js?v=4.0"></script>
-    <script src="/app/services/filter-helper.service.js?v=4.0"></script>
-    <script src="/app/services/auth.service.js?v=4.0"></script>
-    <script src="/app/services/admin.service.js?v=4.0"></script>
-    <script src="/app/services/user.service.js?v=4.0"></script>
-    <script src="/app/services/role.service.js?v=4.0"></script>
-    <script src="/app/services/customer.service.js?v=4.0"></script>
-    <script src="/app/services/followup.service.js?v=4.0"></script>
-    <script src="/app/services/time-filter.service.js?v=4.0"></script>
-    <script src="/app/services/report.service.js?v=4.0"></script>
-    
-    <!-- Feature Controllers -->
-    <script src="/app/app.controller.js?v=4.0"></script>
+    <!-- Common Utility Services -->
+    <script src="/app/services/common/toast.service.js?v=6.0"></script>
+    <script src="/app/services/common/i18n.service.js?v=6.0"></script>
+    <script src="/app/services/common/filter-helper.service.js?v=6.0"></script>
+
+    <!-- Auth Micro-Services -->
+    <script src="/app/services/auth/get-me.service.js?v=6.0"></script>
+    <script src="/app/services/auth/login.service.js?v=6.0"></script>
+    <script src="/app/services/auth/logout.service.js?v=6.0"></script>
+    <script src="/app/services/auth/auth.service.js?v=6.0"></script>
+
+    <!-- Admin Micro-Services -->
+    <script src="/app/services/admin/get-all-admins.service.js?v=6.0"></script>
+    <script src="/app/services/admin/get-admin-by-id.service.js?v=6.0"></script>
+    <script src="/app/services/admin/create-admin.service.js?v=6.0"></script>
+    <script src="/app/services/admin/update-admin.service.js?v=6.0"></script>
+    <script src="/app/services/admin/delete-admin.service.js?v=6.0"></script>
+    <script src="/app/services/admin/admin.service.js?v=6.0"></script>
+
+    <!-- User Micro-Services -->
+    <script src="/app/services/users/get-all-users.service.js?v=6.0"></script>
+    <script src="/app/services/users/get-user-by-id.service.js?v=6.0"></script>
+    <script src="/app/services/users/create-user.service.js?v=6.0"></script>
+    <script src="/app/services/users/update-user.service.js?v=6.0"></script>
+    <script src="/app/services/users/delete-user.service.js?v=6.0"></script>
+    <script src="/app/services/users/user.service.js?v=6.0"></script>
+
+    <!-- Customer Micro-Services -->
+    <script src="/app/services/customers/get-all-customers.service.js?v=6.0"></script>
+    <script src="/app/services/customers/get-customer-by-id.service.js?v=6.0"></script>
+    <script src="/app/services/customers/get-customer-orders.service.js?v=6.0"></script>
+    <script src="/app/services/customers/get-customer-stats.service.js?v=6.0"></script>
+    <script src="/app/services/customers/customer.service.js?v=6.0"></script>
+
+    <!-- Followup Micro-Services -->
+    <script src="/app/services/followups/get-followups.service.js?v=6.0"></script>
+    <script src="/app/services/followups/create-followup.service.js?v=6.0"></script>
+    <script src="/app/services/followups/update-followup.service.js?v=6.0"></script>
+    <script src="/app/services/followups/toggle-followup-status.service.js?v=6.0"></script>
+    <script src="/app/services/followups/followup.service.js?v=6.0"></script>
+
+    <!-- Time Filter Micro-Services -->
+    <script src="/app/services/time-filters/get-time-filters.service.js?v=6.0"></script>
+    <script src="/app/services/time-filters/create-time-filter.service.js?v=6.0"></script>
+    <script src="/app/services/time-filters/toggle-time-filter.service.js?v=6.0"></script>
+    <script src="/app/services/time-filters/delete-time-filter.service.js?v=6.0"></script>
+    <script src="/app/services/time-filters/time-filter.service.js?v=6.0"></script>
+
+    <!-- Role Micro-Services -->
+    <script src="/app/services/roles/get-all-roles.service.js?v=6.0"></script>
+    <script src="/app/services/roles/get-role-by-id.service.js?v=6.0"></script>
+    <script src="/app/services/roles/create-role.service.js?v=6.0"></script>
+    <script src="/app/services/roles/update-role.service.js?v=6.0"></script>
+    <script src="/app/services/roles/delete-role.service.js?v=6.0"></script>
+    <script src="/app/services/roles/role.service.js?v=6.0"></script>
+
+    <!-- Report Micro-Services -->
+    <script src="/app/services/reports/get-reports.service.js?v=6.0"></script>
+    <script src="/app/services/reports/report.service.js?v=6.0"></script>
+
+    <!-- Feature Micro-Controllers (Layout) -->
+    <script src="/app/features/layout/controllers/header.controller.js?v=6.0"></script>
+    <script src="/app/features/layout/controllers/sidebar.controller.js?v=6.0"></script>
+    <script src="/app/features/layout/controllers/layout.controller.js?v=6.0"></script>
+
+    <!-- Feature Micro-Controllers (Admin) -->
+    <script src="/app/features/admin/controllers/admin-list.controller.js?v=6.0"></script>
+    <script src="/app/features/admin/controllers/admin-create.controller.js?v=6.0"></script>
+    <script src="/app/features/admin/controllers/admin-inspect.controller.js?v=6.0"></script>
+    <script src="/app/features/admin/controllers/admin-delete.controller.js?v=6.0"></script>
+    <script src="/app/features/admin/controllers/admin.controller.js?v=6.0"></script>
+
+    <!-- Feature Micro-Controllers (Users) -->
+    <script src="/app/features/users/controllers/user-list.controller.js?v=6.0"></script>
+    <script src="/app/features/users/controllers/user-create.controller.js?v=6.0"></script>
+    <script src="/app/features/users/controllers/user-inspect.controller.js?v=6.0"></script>
+    <script src="/app/features/users/controllers/user-update.controller.js?v=6.0"></script>
+    <script src="/app/features/users/controllers/user-delete.controller.js?v=6.0"></script>
+    <script src="/app/features/users/controllers/user.controller.js?v=6.0"></script>
+
+    <!-- Feature Micro-Controllers (Followups) -->
+    <script src="/app/features/followups/controllers/followup-list.controller.js?v=6.0"></script>
+    <script src="/app/features/followups/controllers/customer-orders.controller.js?v=6.0"></script>
+    <script src="/app/features/followups/controllers/customer-feedback.controller.js?v=6.0"></script>
+    <script src="/app/features/followups/controllers/followup.controller.js?v=6.0"></script>
+
+    <!-- Feature Micro-Controllers (Time Filters & Reports) -->
+    <script src="/app/features/time-filters/controllers/time-filter.controller.js?v=6.0"></script>
+    <script src="/app/features/reports/controllers/report.controller.js?v=6.0"></script>
+
+    <!-- Shared App Coordinator -->
+    <script src="/app/app.controller.js?v=6.0"></script>
 </div>
 </body>
 </html>

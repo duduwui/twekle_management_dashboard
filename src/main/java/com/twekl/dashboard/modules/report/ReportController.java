@@ -11,12 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.Map;
 
-@Tag(name = "Reports", description = "Customer follow-up milestone completion, success rates, and timeline performance analytics")
 @RestController
 @RequestMapping({"/internal/reports", "/api/reports"})
 @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -29,8 +26,7 @@ public class ReportController {
         this.reportService = reportService;
     }
 
-    @Operation(summary = "Generate follow-up milestone report", description = "Calculates completion percentages, pending counts, and satisfaction breakdown across custom periods")
-    @GetMapping("/followups")
+        @GetMapping("/followups")
     public ResponseEntity<Map<String, Object>> getFollowupReport(
             @RequestParam(value = "period", required = false, defaultValue = "all") String period,
             @RequestParam(value = "dateFrom", required = false) String dateFrom,

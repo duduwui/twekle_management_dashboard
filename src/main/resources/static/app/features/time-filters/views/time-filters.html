@@ -107,3 +107,10 @@
                                 <div class="datatable-pagination">
                                     <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === 1" ng-click="setFilterRulePage(filterRulesDt.currentPage - 1)">« Prev</button>
                                     <button type="button" class="page-btn" ng-repeat="p in getFilterRulePageNumbers(getFilteredFilterRules().length)" ng-class="{'active': filterRulesDt.currentPage === p}" ng-click="setFilterRulePage(p)" ng-bind="p"></button>
+                                    <button type="button" class="page-btn" ng-disabled="filterRulesDt.currentPage === getTotalFilterRulePages(getFilteredFilterRules().length)" ng-click="setFilterRulePage(filterRulesDt.currentPage + 1)">Next »</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>

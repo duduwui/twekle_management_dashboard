@@ -1,68 +1,133 @@
 /**
  * Time Filter Feature Controller
- * Manages time filter presets, creation, toggling, and deletion.
+ * Manages Dynamic Time Filter Presets, Creation, Status Toggling, and Deletion.
  */
 angular.module('tweklApp')
-.controller('TimeFilterController', ['$scope', 'TimeFilterGetAllService', 'TimeFilterCreateService', 'TimeFilterToggleService', 'TimeFilterDeleteService', 'ToastService',
-function($scope, TimeFilterGetAllService, TimeFilterCreateService, TimeFilterToggleService, TimeFilterDeleteService, ToastService) {
+.controller('TimeFilterController', [
+    '$scope', 'TimeFilterGetAllService', 'TimeFilterCreateService', 'TimeFilterToggleService', 'TimeFilterDeleteService', 'ToastService', 'FilterHelperService',
+function($scope, TimeFilterGetAllService, TimeFilterCreateService, TimeFilterToggleService, TimeFilterDeleteService, ToastService, FilterHelperService) {
 
-    $scope.timePresets = [];
+    // Table pagination & sorting
+    $scope.filterRulesDt = {
+        currentPage: 1,
+        pageSize: 10,
+        sortField: 'id',
+        sortReverse: false,
+        totalItems: 0
+    };
+
+    $scope.filterRulesSearch = '';
+
     $scope.newPreset = {
-        presetKey: '',
-        labelEn: '',
-        labelAr: '',
-        labelKu: '',
-        durationValue: 1,
-        durationUnit: 'DAYS'
+        name: '',
+        durationValue: 24,
+        durationUnit: 'HOURS',
+        isActive: true
     };
 
     /**
-     * Load all presets
+     * Loads all preset rules from backend
      */
     $scope.loadPresets = function() {
         TimeFilterGetAllService.execute().then(function(res) {
-            $scope.timePresets = res.data || [];
+            var arr = res.data || [];
+            arr.sort(function(a, b) {
+                var minA = FilterHelperService.toDurationMinutes(a);
+                var minB = FilterHelperService.toDurationMinutes(b);
+                if (minA !== minB) return minA - minB;
+                return (a.id || 0) - (b.id || 0);
+            });
+            $scope.timeFilterPresets = arr;
         }, function() {
             ToastService.error('Failed to load time filter presets');
         });
     };
 
-    /**
-     * Create new preset
-     */
-    $scope.createPreset = function() {
-        if (!$scope.newPreset.labelEn) {
-            ToastService.error('Please provide a label');
-            return;
-        }
-        $scope.newPreset.presetKey = 'PRESET_' + Date.now();
-
-        TimeFilterCreateService.execute($scope.newPreset).then(function() {
-            ToastService.success('Time filter preset created!');
-            $scope.newPreset = { presetKey: '', labelEn: '', labelAr: '', labelKu: '', durationValue: 1, durationUnit: 'DAYS' };
-            $scope.loadPresets();
-        }, function(err) {
-            ToastService.error('Failed to create time preset');
+    // =========================================================
+    // TABLE PAGINATION & SORTING HELPERS
+    // =========================================================
+    $scope.getFilteredFilterRules = function() {
+        var items = $scope.timeFilterPresets || [];
+        if (!$scope.filterRulesSearch) return items;
+        return items.filter(function(item) {
+            return FilterHelperService.searchMatch(JSON.stringify(item), $scope.filterRulesSearch);
         });
     };
 
-    /**
-     * Toggle preset active state
-     */
-    $scope.togglePreset = function(preset) {
+    $scope.getPagedFilterRules = function() {
+        var filtered = $scope.getFilteredFilterRules();
+        var start = ($scope.filterRulesDt.currentPage - 1) * $scope.filterRulesDt.pageSize;
+        return filtered.slice(start, start + $scope.filterRulesDt.pageSize);
+    };
+
+    $scope.sortFilterRulesBy = function(field) {
+        if ($scope.filterRulesDt.sortField === field) {
+            $scope.filterRulesDt.sortReverse = !$scope.filterRulesDt.sortReverse;
+        } else {
+            $scope.filterRulesDt.sortField = field;
+            $scope.filterRulesDt.sortReverse = false;
+        }
+    };
+
+    $scope.getFilterRuleSortIndicator = function(field) {
+        if ($scope.filterRulesDt.sortField !== field) return '';
+        return $scope.filterRulesDt.sortReverse ? '▼' : '▲';
+    };
+
+    $scope.getTotalFilterRulePages = function(totalItems) {
+        return Math.ceil((totalItems || 1) / $scope.filterRulesDt.pageSize) || 1;
+    };
+
+    $scope.getFilterRulePageNumbers = function(totalItems) {
+        var total = $scope.getTotalFilterRulePages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    $scope.setFilterRulePage = function(page) {
+        if (page >= 1 && page <= $scope.getTotalFilterRulePages($scope.getFilteredFilterRules().length)) {
+            $scope.filterRulesDt.currentPage = page;
+        }
+    };
+
+    // =========================================================
+    // CRUD ACTIONS
+    // =========================================================
+    $scope.createTimeFilterPreset = function() {
+        if (!$scope.newPreset.name || !$scope.newPreset.durationValue) {
+            ToastService.error('Please provide preset name and duration value');
+            return;
+        }
+
+        var payload = {
+            name: $scope.newPreset.name,
+            durationValue: $scope.newPreset.durationValue,
+            durationUnit: $scope.newPreset.durationUnit,
+            isActive: true
+        };
+
+        TimeFilterCreateService.execute(payload).then(function() {
+            ToastService.success('Time filter preset created!');
+            $scope.newPreset = { name: '', durationValue: 24, durationUnit: 'HOURS', isActive: true };
+            $scope.loadPresets();
+        }, function(err) {
+            ToastService.error(err.data && err.data.message ? err.data.message : 'Failed to create preset');
+        });
+    };
+
+    $scope.toggleTimeFilterPreset = function(preset) {
         TimeFilterToggleService.execute(preset.id).then(function() {
-            preset.active = !preset.active;
+            preset.isActive = !preset.isActive;
             ToastService.success('Preset updated');
         }, function() {
             ToastService.error('Failed to toggle preset');
         });
     };
 
-    /**
-     * Delete preset
-     */
-    $scope.deletePreset = function(id) {
-        TimeFilterDeleteService.execute(id).then(function() {
+    $scope.deleteTimeFilterPreset = function(preset) {
+        if (!preset || !preset.id) return;
+        TimeFilterDeleteService.execute(preset.id).then(function() {
             ToastService.success('Preset deleted');
             $scope.loadPresets();
         }, function() {

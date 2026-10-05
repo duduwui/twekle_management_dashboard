@@ -4,8 +4,8 @@
  */
 angular.module('tweklApp')
 .controller('AdminController', [
-    '$scope', '$timeout', 'AdminGetAllService', 'AdminCreateService', 'AdminUpdateService', 'AdminDeleteService', 'ToastService', 'FilterHelperService',
-function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateService, AdminDeleteService, ToastService, FilterHelperService) {
+    '$scope', '$window', '$timeout', 'AdminService', 'ToastService', 'FilterHelperService',
+function($scope, $window, $timeout, AdminService, ToastService, FilterHelperService) {
 
     // View states: 'list' | 'create' | 'inspect' | 'delete'
     $scope.adminView = 'list';
@@ -23,11 +23,11 @@ function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateSe
         totalItems: 0
     };
 
-    // Filter criteria
+    // Filter criteria - Default Date From: Today, Date To: Tomorrow / Next Day
     $scope.adminFilters = {
         search: '',
-        dateFrom: null,
-        dateTo: null
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow()
     };
 
     // Create form model
@@ -42,17 +42,24 @@ function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateSe
     };
 
     /**
-     * Switch admin view mode
+     * Switch admin view mode and update URL
      */
-    $scope.setAdminView = function(view) {
+    $scope.setAdminView = function(view, admin) {
         $scope.adminView = view;
+        if (admin) $scope.selectedAdmin = admin;
+        if ($window.history && $window.history.pushState) {
+            if (view === 'list')    $window.history.pushState(null, '', '/admin/admins');
+            else if (view === 'create')  $window.history.pushState(null, '', '/admin/admins/create');
+            else if (view === 'inspect' && $scope.selectedAdmin) $window.history.pushState(null, '', '/admin/admins/' + $scope.selectedAdmin.id);
+        }
     };
+
 
     /**
      * Loads all administrators from backend
      */
     $scope.loadAdmins = function() {
-        AdminGetAllService.execute().then(function(res) {
+        AdminService.getAll().then(function(res) {
             $scope.admins = res.data || [];
         }, function(err) {
             ToastService.error('Failed to load administrators');
@@ -114,7 +121,7 @@ function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateSe
             canManageUsers: admin.canManageUsers,
             status: newStatus
         };
-        AdminUpdateService.execute(admin.id, updatePayload).then(function() {
+        AdminService.update(admin.id, updatePayload).then(function() {
             admin.status = newStatus;
             ToastService.success('Admin status updated');
         }, function() {
@@ -131,7 +138,7 @@ function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateSe
             return;
         }
 
-        AdminCreateService.execute($scope.newAdmin).then(function(res) {
+        AdminService.create($scope.newAdmin).then(function(res) {
             ToastService.success('Administrator created successfully!');
             $scope.newAdmin = { username: '', phoneNumber: '', password: '', superAdmin: false, canCreateRoles: true, canManageUsers: true, status: 'ACTIVE' };
             $scope.adminView = 'list';
@@ -185,7 +192,7 @@ function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateSe
 
     $scope.deleteAdmin = function() {
         if (!$scope.selectedAdmin || !$scope.selectedAdmin.id) return;
-        AdminDeleteService.execute($scope.selectedAdmin.id).then(function() {
+        AdminService.delete($scope.selectedAdmin.id).then(function() {
             ToastService.success('Administrator deleted successfully');
             $scope.selectedAdmin = null;
             $scope.adminView = 'list';
@@ -199,6 +206,18 @@ function($scope, $timeout, AdminGetAllService, AdminCreateService, AdminUpdateSe
         $scope.selectedAdmin = null;
         $scope.adminView = 'list';
     };
+
+    // Auto-reload when session is authenticated
+    $scope.$on('auth:loggedIn', function() {
+        $scope.loadAdmins();
+    });
+
+    // Auto-reload when tab becomes active if empty
+    $scope.$on('tab:changed', function(event, tab) {
+        if (tab === 'admins' && (!$scope.admins || $scope.admins.length === 0)) {
+            $scope.loadAdmins();
+        }
+    });
 
     // Auto-load on init
     $scope.loadAdmins();

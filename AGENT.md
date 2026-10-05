@@ -8,96 +8,109 @@
 
 | Layer | Technology | Details |
 |---|---|---|
-| **Backend** | Pure Spring MVC 6.1.13 + Jakarta EE 10 | **ZERO Spring Boot**. Embedded Apache Tomcat 10.1.30, `AppInitializer.java`, `WebMvcConfig.java`, `SecurityConfig.java`, Hibernate 6.5.3, Lombok, Maven WAR packaging |
-| **Frontend** | AngularJS 1.8.2 (Action-Level Micro-Nested) | Single Page Application (SPA) architecture within Thymeleaf. Every action/sub-feature is in its own isolated micro-file |
-| **Services** | Super-Micro Angular Services (`static/app/services/`) | Single-responsibility, 15–30 line services communicating strictly via `/internal/*` |
-| **Styling** | Comic / Neobrutalism CSS | Custom CSS (`style.css`), unified Twekl Teal theme, bold black borders, hard offset shadows |
+| **Backend** | Pure Spring MVC 6.1.13 + Jakarta EE 10 | **ZERO Spring Boot**. Embedded Apache Tomcat 10.1.30, `AppInitializer.java`, `WebMvcConfig.java`, `SecurityConfig.java`, `JpaConfig.java`, Hibernate 6.5.3, Lombok, Maven WAR/Jar execution |
+| **Frontend** | AngularJS 1.8.2 (Feature-Cohesive Architecture) | Single Page Application (SPA) architecture within Thymeleaf. Sub-views partitioned by action drill-down (`ng-include`) |
+| **Services** | Unified Feature Services (`static/app/services/`) | Single-responsibility, cohesive domain services communicating via `/internal/*` and fallback `/api/*` |
+| **Styling** | Comic / Neobrutalism CSS | Custom CSS (`style.css`), unified Twekl Teal theme, crisp black borders (`2px solid #000`), hard offset shadows |
 | **Database** | MySQL 8.0 (Docker) | Container: `twekl-mysql` (port 3306), db: `twekl_db`, user: `twekl_user`, pass: `twekl_pass_2026` |
 | **Authentication** | Session-Based (Stateful) | `HttpSession` with `JSESSIONID` cookies; strictly NO JWT / Bearer tokens |
-| **Routing** | HTML5 History API | Clean URLs without `#` hash (e.g. `/admin/followups`, `/admin/users`, `/admin/admins`) |
+| **Routing** | HTML5 History API | Clean URLs without `#` hash (e.g. `/admin/followups`, `/admin/users`, `/admin/admins`, `/admin/reports`) |
 | **Git Remote** | GitHub Repository | `https://github.com/duduwui/twekle_management_dashboard.git` (`main` branch) |
 
 ---
 
-## 2. Workspaces & Git Syncing Workflow
+## 2. Workspace & Git Workflow
 
-Always maintain parity between these two local directories:
-1. **Active Primary Workspace:** `/home/emz/.gemini/antigravity/scratch/twekl-dashboard`
-2. **Desktop Mirror & Export:** `/home/emz/Desktop/twekl-dashboard`
+The canonical project workspace is:
+* **Primary Workspace Directory:** `/home/emz/Desktop/twekl-dashboard`
 
-### Standard Sync & Deployment Routine:
-Whenever you make changes, compile, test, rsync to Desktop, and commit:
+### Standard Build & Run Commands:
 ```bash
-# 1. Compile and verify backend
+# Compile and verify backend
 mvn clean compile
 
-# 2. Sync changes to Desktop
-rsync -av --delete --exclude='.git' --exclude='target' /home/emz/.gemini/antigravity/scratch/twekl-dashboard/ /home/emz/Desktop/twekl-dashboard/
+# Run the Tomcat server on port 8080
+mvn exec:java
 
-# 3. Commit and push from scratch
-git add -A
-git commit -m "feat: <description>"
-git push origin main
+# Hot-sync templates/static assets during development without restart
+cp -ru src/main/resources/* target/classes/
 ```
 
 ---
 
-## 3. Database & Server Management
+## 3. Database Credentials & Access Commands
 
-### MySQL in Docker:
-The database runs as a Docker container named `twekl-mysql`.
-- **Start Database:** `docker start twekl-mysql`
-- **Check Status:** `docker ps`
-- **Database Connection:** `jdbc:mysql://localhost:3306/twekl_db` (User: `twekl_user`, Pass: `twekl_pass_2026`)
+### Connection Details:
+* **Host:** `127.0.0.1` (or `localhost`)
+* **Port:** `3306`
+* **Database Name:** `twekl_db`
+* **Username:** `twekl_user`
+* **Password:** `twekl_pass_2026`
+* **JDBC URL:** `jdbc:mysql://127.0.0.1:3306/twekl_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true`
 
-### Running the Application (Pure Spring MVC on Tomcat 10):
-- **Run Backend:** `mvn compile exec:java` (launches `com.twekl.dashboard.TomcatServer` on `http://localhost:8080`)
-- **Default Super Admin:** Username: `twekl_super_admin`, Password: `Super@2026`
+### Docker Container Commands:
+* **Docker Container Name:** `twekl-mysql`
+* **Start Container:** `docker start twekl-mysql`
+* **Check Status:** `docker ps`
+* **Open MySQL Shell:**
+  ```bash
+  docker exec -it twekl-mysql mysql -utwekl_user -ptwekl_pass_2026 --default-character-set=utf8mb4 twekl_db
+  ```
+* **One-Liner Query Command:**
+  ```bash
+  docker exec -i twekl-mysql mysql -utwekl_user -ptwekl_pass_2026 --default-character-set=utf8mb4 twekl_db -e "SELECT * FROM time_filter_presets;"
+  ```
+
+### Default Super Admin Credentials:
+* **Username:** `twekl_super_admin`
+* **Password:** `Super@2026`
 
 ---
 
-## 4. Frontend Architecture: Action-Level Micro-Nesting
+## 4. Frontend Architecture: Feature-Cohesive, Action-Drilldown Pattern
 
-To guarantee extreme maintainability, clean debugging, and zero cognitive load:
-1. **Zero Monoliths:** No multi-thousand-line or 100+ line catch-all controllers.
-2. **Single Responsibility Files:** Each micro-controller handles exactly **one** single action or view (e.g. Create Admin, Delete Admin, List Admins, Inspect Admin).
-3. **Super-Micro Services:** Services are thin API callers (15-30 lines) returning `$http` promises for `/internal/*` endpoints.
+To prevent AngularJS scope shadowing, event cascade overhead, and script-tag bloat:
+1. **Views (Action-Level Drill-Down):** Sub-views are partitioned by action (`admin-list.html`, `admin-create.html`, `admin-inspect.html`, `admin-delete.html`) loaded dynamically via `ng-include`.
+2. **Feature Coordinator Controllers:** One authoritative controller per feature domain (`admin.controller.js`, `user.controller.js`, `followup.controller.js`, `time-filter.controller.js`, `report.controller.js`).
+3. **Global Layout Coordinator:** `layout.controller.js` manages root modal overlays (`modals.html`), sidebar accordions, current route synchronization, and global presets.
+4. **Unified Feature Services:** Single-responsibility domain services (`admin.service.js`, `user.service.js`, `customer.service.js`, `followup.service.js`, `time-filter.service.js`, `report.service.js`).
 
 ```text
 src/main/resources/static/app/
 ├── app.module.js                              # Module definition & 401/403 interceptors
-├── app.controller.js                          # Root coordinator (< 10 lines)
-├── services/                                  # Super-micro API service callers (~20 lines each)
+├── app.controller.js                          # Root coordinator
+├── services/                                  # Domain API services
 │   ├── auth.service.js
 │   ├── admin.service.js
 │   ├── user.service.js
+│   ├── role.service.js
 │   ├── customer.service.js
 │   ├── followup.service.js
 │   ├── time-filter.service.js
 │   ├── report.service.js
-│   ├── role.service.js
-│   ├── toast.service.js
-│   ├── filter-helper.service.js
-│   └── i18n.service.js
-└── features/                                  # Domain features with micro-actions & views
+│   └── common/                                # Shared utilities
+│       ├── toast.service.js
+│       ├── filter-helper.service.js
+│       └── i18n.service.js
+└── features/                                  # Domain features with drill-down views
     ├── admin/
-    │   ├── admin.controller.js                # Micro-controller (or action-specific controllers)
+    │   ├── controllers/admin.controller.js    # Feature state & action coordinator
     │   └── views/                             # Sub-views (list, create, inspect, delete)
     ├── users/
-    │   ├── user.controller.js
-    │   └── views/
+    │   ├── controllers/user.controller.js
+    │   └── views/                             # Sub-views (list, create, update, delete, inspect)
     ├── followups/
-    │   ├── followup.controller.js
-    │   └── views/
+    │   ├── controllers/followup.controller.js
+    │   └── views/                             # Sub-views (list, orders, feedback)
     ├── time-filters/
-    │   ├── time-filter.controller.js
-    │   └── views/
+    │   ├── controllers/time-filter.controller.js
+    │   └── views/                             # Presets management view
     ├── reports/
-    │   ├── report.controller.js
-    │   └── views/
+    │   ├── controllers/report.controller.js
+    │   └── views/                             # Sub-views (milestones, satisfaction, products, directory)
     └── layout/
-        ├── layout.controller.js
-        └── views/
+        ├── controllers/layout.controller.js   # Shell, route syncing, modals & presets coordinator
+        └── views/                             # Modals partial, header, sidebar
 ```
 
 ---
@@ -114,6 +127,8 @@ All dashboard pages **must** use clean, standard URLs via the HTML5 History API 
 - **Admin Actions:** `/admin/admins/create`, `/admin/admins/inspect/:id`, `/admin/admins/delete/:id`
 - **Users & Permissions:** `/admin/users`
 - **User Actions:** `/admin/users/create`, `/admin/users/inspect/:id`, `/admin/users/update/:id`, `/admin/users/delete/:id`
+- **Time Filters:** `/admin/time-filters`
+- **Reports:** `/admin/reports`, `/admin/reports/milestones`, `/admin/reports/satisfaction`, `/admin/reports/products`, `/admin/reports/customers`
 - **Authentication:** `/login`
 
 ---
@@ -124,11 +139,4 @@ All dashboard pages **must** use clean, standard URLs via the HTML5 History API 
 - **Shadows:** Hard offset shadows (`box-shadow: var(--shadow-comic-md)`).
 - **Palette:** Twekl Teal (`#35B89F` / `#229E86`), Dark Slate (`#0F172A`), Pale Canvas (`#FDFCF7`), and Red Accent (`#EF4444`).
 - **Tables:** Single-line data cells (`white-space: nowrap !important;`), calm background colors, zero numeric badge noise in sidebar.
-
----
-
-## 7. Working With the User (Best Practices)
-
-- **Be Direct, Honest & Precise:** Always verify the codebase state directly before answering.
-- **Micro-Nesting First:** Break down any complex logic or controllers into micro-action units.
-- **Synchronize Workspaces:** Keep `/home/emz/Desktop/twekl-dashboard` and scratch workspace in 100% sync.
+- **Modals:** Must remain at the `<body>` root level ([`modals.html`](file:///home/emz/Desktop/twekl-dashboard/src/main/resources/static/app/features/layout/views/modals.html)) with `position: fixed` to ensure full-viewport backdrop dimming (0 to 100vw, 0 to 100vh). Never nest modal overlays inside `.comic-card` containers with CSS transforms.

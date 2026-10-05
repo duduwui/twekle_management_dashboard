@@ -4,7 +4,13 @@
  */
 var app = angular.module('tweklApp', []);
 
-app.config(['$httpProvider', function($httpProvider) {
+app.config(['$httpProvider', '$locationProvider', function($httpProvider, $locationProvider) {
+    // Enable HTML5 Mode for clean URLs (/admin/followups, /admin/admins, etc.) without hashbang
+    $locationProvider.html5Mode({
+        enabled: true,
+        requireBase: true
+    });
+
     // Intercept 401/403 HTTP session responses
     $httpProvider.interceptors.push(['$q', '$rootScope', function($q, $rootScope) {
         return {
@@ -19,3 +25,4 @@ app.config(['$httpProvider', function($httpProvider) {
         };
     }]);
 }]);
+

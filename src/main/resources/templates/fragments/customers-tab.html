@@ -3,14 +3,15 @@
 <body>
 <div th:fragment="customersTab" th:remove="tag">
     <section class="comic-card" ng-show="currentTab === 'customers'" ng-controller="FollowupController">
+
         <!-- 3.1 Customer Follow-up Directory -->
-        <div ng-include="'/app/features/followups/views/followup-list.html'"></div>
+        <div ng-include="'/app/features/followups/views/followup-list.html'" ng-if="customerView === 'list'"></div>
 
         <!-- 3.2 Customer Purchase History / Order Log -->
-        <div ng-include="'/app/features/followups/views/customer-orders.html'"></div>
+        <div ng-include="'/app/features/followups/views/customer-orders.html'" ng-if="customerView === 'orders'"></div>
 
         <!-- 3.3 Customer Feedback & Notes -->
-        <div ng-include="'/app/features/followups/views/customer-feedback.html'"></div>
+        <div ng-include="'/app/features/followups/views/customer-feedback.html'" ng-if="customerView === 'feedback'"></div>
     </section>
 </div>
 </body>

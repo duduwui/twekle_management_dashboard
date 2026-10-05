@@ -32,7 +32,7 @@ public class JpaConfig {
     @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/twekl_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+        config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/twekl_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true");
         config.setUsername("twekl_user");
         config.setPassword("twekl_pass_2026");
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");

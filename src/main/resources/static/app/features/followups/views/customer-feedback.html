@@ -16,15 +16,13 @@
 
                         <!-- Orders & Follow-up Tree with Note & Photo Editor -->
                         <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="font-size: 1.15rem; font-weight: 900;">Customer Orders & Follow-up Notes / Photos (Interactive Tree):</div>
-
                             <!-- Filter Toolbar (Date Range + Presets Dropdown + Live Search) -->
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
-                                    <input type="date" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
+                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
                                     <span class="filter-date-label">To:</span>
-                                    <input type="date" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
+                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
                                     
                                     <!-- Big Filter Preset Selector Button -->
                                     <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset}" ng-click="openFilterModal('order')" title="Select Time Filter Preset">
@@ -98,7 +96,7 @@
                                         </tr>
 
                                         <!-- Expandable Follow-up Checklist Tree with Inline Note & Photo Upload -->
-                                        <tr ng-if="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
+                                        <tr ng-show="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
                                             <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
                                                 <div class="order-followup-tree-box">
                                                     <div class="followup-tree-header">

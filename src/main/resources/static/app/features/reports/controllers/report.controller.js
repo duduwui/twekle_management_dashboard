@@ -4,8 +4,8 @@
  */
 angular.module('tweklApp')
 .controller('ReportController', [
-    '$scope', '$http', 'ReportGetService', 'ToastService', 'FilterHelperService',
-function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
+    '$scope', '$http', 'ReportService', 'ToastService', 'FilterHelperService',
+function($scope, $http, ReportService, ToastService, FilterHelperService) {
 
     $scope.loading = false;
     $scope.reportData = {
@@ -15,9 +15,10 @@ function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
         customers: []
     };
 
+    // Default Date From: Today, Date To: Tomorrow / Next Day
     $scope.reportFilters = {
-        dateFrom: null,
-        dateTo: null,
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow(),
         satisfactionFilter: 'all',
         milestoneFilter: 'all',
         searchPending: '',
@@ -37,7 +38,8 @@ function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
      */
     $scope.loadReportData = function() {
         $scope.loading = true;
-        ReportGetService.execute('all').then(function(res) {
+        var period = $scope.selectedReportPreset ? ($scope.selectedReportPreset.presetKey || $scope.selectedReportPreset.name) : 'all';
+        ReportService.getReports(period).then(function(res) {
             $scope.loading = false;
             var data = res.data || {};
             $scope.reportData.milestones = data.milestones || [];
@@ -65,15 +67,26 @@ function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
     // REPORT POPUP MODAL FILTERS
     // =========================================================
     $scope.openReportFilterModal = function() {
-        $scope.pendingReportFilters = {
-            satisfaction: $scope.reportFilters.satisfactionFilter || 'all',
-            preset: $scope.selectedReportPreset
-        };
-        $scope.showReportFilterModal = true;
+        if ($scope.modalState) {
+            $scope.modalState.reportFilter = true;
+        }
+        $scope.$emit('modal:openReportFilter', {
+            preset: $scope.selectedReportPreset,
+            satisfaction: $scope.reportFilters.satisfactionFilter || 'all'
+        });
+        if ($scope.$parent && $scope.$parent.openReportFilterModal) {
+            $scope.$parent.openReportFilterModal();
+        }
     };
 
     $scope.closeReportFilterModal = function() {
+        if ($scope.modalState) {
+            $scope.modalState.reportFilter = false;
+        }
         $scope.showReportFilterModal = false;
+        if ($scope.$parent && $scope.$parent.closeReportFilterModal) {
+            $scope.$parent.closeReportFilterModal();
+        }
     };
 
     $scope.resetReportFilterModal = function() {
@@ -84,10 +97,17 @@ function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
         $scope.reportFilters.dateFrom = null;
         $scope.reportFilters.dateTo = null;
         $scope.closeReportFilterModal();
+        $scope.loadReportData();
+        if ($scope.$parent && $scope.$parent.resetReportFilterModal) {
+            $scope.$parent.resetReportFilterModal();
+        }
     };
 
     $scope.selectPendingReportPreset = function(preset) {
         $scope.pendingReportFilters.preset = preset;
+        if ($scope.$parent && $scope.$parent.selectPendingReportPreset) {
+            $scope.$parent.selectPendingReportPreset(preset);
+        }
     };
 
     $scope.isPendingReportPresetSelected = function(preset) {
@@ -100,10 +120,21 @@ function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
         $scope.selectedReportPreset = $scope.pendingReportFilters.preset;
         $scope.reportFilters.satisfactionFilter = $scope.pendingReportFilters.satisfaction;
         $scope.closeReportFilterModal();
+        $scope.loadReportData();
+        if ($scope.$parent && $scope.$parent.confirmApplyReportFilterModal) {
+            $scope.$parent.confirmApplyReportFilterModal();
+        }
     };
 
     $scope.selectReportPreset = function(preset) {
         $scope.selectedReportPreset = preset;
+        $scope.$emit('modal:syncReportPreset', preset);
+        $scope.loadReportData();
+    };
+
+    $scope.clearSatisfactionFilter = function() {
+        $scope.reportFilters.satisfactionFilter = 'all';
+        $scope.$emit('modal:syncSatisfactionFilter', 'all');
     };
 
     // =========================================================
@@ -138,6 +169,21 @@ function($scope, $http, ReportGetService, ToastService, FilterHelperService) {
         ToastService.info('Exporting CSV report...');
     };
 
+    // Auto-reload when time filter presets change or login occurs
+    $scope.$on('timePresets:changed', function() {
+        $scope.loadReportData();
+    });
+
+    // Listen for report filter changes from LayoutController
+    $scope.$on('filter:reportFiltersChanged', function(event, data) {
+        if (data) {
+            $scope.selectedReportPreset = data.preset;
+            $scope.reportFilters.satisfactionFilter = data.satisfaction || 'all';
+        }
+        $scope.loadReportData();
+    });
+
     // Auto-load on init
     $scope.loadReportData();
 }]);
+

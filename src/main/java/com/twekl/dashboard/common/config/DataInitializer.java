@@ -13,6 +13,10 @@ import com.twekl.dashboard.modules.role.entity.Role;
 import com.twekl.dashboard.modules.role.repository.RoleRepository;
 import com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset;
 import com.twekl.dashboard.modules.timefilter.repository.TimeFilterPresetRepository;
+import com.twekl.dashboard.modules.user.entity.AppUser;
+import com.twekl.dashboard.modules.user.entity.ModulePermission;
+import com.twekl.dashboard.modules.user.repository.AppUserRepository;
+import com.twekl.dashboard.modules.user.repository.ModulePermissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +36,8 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
 
     private final AdminRepository adminRepository;
     private final RoleRepository roleRepository;
+    private final AppUserRepository appUserRepository;
+    private final ModulePermissionRepository permissionRepository;
     private final TimeFilterPresetRepository timeFilterPresetRepository;
     private final CustomerRepository customerRepository;
     private final CustomerOrderRepository orderRepository;
@@ -41,6 +47,8 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     @Autowired
     public DataInitializer(AdminRepository adminRepository, 
                            RoleRepository roleRepository,
+                           AppUserRepository appUserRepository,
+                           ModulePermissionRepository permissionRepository,
                            TimeFilterPresetRepository timeFilterPresetRepository,
                            CustomerRepository customerRepository,
                            CustomerOrderRepository orderRepository,
@@ -48,6 +56,8 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
                            PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
         this.roleRepository = roleRepository;
+        this.appUserRepository = appUserRepository;
+        this.permissionRepository = permissionRepository;
         this.timeFilterPresetRepository = timeFilterPresetRepository;
         this.customerRepository = customerRepository;
         this.orderRepository = orderRepository;
@@ -94,6 +104,33 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
                     .status("ACTIVE")
                     .build();
             adminRepository.save(superAdmin);
+        }
+
+        if (appUserRepository.count() == 0) {
+            log.info("Seeding Sample App Users with 3-Module CRUD Permissions...");
+
+            // User 1: Ahmed Al-Iraqi (Full Software & Sales access)
+            AppUser u1 = new AppUser(null, "ahmed_tech", "أحمد العراقي", "ئەحمەد عێراقی", passwordEncoder.encode("User@2026"), "+964 750 123 4567", "ACTIVE");
+            u1.addPermission(new ModulePermission("software", "Software Management", "إدارة البرمجيات", "بەڕێوەبردنی سۆفتوێر", true, true, true, true));
+            u1.addPermission(new ModulePermission("sales", "Sales & Invoices", "المبيعات والفواتير", "فرۆشتن و پسوولەکان", true, true, true, false));
+            u1.addPermission(new ModulePermission("products", "Product Management", "إدارة المنتجات", "بەڕێوەبردنی کاڵاکان", true, true, true, false));
+            appUserRepository.save(u1);
+
+            // User 2: Sara Hassan (Sales Representative)
+            AppUser u2 = new AppUser(null, "sara_sales", "سارة حسان", "سارا حەسەن", passwordEncoder.encode("User@2026"), "+964 770 987 6543", "ACTIVE");
+            u2.addPermission(new ModulePermission("software", "Software Management", "إدارة البرمجيات", "بەڕێوەبردنی سۆفتوێر", false, true, false, false));
+            u2.addPermission(new ModulePermission("sales", "Sales & Invoices", "المبيعات والفواتير", "فرۆشتن و پسوولەکان", true, true, true, true));
+            u2.addPermission(new ModulePermission("products", "Product Management", "إدارة المنتجات", "بەڕێوەبردنی کاڵاکان", false, true, true, false));
+            appUserRepository.save(u2);
+
+            // User 3: Kawa Barzani (Product Specialist)
+            AppUser u3 = new AppUser(null, "kawa_products", "كاوا بارزاني", "کاوە بارزانی", passwordEncoder.encode("User@2026"), "+964 751 222 3344", "ACTIVE");
+            u3.addPermission(new ModulePermission("software", "Software Management", "إدارة البرمجيات", "بەڕێوەبردنی سۆفتوێر", false, true, false, false));
+            u3.addPermission(new ModulePermission("sales", "Sales & Invoices", "المبيعات والفواتير", "فرۆشتن و پسوولەکان", false, true, false, false));
+            u3.addPermission(new ModulePermission("products", "Product Management", "إدارة المنتجات", "بەڕێوەبردنی کاڵاکان", true, true, true, true));
+            appUserRepository.save(u3);
+
+            log.info("Seeded 3 sample multilingual App Users with permissions.");
         }
 
         if (customerRepository.count() == 0) {

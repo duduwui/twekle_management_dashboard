@@ -76,6 +76,10 @@ public class TimeFilterPreset {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 
+    // Serialization compatibility aliases for Layer 7 JSON contract
+    public String getName() { return labelEn; }
+    public boolean getIsActive() { return active; }
+
     public int getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
 

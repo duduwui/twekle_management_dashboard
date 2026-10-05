@@ -17,7 +17,11 @@ public class WebViewController {
         "/admin/admins",
         "/admin/admins/**",
         "/admin/time-filters",
-        "/admin/reports"
+        "/admin/time-filters/**",
+        "/admin/role-templates",
+        "/admin/role-templates/**",
+        "/admin/reports",
+        "/admin/reports/**"
     })
     public String index() {
         return "index";

@@ -3,20 +3,33 @@
 <body>
 <div th:fragment="usersTab" th:remove="tag">
     <section class="comic-card" ng-show="currentTab === 'users'" ng-controller="UserController">
+        <!-- Top View Switcher Toolbar -->
+        <div class="card-header-flex" style="margin-bottom: 6px; padding-bottom: 12px; border-bottom: 2px solid var(--border-black);">
+            <div class="role-view-switcher">
+                <button type="button" 
+                        class="role-view-btn" 
+                        ng-class="{'active': userView === 'create'}" 
+                        ng-click="setUserView('create')">
+                    Create & Configure User
+                </button>
+                <button type="button" 
+                        class="role-view-btn" 
+                        ng-class="{'active': userView === 'list'}" 
+                        ng-click="setUserView('list')">
+                    All Users Directory ({{users.length}})
+                </button>
+            </div>
+
+            <div ng-if="userView === 'inspect' && selectedUser" style="display: flex; align-items: center; gap: 8px;">
+                <span class="comic-tag tag-primary" style="font-size: 0.85rem;">Inspecting: {{ selectedUser.usernameEn }}</span>
+            </div>
+        </div>
+
         <!-- 2.1 User List Page -->
-        <div ng-include="'/app/features/users/views/user-list.html'"></div>
+        <div ng-include="'/app/features/users/views/user-list.html'" ng-if="userView === 'list'"></div>
 
         <!-- 2.2 User Create Page -->
-        <div ng-include="'/app/features/users/views/user-create.html'"></div>
-
-        <!-- 2.3 User Inspect Page -->
-        <div ng-include="'/app/features/users/views/user-inspect.html'"></div>
-
-        <!-- 2.4 User Update Page -->
-        <div ng-include="'/app/features/users/views/user-update.html'"></div>
-
-        <!-- 2.5 User Delete Page -->
-        <div ng-include="'/app/features/users/views/user-delete.html'"></div>
+        <div ng-include="'/app/features/users/views/user-create.html'" ng-if="userView === 'create'"></div>
     </section>
 </div>
 </body>

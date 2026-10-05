@@ -4,6 +4,11 @@
                         <!-- Clean Admin Toolbar (+ Create Admin & Live Search) -->
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
+                                <span class="filter-date-label">From:</span>
+                                <input type="date" lang="en-GB" class="comic-date-input" ng-model="adminFilters.dateFrom" title="Start Date">
+                                <span class="filter-date-label">To:</span>
+                                <input type="date" lang="en-GB" class="comic-date-input" ng-model="adminFilters.dateTo" title="End Date">
+                                
                                 <button type="button" class="comic-btn-sm" ng-click="setAdminView('create')">
                                     + Create Admin
                                 </button>

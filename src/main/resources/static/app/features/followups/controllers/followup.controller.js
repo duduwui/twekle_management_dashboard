@@ -4,8 +4,8 @@
  */
 angular.module('tweklApp')
 .controller('FollowupController', [
-    '$scope', '$http', '$timeout', 'CustomerGetAllService', 'CustomerGetOrdersService', 'CustomerGetByIdService', 'FollowupToggleStatusService', 'FollowupUpdateService', 'ToastService', 'FilterHelperService',
-function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersService, CustomerGetByIdService, FollowupToggleStatusService, FollowupUpdateService, ToastService, FilterHelperService) {
+    '$scope', '$http', '$timeout', '$window', '$interval', 'CustomerService', 'FollowupService', 'ToastService', 'FilterHelperService',
+function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupService, ToastService, FilterHelperService) {
 
     // Active sub-view: 'list' | 'orders' | 'feedback'
     $scope.customerView = 'list';
@@ -16,6 +16,8 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
     $scope.expandedOrderId = null;
     $scope.targetMilestoneHighlight = null;
 
+    var pendingTargetCustomerId = null;
+
     // Table pagination & sorting (Customer List)
     $scope.dt = {
         currentPage: 1,
@@ -25,11 +27,12 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
         totalItems: 0
     };
 
-    // Filter criteria (Customer List)
+    // Filter criteria (Customer List) - Default: Today to Tomorrow matching other tabs
     $scope.customerFilters = {
         search: '',
-        dateFrom: null,
-        dateTo: null
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow(),
+        followupStatus: 'ALL'
     };
 
     // Table pagination & sorting (Customer Orders)
@@ -41,11 +44,11 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
         totalItems: 0
     };
 
-    // Filter criteria (Customer Orders)
+    // Filter criteria (Customer Orders) - Default: Today to Tomorrow matching other tabs
     $scope.orderFilters = {
         search: '',
-        dateFrom: null,
-        dateTo: null
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow()
     };
 
     // Modals state
@@ -55,6 +58,30 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
     $scope.newCustomerFeedback = { content: '', satisfaction: null, imageUrl: '', authorName: '', orderId: null };
     $scope.showEditFeedbackModal = false;
     $scope.editingCustomerFeedback = {};
+
+    /**
+     * Resolves initial sub-view and customer from URL pathname on page refresh
+     */
+    function initFollowupRoute() {
+        var path = window.location.pathname;
+        if (path.indexOf('/admin/followups/orders/') === 0) {
+            var parts = path.split('/');
+            var targetId = parts[4] ? parseInt(parts[4], 10) : null;
+            if (targetId) {
+                $scope.customerView = 'orders';
+                pendingTargetCustomerId = targetId;
+            }
+        } else if (path.indexOf('/admin/followups/feedback/') === 0) {
+            var parts = path.split('/');
+            var targetId = parts[4] ? parseInt(parts[4], 10) : null;
+            if (targetId) {
+                $scope.customerView = 'feedback';
+                pendingTargetCustomerId = targetId;
+            }
+        } else {
+            $scope.customerView = 'list';
+        }
+    }
 
     /**
      * Set active customer view ('list', 'orders', 'feedback')
@@ -70,27 +97,110 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
             $scope.customerOrders = [];
             $scope.expandedOrderId = null;
             $scope.targetMilestoneHighlight = null;
+            if ($window.history && $window.history.pushState) $window.history.pushState(null, '', '/admin/followups');
+        } else if (view === 'orders' && cust) {
+            if ($window.history && $window.history.pushState) $window.history.pushState(null, '', '/admin/followups/orders/' + cust.id);
+        } else if (view === 'feedback' && cust) {
+            if ($window.history && $window.history.pushState) $window.history.pushState(null, '', '/admin/followups/feedback/' + cust.id);
         }
     };
 
+
+    $scope.loadingCustomers = false;
+
     /**
-     * Loads customer directory from backend
+     * Loads customer directory from backend.
+     * Stamps each customer with _loadedAt so the live countdown can drift correctly.
      */
     $scope.loadCustomers = function() {
+        $scope.loadingCustomers = true;
         var preset = $scope.selectedTimePreset ? ($scope.selectedTimePreset.presetKey || $scope.selectedTimePreset.name) : null;
-        CustomerGetAllService.execute(preset).then(function(res) {
-            $scope.customers = res.data || [];
+        CustomerService.getAll(preset).then(function(res) {
+            $scope.loadingCustomers = false;
+            var now = Date.now();
+            $scope.customers = (res.data || []).map(function(c) {
+                c._loadedAt = now; // track when we got this data
+                return c;
+            });
+            if (pendingTargetCustomerId && ($scope.customerView === 'orders' || $scope.customerView === 'feedback')) {
+                var cust = $scope.customers.find(function(c) { return c.id === pendingTargetCustomerId; });
+                if (cust) {
+                    $scope.selectedCustomer = cust;
+                    $scope.loadCustomerOrders(cust.id);
+                }
+                pendingTargetCustomerId = null;
+            }
         }, function(err) {
+            $scope.loadingCustomers = false;
             ToastService.error('Failed to load customers');
         });
     };
+
+    /**
+     * Returns a live-adjusted countdown string for a customer's next pending followup.
+     * Adjusts server-provided minutesLeft by how much time has elapsed since load.
+     */
+    $scope.getLiveCountdown = function(cust) {
+        if (!cust || cust.nextPendingMinutesLeft == null) return '';
+        var elapsedMins = cust._loadedAt ? Math.floor((Date.now() - cust._loadedAt) / 60000) : 0;
+        var mins = cust.nextPendingMinutesLeft - elapsedMins;
+
+        if (mins >= 0) {
+            // Time remaining
+            if (mins < 60) return mins + 'm';
+            var hours = Math.floor(mins / 60);
+            if (hours < 24) return hours + 'h ' + (mins % 60) + 'm';
+            var days = Math.floor(hours / 24);
+            var remH = hours % 24;
+            return remH > 0 ? (days + 'd ' + remH + 'h') : (days + 'd');
+        } else {
+            // Overdue — show how long ago it was due
+            var overdue = Math.abs(mins);
+            if (overdue < 60) return overdue + 'm overdue';
+            var ovH = Math.floor(overdue / 60);
+            if (ovH < 24) return ovH + 'h overdue';
+            var ovD = Math.floor(ovH / 24);
+            var ovRH = ovH % 24;
+            return ovRH > 0 ? (ovD + 'd ' + ovRH + 'h overdue') : (ovD + 'd overdue');
+        }
+    };
+
+    // Tick every 60 seconds to refresh countdown displays without re-fetching
+    var _countdownTick = $interval(function() {
+        // Force Angular digest so getLiveCountdown() re-evaluates
+        // Customers array unchanged — just need scope digest
+        if ($scope.customers && $scope.customers.length) {
+            $scope._tick = ($scope._tick || 0) + 1;
+        }
+    }, 60000);
+
+    // Clean up interval when controller is destroyed
+    $scope.$on('$destroy', function() { $interval.cancel(_countdownTick); });
+
+    // Reload customers and clear cached followups when auth or time presets change
+    $scope.$on('auth:loggedIn', function() {
+        $scope.orderFollowups = {};
+        $scope.loadCustomers();
+        $scope.loadCustomerStats();
+    });
+
+    $scope.$on('timePresets:changed', function() {
+        $scope.orderFollowups = {};
+        $scope.loadCustomers();
+        $scope.loadCustomerStats();
+        if ($scope.selectedCustomer) {
+            $scope.loadCustomerOrders($scope.selectedCustomer.id);
+        }
+    });
+
+
 
     /**
      * Loads orders for a specific customer
      */
     $scope.loadCustomerOrders = function(customerId) {
         if (!customerId) return;
-        CustomerGetOrdersService.execute(customerId).then(function(res) {
+        CustomerService.getOrders(customerId).then(function(res) {
             $scope.customerOrders = res.data || [];
             // Auto-load follow-ups for all orders
             $scope.customerOrders.forEach(function(ord) {
@@ -106,7 +216,7 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
      */
     $scope.loadOrderFollowups = function(orderId) {
         if (!orderId) return;
-        $http.get('/api/orders/' + orderId + '/followups').then(function(res) {
+        FollowupService.getFollowups(orderId).then(function(res) {
             $scope.orderFollowups[orderId] = res.data || [];
         });
     };
@@ -169,7 +279,11 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
         $scope.expandedOrderId = orderId || null;
         $scope.customerView = 'orders';
         $scope.loadCustomerOrders(cust.id);
+        if ($window.history && $window.history.pushState) {
+            $window.history.pushState(null, '', '/admin/followups/orders/' + cust.id);
+        }
     };
+
 
     // =========================================================
     // ORDER AUDIT LOG & CHECKLIST HELPERS
@@ -225,18 +339,25 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
     $scope.formatOrderAge = function(order) {
         if (!order || !order.orderDate) return 'Due';
         var diffMs = Date.now() - new Date(order.orderDate).getTime();
-        var days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-        return days <= 0 ? 'Today' : (days + ' days ago');
+        var totalMins = Math.floor(diffMs / 60000);
+        if (totalMins < 60) return totalMins + 'm ago';
+        var hours = Math.floor(totalMins / 60);
+        if (hours < 24) return hours + 'h ago';
+        var days = Math.floor(hours / 24);
+        var remH = hours % 24;
+        return remH > 0 ? (days + 'd ' + remH + 'h ago') : (days + 'd ago');
     };
 
     $scope.formatCountdown = function(minutes) {
-        if (minutes == null) return 'Soon';
-        if (minutes <= 60) return minutes + 'm';
+        if (minutes == null || minutes < 0) return 'Soon';
+        if (minutes < 60) return minutes + 'm';
         var hours = Math.floor(minutes / 60);
         if (hours < 24) return hours + 'h';
         var days = Math.floor(hours / 24);
-        return days + 'd';
+        var remH = hours % 24;
+        return remH > 0 ? (days + 'd ' + remH + 'h') : (days + 'd');
     };
+
 
     $scope.getTotalOrderPages = function(totalItems) {
         return Math.ceil((totalItems || 1) / $scope.orderDt.pageSize) || 1;
@@ -259,15 +380,23 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
      * Toggle milestone checkpoint status (Yes ✔ / No ✖)
      */
     $scope.toggleFollowupCheck = function(order, check) {
-        FollowupToggleStatusService.execute(check.id).then(function(res) {
+        FollowupService.toggleStatus(check.id).then(function(res) {
             var updated = res.data && res.data.data ? res.data.data : res.data;
             if (updated) {
                 check.isCompleted = updated.completed != null ? updated.completed : !check.isCompleted;
+                check.completed   = check.isCompleted;
                 check.status = updated.status || (check.isCompleted ? 'COMPLETED' : 'PENDING');
             } else {
                 check.isCompleted = !check.isCompleted;
+                check.completed   = check.isCompleted;
             }
             ToastService.success('Checkpoint status updated');
+            // Reload followups for this order so the list re-sorts and shows correct next milestone
+            if (order && order.id) {
+                $scope.loadOrderFollowups(order.id);
+            }
+            // Reload customer list so Remaining Follow-ups count + Next Pending Followup update
+            $scope.loadCustomers();
         }, function() {
             ToastService.error('Failed to toggle status');
         });
@@ -295,7 +424,7 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
             notes: $scope.editingFollowup.note || '',
             photoUrl: $scope.editingFollowup.imageUrl || ''
         };
-        FollowupUpdateService.execute($scope.editingFollowup.id, payload).then(function(res) {
+        FollowupService.updateFollowup($scope.editingFollowup.id, payload).then(function(res) {
             ToastService.success('Checkpoint updated successfully');
             if ($scope.editingFollowup.orderId) {
                 $scope.loadOrderFollowups($scope.editingFollowup.orderId);
@@ -332,9 +461,64 @@ function($scope, $http, $timeout, CustomerGetAllService, CustomerGetOrdersServic
 
     // Listen for preset change from LayoutController
     $scope.$on('filter:timePresetChanged', function(event, preset) {
+        if (preset) {
+            var range = FilterHelperService.getPresetDateRange(preset);
+            $scope.customerFilters.dateFrom = range.dateFrom;
+            $scope.customerFilters.dateTo = range.dateTo;
+        } else {
+            $scope.customerFilters.dateFrom = null;
+            $scope.customerFilters.dateTo = null;
+        }
         $scope.loadCustomers();
     });
 
+    // Listen for order preset change from LayoutController
+    $scope.$on('filter:orderTimePresetChanged', function(event, preset) {
+        if (preset) {
+            var range = FilterHelperService.getPresetDateRange(preset);
+            $scope.orderFilters.dateFrom = range.dateFrom;
+            $scope.orderFilters.dateTo = range.dateTo;
+        } else {
+            $scope.orderFilters.dateFrom = null;
+            $scope.orderFilters.dateTo = null;
+        }
+        $scope.orderDt.currentPage = 1;
+    });
+
+    // Listen for queue status filter change from LayoutController
+    $scope.$on('filter:followupStatusChanged', function(event, status) {
+        $scope.customerFilters.followupStatus = status || 'ALL';
+        $scope.dt.currentPage = 1;
+    });
+
+    $scope.clearFollowupStatusFilter = function() {
+        $scope.customerFilters.followupStatus = 'ALL';
+        $scope.dt.currentPage = 1;
+        $scope.$emit('filter:clearFollowupStatus');
+    };
+
+    // Listen for sub-view navigation from sidebar
+    $scope.$on('followup:switchView', function(event, subView) {
+        $scope.setCustomerView(subView, $scope.selectedCustomer);
+    });
+
+    // Listen for tab activation to ensure data is loaded
+    $scope.$on('tab:changed', function(event, tab) {
+        if (tab === 'customers') {
+            if (!$scope.customers || $scope.customers.length === 0) {
+                $scope.loadCustomers();
+            }
+        }
+    });
+
+    // Listen to browser popstate to synchronize view with browser back/forward buttons
+    $window.addEventListener('popstate', function() {
+        $scope.$apply(function() {
+            initFollowupRoute();
+        });
+    });
+
     // Auto-load on init
+    initFollowupRoute();
     $scope.loadCustomers();
 }]);

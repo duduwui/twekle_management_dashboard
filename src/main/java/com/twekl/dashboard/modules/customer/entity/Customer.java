@@ -29,6 +29,27 @@ public class Customer {
     private double totalSpent = 0.0;
     private LocalDateTime lastOrderDate;
 
+    @Transient
+    private String followupStatus = "IDLE"; // ALERT, IDLE, DONE
+
+    @Transient
+    private String nextPendingFollowup;
+
+    @Transient
+    private Long nextPendingOrderId;
+
+    @Transient
+    private boolean allFollowupsCompleted = false;
+
+    @Transient
+    private int remainingFollowupsCount = 0;
+
+    /** Minutes until the next pending followup is due. Negative = already overdue. */
+    @Transient
+    private Integer nextPendingMinutesLeft = null;
+
+
+
     @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<CustomerOrder> orders = new ArrayList<>();
@@ -102,6 +123,27 @@ public class Customer {
 
     public LocalDateTime getLastOrderDate() { return lastOrderDate; }
     public void setLastOrderDate(LocalDateTime lastOrderDate) { this.lastOrderDate = lastOrderDate; }
+
+    public String getFollowupStatus() { return followupStatus; }
+    public void setFollowupStatus(String followupStatus) { this.followupStatus = followupStatus; }
+
+    public String getNextPendingFollowup() { return nextPendingFollowup; }
+    public void setNextPendingFollowup(String nextPendingFollowup) { this.nextPendingFollowup = nextPendingFollowup; }
+
+    public Long getNextPendingOrderId() { return nextPendingOrderId; }
+    public void setNextPendingOrderId(Long nextPendingOrderId) { this.nextPendingOrderId = nextPendingOrderId; }
+
+    public boolean isAllFollowupsCompleted() { return allFollowupsCompleted; }
+    public boolean getAllFollowupsCompleted() { return allFollowupsCompleted; }
+    public void setAllFollowupsCompleted(boolean allFollowupsCompleted) { this.allFollowupsCompleted = allFollowupsCompleted; }
+
+    public int getRemainingFollowupsCount() { return remainingFollowupsCount; }
+    public void setRemainingFollowupsCount(int remainingFollowupsCount) { this.remainingFollowupsCount = remainingFollowupsCount; }
+
+    public Integer getNextPendingMinutesLeft() { return nextPendingMinutesLeft; }
+    public void setNextPendingMinutesLeft(Integer nextPendingMinutesLeft) { this.nextPendingMinutesLeft = nextPendingMinutesLeft; }
+
+
 
     public List<CustomerOrder> getOrders() { return orders; }
     public void setOrders(List<CustomerOrder> orders) { this.orders = orders; }

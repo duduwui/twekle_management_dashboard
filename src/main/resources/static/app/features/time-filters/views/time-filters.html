@@ -73,15 +73,15 @@
                                     <tbody>
                                         <tr ng-repeat="preset in getPagedFilterRules() track by preset.id">
                                             <td><strong style="color: var(--primary-dark);" ng-bind="'#' + preset.id"></strong></td>
-                                            <td><strong style="font-size: 0.95rem;" ng-bind="preset.name"></strong></td>
+                                            <td><strong style="font-size: 0.95rem;" ng-bind="preset.labelEn || preset.name || ('Last ' + preset.durationValue + ' ' + preset.durationUnit)"></strong></td>
                                             <td><span style="font-weight: 700; color: var(--text-muted);" ng-bind="preset.durationValue + ' ' + preset.durationUnit"></span></td>
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 8px;">
                                                     <label class="comic-switch">
-                                                        <input type="checkbox" ng-checked="preset.isActive" ng-click="toggleTimeFilterPreset(preset)">
+                                                        <input type="checkbox" ng-checked="preset.active" ng-click="toggleTimeFilterPreset(preset)">
                                                         <span class="comic-slider"></span>
                                                     </label>
-                                                    <span class="comic-tag" ng-class="preset.isActive ? 'tag-primary' : 'tag-muted'" ng-bind="preset.isActive ? 'ACTIVE' : 'INACTIVE'"></span>
+                                                    <span class="comic-tag" ng-class="preset.active ? 'tag-primary' : 'tag-muted'" ng-bind="preset.active ? 'ACTIVE' : 'INACTIVE'"></span>
                                                 </div>
                                             </td>
                                             <td style="text-align: right;">

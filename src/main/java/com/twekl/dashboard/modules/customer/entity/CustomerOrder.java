@@ -14,7 +14,7 @@ public class CustomerOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(name = "order_number", nullable = false, unique = true, length = 64)
     private String orderNumber; // e.g. ORD-1001
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -22,28 +22,43 @@ public class CustomerOrder {
     @JsonIgnore
     private Customer customer;
 
-    @Column(nullable = false)
+    @Column(name = "items_summary", length = 1000)
+    private String itemsSummary;
+
+    @Column(name = "product_name")
     private String productName;
 
     private int quantity = 1;
-    private double totalPrice = 0.0;
-    private String status = "DELIVERED"; // PENDING, DELIVERED, CANCELLED
 
+    @Column(name = "total_amount")
+    private Double totalAmount = 0.0;
+
+    @Column(name = "total_price")
+    private double totalPrice = 0.0;
+
+    @Column(name = "order_status", length = 50)
+    private String orderStatus = "DELIVERED"; // PENDING, DELIVERED, CANCELLED
+
+    @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<OrderFollowupCheck> checks = new ArrayList<>();
 
     public CustomerOrder() {
         this.orderDate = LocalDateTime.now();
     }
 
-    public CustomerOrder(String orderNumber, Customer customer, String productName, int quantity, double totalPrice, LocalDateTime orderDate) {
+    public CustomerOrder(String orderNumber, Customer customer, String itemsSummary, int quantity, double totalAmount, LocalDateTime orderDate) {
         this.orderNumber = orderNumber;
         this.customer = customer;
-        this.productName = productName;
+        this.itemsSummary = itemsSummary;
+        this.productName = itemsSummary;
         this.quantity = quantity;
-        this.totalPrice = totalPrice;
+        this.totalAmount = totalAmount;
+        this.totalPrice = totalAmount;
+        this.orderStatus = "DELIVERED";
         this.orderDate = orderDate != null ? orderDate : LocalDateTime.now();
     }
 
@@ -67,17 +82,45 @@ public class CustomerOrder {
     public Customer getCustomer() { return customer; }
     public void setCustomer(Customer customer) { this.customer = customer; }
 
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
+    public String getItemsSummary() {
+        if (this.itemsSummary != null && !this.itemsSummary.trim().isEmpty()) {
+            return this.itemsSummary;
+        }
+        return (this.productName != null && !this.productName.trim().isEmpty()) ? this.productName : "Standard Products";
+    }
+
+    public void setItemsSummary(String itemsSummary) {
+        this.itemsSummary = itemsSummary;
+        this.productName = itemsSummary;
+    }
+
+    public String getProductName() { return getItemsSummary(); }
+    public void setProductName(String productName) { setItemsSummary(productName); }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public double getTotalPrice() { return totalPrice; }
-    public void setTotalPrice(double totalPrice) { this.totalPrice = totalPrice; }
+    public Double getTotalAmount() {
+        if (this.totalAmount != null && this.totalAmount > 0) return this.totalAmount;
+        return this.totalPrice;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setTotalAmount(Double totalAmount) {
+        this.totalAmount = totalAmount;
+        this.totalPrice = totalAmount != null ? totalAmount : 0.0;
+    }
+
+    public double getTotalPrice() { return getTotalAmount(); }
+    public void setTotalPrice(double totalPrice) { setTotalAmount(totalPrice); }
+
+    public String getOrderStatus() {
+        return (this.orderStatus != null && !this.orderStatus.isEmpty()) ? this.orderStatus : "DELIVERED";
+    }
+
+    public void setOrderStatus(String orderStatus) { this.orderStatus = orderStatus; }
+
+    public String getStatus() { return getOrderStatus(); }
+    public void setStatus(String status) { setOrderStatus(status); }
 
     public LocalDateTime getOrderDate() { return orderDate; }
     public void setOrderDate(LocalDateTime orderDate) { this.orderDate = orderDate; }

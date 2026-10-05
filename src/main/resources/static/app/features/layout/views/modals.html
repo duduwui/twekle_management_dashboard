@@ -1,4 +1,175 @@
-    <!-- 1. ADMIN DELETE CONFIRMATION POPUP MODAL                  -->
+    <!-- ========================================================= -->
+    <!-- 1. COMPREHENSIVE REPORT FILTERS MODAL                     -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showReportFilterModal || (modalState && modalState.reportFilter)" ng-click="closeReportFilterModal()">
+        <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
+            <!-- Clean Header -->
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Report Filters</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
+            </div>
+
+            <!-- Body -->
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                <!-- Section 1: Time Range Presets -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                    <div class="filter-presets-grid-3">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingReportPresetSelected(null)}"
+                             ng-click="selectPendingReportPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(null)">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.active !== false || preset.isActive"
+                             ng-class="{'selected': isPendingReportPresetSelected(preset)}"
+                             ng-click="selectPendingReportPreset(preset)">
+                            <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                            <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(preset)">✓</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Satisfaction Scale -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Satisfaction Scale</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'all'}"
+                             ng-click="pendingReportFilters.satisfaction = 'all'">
+                            <span class="filter-simple-name">All</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'all'">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'SATISFIED'}"
+                             ng-click="pendingReportFilters.satisfaction = 'SATISFIED'">
+                            <span class="filter-simple-name">Satisfied</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'SATISFIED'">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'NEUTRAL'}"
+                             ng-click="pendingReportFilters.satisfaction = 'NEUTRAL'">
+                            <span class="filter-simple-name">Neutral</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'NEUTRAL'">✓</span></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'UNSATISFIED'}"
+                             ng-click="pendingReportFilters.satisfaction = 'UNSATISFIED'">
+                            <span class="filter-simple-name">Unsatisfied</span>
+                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'UNSATISFIED'">✓</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clean Footer -->
+            <div class="filter-modal-footer-simple" style="justify-content: space-between;">
+                <button type="button" class="comic-btn-secondary" ng-click="resetReportFilterModal()" style="font-size: 0.82rem;">Reset All</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeReportFilterModal()">Cancel</button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyReportFilterModal()">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 2. TIME & QUEUE FILTER POPUP MODAL                        -->
+    <!-- ========================================================= -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
+        <div class="filter-modal-card" ng-click="$event.stopPropagation()">
+            <!-- Clean Header -->
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">{{ currentFilterTarget === 'customer' ? 'Follow-up Filters' : 'Time Filters' }}</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                <!-- Section 1: Time Range Presets -->
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                    <div class="filter-presets-grid-3">
+                        <div class="filter-preset-card-simple" 
+                             ng-class="{'selected': isPendingPresetSelected(null)}" 
+                             ng-click="selectPendingPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check">
+                                <span ng-if="isPendingPresetSelected(null)">✓</span>
+                            </div>
+                        </div>
+
+                        <div class="filter-preset-card-simple" 
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.active !== false || preset.isActive"
+                             ng-class="{'selected': isPendingPresetSelected(preset)}" 
+                             ng-click="selectPendingPreset(preset)">
+                            <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                            <div class="filter-simple-check">
+                                <span ng-if="isPendingPresetSelected(preset)">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Follow-up Queue Status (Customer Directory Only) -->
+                <div ng-if="currentFilterTarget === 'customer'">
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Follow-up Queue Status</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('ALL')}"
+                             ng-click="selectPendingFollowupStatus('ALL')">
+                            <span class="filter-simple-name">All Queue</span>
+                            <div class="filter-simple-check">
+                                <span ng-if="isPendingFollowupStatusSelected('ALL')">✓</span>
+                            </div>
+                        </div>
+
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('ALERT')}"
+                             ng-click="selectPendingFollowupStatus('ALERT')">
+                            <span class="filter-simple-name" style="color: #DC2626; font-weight: 900;">Time to Follow</span>
+                            <div class="filter-simple-check">
+                                <span ng-if="isPendingFollowupStatusSelected('ALERT')">✓</span>
+                            </div>
+                        </div>
+
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('IDLE')}"
+                             ng-click="selectPendingFollowupStatus('IDLE')">
+                            <span class="filter-simple-name" style="color: #2563EB; font-weight: 900;">In Queue</span>
+                            <div class="filter-simple-check">
+                                <span ng-if="isPendingFollowupStatusSelected('IDLE')">✓</span>
+                            </div>
+                        </div>
+
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('DONE')}"
+                             ng-click="selectPendingFollowupStatus('DONE')">
+                            <span class="filter-simple-name" style="color: #16A34A; font-weight: 900;">Completed</span>
+                            <div class="filter-simple-check">
+                                <span ng-if="isPendingFollowupStatusSelected('DONE')">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clean Footer -->
+            <div class="filter-modal-footer-simple" style="justify-content: space-between;">
+                <button type="button" class="comic-btn-secondary" ng-click="selectPendingPreset(null); selectPendingFollowupStatus('ALL');" style="font-size: 0.82rem;">Reset All</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()">Cancel</button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 3. ADMIN DELETE CONFIRMATION POPUP MODAL                  -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 460px;">
@@ -18,7 +189,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 2. EDIT / ADD FOLLOW-UP NOTE & IMAGE MODAL                -->
+    <!-- 4. EDIT / ADD FOLLOW-UP NOTE & IMAGE MODAL                -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 500px;">
@@ -74,21 +245,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 3. IMAGE PREVIEW LIGHTBOX MODAL                           -->
-    <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
-        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 650px; background: #0F172A; color: #FFFFFF; border: 2.5px solid #000000;">
-            <div class="comic-modal-header" style="background-color: #1E293B; border-bottom: 2px solid #000000;">
-                <strong style="font-size: 0.95rem; color: #FFFFFF;">Attached Follow-up Photo</strong>
-                <button type="button" class="comic-modal-close" style="color: #FFFFFF;" ng-click="closeImageModal()">&times;</button>
-            </div>
-            <div style="padding: 16px; display: flex; justify-content: center; align-items: center;">
-                <img ng-src="{{previewImageUrl}}" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px; border: 1.5px solid #000;" alt="Full Preview">
-            </div>
-        </div>
-    </div>
-    <!-- ========================================================= -->
-    <!-- 4. ADD CUSTOMER NOTE / FEEDBACK & PHOTO MODAL               -->
+    <!-- 5. ADD CUSTOMER NOTE / FEEDBACK & PHOTO MODAL             -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showAddFeedbackModal" ng-click="closeAddFeedbackModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
@@ -165,7 +322,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 4.1 EDIT CUSTOMER NOTE / FEEDBACK & PHOTO MODAL           -->
+    <!-- 6. EDIT CUSTOMER NOTE / FEEDBACK & PHOTO MODAL            -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showEditFeedbackModal" ng-click="closeEditFeedbackModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
@@ -242,133 +399,22 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 5. CLEAN 3-COLUMN TIME FILTER POPUP MODAL                 -->
+    <!-- 7. IMAGE PREVIEW LIGHTBOX MODAL                           -->
     <!-- ========================================================= -->
-        <!-- ========================================================= -->
-        <!-- ========================================================= -->
-    <!-- 5. COMPREHENSIVE REPORT FILTERS MODAL                     -->
-    <!-- ========================================================= -->
-    <div class="comic-modal-overlay" ng-cloak ng-show="showReportFilterModal" ng-click="closeReportFilterModal()">
-        <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
-            <!-- Clean Header -->
-            <div class="filter-modal-header-simple">
-                <strong class="filter-modal-title-simple">Filters</strong>
-                <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
+    <div class="comic-modal-overlay" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 650px; background: #0F172A; color: #FFFFFF; border: 2.5px solid #000000;">
+            <div class="comic-modal-header" style="background-color: #1E293B; border-bottom: 2px solid #000000;">
+                <strong style="font-size: 0.95rem; color: #FFFFFF;">Attached Follow-up Photo</strong>
+                <button type="button" class="comic-modal-close" style="color: #FFFFFF;" ng-click="closeImageModal()">&times;</button>
             </div>
-
-            <!-- Body: Time Filters (3-col grid) & Satisfaction Scale -->
-            <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
-                <!-- Section 1: Time Filters -->
-                <div>
-                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Filters</div>
-                    <div class="filter-presets-grid-3">
-                        <!-- All Time Card -->
-                        <div class="filter-preset-card-simple"
-                             ng-class="{'selected': isPendingReportPresetSelected(null)}"
-                             ng-click="selectPendingReportPreset(null)">
-                            <span class="filter-simple-name">All Time</span>
-                            <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(null)">✓</span></div>
-                        </div>
-                        <!-- Dynamic Presets Cards -->
-                        <div class="filter-preset-card-simple"
-                             ng-repeat="preset in timeFilterPresets track by preset.id"
-                             ng-if="preset.isActive"
-                             ng-class="{'selected': isPendingReportPresetSelected(preset)}"
-                             ng-click="selectPendingReportPreset(preset)">
-                            <span class="filter-simple-name" ng-bind="preset.name"></span>
-                            <div class="filter-simple-check"><span ng-if="isPendingReportPresetSelected(preset)">✓</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2: Satisfaction Scale -->
-                <div>
-                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Satisfaction Scale</div>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                        <div class="filter-preset-card-simple"
-                             ng-class="{'selected': pendingReportFilters.satisfaction === 'all'}"
-                             ng-click="pendingReportFilters.satisfaction = 'all'">
-                            <span class="filter-simple-name">All</span>
-                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'all'">✓</span></div>
-                        </div>
-                        <div class="filter-preset-card-simple"
-                             ng-class="{'selected': pendingReportFilters.satisfaction === 'SATISFIED'}"
-                             ng-click="pendingReportFilters.satisfaction = 'SATISFIED'">
-                            <span class="filter-simple-name">Satisfied</span>
-                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'SATISFIED'">✓</span></div>
-                        </div>
-                        <div class="filter-preset-card-simple"
-                             ng-class="{'selected': pendingReportFilters.satisfaction === 'NEUTRAL'}"
-                             ng-click="pendingReportFilters.satisfaction = 'NEUTRAL'">
-                            <span class="filter-simple-name">Neutral</span>
-                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'NEUTRAL'">✓</span></div>
-                        </div>
-                        <div class="filter-preset-card-simple"
-                             ng-class="{'selected': pendingReportFilters.satisfaction === 'UNSATISFIED'}"
-                             ng-click="pendingReportFilters.satisfaction = 'UNSATISFIED'">
-                            <span class="filter-simple-name">Unsatisfied</span>
-                            <div class="filter-simple-check"><span ng-if="pendingReportFilters.satisfaction === 'UNSATISFIED'">✓</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Clean Footer -->
-            <div class="filter-modal-footer-simple" style="justify-content: space-between;">
-                <button type="button" class="comic-btn-secondary" ng-click="resetReportFilterModal()" style="font-size: 0.82rem;">Reset All</button>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="comic-btn-secondary" ng-click="closeReportFilterModal()">Cancel</button>
-                    <button type="button" class="comic-btn" ng-click="confirmApplyReportFilterModal()">Apply Filters</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
-        <div class="filter-modal-card" ng-click="$event.stopPropagation()">
-            <!-- Clean Header -->
-            <div class="filter-modal-header-simple">
-                <strong class="filter-modal-title-simple">Time Filters</strong>
-                <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
-            </div>
-
-            <!-- 3-Column Clean Presets Grid -->
-            <div style="padding: 18px 20px;">
-                <div class="filter-presets-grid-3">
-                    <!-- All Time Card -->
-                    <div class="filter-preset-card-simple" 
-                         ng-class="{'selected': isPendingPresetSelected(null)}" 
-                         ng-click="selectPendingPreset(null)">
-                        <span class="filter-simple-name">All Time</span>
-                        <div class="filter-simple-check">
-                            <span ng-if="isPendingPresetSelected(null)">✓</span>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Preset Cards -->
-                    <div class="filter-preset-card-simple" 
-                         ng-repeat="preset in timeFilterPresets track by preset.id"
-                         ng-if="preset.isActive"
-                         ng-class="{'selected': isPendingPresetSelected(preset)}" 
-                         ng-click="selectPendingPreset(preset)">
-                        <span class="filter-simple-name" ng-bind="preset.name"></span>
-                        <div class="filter-simple-check">
-                            <span ng-if="isPendingPresetSelected(preset)">✓</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Clean Footer -->
-            <div class="filter-modal-footer-simple">
-                <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()">Cancel</button>
-                <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()">Confirm</button>
+            <div style="padding: 16px; display: flex; justify-content: center; align-items: center;">
+                <img ng-src="{{previewImageUrl}}" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px; border: 1.5px solid #000;" alt="Full Preview">
             </div>
         </div>
     </div>
 
     <!-- ========================================================= -->
-    <!-- 6. AUTHENTICATION / LOGIN POPUP MODAL                     -->
+    <!-- 8. AUTHENTICATION / LOGIN POPUP MODAL                     -->
     <!-- ========================================================= -->
     <div class="comic-modal-overlay" ng-cloak ng-show="showLoginModal" ng-click="closeLoginModal()">
         <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 420px;">
@@ -393,3 +439,11 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- Comic Toast Alerts -->
+    <div class="toast-container">
+        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
+            <span ng-bind="toast.message"></span>
+        </div>
+    </div>

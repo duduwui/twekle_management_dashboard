@@ -39,15 +39,17 @@ app.factory('FilterHelperService', [function() {
     function isWithinDateRange(itemDateStr, fromStr, toStr) {
         if (!fromStr && !toStr) return true;
         if (!itemDateStr) return true;
-        var itemDate = new Date(itemDateStr).getTime();
+        var itemDate = (itemDateStr instanceof Date) ? itemDateStr.getTime() : new Date(itemDateStr).getTime();
         if (isNaN(itemDate)) return true;
         if (fromStr) {
-            var fromDate = new Date(fromStr).getTime();
-            if (itemDate < fromDate) return false;
+            var fromDate = (fromStr instanceof Date) ? new Date(fromStr.getTime()) : new Date(fromStr);
+            fromDate.setHours(0, 0, 0, 0);
+            if (itemDate < fromDate.getTime()) return false;
         }
         if (toStr) {
-            var toDate = new Date(toStr).getTime() + (24 * 60 * 60 * 1000 - 1);
-            if (itemDate > toDate) return false;
+            var toDate = (toStr instanceof Date) ? new Date(toStr.getTime()) : new Date(toStr);
+            toDate.setHours(23, 59, 59, 999);
+            if (itemDate > toDate.getTime()) return false;
         }
         return true;
     }
@@ -91,8 +93,13 @@ app.factory('FilterHelperService', [function() {
                 if (!searchMatch(searchStr, filterState.search)) return false;
             }
             if (filterState && (filterState.dateFrom || filterState.dateTo)) {
-                var dateVal = item.createdAt || item.updatedAt || item.createdDate;
+                var dateVal = item.createdAt || item.orderDate || item.lastOrderDate || item.updatedAt || item.createdDate || item.date;
                 if (!isWithinDateRange(dateVal, filterState.dateFrom, filterState.dateTo)) return false;
+            }
+            if (filterState && filterState.followupStatus && filterState.followupStatus !== 'ALL') {
+                if (filterState.followupStatus === 'ALERT' && item.followupStatus !== 'ALERT') return false;
+                if (filterState.followupStatus === 'IDLE' && item.followupStatus !== 'IDLE') return false;
+                if (filterState.followupStatus === 'DONE' && (item.followupStatus !== 'DONE' && !item.allFollowupsCompleted)) return false;
             }
             return true;
         });
@@ -120,11 +127,48 @@ app.factory('FilterHelperService', [function() {
         return filtered;
     }
 
+    /**
+     * Returns a Date object set to the beginning of today (00:00:00.000)
+     */
+    function getToday() {
+        var d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    /**
+     * Returns a Date object set to tomorrow (00:00:00.000)
+     */
+    function getTomorrow() {
+        var d = new Date();
+        d.setDate(d.getDate() + 1);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    /**
+     * Calculates start and end Date objects for a given time filter preset
+     */
+    function getPresetDateRange(preset) {
+        if (!preset) return { dateFrom: null, dateTo: null };
+        var mins = toDurationMinutes(preset);
+        if (mins <= 0) return { dateFrom: null, dateTo: null };
+        var now = new Date();
+        var from = new Date(now.getTime() - (mins * 60 * 1000));
+        from.setHours(0, 0, 0, 0);
+        var to = new Date();
+        to.setHours(23, 59, 59, 999);
+        return { dateFrom: from, dateTo: to };
+    }
+
     return {
         toDurationMinutes: toDurationMinutes,
         getPresetTargetDays: getPresetTargetDays,
+        getPresetDateRange: getPresetDateRange,
         isWithinDateRange: isWithinDateRange,
         searchMatch: searchMatch,
-        filterTable: filterTable
+        filterTable: filterTable,
+        getToday: getToday,
+        getTomorrow: getTomorrow
     };
 }]);

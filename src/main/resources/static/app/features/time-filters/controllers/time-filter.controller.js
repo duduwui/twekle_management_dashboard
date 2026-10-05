@@ -4,8 +4,8 @@
  */
 angular.module('tweklApp')
 .controller('TimeFilterController', [
-    '$scope', 'TimeFilterGetAllService', 'TimeFilterCreateService', 'TimeFilterToggleService', 'TimeFilterDeleteService', 'ToastService', 'FilterHelperService',
-function($scope, TimeFilterGetAllService, TimeFilterCreateService, TimeFilterToggleService, TimeFilterDeleteService, ToastService, FilterHelperService) {
+    '$scope', '$rootScope', 'TimeFilterService', 'ToastService', 'FilterHelperService',
+function($scope, $rootScope, TimeFilterService, ToastService, FilterHelperService) {
 
     // Table pagination & sorting
     $scope.filterRulesDt = {
@@ -29,7 +29,7 @@ function($scope, TimeFilterGetAllService, TimeFilterCreateService, TimeFilterTog
      * Loads all preset rules from backend
      */
     $scope.loadPresets = function() {
-        TimeFilterGetAllService.execute().then(function(res) {
+        TimeFilterService.getAll().then(function(res) {
             var arr = res.data || [];
             arr.sort(function(a, b) {
                 var minA = FilterHelperService.toDurationMinutes(a);
@@ -100,25 +100,35 @@ function($scope, TimeFilterGetAllService, TimeFilterCreateService, TimeFilterTog
             return;
         }
 
+        var presetKey = $scope.newPreset.name.trim()
+            .toUpperCase()
+            .replace(/[^A-Z0-9]+/g, '_')
+            .replace(/^_|_$/g, '');
+
         var payload = {
-            name: $scope.newPreset.name,
-            durationValue: $scope.newPreset.durationValue,
+            presetKey: presetKey,
+            labelEn: $scope.newPreset.name.trim(),
+            durationValue: parseInt($scope.newPreset.durationValue, 10),
             durationUnit: $scope.newPreset.durationUnit,
-            isActive: true
+            active: true,
+            displayOrder: 0
         };
 
-        TimeFilterCreateService.execute(payload).then(function() {
+        TimeFilterService.create(payload).then(function() {
             ToastService.success('Time filter preset created!');
-            $scope.newPreset = { name: '', durationValue: 24, durationUnit: 'HOURS', isActive: true };
+            $scope.newPreset = { name: '', durationValue: 24, durationUnit: 'HOURS' };
             $scope.loadPresets();
+            $rootScope.$broadcast('timePresets:changed'); // reload global presets in layout
         }, function(err) {
             ToastService.error(err.data && err.data.message ? err.data.message : 'Failed to create preset');
         });
     };
 
     $scope.toggleTimeFilterPreset = function(preset) {
-        TimeFilterToggleService.execute(preset.id).then(function() {
-            preset.isActive = !preset.isActive;
+        TimeFilterService.toggle(preset.id).then(function(res) {
+            // Reload to get fresh active state from server
+            $scope.loadPresets();
+            $rootScope.$broadcast('timePresets:changed');
             ToastService.success('Preset updated');
         }, function() {
             ToastService.error('Failed to toggle preset');
@@ -127,13 +137,19 @@ function($scope, TimeFilterGetAllService, TimeFilterCreateService, TimeFilterTog
 
     $scope.deleteTimeFilterPreset = function(preset) {
         if (!preset || !preset.id) return;
-        TimeFilterDeleteService.execute(preset.id).then(function() {
+        TimeFilterService.delete(preset.id).then(function() {
             ToastService.success('Preset deleted');
             $scope.loadPresets();
+            $rootScope.$broadcast('timePresets:changed'); // remove from global filter modal
         }, function() {
             ToastService.error('Failed to delete preset');
         });
     };
 
+    $scope.$on('auth:loggedIn', function() {
+        $scope.loadPresets();
+    });
+
     $scope.loadPresets();
 }]);
+

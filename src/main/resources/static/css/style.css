@@ -485,10 +485,10 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: 24px 28px;
+  padding: 16px 24px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* =========================================================
@@ -1823,6 +1823,38 @@ input:checked + .comic-slider:before {
   transform: translateX(2px);
 }
 
+/* Idle (not due yet) milestone — muted styling */
+.comic-milestone-link-btn.idle-milestone {
+  background-color: #F8FAFC;
+  color: #475569;
+  border-color: #CBD5E1;
+}
+.comic-milestone-link-btn.idle-milestone:hover {
+  background-color: #E2E8F0;
+  color: #1E293B;
+  border-color: #94A3B8;
+}
+
+/* Live countdown badge inside the milestone button */
+.milestone-countdown {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.milestone-countdown.overdue {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+.milestone-countdown.upcoming {
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+}
+
 .role-template-pills-row {
   display: flex;
   align-items: center;
@@ -2331,13 +2363,13 @@ input:checked + .comic-slider:before {
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 .comic-card > div[ng-show],
 section.comic-card {
-  animation: pageSlideFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageSlideFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .order-followup-tree-box {

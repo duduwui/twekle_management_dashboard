@@ -22,20 +22,65 @@ public class CustomerService {
     private final CustomerOrderRepository orderRepository;
     private final CustomerFeedbackRepository feedbackRepository;
     private final OrderFollowupCheckRepository followupCheckRepository;
+    private final com.twekl.dashboard.modules.timefilter.repository.TimeFilterPresetRepository timeFilterPresetRepository;
 
     public CustomerService(CustomerRepository customerRepository,
                            CustomerOrderRepository orderRepository,
                            CustomerFeedbackRepository feedbackRepository,
-                           OrderFollowupCheckRepository followupCheckRepository) {
+                           OrderFollowupCheckRepository followupCheckRepository,
+                           com.twekl.dashboard.modules.timefilter.repository.TimeFilterPresetRepository timeFilterPresetRepository) {
         this.customerRepository = customerRepository;
         this.orderRepository = orderRepository;
         this.feedbackRepository = feedbackRepository;
         this.followupCheckRepository = followupCheckRepository;
+        this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
+
 
     @Transactional(readOnly = true)
     public List<Customer> findAll(String timeFilter) {
         List<Customer> all = customerRepository.findAll();
+
+        List<com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        Set<Long> activePresetIds = new HashSet<>();
+        Set<String> activePresetNames = new HashSet<>();
+        for (com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+
+        // Batch-load all orders and checks to eliminate N+1 query loop completely
+        List<CustomerOrder> allOrders = orderRepository.findAll();
+        List<OrderFollowupCheck> allChecks = followupCheckRepository.findAll();
+
+        Map<Long, List<CustomerOrder>> ordersByCustId = new HashMap<>();
+        for (CustomerOrder o : allOrders) {
+            if (o.getCustomer() != null && o.getCustomer().getId() != null) {
+                ordersByCustId.computeIfAbsent(o.getCustomer().getId(), k -> new ArrayList<>()).add(o);
+            }
+        }
+        for (List<CustomerOrder> ordList : ordersByCustId.values()) {
+            ordList.sort((a, b) -> {
+                if (a.getOrderDate() == null && b.getOrderDate() == null) return 0;
+                if (a.getOrderDate() == null) return 1;
+                if (b.getOrderDate() == null) return -1;
+                return b.getOrderDate().compareTo(a.getOrderDate());
+            });
+        }
+
+        Map<Long, List<OrderFollowupCheck>> checksByOrderId = new HashMap<>();
+        for (OrderFollowupCheck ch : allChecks) {
+            if (ch.getOrder() != null && ch.getOrder().getId() != null) {
+                checksByOrderId.computeIfAbsent(ch.getOrder().getId(), k -> new ArrayList<>()).add(ch);
+            }
+        }
+
+        for (Customer c : all) {
+            List<CustomerOrder> orders = ordersByCustId.getOrDefault(c.getId(), Collections.emptyList());
+            populateCustomerFollowupMetaWithData(c, orders, checksByOrderId, activePresetIds, activePresetNames);
+        }
+
         if (timeFilter == null || timeFilter.trim().isEmpty() || "ALL".equalsIgnoreCase(timeFilter)) {
             return all;
         }
@@ -54,7 +99,155 @@ public class CustomerService {
 
     @Transactional(readOnly = true)
     public Optional<Customer> findById(Long id) {
-        return customerRepository.findById(id);
+        Optional<Customer> opt = customerRepository.findById(id);
+        opt.ifPresent(this::populateCustomerFollowupMeta);
+        return opt;
+    }
+
+    private void populateCustomerFollowupMeta(Customer c) {
+        List<com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        Set<Long> activePresetIds = new HashSet<>();
+        Set<String> activePresetNames = new HashSet<>();
+        for (com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+        populateCustomerFollowupMeta(c, activePresetIds, activePresetNames);
+    }
+
+    private void populateCustomerFollowupMeta(Customer c, Set<Long> activePresetIds, Set<String> activePresetNames) {
+        if (c == null) return;
+        List<CustomerOrder> orders = orderRepository.findByCustomerIdOrderByOrderDateDesc(c.getId());
+        c.setTotalOrders(orders.size());
+        double totalSpent = orders.stream().mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
+        c.setTotalSpent(totalSpent);
+
+        if (orders.isEmpty()) {
+            c.setFollowupStatus("IDLE");
+            c.setNextPendingFollowup("-");
+            c.setAllFollowupsCompleted(false);
+            c.setRemainingFollowupsCount(0);
+            return;
+        }
+
+        int pendingCount = 0;
+        OrderFollowupCheck firstDueCheck = null;
+        OrderFollowupCheck firstPendingCheck = null;
+        Long targetOrderId = null;
+
+        for (CustomerOrder ord : orders) {
+            List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderId(ord.getId());
+            for (OrderFollowupCheck ch : checks) {
+                ch.setOrder(ord);
+                if (!ch.getIsCompleted()) {
+                    // Check if preset is active
+                    boolean isActive = (ch.getPresetId() != null && activePresetIds.contains(ch.getPresetId()))
+                            || (ch.getPresetName() != null && activePresetNames.contains(ch.getPresetName().trim().toLowerCase()));
+                    if (!isActive) {
+                        continue; // Skip deactivated presets!
+                    }
+
+                    pendingCount++;
+                    if (firstPendingCheck == null) {
+                        firstPendingCheck = ch;
+                        targetOrderId = ord.getId();
+                    }
+                    if (ch.getIsDue() && firstDueCheck == null) {
+                        firstDueCheck = ch;
+                        targetOrderId = ord.getId();
+                    }
+                }
+            }
+        }
+
+        c.setRemainingFollowupsCount(pendingCount);
+        c.setNextPendingOrderId(targetOrderId);
+
+        if (pendingCount == 0) {
+            c.setFollowupStatus("DONE");
+            c.setAllFollowupsCompleted(true);
+            c.setNextPendingFollowup("✓ All Done");
+            c.setNextPendingMinutesLeft(null);
+        } else if (firstDueCheck != null) {
+            c.setFollowupStatus("ALERT");
+            c.setAllFollowupsCompleted(false);
+            c.setNextPendingFollowup(firstDueCheck.getPresetName());
+            c.setNextPendingMinutesLeft(firstDueCheck.getMinutesUntilDue()); // will be ≤ 0
+        } else {
+            c.setFollowupStatus("IDLE");
+            c.setAllFollowupsCompleted(false);
+            c.setNextPendingFollowup(firstPendingCheck != null ? firstPendingCheck.getPresetName() : "Pending");
+            c.setNextPendingMinutesLeft(firstPendingCheck != null ? firstPendingCheck.getMinutesUntilDue() : null);
+        }
+    }
+
+    private void populateCustomerFollowupMetaWithData(Customer c,
+                                                      List<CustomerOrder> orders,
+                                                      Map<Long, List<OrderFollowupCheck>> checksByOrderId,
+                                                      Set<Long> activePresetIds,
+                                                      Set<String> activePresetNames) {
+        if (c == null) return;
+        c.setTotalOrders(orders.size());
+        double totalSpent = orders.stream().mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
+        c.setTotalSpent(totalSpent);
+
+        if (orders.isEmpty()) {
+            c.setFollowupStatus("IDLE");
+            c.setNextPendingFollowup("-");
+            c.setAllFollowupsCompleted(false);
+            c.setRemainingFollowupsCount(0);
+            return;
+        }
+
+        int pendingCount = 0;
+        OrderFollowupCheck firstDueCheck = null;
+        OrderFollowupCheck firstPendingCheck = null;
+        Long targetOrderId = null;
+
+        for (CustomerOrder ord : orders) {
+            List<OrderFollowupCheck> checks = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
+            for (OrderFollowupCheck ch : checks) {
+                ch.setOrder(ord);
+                if (!ch.getIsCompleted()) {
+                    boolean isActive = (ch.getPresetId() != null && activePresetIds.contains(ch.getPresetId()))
+                            || (ch.getPresetName() != null && activePresetNames.contains(ch.getPresetName().trim().toLowerCase()));
+                    if (!isActive) {
+                        continue;
+                    }
+
+                    pendingCount++;
+                    if (firstPendingCheck == null) {
+                        firstPendingCheck = ch;
+                        targetOrderId = ord.getId();
+                    }
+                    if (ch.getIsDue() && firstDueCheck == null) {
+                        firstDueCheck = ch;
+                        targetOrderId = ord.getId();
+                    }
+                }
+            }
+        }
+
+        c.setRemainingFollowupsCount(pendingCount);
+        c.setNextPendingOrderId(targetOrderId);
+
+        if (pendingCount == 0) {
+            c.setFollowupStatus("DONE");
+            c.setAllFollowupsCompleted(true);
+            c.setNextPendingFollowup("✓ All Done");
+            c.setNextPendingMinutesLeft(null);
+        } else if (firstDueCheck != null) {
+            c.setFollowupStatus("ALERT");
+            c.setAllFollowupsCompleted(false);
+            c.setNextPendingFollowup(firstDueCheck.getPresetName());
+            c.setNextPendingMinutesLeft(firstDueCheck.getMinutesUntilDue());
+        } else {
+            c.setFollowupStatus("IDLE");
+            c.setAllFollowupsCompleted(false);
+            c.setNextPendingFollowup(firstPendingCheck != null ? firstPendingCheck.getPresetName() : "Pending");
+            c.setNextPendingMinutesLeft(firstPendingCheck != null ? firstPendingCheck.getMinutesUntilDue() : null);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -69,20 +262,40 @@ public class CustomerService {
 
     @Transactional(readOnly = true)
     public List<OrderFollowupCheck> findFollowupsByOrderId(Long orderId) {
-        return followupCheckRepository.findByOrderId(orderId);
+        List<OrderFollowupCheck> all = followupCheckRepository.findByOrderId(orderId);
+        List<com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        Set<Long> activePresetIds = new HashSet<>();
+        Set<String> activePresetNames = new HashSet<>();
+        for (com.twekl.dashboard.modules.timefilter.entity.TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+
+        List<OrderFollowupCheck> filtered = new ArrayList<>();
+        for (OrderFollowupCheck ch : all) {
+            // Keep if completed, OR if its preset is currently active
+            boolean isActive = (ch.getPresetId() != null && activePresetIds.contains(ch.getPresetId()))
+                    || (ch.getPresetName() != null && activePresetNames.contains(ch.getPresetName().trim().toLowerCase()));
+            if (ch.getIsCompleted() || isActive) {
+                filtered.add(ch);
+            }
+        }
+        return filtered;
     }
+
 
     public OrderFollowupCheck toggleFollowupStatus(Long checkId) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
                 .orElseThrow(() -> new IllegalArgumentException("Checkpoint not found with id: " + checkId));
 
-        if ("COMPLETED".equalsIgnoreCase(check.getStatus())) {
+        if (check.getIsCompleted()) {
+            check.setIsCompleted(false);
             check.setStatus("PENDING");
-            check.setCompleted(false);
             check.setCompletedDate(null);
         } else {
+            check.setIsCompleted(true);
             check.setStatus("COMPLETED");
-            check.setCompleted(true);
             check.setCompletedDate(LocalDateTime.now());
         }
         return followupCheckRepository.save(check);
@@ -92,8 +305,8 @@ public class CustomerService {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
                 .orElseThrow(() -> new IllegalArgumentException("Checkpoint not found with id: " + checkId));
 
-        if (notes != null) check.setNotes(notes);
-        if (photoUrl != null) check.setPhotoUrl(photoUrl);
+        if (notes != null) check.setNote(notes);
+        if (photoUrl != null) check.setImageUrl(photoUrl);
 
         return followupCheckRepository.save(check);
     }
@@ -110,17 +323,16 @@ public class CustomerService {
     public Map<String, Object> getStats() {
         long totalCustomers = customerRepository.count();
         long totalOrders = orderRepository.count();
-        List<OrderFollowupCheck> allChecks = followupCheckRepository.findAll();
-
-        long completedChecks = allChecks.stream().filter(c -> "COMPLETED".equalsIgnoreCase(c.getStatus())).count();
-        long pendingChecks = allChecks.size() - completedChecks;
+        long totalFollowups = followupCheckRepository.count();
+        long completedFollowups = followupCheckRepository.countByIsCompletedTrue();
+        long pendingFollowups = totalFollowups - completedFollowups;
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalCustomers", totalCustomers);
         stats.put("totalOrders", totalOrders);
-        stats.put("completedFollowups", completedChecks);
-        stats.put("pendingFollowups", pendingChecks);
-        stats.put("totalFollowups", allChecks.size());
+        stats.put("completedFollowups", completedFollowups);
+        stats.put("pendingFollowups", pendingFollowups);
+        stats.put("totalFollowups", totalFollowups);
         return stats;
     }
 

@@ -4,16 +4,10 @@
 <div th:fragment="adminTab" th:remove="tag">
     <section class="comic-card" ng-show="currentTab === 'admins'" ng-controller="AdminController">
         <!-- 1.1 Admin List Page -->
-        <div ng-include="'/app/features/admin/views/admin-list.html'"></div>
+        <div ng-include="'/app/features/admin/views/admin-list.html'" ng-if="adminView === 'list'"></div>
 
         <!-- 1.2 Admin Create Page -->
-        <div ng-include="'/app/features/admin/views/admin-create.html'"></div>
-
-        <!-- 1.3 Admin Inspect Page -->
-        <div ng-include="'/app/features/admin/views/admin-inspect.html'"></div>
-
-        <!-- 1.4 Admin Delete Page -->
-        <div ng-include="'/app/features/admin/views/admin-delete.html'"></div>
+        <div ng-include="'/app/features/admin/views/admin-create.html'" ng-if="adminView === 'create'"></div>
     </section>
 </div>
 </body>

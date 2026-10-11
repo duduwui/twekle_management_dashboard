@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="tweklApp" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head th:replace="~{administration/fragments/admin-dashboard-fragments :: head}"></head>
+<body ng-controller="LayoutController">
+
+    <div class="app-container">
+        <!-- Sidebar Navigation Fragment -->
+        <aside th:replace="~{administration/fragments/admin-dashboard-fragments :: sidebar}"></aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <!-- Top Header Fragment -->
+            <header th:replace="~{administration/fragments/admin-dashboard-fragments :: header}"></header>
+
+            <!-- Page Body: Content injected by individual view -->
+            <main class="page-body">
+                <div layout:fragment="content">
+                    <!-- Default fallback content -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Common Modals & Toasts Fragment -->
+    <div th:replace="~{administration/fragments/admin-dashboard-fragments :: modals}"></div>
+
+    <!-- Thymeleaf Server-Side Data Injection -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        window.SERVER_ACTIVE_TAB = /*[[${activeTab}]]*/ 'dashboard';
+        window.SERVER_STATS = /*[[${stats}]]*/ null;
+        window.SERVER_URGENT_CUSTOMERS = /*[[${urgentCustomers}]]*/ null;
+        window.SERVER_ALL_CUSTOMERS = /*[[${allCustomers}]]*/ null;
+        window.SERVER_FOLLOWUPS = /*[[${followupSummaries}]]*/ null;
+        window.SERVER_REPORT_DATA = /*[[${reportData}]]*/ null;
+        window.SERVER_PRESETS = /*[[${presets}]]*/ null;
+        window.SERVER_ADMIN_LIST = /*[[${adminList}]]*/ null;
+        window.SERVER_ROLE_LIST = /*[[${roleList}]]*/ null;
+        window.SERVER_CURRENT_USER = /*[[${currentUser}]]*/ null;
+        /*]]>*/
+    </script>
+
+    <!-- Scripts Fragment -->
+    <div th:replace="~{administration/fragments/admin-dashboard-fragments :: scripts}"></div>
+
+</body>
+</html>
+

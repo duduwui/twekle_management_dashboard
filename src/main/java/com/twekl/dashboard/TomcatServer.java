@@ -5,7 +5,7 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.catalina.webresources.StandardRoot;
 import org.springframework.web.SpringServletContainerInitializer;
-import com.twekl.dashboard.common.config.AppInitializer;
+import com.twekl.dashboard.administration.config.AppInitializer;
 
 import java.io.File;
 import java.util.Collections;

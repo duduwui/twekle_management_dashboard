@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{administration/fragments/adminLayout}">
+<head>
+    <title>Dashboard Overview | Twekl Administration</title>
+</head>
+<body>
+    <div layout:fragment="content">
+<section class="comic-card dashboard-card"  ng-controller="DashboardController">
+        
+        <div class="dashboard-container">
+
+            <!-- 1. FIVE MAJOR KPI METRICS (CENTERED, ZERO ICONS) -->
+            <div class="kpi-row-5">
+                
+                <!-- KPI 1: Customers This Week (Resets every 7 days) -->
+                <div class="comic-kpi-card kpi-card-clickable" ng-click="openCustomersModal('week')" title="Click to view customers registered this week">
+                    <span class="kpi-label">THIS WEEK</span>
+                    <span class="kpi-value kpi-primary" ng-bind="stats.customersThisWeek || 0">0</span>
+                    <span class="kpi-subtext">Resets every 7 days</span>
+                </div>
+
+                <!-- KPI 2: Customers This Month (Resets every 30 days) -->
+                <div class="comic-kpi-card kpi-card-clickable" ng-click="openCustomersModal('month')" title="Click to view customers registered this month">
+                    <span class="kpi-label">THIS MONTH</span>
+                    <span class="kpi-value kpi-primary" ng-bind="stats.customersThisMonth || 0">0</span>
+                    <span class="kpi-subtext">Resets every 30 days</span>
+                </div>
+
+                <!-- KPI 3: Total Customers (All-time total, increases) -->
+                <div class="comic-kpi-card kpi-card-clickable" ng-click="openCustomersModal('all')" title="Click to view all registered customers">
+                    <span class="kpi-label">TOTAL CUSTOMERS</span>
+                    <span class="kpi-value kpi-primary" ng-bind="stats.totalCustomers || 0">0</span>
+                    <span class="kpi-subtext">All-time total</span>
+                </div>
+
+                <!-- KPI 4: Pending in Queue (Click auto-filters Follow-ups tab to In Queue) -->
+                <div class="comic-kpi-card kpi-card-clickable" ng-click="filterPendingQueue()" title="Click to filter Follow-ups table directly to queue">
+                    <span class="kpi-label">PENDING IN QUEUE</span>
+                    <span class="kpi-value kpi-primary" ng-bind="stats.pendingFollowups || 0">0</span>
+                    <span class="kpi-subtext">Click to filter queue</span>
+                </div>
+
+                <!-- KPI 5: Unsatisfied Users (Click shows popup details of who and why) -->
+                <div class="comic-kpi-card kpi-card-clickable" ng-class="{'kpi-card-alert': stats.unsatisfiedCount > 0}" ng-click="openUnsatisfiedModal()" title="Click to view unsatisfied customer details and reasons">
+                    <span class="kpi-label">UNSATISFIED USERS</span>
+                    <span class="kpi-value" ng-class="{'kpi-danger': stats.unsatisfiedCount > 0, 'kpi-primary': stats.unsatisfiedCount === 0}">
+                        {{ stats.unsatisfiedCount || 0 }}
+                    </span>
+                    <span class="kpi-subtext" ng-if="stats.unsatisfiedCount > 0">
+                        Click to see reasons
+                    </span>
+                    <span class="kpi-subtext" ng-if="!stats.unsatisfiedCount || stats.unsatisfiedCount === 0">
+                        Zero complaints
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- 2. VISUAL PROGRESS (CLICKABLE CHART FOR DETAILS) -->
+            <div class="visual-progress-card visual-progress-clickable" ng-click="openProgressModal()" title="Click to view detailed follow-up completion breakdown">
+                <div class="visual-progress-header" style="justify-content: center; text-align: center; gap: 12px;">
+                    <span class="visual-progress-title">Follow-up Completion Progress</span>
+                    <span class="visual-progress-percent">{{ stats.completionPercentage || 0 }}% Completed</span>
+                </div>
+                
+                <!-- Segmented Progress Bar -->
+                <div class="visual-bar-track">
+                    <div class="visual-bar-completed" ng-style="{'width': (stats.completionPercentage || 0) + '%'}"></div>
+                    <div class="visual-bar-pending" ng-style="{'width': (100 - (stats.completionPercentage || 0)) + '%'}"></div>
+                </div>
+
+                <!-- Centered Legend -->
+                <div class="visual-legend-row" style="justify-content: center; text-align: center;">
+                    <div class="legend-item">
+                        <span class="legend-dot dot-completed"></span>
+                        <span>Completed: <strong>{{ stats.completedFollowups || 0 }}</strong></span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot dot-pending"></span>
+                        <span>In Queue: <strong>{{ stats.pendingFollowups || 0 }}</strong></span>
+                    </div>
+                    <div class="legend-item" ng-if="stats.alertFollowups > 0">
+                        <span class="legend-dot dot-alert"></span>
+                        <span>Overdue: <strong>{{ stats.alertFollowups }}</strong></span>
+                    </div>
+                    <div class="legend-item">
+                        <span>Total Checks: <strong>{{ stats.totalFollowups || (stats.completedFollowups + stats.pendingFollowups) || 0 }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PRIORITY ATTENTION TABLE (ORDERED BY MOST OVERDUE / WAITING TIME) -->
+            <div class="priority-table-card">
+                <div class="priority-header" style="justify-content: space-between;">
+                    <h3 class="priority-title" style="margin: 0;">
+                        <span>Priority Attention: Next Follow-ups (Most Overdue First)</span>
+                    </h3>
+                    <button type="button" class="comic-btn btn-sm btn-ghost" ng-click="goToFollowups()" title="View all customers in Follow-ups tab">
+                        View All Customers
+                    </button>
+                </div>
+
+                <!-- When There Are Customers Needing Follow-up -->
+                <div class="table-responsive" ng-if="urgentCustomers && urgentCustomers.length > 0">
+                    <table class="comic-table table-centered">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Phone Number</th>
+                                <th>City</th>
+                                <th>Milestone</th>
+                                <th>Remaining Time</th>
+                                <th>Status</th>
+                                <th style="width: 120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="cust in urgentCustomers track by cust.id">
+                                <td>
+                                    <strong style="color: var(--text-main);" ng-bind="cust.name"></strong>
+                                </td>
+                                <td>
+                                    <span class="text-muted" ng-bind="cust.phoneNumber"></span>
+                                </td>
+                                <td>
+                                    <span class="comic-tag tag-gray" ng-bind="cust.city || '-'"></span>
+                                </td>
+                                <td>
+                                    <span class="font-bold" ng-bind="cust.nextPendingFollowup || 'Pending Check'"></span>
+                                </td>
+                                <td>
+                                    <span class="comic-tag" ng-class="isOverdue(cust) ? 'tag-danger' : 'tag-warning'">
+                                        {{ getLiveCountdown(cust) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="comic-tag" ng-class="isOverdue(cust) ? 'tag-danger' : 'tag-warning'">
+                                        {{ isOverdue(cust) ? 'Overdue' : 'In Queue' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button type="button" class="comic-btn btn-sm btn-primary" ng-click="openCustomer(cust)" title="Open customer follow-up orders">
+                                        Open
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State (When All Caught Up) -->
+                <div class="priority-empty-state" ng-if="!urgentCustomers || urgentCustomers.length === 0" style="text-align: center;">
+                    <h4 class="priority-empty-title">All Caught Up</h4>
+                    <p class="priority-empty-desc">
+                        There are no pending or overdue follow-ups right now.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 4. CATEGORIZED CUSTOMERS MODAL (BY DATE: THIS WEEK / THIS MONTH / TOTAL) -->
+        <div class="comic-modal-overlay" ng-show="showCustomersModal">
+            <div class="comic-modal" style="max-width: 780px; width: 94%;">
+                <div class="comic-modal-header">
+                    <div>
+                        <h3 class="modal-title">Customer Registrations</h3>
+                        <p class="modal-subtitle">Categorized customer details by registration date</p>
+                    </div>
+                    <button type="button" class="comic-modal-close" ng-click="closeCustomersModal()" title="Close">&times;</button>
+                </div>
+
+                <!-- Categorized Category Selector Tabs -->
+                <div style="display: flex; gap: 8px; padding: 14px 20px 0 20px; border-bottom: 1px solid var(--border-color);">
+                    <button type="button" class="modal-cat-pill" ng-class="{'active': activeCustomerCategory === 'week'}" ng-click="setCustomerCategory('week')">
+                        This Week ({{ (categorizedCustomers.week || []).length }})
+                    </button>
+                    <button type="button" class="modal-cat-pill" ng-class="{'active': activeCustomerCategory === 'month'}" ng-click="setCustomerCategory('month')">
+                        This Month ({{ (categorizedCustomers.month || []).length }})
+                    </button>
+                    <button type="button" class="modal-cat-pill" ng-class="{'active': activeCustomerCategory === 'all'}" ng-click="setCustomerCategory('all')">
+                        All Customers ({{ (categorizedCustomers.all || []).length }})
+                    </button>
+                </div>
+                
+                <div class="comic-modal-body" style="padding: 18px 20px; max-height: 420px; overflow-y: auto;">
+                    <div class="table-responsive" ng-if="categorizedCustomers[activeCustomerCategory] && categorizedCustomers[activeCustomerCategory].length > 0">
+                        <table class="comic-table table-centered">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Phone Number</th>
+                                    <th>City</th>
+                                    <th>Registered Date</th>
+                                    <th>Orders</th>
+                                    <th>Total Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="cust in categorizedCustomers[activeCustomerCategory] track by cust.id">
+                                    <td>
+                                        <strong style="color: var(--text-main);" ng-bind="cust.name"></strong>
+                                    </td>
+                                    <td ng-bind="cust.phoneNumber"></td>
+                                    <td>
+                                        <span class="comic-tag tag-gray" ng-bind="cust.city || '-'"></span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted" style="font-size: 0.8rem;" ng-bind="cust.createdAt ? (cust.createdAt | date:'mediumDate') : 'Recently'"></span>
+                                    </td>
+                                    <td>
+                                        <strong ng-bind="cust.totalOrders || 0"></strong>
+                                    </td>
+                                    <td>
+                                        <strong ng-bind="(cust.totalSpent || 0 | currency:'$':2)"></strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="priority-empty-state" ng-if="!categorizedCustomers[activeCustomerCategory] || categorizedCustomers[activeCustomerCategory].length === 0" style="text-align: center; padding: 24px;">
+                        <h4 class="priority-empty-title">No Customers in This Category</h4>
+                        <p class="priority-empty-desc">No customer registrations recorded for the selected time range.</p>
+                    </div>
+                </div>
+
+                <div class="comic-modal-footer" style="justify-content: space-between;">
+                    <button type="button" class="comic-btn btn-primary" ng-click="closeCustomersModal(); goToFollowups();">
+                        Open Customer Directory
+                    </button>
+                    <button type="button" class="comic-btn btn-ghost" ng-click="closeCustomersModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. UNSATISFIED USERS DETAILS MODAL (WHO & WHY) -->
+        <div class="comic-modal-overlay" ng-show="showUnsatisfiedModal">
+            <div class="comic-modal" style="max-width: 760px; width: 94%;">
+                <div class="comic-modal-header">
+                    <div>
+                        <h3 class="modal-title">Unsatisfied Customer Feedback</h3>
+                        <p class="modal-subtitle">Details and reasons for negative customer feedback</p>
+                    </div>
+                    <button type="button" class="comic-modal-close" ng-click="closeUnsatisfiedModal()" title="Close">&times;</button>
+                </div>
+                
+                <div class="comic-modal-body" style="padding: 20px; max-height: 420px; overflow-y: auto;">
+                    <!-- If There Are Unsatisfied Feedbacks -->
+                    <div class="table-responsive" ng-if="unsatisfiedList && unsatisfiedList.length > 0">
+                        <table class="comic-table table-centered">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Order</th>
+                                    <th>Rating</th>
+                                    <th>Reason / Why</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in unsatisfiedList">
+                                    <td>
+                                        <strong>{{ item.customerName }}</strong>
+                                        <div class="text-muted" style="font-size: 0.75rem;">{{ item.phoneNumber }} ({{ item.city }})</div>
+                                    </td>
+                                    <td>{{ item.orderNumber }}</td>
+                                    <td>
+                                        <span class="comic-tag tag-danger">{{ item.rating }}</span>
+                                    </td>
+                                    <td style="text-align: left; max-width: 260px;">
+                                        <span>{{ item.reason }}</span>
+                                    </td>
+                                    <td class="nowrap text-muted" style="font-size: 0.75rem;">
+                                        {{ item.date | date:'mediumDate' }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- If 0 Unsatisfied Feedbacks -->
+                    <div class="priority-empty-state" ng-if="!unsatisfiedList || unsatisfiedList.length === 0" style="padding: 28px 16px; text-align: center;">
+                        <h4 class="priority-empty-title">Zero Unsatisfied Users</h4>
+                        <p class="priority-empty-desc">
+                            All customer feedback, reviews, and milestone checks are currently positive or satisfied.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="comic-modal-footer" style="justify-content: space-between;">
+                    <button type="button" class="comic-btn btn-primary" ng-click="goToSatisfactionReports()">
+                        View Full Satisfaction Reports
+                    </button>
+                    <button type="button" class="comic-btn btn-ghost" ng-click="closeUnsatisfiedModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. FOLLOW-UP PROGRESS DETAIL MODAL (ON CHART CLICK) -->
+        <div class="comic-modal-overlay" ng-show="showProgressModal">
+            <div class="comic-modal" style="max-width: 620px; width: 92%;">
+                <div class="comic-modal-header">
+                    <div>
+                        <h3 class="modal-title">Follow-up Completion Breakdown</h3>
+                        <p class="modal-subtitle">Current status of customer check-in checkpoints</p>
+                    </div>
+                    <button type="button" class="comic-modal-close" ng-click="closeProgressModal()" title="Close">&times;</button>
+                </div>
+
+                <div class="comic-modal-body" style="padding: 24px; text-align: center;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px;">
+                        <div class="comic-kpi-card" style="padding: 14px;">
+                            <span class="kpi-label">COMPLETED</span>
+                            <span class="kpi-value kpi-primary" style="color: #16A34A;">{{ stats.completedFollowups || 0 }}</span>
+                            <span class="kpi-subtext">Checks passed</span>
+                        </div>
+                        <div class="comic-kpi-card" style="padding: 14px;">
+                            <span class="kpi-label">IN QUEUE</span>
+                            <span class="kpi-value" style="color: #D97706;">{{ stats.pendingFollowups || 0 }}</span>
+                            <span class="kpi-subtext">Waiting follow-up</span>
+                        </div>
+                        <div class="comic-kpi-card" style="padding: 14px;">
+                            <span class="kpi-label">RATE</span>
+                            <span class="kpi-value kpi-primary">{{ stats.completionPercentage || 0 }}%</span>
+                            <span class="kpi-subtext">Completion rate</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar in Modal -->
+                    <div class="visual-bar-track" style="margin-bottom: 20px; height: 18px;">
+                        <div class="visual-bar-completed" ng-style="{'width': (stats.completionPercentage || 0) + '%'}"></div>
+                        <div class="visual-bar-pending" ng-style="{'width': (100 - (stats.completionPercentage || 0)) + '%'}"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" class="comic-btn btn-primary" ng-click="filterDone()" style="background-color: #16A34A; border-color: #16A34A;">
+                            Filter to Completed
+                        </button>
+                        <button type="button" class="comic-btn btn-primary" ng-click="filterQueue()" style="background-color: #D97706; border-color: #D97706;">
+                            Filter to Queue
+                        </button>
+                    </div>
+                </div>
+
+                <div class="comic-modal-footer">
+                    <button type="button" class="comic-btn btn-ghost" ng-click="closeProgressModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+    </div>
+</body>
+</html>

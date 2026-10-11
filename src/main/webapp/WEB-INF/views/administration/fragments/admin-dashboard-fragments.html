@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 1. HEAD FRAGMENT -->
+<head th:fragment="head">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twekl Admin Dashboard</title>
+    <style>
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+            display: none !important;
+        }
+        .comic-modal-overlay.ng-hide {
+            display: none !important;
+        }
+    </style>
+    <!-- Google Fonts (Non-blocking fallback to local system font stack) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <!-- Custom Comic Design System Style -->
+    <link rel="stylesheet" href="/css/style.css?v=4.2">
+</head>
+
+<!-- 2. TOP HEADER FRAGMENT -->
+<header class="top-header" th:fragment="header">
+    <div>
+        <h1 class="header-page-title" th:if="${activeTab == 'dashboard'}" th:text="'Dashboard Overview'">Dashboard Overview</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'admins'}" th:text="'Admin Management'">Admin Management</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'roles'}" th:text="'Role Templates & Permissions'">Role Templates &amp; Permissions</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'customers'}" th:text="'Follow-ups'">Follow-ups</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'timelines' || activeTab == 'time-filters'}" th:text="'Time Filters'">Time Filters</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'reports'}" th:text="'Reports & Analytics'">Reports &amp; Analytics</h1>
+        <h1 class="header-page-title" th:if="${activeTab == null}">Dashboard Overview</h1>
+    </div>
+</header>
+
+<!-- 3. SIDEBAR NAVIGATION FRAGMENT -->
+<aside class="sidebar" th:fragment="sidebar">
+    <div class="brand-section">
+        <img src="/images/twekl-logo.png" alt="Twekl Logo" class="brand-logo-img">
+        <div class="brand-info">
+            <span class="brand-title">Twekl</span>
+            <span class="brand-subtitle">Management</span>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <span class="nav-label">Navigation</span>
+        
+        <!-- Group 0: Dashboard (Global Access) -->
+        <a th:href="@{/admin/dashboard}" 
+           class="nav-item" 
+           th:classappend="${activeTab == 'dashboard'} ? 'active' : ''">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Dashboard</span>
+            </div>
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <!-- Group 1: Administration Category Accordion -->
+        <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}">
+            <button type="button" 
+                    class="nav-category-toggle" 
+                    th:classappend="${activeTab == 'admins' || activeTab == 'roles'} ? 'active-category' : ''"
+                    onclick="toggleCategoryNav('admin')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="arrow-admin" 
+                          class="category-arrow" 
+                          th:classappend="${activeTab == 'admins' || activeTab == 'roles'} ? 'expanded' : ''">▶</span>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Administration</span>
+                </div>
+            </button>
+
+            <!-- Administration 2 Sub-tabs -->
+            <div id="subnav-admin" 
+                 class="nav-sub-items" 
+                 th:style="${activeTab == 'admins' || activeTab == 'roles'} ? 'display: flex;' : 'display: none;'">
+                <a th:href="@{/admin/admins}" 
+                   class="nav-sub-item" 
+                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers}"
+                   th:classappend="${activeTab == 'admins'} ? 'active' : ''">
+                    <span>Admin Management</span>
+                </a>
+                <a th:href="@{/admin/roles}" 
+                   class="nav-sub-item" 
+                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canCreateRoles}"
+                   th:classappend="${activeTab == 'roles'} ? 'active' : ''">
+                    <span>Role Templates</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}"></div>
+
+        <!-- Group 2: Follow-ups -->
+        <a th:href="@{/admin/customers}" 
+           class="nav-item" 
+           th:classappend="${activeTab == 'customers'} ? 'active' : ''">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>Follow-ups</span>
+            </div>
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <!-- Group 3: Reports Accordion -->
+        <div class="nav-category-group">
+            <button type="button" 
+                    class="nav-category-toggle" 
+                    th:classappend="${activeTab == 'reports'} ? 'active-category' : ''"
+                    onclick="toggleCategoryNav('reports')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="arrow-reports" 
+                          class="category-arrow" 
+                          th:classappend="${activeTab == 'reports'} ? 'expanded' : ''">▶</span>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Reports</span>
+                </div>
+            </button>
+
+            <!-- Reports 4 Sub-tabs -->
+            <div id="subnav-reports" 
+                 class="nav-sub-items" 
+                 th:style="${activeTab == 'reports'} ? 'display: flex;' : 'display: none;'">
+                <a th:href="@{/admin/reports}" 
+                   class="nav-sub-item" 
+                   th:classappend="${activeTab == 'reports'} ? 'active' : ''">
+                    <span>Follow-ups &amp; Milestones</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <!-- Group 4: Time Filters & Automation Presets -->
+        <a th:href="@{/admin/timelines}" 
+           class="nav-item" 
+           th:classappend="${activeTab == 'timelines' || activeTab == 'time-filters'} ? 'active' : ''">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Time Filters</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Sidebar Bottom User Profile / Credentials -->
+    <div class="sidebar-footer" th:if="${currentUser != null}">
+        <div class="sidebar-user-card">
+            <div class="sidebar-user-details">
+                <span class="sidebar-user-name" th:text="${currentUser.username}">System User</span>
+                <span class="sidebar-user-role" th:text="${currentUser.superAdmin ? 'Super Admin' : 'Admin'}">Super Admin</span>
+            </div>
+            <form th:action="@{/admin/auth/logout}" method="post" style="display: inline; margin: 0;">
+                <button type="submit" class="sidebar-logout-btn" title="Logout">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="sidebar-footer" th:if="${currentUser == null}">
+        <a th:href="@{/login}" class="sidebar-login-btn">
+            <span>Log In</span>
+        </a>
+    </div>
+</aside>
+
+<!-- 4. MODALS & TOASTS FRAGMENT -->
+<div th:fragment="modals" th:remove="tag">
+    <!-- Comprehensive Report Filters Modal -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showReportFilterModal || (modalState && modalState.reportFilter)" ng-click="closeReportFilterModal()">
+        <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Report Filters</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
+            </div>
+
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                    <div class="filter-presets-grid-3">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingReportPresetSelected(null)}"
+                             ng-click="selectPendingReportPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.active !== false || preset.isActive"
+                             ng-class="{'selected': isPendingReportPresetSelected(preset)}"
+                             ng-click="selectPendingReportPreset(preset)">
+                            <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer Satisfaction Filter</div>
+                    <div class="filter-presets-grid-4">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction}"
+                             ng-click="pendingReportFilters.satisfaction = 'all'">
+                            <span class="filter-simple-name">All Reviews</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'satisfied'}"
+                             ng-click="pendingReportFilters.satisfaction = 'satisfied'">
+                            <span class="filter-simple-name">Satisfied</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'satisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'neutral'}"
+                             ng-click="pendingReportFilters.satisfaction = 'neutral'">
+                            <span class="filter-simple-name">Neutral</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'neutral'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'unsatisfied'}"
+                             ng-click="pendingReportFilters.satisfaction = 'unsatisfied'">
+                            <span class="filter-simple-name">Unsatisfied</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'unsatisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-modal-footer-simple">
+                <button type="button" class="comic-btn-secondary" ng-click="resetReportFilterModal()" style="padding: 9px 16px;">
+                    Reset
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeReportFilterModal()" style="padding: 9px 16px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyReportFilterModal()" style="padding: 9px 22px;">
+                        Apply Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Time & Follow-up Filter Modal -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
+        <div class="filter-modal-card" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Filter Criteria</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
+            </div>
+
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                    <div class="filter-presets-grid-3">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingPresetSelected(null)}"
+                             ng-click="selectPendingPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.active !== false || preset.isActive"
+                             ng-class="{'selected': isPendingPresetSelected(preset)}"
+                             ng-click="selectPendingPreset(preset)">
+                            <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-if="currentFilterTarget === 'customer'">
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Follow-up Progress State</div>
+                    <div class="filter-presets-grid-4">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('ALL')}"
+                             ng-click="selectPendingFollowupStatus('ALL')">
+                            <span class="filter-simple-name">All Statuses</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALL')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('ALERT')}"
+                             ng-click="selectPendingFollowupStatus('ALERT')">
+                            <span class="filter-simple-name">Overdue</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALERT')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('IDLE')}"
+                             ng-click="selectPendingFollowupStatus('IDLE')">
+                            <span class="filter-simple-name">Pending</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('IDLE')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('DONE')}"
+                             ng-click="selectPendingFollowupStatus('DONE')">
+                            <span class="filter-simple-name">Completed</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('DONE')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-modal-footer-simple">
+                <button type="button" class="comic-btn-secondary" ng-click="selectPendingPreset(null); selectPendingFollowupStatus('ALL');" style="padding: 9px 16px;">
+                    Reset
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()" style="padding: 9px 16px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()" style="padding: 9px 22px;">
+                        Apply Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Lightbox Modal -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
+        <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; align-items: center; justify-content: center;" ng-click="$event.stopPropagation()">
+            <button type="button" class="comic-modal-close" ng-click="closeImageModal()" style="position: absolute; top: -14px; right: -14px; background: #FFFFFF; border-radius: 50%; width: 32px; height: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            <img ng-src="{{previewImageUrl}}" style="max-width: 88vw; max-height: 82vh; border-radius: 8px; border: 3px solid #FFFFFF; box-shadow: 0 10px 40px rgba(0,0,0,0.5); object-fit: contain;" alt="Image Preview">
+        </div>
+    </div>
+
+    <!-- Authentication / Login Popup Modal -->
+    <div class="comic-modal-overlay" ng-cloak ng-show="showLoginModal" ng-click="closeLoginModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 420px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Administrator Login</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeLoginModal()">&times;</button>
+            </div>
+            <form ng-submit="login()">
+                <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="comic-input" placeholder="e.g. twekl_super_admin" ng-model="loginForm.username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="comic-input" placeholder="••••••••" ng-model="loginForm.password" required>
+                    </div>
+                </div>
+                <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeLoginModal()">Cancel</button>
+                    <button type="submit" class="comic-btn">Log In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Comic Toast Alerts -->
+    <div class="toast-container">
+        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
+            <span ng-bind="toast.message"></span>
+        </div>
+    </div>
+</div>
+
+<!-- 5. SCRIPTS FRAGMENT -->
+<div th:fragment="scripts" th:remove="tag">
+    <!-- AngularJS Core Library (1.8.2) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    
+    <!-- Core Application & Services -->
+    <script src="/js/core/app.js?v=6.0"></script>
+    <script src="/js/core/common.js?v=6.0"></script>
+    <script src="/js/core/auth.js?v=6.0"></script>
+
+    <!-- Feature Modules (Controller + Service in ONE file per screen) -->
+    <script src="/js/dashboard/dashboard.js?v=7.0"></script>
+    <script src="/js/admin/admins.js?v=7.0"></script>
+    <script src="/js/role/roles.js?v=7.0"></script>
+    <script src="/js/customer/customers.js?v=7.0"></script>
+    <script src="/js/order/orders.js?v=7.0"></script>
+    <script src="/js/timefilter/timeFilters.js?v=7.0"></script>
+    <script src="/js/report/reports.js?v=7.0"></script>
+
+    <!-- Clean Sidebar Category Accordion Toggle -->
+    <script>
+    function toggleCategoryNav(name) {
+        var sub = document.getElementById('subnav-' + name);
+        var arrow = document.getElementById('arrow-' + name);
+        if (!sub) return;
+        var isHidden = (sub.style.display === 'none' || getComputedStyle(sub).display === 'none');
+        if (isHidden) {
+            sub.style.display = 'flex';
+            if (arrow) arrow.classList.add('expanded');
+        } else {
+            sub.style.display = 'none';
+            if (arrow) arrow.classList.remove('expanded');
+        }
+    }
+
+    // In-place async action interceptor: prevents full page reload on delete or toggle actions
+    document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("submit", function(e) {
+            var form = e.target;
+            var action = form.getAttribute("action") || "";
+            var isDelete = action.includes("/delete") || action.includes("delete-");
+            var isToggle = action.includes("/toggle") || action.includes("toggle-");
+
+            if (!isDelete && !isToggle) {
+                return;
+            }
+
+            e.preventDefault();
+            var submitBtn = form.querySelector("button[type='submit']");
+            if (submitBtn) submitBtn.disabled = true;
+            var row = form.closest("tr");
+
+            fetch(action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            }).then(function(res) {
+                if (!res.ok && res.status !== 302 && res.status !== 200) {
+                    throw new Error("Action returned HTTP " + res.status);
+                }
+                if (isDelete && row) {
+                    row.style.transition = "all 0.3s ease-out";
+                    row.style.opacity = "0";
+                    row.style.transform = "translateX(20px)";
+                    setTimeout(function() {
+                        row.remove();
+                        var countEl = document.querySelector(".datatable-info strong");
+                        if (countEl) {
+                            var cur = parseInt(countEl.textContent, 10);
+                            if (!isNaN(cur) && cur > 0) countEl.textContent = (cur - 1);
+                        }
+                    }, 300);
+                    showActionToast("Item deleted successfully", "success");
+                } else if (isToggle && submitBtn) {
+                    submitBtn.disabled = false;
+                    var txt = submitBtn.textContent.trim().toUpperCase();
+                    var isCurrentlyActive = txt.includes("ACTIVE") && !txt.includes("INACTIVE");
+                    if (isCurrentlyActive) {
+                        submitBtn.classList.remove("tag-primary");
+                        submitBtn.classList.add("tag-muted");
+                        submitBtn.textContent = submitBtn.textContent.trim() === "ACTIVE" ? "INACTIVE" : "Inactive";
+                        showActionToast("Status deactivated", "info");
+                    } else {
+                        submitBtn.classList.remove("tag-muted");
+                        submitBtn.classList.add("tag-primary");
+                        submitBtn.textContent = submitBtn.textContent.trim() === "INACTIVE" ? "ACTIVE" : "Active";
+                        showActionToast("Status activated", "success");
+                    }
+                }
+            }).catch(function(err) {
+                if (submitBtn) submitBtn.disabled = false;
+                showActionToast("Action failed: " + err.message, "error");
+            });
+        });
+
+        function showActionToast(msg, type) {
+            var container = document.querySelector(".toast-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.className = "toast-container";
+                document.body.appendChild(container);
+            }
+            var toast = document.createElement("div");
+            toast.className = "comic-toast " + (type || "success");
+            var span = document.createElement("span");
+            span.textContent = msg;
+            toast.appendChild(span);
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.transition = "opacity 0.4s ease";
+                toast.style.opacity = "0";
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3200);
+        }
+    });
+    </script>
+</div>
+
+</body>
+</html>
+

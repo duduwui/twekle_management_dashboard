@@ -12,16 +12,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * Controller for Viewing Staff Administrators Directory.
- * Pure Thymeleaf Server-Side Rendering (SSR).
  */
 @Controller
 @RequestMapping("/admin/admins")
-public class AdminViewController {
+public class AdminListController {
 
     private final AdminService adminService;
     private final RoleService roleService;
 
-    public AdminViewController(AdminService adminService, RoleService roleService) {
+    public AdminListController(AdminService adminService, RoleService roleService) {
         this.adminService = adminService;
         this.roleService = roleService;
     }

@@ -295,9 +295,10 @@
 
                                                             <!-- 2. Status Check Yes/No toggle -->
                                                             <div class="check-col-status">
-                                                                <button type="button" 
-                                                                        class="followup-status-btn" 
-                                                                        ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
+                                                                <button type="button"
+                                                                        class="followup-status-btn"
+                                                                        ng-if="auth.canUpdateFollowups"
+                                                                        ng-class="check.isCompleted ? \'status-yes\' : \'status-no\'"
                                                                         ng-click="toggleFollowupCheck(order, check)"
                                                                         title="Click to toggle completion status">
                                                                     <span ng-if="check.isCompleted">✔</span>
@@ -320,7 +321,7 @@
                                                             </div>
 
                                                             <!-- 5. Direct Action to Add/Edit Feedback for this checkpoint -->
-                                                            <div class="check-col-action">
+                                                            <div class="check-col-action" ng-if="auth.canUpdateFollowups">
                                                                 <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check, $event)" title="Add or edit feedback & photos for this milestone">
                                                                     <span ng-if="!check.note && !check.imageUrl">+ Feedback</span>
                                                                     <span ng-if="check.note || check.imageUrl">Edit Feedback</span>
@@ -478,11 +479,12 @@
 
                                                             <!-- 2. Status Check Yes/No toggle (No author name under it) -->
                                                             <div class="check-col-status">
-                                                                <button type="button" 
-                                                                        class="followup-status-btn" 
-                                                                        ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
+                                                                <button type="button"
+                                                                        class="followup-status-btn"
+                                                                        ng-if="auth.canUpdateFollowups"
+                                                                        ng-class="check.isCompleted ? \'status-yes\' : \'status-no\'"
                                                                         ng-click="toggleFollowupCheck(order, check)"
-                                                                        title="Click to toggle status (Synchronized with Order Log)">
+                                                                        title="Click to toggle status">
                                                                     <span ng-if="check.isCompleted">✔</span>
                                                                     <span ng-if="!check.isCompleted">✖</span>
                                                                 </button>
@@ -503,7 +505,7 @@
                                                             </div>
 
                                                             <!-- 5. Edit / Add Details Action (Synchronized with Database & Order Log) -->
-                                                            <div class="check-col-action">
+                                                            <div class="check-col-action" ng-if="auth.canUpdateFollowups">
                                                                 <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check)">
                                                                     <span ng-if="!check.note && !check.imageUrl">+ Add Note & Photo</span>
                                                                     <span ng-if="check.note || check.imageUrl">Edit Note & Photo</span>

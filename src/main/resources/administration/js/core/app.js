@@ -184,7 +184,9 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
                     canCreateRoles: d.canCreateRoles !== false,
                     canManageUsers: d.canManageUsers !== false,
                     canReadFollowups: d.canReadFollowups !== false,
-                    canReadReports: d.canReadReports !== false
+                    canReadReports: !!d.canReadReports,
+                    canUpdateFollowups: !!d.superAdmin || !!d.canUpdateFollowups,
+                    canCreateFollowups: !!d.superAdmin || !!d.canCreateFollowups
                 };
                 $scope.loadTimeFilterPresets();
                 $scope.$broadcast('auth:loggedIn');
@@ -203,7 +205,9 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
                         canCreateRoles: true,
                         canManageUsers: true,
                         canReadFollowups: true,
-                        canReadReports: true
+                        canReadReports: true,
+                        canUpdateFollowups: true,
+                        canCreateFollowups: true
                     };
                     $scope.loadTimeFilterPresets();
                     $scope.$broadcast('auth:loggedIn');

@@ -171,6 +171,72 @@ public class Admin {
         }
     }
 
+    // --- Permission convenience helpers for Thymeleaf templates ---
+
+    /** True if user can read the Reports & Analytics module. */
+    public boolean isCanReadReports() {
+        if (isSuperAdmin) return true;
+        if (permissions != null) {
+            for (AdminPermission p : permissions) {
+                if ("REPORTS_INSIGHTS".equalsIgnoreCase(p.getModuleKey())) {
+                    return p.isCanRead() || p.isCanCreate() || p.isCanUpdate() || p.isCanDelete();
+                }
+            }
+        }
+        if (roles != null) {
+            return roles.stream().anyMatch(r -> r.isCanRead() || r.isCanCreate() || r.isCanUpdate() || r.isCanDelete());
+        }
+        return false;
+    }
+
+    /** True if user can read the Customer Follow-ups module. */
+    public boolean isCanReadFollowups() {
+        if (isSuperAdmin) return true;
+        if (permissions != null) {
+            for (AdminPermission p : permissions) {
+                if ("CUSTOMER_FOLLOWUP".equalsIgnoreCase(p.getModuleKey())) {
+                    return p.isCanRead() || p.isCanCreate() || p.isCanUpdate() || p.isCanDelete();
+                }
+            }
+        }
+        if (roles != null) {
+            return roles.stream().anyMatch(r -> r.isCanRead() || r.isCanCreate() || r.isCanUpdate() || r.isCanDelete());
+        }
+        return true; // read-only is default for all admins
+    }
+
+    /** True if user can update (write notes/photos, toggle completion) on follow-ups. */
+    public boolean isCanUpdateFollowups() {
+        if (isSuperAdmin) return true;
+        if (permissions != null) {
+            for (AdminPermission p : permissions) {
+                if ("CUSTOMER_FOLLOWUP".equalsIgnoreCase(p.getModuleKey())) {
+                    return p.isCanUpdate();
+                }
+            }
+        }
+        if (roles != null) {
+            return roles.stream().anyMatch(r -> r.isCanUpdate());
+        }
+        return false;
+    }
+
+    /** True if user can create new follow-up entries. */
+    public boolean isCanCreateFollowups() {
+        if (isSuperAdmin) return true;
+        if (permissions != null) {
+            for (AdminPermission p : permissions) {
+                if ("CUSTOMER_FOLLOWUP".equalsIgnoreCase(p.getModuleKey())) {
+                    return p.isCanCreate();
+                }
+            }
+        }
+        if (roles != null) {
+            return roles.stream().anyMatch(r -> r.isCanCreate());
+        }
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -98,6 +98,12 @@ public class AdminWebController {
                               Model model) {
         if (!isAuthenticated()) return "redirect:/login";
 
+        // Permission check: redirect non-authorized users to dashboard
+        Admin admin = adminService.getCurrentAdmin().orElse(null);
+        if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
+            return "redirect:/admin/dashboard";
+        }
+
         model.addAttribute("activeTab", "reports");
         model.addAttribute("reportSubTab", tab);
         model.addAttribute("period", period);

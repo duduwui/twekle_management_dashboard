@@ -3,7 +3,7 @@ package com.twekl.dashboard.administration.controller.followup;
 import com.twekl.dashboard.administration.dto.followup.FollowupCheckRequest;
 import com.twekl.dashboard.administration.model.order.OrderFollowupCheck;
 import com.twekl.dashboard.administration.response.ApiResponse;
-import com.twekl.dashboard.administration.service.admin.AdminService;
+import com.twekl.dashboard.administration.service.admin.AdminQueryService;
 import com.twekl.dashboard.administration.service.followup.FollowupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,15 +23,15 @@ import java.util.Map;
 public class Followup {
 
     private final FollowupService followupService;
-    private final AdminService adminService;
+    private final AdminQueryService adminQueryService;
 
-    public Followup(FollowupService followupService, AdminService adminService) {
+    public Followup(FollowupService followupService, AdminQueryService adminQueryService) {
         this.followupService = followupService;
-        this.adminService = adminService;
+        this.adminQueryService = adminQueryService;
     }
 
     private boolean canUpdate() {
-        return adminService.getCurrentAdmin()
+        return adminQueryService.getCurrentAdmin()
                 .map(a -> a.isSuperAdmin() || a.isCanUpdateFollowups())
                 .orElse(false);
     }

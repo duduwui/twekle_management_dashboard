@@ -2,7 +2,7 @@ package com.twekl.dashboard.administration.controller.role;
 
 import com.twekl.dashboard.administration.dto.admin.UpdateAdminRequest;
 import com.twekl.dashboard.administration.model.admin.Admin;
-import com.twekl.dashboard.administration.service.admin.AdminService;
+import com.twekl.dashboard.administration.service.admin.AdminUpdateService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -22,10 +22,10 @@ import java.util.Set;
 @RequestMapping("/admin/roles")
 public class RoleAssign {
 
-    private final AdminService adminService;
+    private final AdminUpdateService adminUpdateService;
 
-    public RoleAssign(AdminService adminService) {
-        this.adminService = adminService;
+    public RoleAssign(AdminUpdateService adminUpdateService) {
+        this.adminUpdateService = adminUpdateService;
     }
 
     @PostMapping({"/{adminId:\\d+}/assign", "/assign"})
@@ -51,7 +51,7 @@ public class RoleAssign {
                 request.setRoleIds(set);
             }
 
-            Admin updated = adminService.updateAdmin(targetAdminId, request);
+            Admin updated = adminUpdateService.updateAdmin(targetAdminId, request);
             flash.addFlashAttribute("successMessage", "Role and permissions successfully assigned to administrator '" + updated.getUsername() + "'.");
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());

@@ -1,7 +1,7 @@
 package com.twekl.dashboard.administration.controller.admin;
 
 import com.twekl.dashboard.administration.dto.admin.UpdateAdminRequest;
-import com.twekl.dashboard.administration.service.admin.AdminService;
+import com.twekl.dashboard.administration.service.admin.AdminUpdateService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,10 +17,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/admins")
 public class AdminUpdate {
 
-    private final AdminService adminService;
+    private final AdminUpdateService adminUpdateService;
 
-    public AdminUpdate(AdminService adminService) {
-        this.adminService = adminService;
+    public AdminUpdate(AdminUpdateService adminUpdateService) {
+        this.adminUpdateService = adminUpdateService;
     }
 
     @PostMapping({"/{adminId:\\d+}/update-permissions", "/{adminId:\\d+}/update-admin"})
@@ -29,7 +29,7 @@ public class AdminUpdate {
                                          @ModelAttribute UpdateAdminRequest request,
                                          RedirectAttributes flash) {
         try {
-            adminService.updateAdmin(adminId, request);
+            adminUpdateService.updateAdmin(adminId, request);
             flash.addFlashAttribute("successMessage", "Permissions updated successfully.");
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());

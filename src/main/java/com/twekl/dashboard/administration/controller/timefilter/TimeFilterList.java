@@ -1,8 +1,8 @@
 package com.twekl.dashboard.administration.controller.timefilter;
 
 import com.twekl.dashboard.administration.model.timefilter.TimeFilterPreset;
-import com.twekl.dashboard.administration.service.admin.AdminService;
-import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
+import com.twekl.dashboard.administration.service.admin.AdminQueryService;
+import com.twekl.dashboard.administration.service.timefilter.TimeFilterQueryService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/admin/timelines")
 public class TimeFilterList {
 
-    private final TimeFilterPresetService presetService;
-    private final AdminService adminService;
+    private final TimeFilterQueryService timeFilterQueryService;
+    private final AdminQueryService adminQueryService;
 
-    public TimeFilterList(TimeFilterPresetService presetService, AdminService adminService) {
-        this.presetService = presetService;
-        this.adminService = adminService;
+    public TimeFilterList(TimeFilterQueryService timeFilterQueryService, AdminQueryService adminQueryService) {
+        this.timeFilterQueryService = timeFilterQueryService;
+        this.adminQueryService = adminQueryService;
     }
 
     private boolean isAuthenticated() {
@@ -34,8 +34,8 @@ public class TimeFilterList {
     public String showTimelines(Model model) {
         if (!isAuthenticated()) return "redirect:/login";
         model.addAttribute("activeTab", "timelines");
-        model.addAttribute("presetList", presetService.findAll());
-        model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
+        model.addAttribute("presetList", timeFilterQueryService.findAll());
+        model.addAttribute("currentUser", adminQueryService.getCurrentAdmin().orElse(null));
         if (!model.containsAttribute("newPreset")) {
             model.addAttribute("newPreset", new TimeFilterPreset());
         }

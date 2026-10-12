@@ -5,7 +5,9 @@ import com.twekl.dashboard.administration.config.SecurityConfig;
 import com.twekl.dashboard.administration.config.WebMvcConfig;
 import com.twekl.dashboard.administration.dto.admin.CreateAdminRequest;
 import com.twekl.dashboard.administration.model.admin.Admin;
-import com.twekl.dashboard.administration.service.admin.AdminService;
+import com.twekl.dashboard.administration.service.admin.AdminCreateService;
+import com.twekl.dashboard.administration.service.admin.AdminDeleteService;
+import com.twekl.dashboard.administration.service.admin.AdminQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +40,13 @@ public class AdminStaffControllerTest {
     private WebApplicationContext context;
 
     @Autowired
-    private AdminService adminService;
+    private AdminQueryService adminQueryService;
+
+    @Autowired
+    private AdminCreateService adminCreateService;
+
+    @Autowired
+    private AdminDeleteService adminDeleteService;
 
     private MockMvc mockMvc;
 
@@ -52,7 +60,7 @@ public class AdminStaffControllerTest {
 
     @org.junit.jupiter.api.AfterEach
     public void cleanupTestAdmins() {
-        adminService.findAll().stream()
+        adminQueryService.findAll().stream()
                 .filter(a -> a.getUsername() != null && (
                         a.getUsername().startsWith("ssr_") ||
                         a.getUsername().startsWith("toggle_") ||
@@ -61,7 +69,7 @@ public class AdminStaffControllerTest {
                 ))
                 .forEach(a -> {
                     try {
-                        adminService.deleteAdmin(a.getAdminId());
+                        adminDeleteService.deleteAdmin(a.getAdminId());
                     } catch (Exception ignored) {}
                 });
     }
@@ -107,7 +115,7 @@ public class AdminStaffControllerTest {
         CreateAdminRequest req = new CreateAdminRequest();
         req.setUsername("toggle_test_" + System.currentTimeMillis());
         req.setPassword("Pass@123456");
-        Admin admin = adminService.createAdmin(req);
+        Admin admin = adminCreateService.createAdmin(req);
 
         mockMvc.perform(post("/admin/admins/" + admin.getAdminId() + "/toggle-status"))
                 .andExpect(status().is3xxRedirection())
@@ -122,7 +130,7 @@ public class AdminStaffControllerTest {
         CreateAdminRequest req = new CreateAdminRequest();
         req.setUsername("delete_test_" + System.currentTimeMillis());
         req.setPassword("Pass@123456");
-        Admin admin = adminService.createAdmin(req);
+        Admin admin = adminCreateService.createAdmin(req);
 
         mockMvc.perform(post("/admin/admins/" + admin.getAdminId() + "/delete-admin"))
                 .andExpect(status().is3xxRedirection())

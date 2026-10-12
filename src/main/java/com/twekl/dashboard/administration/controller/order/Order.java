@@ -3,7 +3,7 @@ package com.twekl.dashboard.administration.controller.order;
 import com.twekl.dashboard.administration.model.order.CustomerOrder;
 import com.twekl.dashboard.administration.model.order.OrderFollowupCheck;
 import com.twekl.dashboard.administration.response.ApiResponse;
-import com.twekl.dashboard.administration.service.customer.CustomerService;
+import com.twekl.dashboard.administration.service.customer.CustomerQueryService;
 import com.twekl.dashboard.administration.service.followup.FollowupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,11 +24,11 @@ import java.util.List;
 @RequestMapping("/admin/orders")
 public class Order {
 
-    private final CustomerService customerService;
+    private final CustomerQueryService customerQueryService;
     private final FollowupService followupService;
 
-    public Order(CustomerService customerService, FollowupService followupService) {
-        this.customerService = customerService;
+    public Order(CustomerQueryService customerQueryService, FollowupService followupService) {
+        this.customerQueryService = customerQueryService;
         this.followupService = followupService;
     }
 
@@ -42,7 +42,7 @@ public class Order {
     @GetMapping(value = "/{orderId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<CustomerOrder>> getOrderById(@PathVariable("orderId") Long orderId) {
-        return customerService.findOrderById(orderId)
+        return customerQueryService.findOrderById(orderId)
                 .map(order -> ResponseEntity.ok(ApiResponse.success(order)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error("Order not found with ID: " + orderId)));

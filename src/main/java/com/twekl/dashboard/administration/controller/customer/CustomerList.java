@@ -5,7 +5,9 @@ import com.twekl.dashboard.administration.model.customer.Customer;
 import com.twekl.dashboard.administration.model.order.CustomerFeedback;
 import com.twekl.dashboard.administration.model.order.CustomerOrder;
 import com.twekl.dashboard.administration.response.ApiResponse;
-import com.twekl.dashboard.administration.service.customer.CustomerService;
+import com.twekl.dashboard.administration.service.customer.CustomerQueryService;
+import com.twekl.dashboard.administration.service.customer.CustomerStatsService;
+import com.twekl.dashboard.administration.service.followup.FollowupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,10 +30,16 @@ import java.util.Map;
 @RequestMapping("/admin/customers")
 public class CustomerList {
 
-    private final CustomerService customerService;
+    private final CustomerQueryService customerQueryService;
+    private final CustomerStatsService customerStatsService;
+    private final FollowupService followupService;
 
-    public CustomerList(CustomerService customerService) {
-        this.customerService = customerService;
+    public CustomerList(CustomerQueryService customerQueryService,
+                        CustomerStatsService customerStatsService,
+                        FollowupService followupService) {
+        this.customerQueryService = customerQueryService;
+        this.customerStatsService = customerStatsService;
+        this.followupService = followupService;
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -45,7 +53,7 @@ public class CustomerList {
     @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomerStats() {
-        Map<String, Object> stats = customerService.getStats();
+        Map<String, Object> stats = customerStatsService.getStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
@@ -53,13 +61,13 @@ public class CustomerList {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerFollowupSummary>>> getCustomerFollowups(
             @RequestParam(required = false, defaultValue = "ALL") String timeFilter) {
-        return ResponseEntity.ok(ApiResponse.success(customerService.findAllSummaries(timeFilter)));
+        return ResponseEntity.ok(ApiResponse.success(followupService.findAllSummaries(timeFilter)));
     }
 
     @GetMapping(value = "/{customerId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Customer>> getCustomerById(@PathVariable("customerId") Long customerId) {
-        return customerService.findByCustomerId(customerId)
+        return customerQueryService.findByCustomerId(customerId)
                 .map(c -> ResponseEntity.ok(ApiResponse.success(c)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error("Customer not found with ID: " + customerId)));
@@ -68,18 +76,18 @@ public class CustomerList {
     @GetMapping(value = "/{customerId:\\d+}/orders", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerOrder>>> getCustomerOrders(@PathVariable("customerId") Long customerId) {
-        List<CustomerOrder> orders = customerService.findOrdersByCustomerId(customerId);
+        List<CustomerOrder> orders = customerQueryService.findOrdersByCustomerId(customerId);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
     @GetMapping(value = "/{customerId:\\d+}/feedbacks", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerFeedback>>> getCustomerFeedbacks(@PathVariable("customerId") Long customerId) {
-        return ResponseEntity.ok(ApiResponse.success(customerService.findFeedbacksByCustomerId(customerId)));
+        return ResponseEntity.ok(ApiResponse.success(customerQueryService.findFeedbacksByCustomerId(customerId)));
     }
 
     private List<Map<String, Object>> getCustomersData(String timeFilter) {
-        return customerService.findAllSummaries(timeFilter).stream().map(s -> {
+        return followupService.findAllSummaries(timeFilter).stream().map(s -> {
             Customer c = s.getCustomer();
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", c.getCustomerId());

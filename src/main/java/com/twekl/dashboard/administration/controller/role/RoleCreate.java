@@ -1,7 +1,7 @@
 package com.twekl.dashboard.administration.controller.role;
 
 import com.twekl.dashboard.administration.dto.role.RoleDto;
-import com.twekl.dashboard.administration.service.role.RoleService;
+import com.twekl.dashboard.administration.service.role.RoleCreateService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -16,10 +16,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/roles")
 public class RoleCreate {
 
-    private final RoleService roleService;
+    private final RoleCreateService roleCreateService;
 
-    public RoleCreate(RoleService roleService) {
-        this.roleService = roleService;
+    public RoleCreate(RoleCreateService roleCreateService) {
+        this.roleCreateService = roleCreateService;
     }
 
     @PostMapping({"/create", "/create-role"})
@@ -30,7 +30,7 @@ public class RoleCreate {
             return "redirect:/admin/roles";
         }
         try {
-            roleService.createRole(request);
+            roleCreateService.createRole(request);
             flash.addFlashAttribute("successMessage", "Role template '" + request.getName().trim() + "' created successfully.");
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());

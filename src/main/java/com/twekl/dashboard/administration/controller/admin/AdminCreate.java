@@ -1,7 +1,7 @@
 package com.twekl.dashboard.administration.controller.admin;
 
 import com.twekl.dashboard.administration.dto.admin.CreateAdminRequest;
-import com.twekl.dashboard.administration.service.admin.AdminService;
+import com.twekl.dashboard.administration.service.admin.AdminCreateService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -18,10 +18,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/admins")
 public class AdminCreate {
 
-    private final AdminService adminService;
+    private final AdminCreateService adminCreateService;
 
-    public AdminCreate(AdminService adminService) {
-        this.adminService = adminService;
+    public AdminCreate(AdminCreateService adminCreateService) {
+        this.adminCreateService = adminCreateService;
     }
 
     @PostMapping("/create-admin")
@@ -34,7 +34,7 @@ public class AdminCreate {
             return "redirect:/admin/admins";
         }
         try {
-            adminService.createAdmin(request);
+            adminCreateService.createAdmin(request);
             flash.addFlashAttribute("successMessage", "Administrator '" + request.getUsername() + "' created successfully.");
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());

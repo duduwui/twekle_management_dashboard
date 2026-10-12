@@ -1,7 +1,7 @@
 package com.twekl.dashboard.administration.controller.role;
 
 import com.twekl.dashboard.administration.dto.role.RoleDto;
-import com.twekl.dashboard.administration.service.role.RoleService;
+import com.twekl.dashboard.administration.service.role.RoleUpdateService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,10 +17,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/roles")
 public class RoleUpdate {
 
-    private final RoleService roleService;
+    private final RoleUpdateService roleUpdateService;
 
-    public RoleUpdate(RoleService roleService) {
-        this.roleService = roleService;
+    public RoleUpdate(RoleUpdateService roleUpdateService) {
+        this.roleUpdateService = roleUpdateService;
     }
 
     @PostMapping({"/{roleId:\\d+}/update", "/{roleId:\\d+}/update-role"})
@@ -29,7 +29,7 @@ public class RoleUpdate {
                              @ModelAttribute RoleDto request,
                              RedirectAttributes flash) {
         try {
-            roleService.updateRole(roleId, request);
+            roleUpdateService.updateRole(roleId, request);
             flash.addFlashAttribute("successMessage", "Role template updated successfully.");
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());

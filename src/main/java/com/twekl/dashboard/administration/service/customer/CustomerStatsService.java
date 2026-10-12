@@ -1,40 +1,32 @@
 package com.twekl.dashboard.administration.service.customer;
 
 import com.twekl.dashboard.administration.dto.customer.CustomerFollowupSummary;
-import com.twekl.dashboard.administration.exception.ResourceNotFoundException;
 import com.twekl.dashboard.administration.model.customer.Customer;
 import com.twekl.dashboard.administration.model.order.CustomerFeedback;
 import com.twekl.dashboard.administration.model.order.CustomerOrder;
 import com.twekl.dashboard.administration.model.order.OrderFollowupCheck;
 import com.twekl.dashboard.administration.model.timefilter.TimeFilterPreset;
-import com.twekl.dashboard.administration.repository.order.CustomerFeedbackRepository;
-import com.twekl.dashboard.administration.repository.order.CustomerOrderRepository;
 import com.twekl.dashboard.administration.repository.customer.CustomerRepository;
 import com.twekl.dashboard.administration.repository.followup.OrderFollowupCheckRepository;
+import com.twekl.dashboard.administration.repository.order.CustomerFeedbackRepository;
+import com.twekl.dashboard.administration.repository.order.CustomerOrderRepository;
 import com.twekl.dashboard.administration.repository.timefilter.TimeFilterPresetRepository;
-import com.twekl.dashboard.administration.dto.followup.FollowupCheckRequest;
 import com.twekl.dashboard.administration.service.followup.FollowupService;
-import com.twekl.dashboard.administration.util.DateUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
-public class CustomerService {
+@Transactional(readOnly = true)
+public class CustomerStatsService {
 
     private final CustomerRepository customerRepository;
     private final CustomerOrderRepository orderRepository;
@@ -43,12 +35,12 @@ public class CustomerService {
     private final TimeFilterPresetRepository timeFilterPresetRepository;
     private final FollowupService followupService;
 
-    public CustomerService(CustomerRepository customerRepository,
-                           CustomerOrderRepository orderRepository,
-                           CustomerFeedbackRepository feedbackRepository,
-                           OrderFollowupCheckRepository followupCheckRepository,
-                           TimeFilterPresetRepository timeFilterPresetRepository,
-                           FollowupService followupService) {
+    public CustomerStatsService(CustomerRepository customerRepository,
+                                CustomerOrderRepository orderRepository,
+                                CustomerFeedbackRepository feedbackRepository,
+                                OrderFollowupCheckRepository followupCheckRepository,
+                                TimeFilterPresetRepository timeFilterPresetRepository,
+                                FollowupService followupService) {
         this.customerRepository = customerRepository;
         this.orderRepository = orderRepository;
         this.feedbackRepository = feedbackRepository;
@@ -57,88 +49,6 @@ public class CustomerService {
         this.followupService = followupService;
     }
 
-    @Transactional(readOnly = true)
-    public List<CustomerFollowupSummary> findAllSummaries(String timeFilter) {
-        return followupService.findAllSummaries(timeFilter);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Customer> findById(Long customerId) {
-        return customerRepository.findById(customerId);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Customer> findByCustomerId(Long customerId) {
-        return customerRepository.findById(customerId);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<CustomerOrder> findOrderById(Long orderId) {
-        return orderRepository.findById(orderId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CustomerOrder> findOrdersByCustomerId(Long customerId) {
-        return orderRepository.findByCustomerIdOrderByOrderDateDesc(customerId);
-    }
-
-    @Transactional
-    public List<OrderFollowupCheck> findChecksByOrderId(Long orderId) {
-        return followupService.findChecksByOrderId(orderId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CustomerFeedback> findFeedbacksByCustomerId(Long customerId) {
-        return feedbackRepository.findByCustomerIdOrderByFeedbackDateDesc(customerId);
-    }
-
-    @Transactional
-    public OrderFollowupCheck toggleFollowupStatus(Long checkId) {
-        return followupService.toggleFollowupStatus(checkId);
-    }
-
-    @Transactional
-    public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction) {
-        return followupService.updateFollowupDetails(checkId, notes, photoUrl, satisfaction);
-    }
-
-    @Transactional
-    public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl) {
-        return followupService.updateFollowupDetails(checkId, notes, photoUrl);
-    }
-
-    @Transactional
-    public OrderFollowupCheck completeCheck(Long checkId, FollowupCheckRequest req) {
-        return followupService.completeCheck(checkId, req);
-    }
-
-    @Transactional
-    public Customer createCustomer(Customer customer) {
-        return customerRepository.save(customer);
-    }
-
-    @Transactional
-    public Customer updateCustomer(Long id, Customer updated) {
-        Customer existing = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + id));
-
-        if (updated.getName() != null) existing.setName(updated.getName());
-        if (updated.getPhoneNumber() != null) existing.setPhoneNumber(updated.getPhoneNumber());
-        if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
-        if (updated.getCity() != null) existing.setCity(updated.getCity());
-
-        return customerRepository.save(existing);
-    }
-
-    @Transactional
-    public void deleteCustomer(Long id) {
-        if (!customerRepository.existsById(id)) {
-            throw new IllegalArgumentException("Customer not found with ID: " + id);
-        }
-        customerRepository.deleteById(id);
-    }
-
-    @Transactional(readOnly = true)
     public Map<String, Object> getStats() {
         long totalCustomers = customerRepository.count();
         long totalOrders = orderRepository.count();
@@ -170,7 +80,7 @@ public class CustomerService {
         long inQueueFollowups = pendingFollowups - overdueFollowups;
         if (inQueueFollowups < 0) inQueueFollowups = 0;
 
-        List<CustomerFollowupSummary> summaries = findAllSummaries("ALL");
+        List<CustomerFollowupSummary> summaries = followupService.findAllSummaries("ALL");
         long alertFollowups = summaries.stream().filter(s -> "ALERT".equalsIgnoreCase(s.getFollowupStatus())).count();
         long idleFollowups = summaries.stream().filter(s -> "IDLE".equalsIgnoreCase(s.getFollowupStatus())).count();
         long doneFollowups = summaries.stream().filter(s -> "DONE".equalsIgnoreCase(s.getFollowupStatus())).count();
@@ -254,4 +164,3 @@ public class CustomerService {
         return stats;
     }
 }
-

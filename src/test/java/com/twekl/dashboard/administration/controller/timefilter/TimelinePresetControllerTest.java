@@ -4,7 +4,9 @@ import com.twekl.dashboard.administration.config.JpaConfig;
 import com.twekl.dashboard.administration.config.SecurityConfig;
 import com.twekl.dashboard.administration.config.WebMvcConfig;
 import com.twekl.dashboard.administration.model.timefilter.TimeFilterPreset;
-import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
+import com.twekl.dashboard.administration.service.timefilter.TimeFilterCreateService;
+import com.twekl.dashboard.administration.service.timefilter.TimeFilterDeleteService;
+import com.twekl.dashboard.administration.service.timefilter.TimeFilterQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +39,13 @@ public class TimelinePresetControllerTest {
     private WebApplicationContext context;
 
     @Autowired
-    private TimeFilterPresetService presetService;
+    private TimeFilterQueryService timeFilterQueryService;
+
+    @Autowired
+    private TimeFilterCreateService timeFilterCreateService;
+
+    @Autowired
+    private TimeFilterDeleteService timeFilterDeleteService;
 
     private MockMvc mockMvc;
 
@@ -51,7 +59,7 @@ public class TimelinePresetControllerTest {
 
     @org.junit.jupiter.api.AfterEach
     public void cleanupTestPresets() {
-        presetService.findAll().stream()
+        timeFilterQueryService.findAll().stream()
                 .filter(p -> p.getPresetKey() != null && (
                         p.getPresetKey().startsWith("TEST_") ||
                         p.getPresetKey().startsWith("PRESET_") ||
@@ -62,7 +70,7 @@ public class TimelinePresetControllerTest {
                 ))
                 .forEach(p -> {
                     try {
-                        presetService.deletePreset(p.getPresetId());
+                        timeFilterDeleteService.deletePreset(p.getPresetId());
                     } catch (Exception ignored) {}
                 });
     }
@@ -103,7 +111,7 @@ public class TimelinePresetControllerTest {
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
     @DisplayName("POST /admin/timelines/{presetId}/toggle-status should toggle preset status and redirect")
     public void testTogglePresetSsr() throws Exception {
-        TimeFilterPreset preset = presetService.createPreset(new TimeFilterPreset("PRESET_TOGGLE_" + System.currentTimeMillis(), "Toggle Test", "تجربة", "تاقیکردنەوە", 10, "DAYS", 99));
+        TimeFilterPreset preset = timeFilterCreateService.createPreset(new TimeFilterPreset("PRESET_TOGGLE_" + System.currentTimeMillis(), "Toggle Test", "تجربة", "تاقیکردنەوە", 10, "DAYS", 99));
 
         mockMvc.perform(post("/admin/timelines/" + preset.getPresetId() + "/toggle-status"))
                 .andExpect(status().is3xxRedirection())
@@ -115,7 +123,7 @@ public class TimelinePresetControllerTest {
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
     @DisplayName("POST /admin/timelines/{presetId}/delete-preset should delete preset and redirect")
     public void testDeletePresetSsr() throws Exception {
-        TimeFilterPreset preset = presetService.createPreset(new TimeFilterPreset("PRESET_DELETE_" + System.currentTimeMillis(), "Delete Test", "حذف", "سڕینەوە", 15, "DAYS", 100));
+        TimeFilterPreset preset = timeFilterCreateService.createPreset(new TimeFilterPreset("PRESET_DELETE_" + System.currentTimeMillis(), "Delete Test", "حذف", "سڕینەوە", 15, "DAYS", 100));
 
         mockMvc.perform(post("/admin/timelines/" + preset.getPresetId() + "/delete-preset"))
                 .andExpect(status().is3xxRedirection())
@@ -137,7 +145,7 @@ public class TimelinePresetControllerTest {
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
     @DisplayName("PATCH /admin/time-filters/{id}/toggle should toggle preset and return ApiResponse")
     public void testToggleTimeFilterRest() throws Exception {
-        TimeFilterPreset preset = presetService.createPreset(new TimeFilterPreset("TEST_TOGGLE_REST_" + System.currentTimeMillis(), "Toggle Rest Test", "تجربة", "تاقیکردنەوە", 12, "DAYS", 99));
+        TimeFilterPreset preset = timeFilterCreateService.createPreset(new TimeFilterPreset("TEST_TOGGLE_REST_" + System.currentTimeMillis(), "Toggle Rest Test", "تجربة", "تاقیکردنەوە", 12, "DAYS", 99));
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/admin/time-filters/" + preset.getPresetId() + "/toggle")
                         .accept(MediaType.APPLICATION_JSON))

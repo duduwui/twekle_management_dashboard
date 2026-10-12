@@ -4,7 +4,9 @@ import com.twekl.dashboard.administration.config.JpaConfig;
 import com.twekl.dashboard.administration.config.SecurityConfig;
 import com.twekl.dashboard.administration.config.WebMvcConfig;
 import com.twekl.dashboard.administration.model.role.Role;
-import com.twekl.dashboard.administration.service.role.RoleService;
+import com.twekl.dashboard.administration.service.role.RoleCreateService;
+import com.twekl.dashboard.administration.service.role.RoleDeleteService;
+import com.twekl.dashboard.administration.service.role.RoleQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +39,13 @@ public class RoleControllerTest {
     private WebApplicationContext context;
 
     @Autowired
-    private RoleService roleService;
+    private RoleQueryService roleQueryService;
+
+    @Autowired
+    private RoleCreateService roleCreateService;
+
+    @Autowired
+    private RoleDeleteService roleDeleteService;
 
     private MockMvc mockMvc;
 
@@ -51,7 +59,7 @@ public class RoleControllerTest {
 
     @org.junit.jupiter.api.AfterEach
     public void cleanupTestRoles() {
-        roleService.findAll().stream()
+        roleQueryService.findAll().stream()
                 .filter(r -> r.getName() != null && (
                         r.getName().startsWith("SSR Test Role") ||
                         r.getName().startsWith("Test Update Role") ||
@@ -59,7 +67,7 @@ public class RoleControllerTest {
                 ))
                 .forEach(r -> {
                     try {
-                        roleService.deleteRole(r.getRoleId());
+                        roleDeleteService.deleteRole(r.getRoleId());
                     } catch (Exception ignored) {}
                 });
     }
@@ -103,7 +111,7 @@ public class RoleControllerTest {
     @WithMockUser(username = "twekl_super_admin", authorities = {"ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES"})
     @DisplayName("POST /admin/roles/{roleId}/update-role SSR form submission should update role and redirect")
     public void testUpdateRoleSsrForm() throws Exception {
-        Role created = roleService.createRole(new Role("Test Update Role " + System.currentTimeMillis(), true, true, false, false));
+        Role created = roleCreateService.createRole(new Role("Test Update Role " + System.currentTimeMillis(), true, true, false, false));
 
         mockMvc.perform(post("/admin/roles/" + created.getRoleId() + "/update-role")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -121,7 +129,7 @@ public class RoleControllerTest {
     @WithMockUser(username = "twekl_super_admin", authorities = {"ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES"})
     @DisplayName("POST /admin/roles/{roleId}/delete-role SSR form submission should delete role and redirect")
     public void testDeleteRoleSsrForm() throws Exception {
-        Role created = roleService.createRole(new Role("Test Delete Role " + System.currentTimeMillis(), false, true, false, false));
+        Role created = roleCreateService.createRole(new Role("Test Delete Role " + System.currentTimeMillis(), false, true, false, false));
 
         mockMvc.perform(post("/admin/roles/" + created.getRoleId() + "/delete-role"))
                 .andExpect(status().is3xxRedirection())

@@ -2,11 +2,11 @@ package com.twekl.dashboard.administration.controller.web;
 
 import com.twekl.dashboard.administration.dto.customer.CustomerFollowupSummary;
 import com.twekl.dashboard.administration.model.admin.Admin;
-import com.twekl.dashboard.administration.service.admin.AdminService;
-import com.twekl.dashboard.administration.service.customer.CustomerService;
+import com.twekl.dashboard.administration.service.admin.AdminQueryService;
+import com.twekl.dashboard.administration.service.customer.CustomerStatsService;
 import com.twekl.dashboard.administration.service.followup.FollowupService;
 import com.twekl.dashboard.administration.service.report.ReportService;
-import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
+import com.twekl.dashboard.administration.service.timefilter.TimeFilterQueryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.MediaType;
@@ -29,22 +29,22 @@ import java.util.List;
 @Controller
 public class AdminWeb {
 
-    private final CustomerService customerService;
+    private final CustomerStatsService customerStatsService;
     private final FollowupService followupService;
     private final ReportService reportService;
-    private final AdminService adminService;
-    private final TimeFilterPresetService timeFilterPresetService;
+    private final AdminQueryService adminQueryService;
+    private final TimeFilterQueryService timeFilterQueryService;
 
-    public AdminWeb(CustomerService customerService,
+    public AdminWeb(CustomerStatsService customerStatsService,
                     FollowupService followupService,
                     ReportService reportService,
-                    AdminService adminService,
-                    TimeFilterPresetService timeFilterPresetService) {
-        this.customerService = customerService;
+                    AdminQueryService adminQueryService,
+                    TimeFilterQueryService timeFilterQueryService) {
+        this.customerStatsService = customerStatsService;
         this.followupService = followupService;
         this.reportService = reportService;
-        this.adminService = adminService;
-        this.timeFilterPresetService = timeFilterPresetService;
+        this.adminQueryService = adminQueryService;
+        this.timeFilterQueryService = timeFilterQueryService;
     }
 
     private boolean isAuthenticated() {
@@ -54,7 +54,7 @@ public class AdminWeb {
 
     @ModelAttribute("currentUser")
     public Admin populateCurrentUser() {
-        return adminService.getCurrentAdmin().orElse(null);
+        return adminQueryService.getCurrentAdmin().orElse(null);
     }
 
     @GetMapping("/login")
@@ -93,7 +93,7 @@ public class AdminWeb {
                 .toList();
 
         model.addAttribute("activeTab", "dashboard");
-        model.addAttribute("stats", customerService.getStats());
+        model.addAttribute("stats", customerStatsService.getStats());
         model.addAttribute("urgentCustomers", urgent);
         model.addAttribute("allCustomers", summaries);
         model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL"));
@@ -106,7 +106,7 @@ public class AdminWeb {
 
         model.addAttribute("activeTab", "followups");
         model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
-        model.addAttribute("presets", timeFilterPresetService.findAll());
+        model.addAttribute("presets", timeFilterQueryService.findAll());
         return "administration/customer/customers";
     }
 
@@ -116,7 +116,7 @@ public class AdminWeb {
                               Model model) {
         if (!isAuthenticated()) return "redirect:/login";
 
-        Admin admin = adminService.getCurrentAdmin().orElse(null);
+        Admin admin = adminQueryService.getCurrentAdmin().orElse(null);
         if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
             return "redirect:/admin/dashboard";
         }
@@ -125,7 +125,7 @@ public class AdminWeb {
         model.addAttribute("reportSubTab", tab);
         model.addAttribute("period", period);
         model.addAttribute("reportData", reportService.generateReport(period));
-        model.addAttribute("presets", timeFilterPresetService.findAll());
+        model.addAttribute("presets", timeFilterQueryService.findAll());
         return "administration/report/reports";
     }
 }

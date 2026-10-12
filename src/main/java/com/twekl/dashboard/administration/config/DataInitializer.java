@@ -14,7 +14,7 @@ import com.twekl.dashboard.administration.repository.order.CustomerOrderReposito
 import com.twekl.dashboard.administration.repository.followup.OrderFollowupCheckRepository;
 import com.twekl.dashboard.administration.repository.role.RoleRepository;
 import com.twekl.dashboard.administration.repository.timefilter.TimeFilterPresetRepository;
-import com.twekl.dashboard.administration.service.admin.AdminService;
+import com.twekl.dashboard.administration.service.admin.AdminCreateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
@@ -42,7 +42,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     private final CustomerFeedbackRepository feedbackRepository;
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AdminService adminService;
+    private final AdminCreateService adminCreateService;
 
     public DataInitializer(AdminRepository adminRepository, 
                            RoleRepository roleRepository,
@@ -52,7 +52,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
                            CustomerFeedbackRepository feedbackRepository,
                            OrderFollowupCheckRepository followupCheckRepository,
                            PasswordEncoder passwordEncoder,
-                           AdminService adminService) {
+                           AdminCreateService adminCreateService) {
         this.adminRepository = adminRepository;
         this.roleRepository = roleRepository;
         this.timeFilterPresetRepository = timeFilterPresetRepository;
@@ -61,7 +61,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
         this.feedbackRepository = feedbackRepository;
         this.followupCheckRepository = followupCheckRepository;
         this.passwordEncoder = passwordEncoder;
-        this.adminService = adminService;
+        this.adminCreateService = adminCreateService;
     }
 
     @Override
@@ -126,7 +126,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
                 roles.add(roleEngineer);
                 superAdmin.setRoles(roles);
             }
-            adminService.seedDefaultPermissions(superAdmin);
+            adminCreateService.seedDefaultPermissions(superAdmin);
             adminRepository.save(superAdmin);
         }
     }

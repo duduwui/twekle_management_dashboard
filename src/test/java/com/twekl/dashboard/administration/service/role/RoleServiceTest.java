@@ -24,13 +24,15 @@ public class RoleServiceTest {
     @Mock
     private RoleRepository roleRepository;
 
-    @InjectMocks
-    private RoleService roleService;
+    private RoleQueryService roleQueryService;
+    private RoleCreateService roleCreateService;
 
     private Role testRole;
 
     @BeforeEach
     public void setUp() {
+        roleQueryService = new RoleQueryService(roleRepository);
+        roleCreateService = new RoleCreateService(roleRepository);
         testRole = new Role("Support Specialist", false, true, false, false);
         testRole.setRoleId(1L);
     }
@@ -40,7 +42,7 @@ public class RoleServiceTest {
     public void testFindAll() {
         when(roleRepository.findAll()).thenReturn(List.of(testRole));
 
-        List<Role> roles = roleService.findAll();
+        List<Role> roles = roleQueryService.findAll();
 
         assertNotNull(roles);
         assertEquals(1, roles.size());
@@ -53,7 +55,7 @@ public class RoleServiceTest {
     public void testFindById_Success() {
         when(roleRepository.findById(1L)).thenReturn(Optional.of(testRole));
 
-        Optional<Role> found = roleService.findById(1L);
+        Optional<Role> found = roleQueryService.findById(1L);
 
         assertTrue(found.isPresent());
         assertEquals("Support Specialist", found.get().getName());
@@ -72,7 +74,7 @@ public class RoleServiceTest {
             return r;
         });
 
-        Role created = roleService.createRole(dto);
+        Role created = roleCreateService.createRole(dto);
 
         assertNotNull(created);
         assertEquals("Sales Executive", created.getName());

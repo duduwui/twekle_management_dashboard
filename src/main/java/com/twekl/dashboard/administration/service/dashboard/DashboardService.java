@@ -1,9 +1,9 @@
 package com.twekl.dashboard.administration.service.dashboard;
 
-import com.twekl.dashboard.administration.service.admin.AdminService;
-import com.twekl.dashboard.administration.service.customer.CustomerService;
-import com.twekl.dashboard.administration.service.role.RoleService;
-import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
+import com.twekl.dashboard.administration.service.admin.AdminQueryService;
+import com.twekl.dashboard.administration.service.customer.CustomerStatsService;
+import com.twekl.dashboard.administration.service.role.RoleQueryService;
+import com.twekl.dashboard.administration.service.timefilter.TimeFilterQueryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,27 +18,27 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class DashboardService {
 
-    private final AdminService adminService;
-    private final RoleService roleService;
-    private final CustomerService customerService;
-    private final TimeFilterPresetService timeFilterPresetService;
+    private final AdminQueryService adminQueryService;
+    private final RoleQueryService roleQueryService;
+    private final CustomerStatsService customerStatsService;
+    private final TimeFilterQueryService timeFilterQueryService;
 
-    public DashboardService(AdminService adminService,
-                            RoleService roleService,
-                            CustomerService customerService,
-                            TimeFilterPresetService timeFilterPresetService) {
-        this.adminService = adminService;
-        this.roleService = roleService;
-        this.customerService = customerService;
-        this.timeFilterPresetService = timeFilterPresetService;
+    public DashboardService(AdminQueryService adminQueryService,
+                            RoleQueryService roleQueryService,
+                            CustomerStatsService customerStatsService,
+                            TimeFilterQueryService timeFilterQueryService) {
+        this.adminQueryService = adminQueryService;
+        this.roleQueryService = roleQueryService;
+        this.customerStatsService = customerStatsService;
+        this.timeFilterQueryService = timeFilterQueryService;
     }
 
     public Map<String, Object> getDashboardSummary() {
         Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("totalAdmins", adminService.count());
-        summary.put("totalRoles", roleService.count());
-        summary.put("totalTimePresets", timeFilterPresetService.count());
-        summary.putAll(customerService.getStats());
+        summary.put("totalAdmins", adminQueryService.count());
+        summary.put("totalRoles", roleQueryService.count());
+        summary.put("totalTimePresets", timeFilterQueryService.count());
+        summary.putAll(customerStatsService.getStats());
         return summary;
     }
 }

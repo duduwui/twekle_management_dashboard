@@ -5,6 +5,9 @@
 var app = angular.module('tweklApp', []);
 
 app.config(['$httpProvider', function($httpProvider) {
+    // Ensure all AngularJS HTTP requests explicitly negotiate JSON
+    $httpProvider.defaults.headers.common['Accept'] = 'application/json';
+
     // Intercept 401/403 HTTP session responses
     $httpProvider.interceptors.push(['$q', '$rootScope', function($q, $rootScope) {
         return {
@@ -112,7 +115,7 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
         } else if (tabName === 'roles') {
             window.location.href = '/admin/roles';
         } else if (tabName === 'customers' || tabName === 'followups') {
-            window.location.href = '/admin/customers';
+            window.location.href = '/admin/followups';
         } else if (tabName === 'reports') {
             window.location.href = '/admin/reports';
         } else if (tabName === 'time-filters' || tabName === 'timelines') {

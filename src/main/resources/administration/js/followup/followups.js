@@ -172,6 +172,9 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
         CustomerService.getAll(preset).then(function(res) {
             $scope.loadingCustomers = false;
             var raw = res.data;
+            if (typeof raw === 'string') {
+                return;
+            }
             var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
             var now = Date.now();
             $scope.customers = list.map(function(c) {
@@ -659,6 +662,15 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
             initFollowupRoute();
         });
     });
+
+    // Hydrate immediately from server-side rendered data if present
+    if (window.SERVER_FOLLOWUPS && Array.isArray(window.SERVER_FOLLOWUPS) && window.SERVER_FOLLOWUPS.length > 0) {
+        var now = Date.now();
+        $scope.customers = window.SERVER_FOLLOWUPS.map(function(c) {
+            c._loadedAt = now;
+            return c;
+        });
+    }
 
     // Auto-load on init
     initFollowupRoute();

@@ -1,4 +1,4 @@
-package com.twekl.dashboard.administration.config;
+package com.twekl.dashboard.administration.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.twekl.dashboard.administration.response.ErrorResponse;

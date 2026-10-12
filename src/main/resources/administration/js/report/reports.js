@@ -82,7 +82,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         var period = $scope.selectedReportPreset ? ($scope.selectedReportPreset.presetKey || $scope.selectedReportPreset.name) : 'all';
         ReportService.getReports(period).then(function(res) {
             $scope.loading = false;
-            var data = res.data || {};
+            var raw = res.data;
+            var data = (raw && raw.data) ? raw.data : (raw || {});
             $scope.reportData.milestones = data.milestones || [];
             $scope.reportData.satisfaction = data.satisfaction || { breakdown: [], recentNotes: [] };
             $scope.reportData.products = data.products || [];
@@ -227,6 +228,15 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         }
         $scope.loadReportData();
     });
+
+    // Hydrate immediately from server-side rendered data if present
+    if (window.SERVER_REPORT_DATA) {
+        var srd = window.SERVER_REPORT_DATA;
+        $scope.reportData.milestones = srd.milestones || [];
+        $scope.reportData.satisfaction = srd.satisfaction || { breakdown: [], recentNotes: [] };
+        $scope.reportData.products = srd.products || [];
+        $scope.reportData.customers = srd.customers || [];
+    }
 
     // Auto-load on init
     $scope.loadReportData();

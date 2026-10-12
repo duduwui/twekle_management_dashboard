@@ -100,7 +100,7 @@ public class AdminWeb {
         return "administration/dashboard/dashboard";
     }
 
-    @GetMapping(value = {"/admin/followups", "/admin/followups/**", "/admin/customers", "/admin/customers/**", "/followups", "/followups/**", "/customers", "/customers/**"}, produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = {"/admin/followups", "/admin/followups/**"}, produces = MediaType.TEXT_HTML_VALUE)
     public String showCustomers(Model model) {
         if (!isAuthenticated()) return "redirect:/login";
 
@@ -110,7 +110,12 @@ public class AdminWeb {
         return "administration/customer/customers";
     }
 
-    @GetMapping(value = {"/admin/reports", "/reports"}, produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = "/admin/customers", produces = MediaType.TEXT_HTML_VALUE)
+    public String redirectCustomers() {
+        return "redirect:/admin/followups";
+    }
+
+    @GetMapping(value = "/admin/reports", produces = MediaType.TEXT_HTML_VALUE)
     public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
                               @RequestParam(value = "tab", defaultValue = "milestones") String tab,
                               Model model) {

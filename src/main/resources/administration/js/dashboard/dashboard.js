@@ -61,6 +61,9 @@ function($scope, $rootScope, $interval, DashboardStatsService, ToastService) {
             var data = (res && res.data && res.data.data !== undefined) ? res.data.data : (res ? res.data : {});
             if (data) {
                 angular.extend($scope.stats, data);
+                var total = $scope.stats.totalFollowups || (($scope.stats.completedFollowups || 0) + ($scope.stats.pendingFollowups || 0)) || 0;
+                var completed = $scope.stats.completedFollowups || 0;
+                $scope.stats.completionPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
             }
         }).finally(function() {
             $scope.loading = false;

@@ -49,6 +49,24 @@ public class TimelinePresetControllerTest {
                 .build();
     }
 
+    @org.junit.jupiter.api.AfterEach
+    public void cleanupTestPresets() {
+        presetService.findAll().stream()
+                .filter(p -> p.getPresetKey() != null && (
+                        p.getPresetKey().startsWith("TEST_") ||
+                        p.getPresetKey().startsWith("PRESET_") ||
+                        p.getPresetKey().startsWith("CUSTOM_") ||
+                        (p.getName() != null && p.getName().startsWith("Test 5 Days")) ||
+                        (p.getName() != null && p.getName().startsWith("Toggle Test")) ||
+                        (p.getName() != null && p.getName().startsWith("Delete Test"))
+                ))
+                .forEach(p -> {
+                    try {
+                        presetService.deletePreset(p.getPresetId());
+                    } catch (Exception ignored) {}
+                });
+    }
+
     @Test
     @DisplayName("GET /admin/timelines without authentication should redirect to /login")
     public void testGetTimelinesHtmlUnauthenticated() throws Exception {

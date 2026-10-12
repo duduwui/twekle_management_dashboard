@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{administration/fragments/adminLayout}">
 <head>
-    <title>Role Templates &amp; Permissions | Twekl Administration</title>
+    <title>Admin Roles &amp; Permissions | Twekl Administration</title>
 </head>
 <body>
     <div layout:fragment="content">
@@ -14,299 +14,406 @@
         <div th:if="${errorMessage}" class="comic-alert-danger" style="margin-bottom: 16px; padding: 12px 16px; background-color: #FEF2F2; border: 2px solid #DC2626; border-radius: 8px; color: #991B1B; font-weight: 700;" th:text="${errorMessage}"></div>
 
         <!-- Section Header -->
-        <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px;">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                 <div>
-                    <h2 class="card-title" style="margin: 0;">Role Templates &amp; Permissions</h2>
+                    <h2 class="card-title" style="margin: 0;">Admin Roles &amp; Permissions Assignment</h2>
                     <span class="card-subtitle" style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-                        Configure role templates and fine-tune CRUD privileges across the 3 core administrative modules.
+                        Select an administrator to assign defined role templates and configure CRUD permissions across core modules.
                     </span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button type="button" class="comic-btn-sm" onclick="initNewRole()">
-                        + New Role Template
-                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Role Template Configuration Box & Form -->
-        <form id="roleForm" th:action="@{/admin/roles/create}" method="post" autocomplete="off">
-            <input type="hidden" id="formRoleId" name="roleId" value="">
-            <input type="hidden" id="formCanCreate" name="canCreate" value="false">
-            <input type="hidden" id="formCanRead" name="canRead" value="true">
-            <input type="hidden" id="formCanUpdate" name="canUpdate" value="false">
-            <input type="hidden" id="formCanDelete" name="canDelete" value="false">
-
-            <div class="comic-form-box" style="margin-bottom: 22px; padding: 18px 22px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1; min-width: 320px;">
-                        <label class="form-label" style="white-space: nowrap; margin: 0; font-size: 0.92rem; font-weight: 800;">Select Template:</label>
-                        <select id="roleSelect" class="comic-input" onchange="selectRoleFromDropdown(this)" style="max-width: 280px; font-weight: 700;">
-                            <option th:each="role, iter : ${roleList}"
-                                    th:value="${role.id}"
-                                    th:text="${role.name} + ' (' + (${role.canCreate}?'C':'') + (${role.canRead}?'R':'') + (${role.canUpdate}?'U':'') + (${role.canDelete}?'D':'') + ')'"
-                                    th:data-role-id="${role.id}"
-                                    th:data-role-name="${role.name}"
-                                    th:data-can-create="${role.canCreate}"
-                                    th:data-can-read="${role.canRead}"
-                                    th:data-can-update="${role.canUpdate}"
-                                    th:data-can-delete="${role.canDelete}"
-                                    th:selected="${iter.index == 0}">
-                            </option>
-                            <option th:if="${#lists.isEmpty(roleList)}" value="" disabled selected>No role templates configured</option>
-                        </select>
-
-                        <div style="height: 24px; width: 1px; background: #CBD5E1; margin: 0 4px;"></div>
-
-                        <label class="form-label" style="white-space: nowrap; margin: 0; font-size: 0.92rem; font-weight: 800;">Template Name <span style="color: #EF4444;">*</span></label>
-                        <input type="text" id="roleNameInput" name="name" class="comic-input" placeholder="e.g. Inventory Controller" required autocomplete="off" style="max-width: 240px;">
-                        <span id="roleModeBadge" class="comic-tag tag-primary" style="font-size: 0.75rem; text-transform: uppercase;">Editing Template</span>
-                    </div>
-
-                    <!-- Global Matrix Presets Toolbar -->
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-right: 4px;">Matrix Presets:</span>
-                        <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('full')">Full CRUD</button>
-                        <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('readonly')">Read Only</button>
-                        <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('revoke')">Revoke All</button>
-                        <div style="height: 24px; width: 1px; background: #CBD5E1; margin: 0 4px;"></div>
-                        <button type="submit" id="saveRoleBtn" class="comic-btn" style="padding: 7px 18px; font-size: 0.85rem;">
-                            Save Changes
-                        </button>
-                        <button type="button" id="deleteRoleBtn" class="comic-btn-danger" onclick="deleteActiveRole()" style="display: inline-block;">
-                            Delete Template
-                        </button>
-                    </div>
-                </div>
+        <!-- 1. ADMINISTRATOR STAFF DIRECTORY TABLE -->
+        <div style="margin-bottom: 28px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #0F172A;">
+                    1. Staff Members Directory (Select to Configure)
+                </h3>
+                <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
+                    Click any administrator below to view and assign their role
+                </span>
             </div>
 
-            <!-- 3-COLUMN MODULE PERMISSION CARDS MATRIX -->
-            <div style="margin-bottom: 12px;">
-                <div style="font-size: 1.05rem; font-weight: 900; color: #000000; margin-bottom: 14px;">
-                    Module Permissions Matrix (3 Core Modules)
-                </div>
+            <div class="table-responsive">
+                <table class="comic-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Staff Member</th>
+                            <th>Phone Number</th>
+                            <th>Assigned Role Template</th>
+                            <th style="width: 130px;">Access Level</th>
+                            <th style="width: 100px;">Status</th>
+                            <th style="text-align: right; width: 170px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="adm : ${adminList}"
+                            th:id="'admin-row-' + ${adm.id}"
+                            class="admin-table-row"
+                            th:data-admin-id="${adm.id}"
+                            th:data-admin-username="${adm.username}"
+                            onclick="selectAdminFromRow(this)"
+                            style="cursor: pointer; transition: background-color 0.15s ease;">
+                            <td>
+                                <strong style="color: #0F172A;" th:text="'#' + ${adm.id}">#1</strong>
+                            </td>
+                            <td>
+                                <strong style="font-size: 0.96rem; color: #0F172A;" th:text="${adm.username}">twekl_super_admin</strong>
+                            </td>
+                            <td>
+                                <span class="text-muted" style="font-size: 0.88rem;" th:text="${adm.phoneNumber != null ? adm.phoneNumber : '-'}">-</span>
+                            </td>
+                            <td>
+                                <span th:if="${#lists.isEmpty(adm.roles)}" class="comic-tag tag-gray" style="font-weight: 700;">
+                                    Unassigned
+                                </span>
+                                <span th:each="role : ${adm.roles}"
+                                      class="comic-tag tag-primary admin-role-badge"
+                                      th:data-role-id="${role.id}"
+                                      style="font-weight: 800;"
+                                      th:text="${role.name}">
+                                    Software Engineer
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${adm.superAdmin}" class="comic-tag tag-primary" style="background-color: #7C3AED; color: #FFFFFF; font-weight: 800;">
+                                    Super Admin
+                                </span>
+                                <span th:unless="${adm.superAdmin}" class="comic-tag tag-gray" style="font-weight: 700;">
+                                    Staff
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${adm.active}" class="comic-tag tag-success" style="font-weight: 800;">Active</span>
+                                <span th:unless="${adm.active}" class="comic-tag tag-danger" style="font-weight: 800;">Inactive</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <button type="button" class="comic-btn-sm btn-select-admin"
+                                        onclick="event.stopPropagation(); selectAdminFromRow(this.closest('tr'))">
+                                    Assign Role &amp; Matrix
+                                </button>
 
-                <div class="module-cards-grid">
-                    
-                    <!-- MODULE 1: Administration & Staff -->
-                    <div class="comic-module-card" id="card_ADMIN_MANAGEMENT">
-                        <div class="module-card-header">
-                            <div class="module-title-group">
-                                <h3 class="module-title">Administration &amp; Staff</h3>
-                            </div>
-                            <span class="module-tag" style="background-color: #E2E8F0;">ADMIN_MANAGEMENT</span>
-                        </div>
-
-                        <p class="module-desc">
-                            Manage administrator accounts, security credentials, role assignments, and system privilege matrix.
-                        </p>
-
-                        <!-- 4 Direct CRUD Switches -->
-                        <div class="crud-switches-box">
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_create">C</span>
-                                    <span>Create</span>
+                                <!-- Hidden Admin Permissions Payload -->
+                                <div style="display: none;" th:id="'perms-data-' + ${adm.id}">
+                                    <span th:each="p : ${adm.permissions}"
+                                          th:data-module="${p.moduleKey}"
+                                          th:data-create="${p.canCreate}"
+                                          th:data-read="${p.canRead}"
+                                          th:data-update="${p.canUpdate}"
+                                          th:data-delete="${p.canDelete}">
+                                    </span>
                                 </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_ADMIN_MANAGEMENT_create" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'create')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge active" id="badge_ADMIN_MANAGEMENT_read">R</span>
-                                    <span>Read</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_ADMIN_MANAGEMENT_read" checked onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'read')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_update">U</span>
-                                    <span>Update</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_ADMIN_MANAGEMENT_update" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'update')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_delete">D</span>
-                                    <span>Delete</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_ADMIN_MANAGEMENT_delete" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'delete')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Card Quick Actions -->
-                        <div class="module-quick-actions">
-                            <button type="button" class="preset-btn" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'full')">Full CRUD</button>
-                            <button type="button" class="preset-btn" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'readonly')">Read Only</button>
-                            <button type="button" class="preset-btn-danger" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'revoke')">Revoke</button>
-                        </div>
-                    </div>
-
-                    <!-- MODULE 2: Customer Follow-ups -->
-                    <div class="comic-module-card" id="card_CUSTOMER_FOLLOWUP">
-                        <div class="module-card-header">
-                            <div class="module-title-group">
-                                <h3 class="module-title">Customer Follow-ups</h3>
-                            </div>
-                            <span class="module-tag" style="background-color: #E2E8F0;">CUSTOMER_FOLLOWUP</span>
-                        </div>
-
-                        <p class="module-desc">
-                            Customer directory, sales order timelines, checkpoint checklists, note documentation &amp; photo attachments.
-                        </p>
-
-                        <!-- 4 Direct CRUD Switches -->
-                        <div class="crud-switches-box">
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_create">C</span>
-                                    <span>Create</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_CUSTOMER_FOLLOWUP_create" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'create')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge active" id="badge_CUSTOMER_FOLLOWUP_read">R</span>
-                                    <span>Read</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_CUSTOMER_FOLLOWUP_read" checked onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'read')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_update">U</span>
-                                    <span>Update</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_CUSTOMER_FOLLOWUP_update" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'update')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_delete">D</span>
-                                    <span>Delete</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_CUSTOMER_FOLLOWUP_delete" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'delete')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Card Quick Actions -->
-                        <div class="module-quick-actions">
-                            <button type="button" class="preset-btn" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'full')">Full CRUD</button>
-                            <button type="button" class="preset-btn" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'readonly')">Read Only</button>
-                            <button type="button" class="preset-btn-danger" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'revoke')">Revoke</button>
-                        </div>
-                    </div>
-
-                    <!-- MODULE 3: Reports & Analytics -->
-                    <div class="comic-module-card" id="card_REPORTS_INSIGHTS">
-                        <div class="module-card-header">
-                            <div class="module-title-group">
-                                <h3 class="module-title">Reports &amp; Analytics</h3>
-                            </div>
-                            <span class="module-tag" style="background-color: #E2E8F0;">REPORTS_INSIGHTS</span>
-                        </div>
-
-                        <p class="module-desc">
-                            Operational milestone turnaround metrics, customer satisfaction feedback, product reviews, and period export.
-                        </p>
-
-                        <!-- 4 Direct CRUD Switches -->
-                        <div class="crud-switches-box">
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_create">C</span>
-                                    <span>Create</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_REPORTS_INSIGHTS_create" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'create')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge active" id="badge_REPORTS_INSIGHTS_read">R</span>
-                                    <span>Read</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_REPORTS_INSIGHTS_read" checked onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'read')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_update">U</span>
-                                    <span>Update</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_REPORTS_INSIGHTS_update" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'update')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="crud-switch-row">
-                                <div class="crud-switch-label">
-                                    <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_delete">D</span>
-                                    <span>Delete</span>
-                                </div>
-                                <label class="comic-switch">
-                                    <input type="checkbox" id="switch_REPORTS_INSIGHTS_delete" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'delete')">
-                                    <span class="comic-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Card Quick Actions -->
-                        <div class="module-quick-actions">
-                            <button type="button" class="preset-btn" onclick="applyModulePreset('REPORTS_INSIGHTS', 'full')">Full CRUD</button>
-                            <button type="button" class="preset-btn" onclick="applyModulePreset('REPORTS_INSIGHTS', 'readonly')">Read Only</button>
-                            <button type="button" class="preset-btn-danger" onclick="applyModulePreset('REPORTS_INSIGHTS', 'revoke')">Revoke</button>
-                        </div>
-                    </div>
-
-                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(adminList)}">
+                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 700;">
+                                No administrators found.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-        </form>
+        <!-- 2. ROLE & PERMISSIONS ASSIGNMENT PANEL -->
+        <div id="roleAssignmentSection" style="margin-top: 10px;">
+            
+            <form id="roleAssignForm" th:action="@{/admin/roles/assign}" method="post" autocomplete="off">
+                <input type="hidden" id="formAdminId" name="adminId" value="">
 
-        <!-- Hidden Delete Form for PRG Pattern -->
-        <form id="deleteRoleForm" method="post" style="display: none;"></form>
+                <!-- Active Admin Target Banner & Role Selector -->
+                <div class="comic-form-box" style="margin-bottom: 22px; padding: 18px 22px; background-color: #F8FAFC;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                        
+                        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1; min-width: 320px;">
+                            <span class="comic-tag tag-primary" style="font-size: 0.82rem; text-transform: uppercase; font-weight: 800;">Configuring Staff:</span>
+                            <strong id="selectedAdminDisplay" style="font-size: 1.12rem; color: #0F172A; text-decoration: underline;">
+                                Select an administrator above
+                            </strong>
+
+                            <div style="height: 24px; width: 2px; background: #CBD5E1; margin: 0 4px;"></div>
+
+                            <label class="form-label" style="white-space: nowrap; margin: 0; font-size: 0.92rem; font-weight: 800;">
+                                Assigned Role Template:
+                            </label>
+                            <select id="roleSelect" name="roleIds" class="comic-input" onchange="onRoleTemplateChanged(this)" style="max-width: 280px; font-weight: 700;">
+                                <option value="" disabled selected>-- Select Role Template --</option>
+                                <option th:each="role : ${roleList}"
+                                        th:value="${role.id}"
+                                        th:text="${role.name}"
+                                        th:data-role-id="${role.id}"
+                                        th:data-role-name="${role.name}"
+                                        th:data-can-create="${role.canCreate}"
+                                        th:data-can-read="${role.canRead}"
+                                        th:data-can-update="${role.canUpdate}"
+                                        th:data-can-delete="${role.canDelete}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Presets & Save Toolbar -->
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-right: 4px;">Matrix Presets:</span>
+                            <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('full')">Full CRUD</button>
+                            <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('readonly')">Read Only</button>
+                            <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('revoke')">Revoke All</button>
+                            <div style="height: 24px; width: 1px; background: #CBD5E1; margin: 0 4px;"></div>
+                            <button type="submit" id="saveRoleBtn" class="comic-btn" style="padding: 8px 20px; font-size: 0.88rem;">
+                                Save Admin Role &amp; Permissions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-COLUMN MODULE PERMISSION CARDS MATRIX -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                        <div style="font-size: 1.05rem; font-weight: 900; color: #000000;">
+                            2. Module Permissions Matrix (3 Core Modules)
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+                            You can customize individual module switches or use presets above.
+                        </span>
+                    </div>
+
+                    <div class="module-cards-grid">
+                        
+                        <!-- MODULE 0: Administration & Staff -->
+                        <div class="comic-module-card" id="card_ADMIN_MANAGEMENT">
+                            <input type="hidden" name="permissions[0].moduleKey" value="ADMIN_MANAGEMENT">
+                            <input type="hidden" name="permissions[0].moduleNameEn" value="Administration & Staff">
+
+                            <div class="module-card-header">
+                                <div class="module-title-group">
+                                    <h3 class="module-title">Administration &amp; Staff</h3>
+                                </div>
+                                <span class="module-tag" style="background-color: #E2E8F0;">ADMIN_MANAGEMENT</span>
+                            </div>
+
+                            <p class="module-desc">
+                                Manage administrator accounts, security credentials, role assignments, and system privilege matrix.
+                            </p>
+
+                            <!-- 4 Direct CRUD Switches -->
+                            <div class="crud-switches-box">
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_create">C</span>
+                                        <span>Create</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[0].canCreate" value="true" id="switch_ADMIN_MANAGEMENT_create" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'create')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge active" id="badge_ADMIN_MANAGEMENT_read">R</span>
+                                        <span>Read</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[0].canRead" value="true" id="switch_ADMIN_MANAGEMENT_read" checked onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'read')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_update">U</span>
+                                        <span>Update</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[0].canUpdate" value="true" id="switch_ADMIN_MANAGEMENT_update" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'update')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_delete">D</span>
+                                        <span>Delete</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[0].canDelete" value="true" id="switch_ADMIN_MANAGEMENT_delete" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'delete')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Card Quick Actions -->
+                            <div class="module-quick-actions">
+                                <button type="button" class="preset-btn" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'full')">Full CRUD</button>
+                                <button type="button" class="preset-btn" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'readonly')">Read Only</button>
+                                <button type="button" class="preset-btn-danger" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'revoke')">Revoke</button>
+                            </div>
+                        </div>
+
+                        <!-- MODULE 1: Customer Follow-ups -->
+                        <div class="comic-module-card" id="card_CUSTOMER_FOLLOWUP">
+                            <input type="hidden" name="permissions[1].moduleKey" value="CUSTOMER_FOLLOWUP">
+                            <input type="hidden" name="permissions[1].moduleNameEn" value="Customer Follow-ups">
+
+                            <div class="module-card-header">
+                                <div class="module-title-group">
+                                    <h3 class="module-title">Customer Follow-ups</h3>
+                                </div>
+                                <span class="module-tag" style="background-color: #E2E8F0;">CUSTOMER_FOLLOWUP</span>
+                            </div>
+
+                            <p class="module-desc">
+                                Customer directory, sales order timelines, checkpoint checklists, note documentation &amp; photo attachments.
+                            </p>
+
+                            <!-- 4 Direct CRUD Switches -->
+                            <div class="crud-switches-box">
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_create">C</span>
+                                        <span>Create</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[1].canCreate" value="true" id="switch_CUSTOMER_FOLLOWUP_create" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'create')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge active" id="badge_CUSTOMER_FOLLOWUP_read">R</span>
+                                        <span>Read</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[1].canRead" value="true" id="switch_CUSTOMER_FOLLOWUP_read" checked onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'read')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_update">U</span>
+                                        <span>Update</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[1].canUpdate" value="true" id="switch_CUSTOMER_FOLLOWUP_update" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'update')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_delete">D</span>
+                                        <span>Delete</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[1].canDelete" value="true" id="switch_CUSTOMER_FOLLOWUP_delete" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'delete')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Card Quick Actions -->
+                            <div class="module-quick-actions">
+                                <button type="button" class="preset-btn" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'full')">Full CRUD</button>
+                                <button type="button" class="preset-btn" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'readonly')">Read Only</button>
+                                <button type="button" class="preset-btn-danger" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'revoke')">Revoke</button>
+                            </div>
+                        </div>
+
+                        <!-- MODULE 2: Reports & Analytics -->
+                        <div class="comic-module-card" id="card_REPORTS_INSIGHTS">
+                            <input type="hidden" name="permissions[2].moduleKey" value="REPORTS_INSIGHTS">
+                            <input type="hidden" name="permissions[2].moduleNameEn" value="Reports & Analytics">
+
+                            <div class="module-card-header">
+                                <div class="module-title-group">
+                                    <h3 class="module-title">Reports &amp; Analytics</h3>
+                                </div>
+                                <span class="module-tag" style="background-color: #E2E8F0;">REPORTS_INSIGHTS</span>
+                            </div>
+
+                            <p class="module-desc">
+                                Operational milestone turnaround metrics, customer satisfaction feedback, product reviews, and period export.
+                            </p>
+
+                            <!-- 4 Direct CRUD Switches -->
+                            <div class="crud-switches-box">
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_create">C</span>
+                                        <span>Create</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[2].canCreate" value="true" id="switch_REPORTS_INSIGHTS_create" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'create')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge active" id="badge_REPORTS_INSIGHTS_read">R</span>
+                                        <span>Read</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[2].canRead" value="true" id="switch_REPORTS_INSIGHTS_read" checked onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'read')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_update">U</span>
+                                        <span>Update</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[2].canUpdate" value="true" id="switch_REPORTS_INSIGHTS_update" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'update')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="crud-switch-row">
+                                    <div class="crud-switch-label">
+                                        <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_delete">D</span>
+                                        <span>Delete</span>
+                                    </div>
+                                    <label class="comic-switch">
+                                        <input type="checkbox" name="permissions[2].canDelete" value="true" id="switch_REPORTS_INSIGHTS_delete" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'delete')">
+                                        <span class="comic-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Card Quick Actions -->
+                            <div class="module-quick-actions">
+                                <button type="button" class="preset-btn" onclick="applyModulePreset('REPORTS_INSIGHTS', 'full')">Full CRUD</button>
+                                <button type="button" class="preset-btn" onclick="applyModulePreset('REPORTS_INSIGHTS', 'readonly')">Read Only</button>
+                                <button type="button" class="preset-btn-danger" onclick="applyModulePreset('REPORTS_INSIGHTS', 'revoke')">Revoke</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bottom Save Action Bar -->
+                <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                    <button type="submit" class="comic-btn" style="padding: 10px 24px; font-size: 0.95rem;">
+                        Save Admin Role &amp; Permissions
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
 
     </section>
 
     <!-- Client-Side UI & Interactive Matrix Controller Script -->
     <script>
     var modules = ['ADMIN_MANAGEMENT', 'CUSTOMER_FOLLOWUP', 'REPORTS_INSIGHTS'];
-    var currentRoleId = null;
+    var currentAdminId = null;
 
     function syncModuleSwitch(mod, action) {
         var sw = document.getElementById('switch_' + mod + '_' + action);
@@ -318,26 +425,6 @@
                 badge.classList.remove('active');
             }
         }
-        recalculateFormValues();
-    }
-
-    function recalculateFormValues() {
-        var anyCreate = false, anyRead = false, anyUpdate = false, anyDelete = false;
-        modules.forEach(function(m) {
-            var swC = document.getElementById('switch_' + m + '_create');
-            var swR = document.getElementById('switch_' + m + '_read');
-            var swU = document.getElementById('switch_' + m + '_update');
-            var swD = document.getElementById('switch_' + m + '_delete');
-            if (swC && swC.checked) anyCreate = true;
-            if (swR && swR.checked) anyRead = true;
-            if (swU && swU.checked) anyUpdate = true;
-            if (swD && swD.checked) anyDelete = true;
-        });
-
-        document.getElementById('formCanCreate').value = anyCreate ? 'true' : 'false';
-        document.getElementById('formCanRead').value = anyRead ? 'true' : 'false';
-        document.getElementById('formCanUpdate').value = anyUpdate ? 'true' : 'false';
-        document.getElementById('formCanDelete').value = anyDelete ? 'true' : 'false';
     }
 
     function applyModulePreset(mod, type) {
@@ -365,77 +452,107 @@
         });
     }
 
-    function selectRoleFromDropdown(selectEl) {
+    function onRoleTemplateChanged(selectEl) {
         var opt = selectEl.options[selectEl.selectedIndex];
-        if (!opt || !opt.getAttribute('data-role-id')) {
-            initNewRole();
-            return;
-        }
+        if (!opt || !opt.value) return;
 
-        var roleId = opt.getAttribute('data-role-id');
-        var roleName = opt.getAttribute('data-role-name');
         var canC = opt.getAttribute('data-can-create') === 'true';
         var canR = opt.getAttribute('data-can-read') === 'true';
         var canU = opt.getAttribute('data-can-update') === 'true';
         var canD = opt.getAttribute('data-can-delete') === 'true';
-
-        currentRoleId = roleId;
-        document.getElementById('formRoleId').value = roleId;
-        document.getElementById('roleNameInput').value = roleName || '';
-        document.getElementById('roleModeBadge').textContent = 'Editing Template';
-        document.getElementById('roleModeBadge').className = 'comic-tag tag-primary';
-        document.getElementById('saveRoleBtn').textContent = 'Save Changes';
-        document.getElementById('deleteRoleBtn').style.display = 'inline-block';
-        document.getElementById('roleForm').action = '/admin/roles/' + roleId + '/update';
 
         modules.forEach(function(m) {
             var swC = document.getElementById('switch_' + m + '_create');
             var swR = document.getElementById('switch_' + m + '_read');
             var swU = document.getElementById('switch_' + m + '_update');
             var swD = document.getElementById('switch_' + m + '_delete');
+
             swC.checked = canC;
             swR.checked = canR;
             swU.checked = canU;
             swD.checked = canD;
+
             ['create', 'read', 'update', 'delete'].forEach(function(act) {
                 syncModuleSwitch(m, act);
             });
         });
     }
 
-    function initNewRole() {
-        var selectEl = document.getElementById('roleSelect');
-        if (selectEl) selectEl.value = '';
-        currentRoleId = null;
-        document.getElementById('formRoleId').value = '';
-        document.getElementById('roleNameInput').value = '';
-        document.getElementById('roleNameInput').focus();
-        document.getElementById('roleModeBadge').textContent = 'New Template';
-        document.getElementById('roleModeBadge').className = 'comic-tag tag-muted';
-        document.getElementById('saveRoleBtn').textContent = 'Save & Create Role Template';
-        document.getElementById('deleteRoleBtn').style.display = 'none';
-        document.getElementById('roleForm').action = '/admin/roles/create';
-
-        applyGlobalPreset('readonly');
+    function selectAdminFromRow(rowEl) {
+        if (!rowEl) return;
+        var adminId = rowEl.getAttribute('data-admin-id');
+        var username = rowEl.getAttribute('data-admin-username');
+        var roleBadge = rowEl.querySelector('.admin-role-badge');
+        var roleId = roleBadge ? roleBadge.getAttribute('data-role-id') : null;
+        selectAdmin(adminId, username, roleId ? parseInt(roleId, 10) : null);
     }
 
-    function deleteActiveRole() {
-        if (!currentRoleId) return;
-        var roleName = document.getElementById('roleNameInput').value;
-        if (confirm('Are you sure you want to delete role template "' + roleName + '"?')) {
-            var form = document.getElementById('deleteRoleForm');
-            form.action = '/admin/roles/' + currentRoleId + '/delete';
-            form.submit();
+    function selectAdmin(adminId, username, roleId) {
+        currentAdminId = adminId;
+        document.getElementById('formAdminId').value = adminId;
+        document.getElementById('selectedAdminDisplay').textContent = username;
+        document.getElementById('roleAssignForm').action = '/admin/roles/' + adminId + '/assign';
+
+        // Highlight selected row in table
+        document.querySelectorAll('.admin-table-row').forEach(function(tr) {
+            tr.style.backgroundColor = '';
+        });
+        var activeRow = document.getElementById('admin-row-' + adminId);
+        if (activeRow) {
+            activeRow.style.backgroundColor = '#FEF3C7';
+        }
+
+        // Set Role Select dropdown
+        var roleSelect = document.getElementById('roleSelect');
+        if (roleId) {
+            roleSelect.value = roleId;
+        } else {
+            roleSelect.value = '';
+        }
+
+        // Read specific admin permissions if present
+        var permsContainer = document.getElementById('perms-data-' + adminId);
+        var customFound = false;
+
+        if (permsContainer) {
+            var permSpans = permsContainer.querySelectorAll('span');
+            if (permSpans && permSpans.length > 0) {
+                customFound = true;
+                permSpans.forEach(function(s) {
+                    var mod = s.getAttribute('data-module');
+                    var canC = s.getAttribute('data-create') === 'true';
+                    var canR = s.getAttribute('data-read') === 'true';
+                    var canU = s.getAttribute('data-update') === 'true';
+                    var canD = s.getAttribute('data-delete') === 'true';
+
+                    var swC = document.getElementById('switch_' + mod + '_create');
+                    var swR = document.getElementById('switch_' + mod + '_read');
+                    var swU = document.getElementById('switch_' + mod + '_update');
+                    var swD = document.getElementById('switch_' + mod + '_delete');
+
+                    if (swC) swC.checked = canC;
+                    if (swR) swR.checked = canR;
+                    if (swU) swU.checked = canU;
+                    if (swD) swD.checked = canD;
+
+                    ['create', 'read', 'update', 'delete'].forEach(function(act) {
+                        syncModuleSwitch(mod, act);
+                    });
+                });
+            }
+        }
+
+        // If no custom perms exist but role is selected, populate from role
+        if (!customFound && roleId) {
+            onRoleTemplateChanged(roleSelect);
         }
     }
 
-    // Auto-select first role on page load if present
+    // Auto-select initial admin on load
     document.addEventListener('DOMContentLoaded', function() {
-        var selectEl = document.getElementById('roleSelect');
-        if (selectEl && selectEl.options.length > 0 && selectEl.value) {
-            selectRoleFromDropdown(selectEl);
-        } else {
-            initNewRole();
+        var firstRow = document.querySelector('.admin-table-row');
+        if (firstRow) {
+            selectAdminFromRow(firstRow);
         }
     });
     </script>

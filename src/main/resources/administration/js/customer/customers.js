@@ -221,8 +221,10 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
         var preset = $scope.selectedTimePreset ? ($scope.selectedTimePreset.presetKey || $scope.selectedTimePreset.name) : null;
         CustomerService.getAll(preset).then(function(res) {
             $scope.loadingCustomers = false;
+            var raw = res.data;
+            var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
             var now = Date.now();
-            $scope.customers = (res.data || []).map(function(c) {
+            $scope.customers = list.map(function(c) {
                 c._loadedAt = now; // track when we got this data
                 return c;
             });

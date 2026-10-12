@@ -454,9 +454,11 @@ public class CustomerService {
         stats.put("customersThisWeek", customersThisWeek);
         stats.put("customersThisMonth", customersThisMonth);
         stats.put("totalOrders", totalOrders);
+        long completionPercentage = totalFollowups > 0 ? Math.round(((double) completedFollowups / totalFollowups) * 100.0) : 0L;
         stats.put("completedFollowups", completedFollowups);
         stats.put("pendingFollowups", pendingFollowups);
         stats.put("totalFollowups", totalFollowups);
+        stats.put("completionPercentage", completionPercentage);
         stats.put("alertFollowups", alertFollowups);
         stats.put("idleFollowups", idleFollowups);
         stats.put("doneFollowups", doneFollowups);

@@ -50,6 +50,22 @@ public class AdminStaffControllerTest {
                 .build();
     }
 
+    @org.junit.jupiter.api.AfterEach
+    public void cleanupTestAdmins() {
+        adminService.findAll().stream()
+                .filter(a -> a.getUsername() != null && (
+                        a.getUsername().startsWith("ssr_") ||
+                        a.getUsername().startsWith("toggle_") ||
+                        a.getUsername().startsWith("delete_") ||
+                        a.getUsername().contains("test")
+                ))
+                .forEach(a -> {
+                    try {
+                        adminService.deleteAdmin(a.getAdminId());
+                    } catch (Exception ignored) {}
+                });
+    }
+
     @Test
     @DisplayName("GET /admin/admins without authentication should redirect to /login")
     public void testGetAdminsHtmlUnauthenticated() throws Exception {

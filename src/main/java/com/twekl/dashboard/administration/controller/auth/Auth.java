@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controller for Admin Authentication and Profile Session.
  */
 @RestController
-@RequestMapping({"/admin/auth", "/admin/api/auth", "/api/auth", "/internal/auth", "/auth"})
+@RequestMapping("/admin/auth")
 public class Auth {
 
     private final AuthService authService;

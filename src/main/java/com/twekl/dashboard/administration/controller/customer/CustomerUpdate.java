@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Update operations for Customers.
  */
 @RestController
-@RequestMapping({"/admin/customers", "/admin/api/customers", "/internal/customers", "/api/customers"})
+@RequestMapping("/admin/customers")
 public class CustomerUpdate {
 
     private final CustomerService customerService;

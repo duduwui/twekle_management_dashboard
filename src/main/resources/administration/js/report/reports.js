@@ -4,7 +4,7 @@
  */
 angular.module('tweklApp')
 .factory('ReportService', ['$http', function($http) {
-    var BASE = '/internal/reports';
+    var BASE = '/admin/reports';
 
     function get(period, params) {
         var config = { params: params || {} };

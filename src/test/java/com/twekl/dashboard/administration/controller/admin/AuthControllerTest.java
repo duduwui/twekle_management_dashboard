@@ -54,14 +54,5 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("twekl_super_admin"));
     }
-
-    @Test
-    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("GET /internal/auth/me compatibility alias should return profile")
-    public void testGetCurrentUserInternalAlias() throws Exception {
-        mockMvc.perform(get("/internal/auth/me"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.username").value("twekl_super_admin"));
-    }
 }
 

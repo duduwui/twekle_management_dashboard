@@ -5,7 +5,6 @@ import com.twekl.dashboard.administration.model.order.OrderFollowupCheck;
 import com.twekl.dashboard.administration.response.ApiResponse;
 import com.twekl.dashboard.administration.service.customer.CustomerService;
 import com.twekl.dashboard.administration.service.followup.FollowupService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +18,10 @@ import java.util.List;
 
 /**
  * Controller for Customer Orders.
- * Dedicated order domain without Controller suffix.
+ * Canonical route /admin/orders without legacy aliases.
  */
 @RestController
-@RequestMapping({"/admin/orders", "/admin/api/orders", "/internal/orders", "/api/orders"})
+@RequestMapping("/admin/orders")
 public class Order {
 
     private final CustomerService customerService;
@@ -35,11 +34,8 @@ public class Order {
 
     @GetMapping(value = "/{orderId:\\d+}/followups", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> getOrderFollowupChecks(@PathVariable("orderId") Long orderId, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderFollowupChecks(@PathVariable("orderId") Long orderId) {
         List<OrderFollowupCheck> checks = followupService.findChecksByOrderId(orderId);
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(checks);
-        }
         return ResponseEntity.ok(ApiResponse.success(checks));
     }
 
@@ -49,6 +45,6 @@ public class Order {
         return customerService.findOrderById(orderId)
                 .map(order -> ResponseEntity.ok(ApiResponse.success(order)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.<CustomerOrder>error("Order not found with ID: " + orderId)));
+                        .body(ApiResponse.error("Order not found with ID: " + orderId)));
     }
 }

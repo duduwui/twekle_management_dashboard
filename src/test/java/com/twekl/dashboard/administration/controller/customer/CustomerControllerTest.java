@@ -51,11 +51,11 @@ public class CustomerControllerTest {
 
     @Test
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("GET /internal/customers should return customer lifecycle list directly")
-    public void testGetAllCustomersInternalAlias() throws Exception {
-        mockMvc.perform(get("/internal/customers"))
+    @DisplayName("GET /admin/customers with timeFilter should return customer lifecycle list")
+    public void testGetAllCustomersWithTimeFilter() throws Exception {
+        mockMvc.perform(get("/admin/customers").param("timeFilter", "ALL").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.data").isArray());
     }
 
     @Test

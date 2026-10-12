@@ -125,21 +125,21 @@ public class TimelinePresetControllerTest {
 
     @Test
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("GET /internal/time-filters should return JSON list of presets")
-    public void testGetInternalTimeFiltersRest() throws Exception {
-        mockMvc.perform(get("/internal/time-filters").accept(MediaType.APPLICATION_JSON))
+    @DisplayName("GET /admin/time-filters should return JSON list of presets")
+    public void testGetTimeFiltersRest() throws Exception {
+        mockMvc.perform(get("/admin/time-filters").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$").isArray());
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data").isArray());
     }
 
     @Test
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("PATCH /internal/time-filters/{id}/toggle should toggle preset and return ApiResponse")
-    public void testToggleInternalTimeFilterRest() throws Exception {
+    @DisplayName("PATCH /admin/time-filters/{id}/toggle should toggle preset and return ApiResponse")
+    public void testToggleTimeFilterRest() throws Exception {
         TimeFilterPreset preset = presetService.createPreset(new TimeFilterPreset("TEST_TOGGLE_REST_" + System.currentTimeMillis(), "Toggle Rest Test", "تجربة", "تاقیکردنەوە", 12, "DAYS", 99));
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/internal/time-filters/" + preset.getPresetId() + "/toggle")
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/admin/time-filters/" + preset.getPresetId() + "/toggle")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.success").value(true))

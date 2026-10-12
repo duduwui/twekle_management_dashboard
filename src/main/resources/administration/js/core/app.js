@@ -588,7 +588,7 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
             photoUrl: $scope.editingFollowup.imageUrl || '',
             satisfaction: sat
         };
-        $http.post('/internal/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
+        $http.post('/admin/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
             $scope.showEditFollowupModal = false;
             $scope.$broadcast('followup:updated', {
                 checkId: $scope.editingFollowup.id,
@@ -601,7 +601,7 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
             $scope.$broadcast('customer:reload');
             $scope.$broadcast('report:reload');
         }).catch(function() {
-            $http.put('/internal/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
+            $http.put('/admin/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
                 $scope.showEditFollowupModal = false;
                 $scope.$broadcast('followup:updated', {
                     checkId: $scope.editingFollowup.id,

@@ -22,7 +22,7 @@ import java.util.Map;
  * Dedicated report domain without Controller suffix.
  */
 @RestController
-@RequestMapping({"/admin/reports", "/admin/api/reports", "/internal/reports", "/api/reports"})
+@RequestMapping("/admin/reports")
 public class Report {
 
     private final ReportService reportService;
@@ -33,13 +33,9 @@ public class Report {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> generateAnalyticsReport(
-            @RequestParam(required = false, defaultValue = "ALL") String period,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateAnalyticsReport(
+            @RequestParam(required = false, defaultValue = "ALL") String period) {
         Map<String, Object> data = reportService.generateReport(period);
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(data);
-        }
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 

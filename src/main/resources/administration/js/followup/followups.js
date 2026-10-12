@@ -5,7 +5,7 @@
 angular.module('tweklApp')
 .factory('CustomerService', ['$http', function($http) {
     var BASE = '/admin/followups';
-    var CUSTOMERS = '/internal/customers';
+    var CUSTOMERS = '/admin/customers';
     return {
         getAll: function(timeFilter) {
             return $http.get(CUSTOMERS, { params: timeFilter ? { timeFilter: timeFilter } : {} });
@@ -29,7 +29,7 @@ angular.module('tweklApp')
 angular.module('tweklApp')
 .factory('FollowupService', ['$http', function($http) {
     var BASE = '/admin/followups';
-    var ORDERS = '/internal/orders';
+    var ORDERS = '/admin/orders';
     return {
         getFollowups: function(orderId) {
             return $http.get(ORDERS + '/' + orderId + '/followups');

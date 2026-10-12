@@ -3,7 +3,6 @@ package com.twekl.dashboard.administration.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -73,43 +72,16 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 // Static web resources & web landing / SPA routes
-                .requestMatchers("/", "/login", "/admin/**", "/manager/**", "/followups/**", "/users/**", "/roles/**", "/role-templates/**", "/admins/**", "/customers/**", "/resources/**", "/static/**", "/app/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/login", "/admin/**", "/resources/**", "/static/**", "/app/**", "/css/**", "/js/**", "/images/**", "/administration/**", "/favicon.ico").permitAll()
                 
                 // OpenAPI 3.0 / Swagger UI Documentation & Actuator Probes
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 
                 // Public Authentication Endpoints
-                .requestMatchers("/admin/auth/**", "/auth/**", "/admin/api/auth/**", "/internal/auth/**", "/api/auth/**").permitAll()
+                .requestMatchers("/admin/auth/**").permitAll()
                 
-                // Super Administrator Sensitive Operations
-                .requestMatchers(HttpMethod.POST, "/admin/api/admins/**", "/internal/admins/**", "/api/admins/**", "/api/admin/admins/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")
-                .requestMatchers(HttpMethod.PUT, "/admin/api/admins/**", "/internal/admins/**", "/api/admins/**", "/api/admin/admins/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES", "PERMISSION_MANAGE_USERS")
-                .requestMatchers(HttpMethod.PATCH, "/admin/api/admins/**", "/internal/admins/**", "/api/admins/**", "/api/admin/admins/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")
-                .requestMatchers(HttpMethod.DELETE, "/admin/api/admins/**", "/internal/admins/**", "/api/admins/**", "/api/admin/admins/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")
-                .requestMatchers(HttpMethod.GET, "/admin/api/admins/**", "/internal/admins/**", "/api/admins/**", "/api/admin/admins/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                
-                // Role Templates & Permission Controls
-                .requestMatchers(HttpMethod.POST, "/admin/api/roles/**", "/internal/roles/**", "/api/roles/**", "/api/admin/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
-                .requestMatchers(HttpMethod.PATCH, "/admin/api/roles/**", "/internal/roles/**", "/api/roles/**", "/api/admin/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
-                .requestMatchers(HttpMethod.DELETE, "/admin/api/roles/**", "/internal/roles/**", "/api/roles/**", "/api/admin/roles/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")
-                .requestMatchers(HttpMethod.GET, "/admin/api/roles/**", "/internal/roles/**", "/api/roles/**", "/api/admin/roles/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                
-                // User Management Endpoints
-                .requestMatchers("/internal/users/**", "/api/users/**", "/api/admin/users/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "PERMISSION_MANAGE_USERS")
-                
-                // Customer Follow-up, Orders, Presets, Dashboard Stats & Reports
-                .requestMatchers("/admin/api/customers/**", "/internal/customers/**", "/api/customers/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/admin/api/orders/**", "/internal/orders/**", "/api/orders/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/admin/api/followups/**", "/internal/followups/**", "/api/followups/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/admin/api/timelines/**", "/admin/api/time-filters/**", "/internal/time-filters/**", "/api/time-filters/**", "/api/admin/time-filters/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/admin/api/stats/**", "/internal/stats/**", "/api/stats/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/admin/api/reports/**", "/internal/reports/**", "/api/reports/**", "/api/admin/reports/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                
-                // All other internal data and API endpoints require authenticated session
-                .requestMatchers("/admin/api/**", "/internal/**", "/api/**").authenticated()
-                
-                // Any other SPA page routes
+                // Any other routes
                 .anyRequest().permitAll()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));

@@ -15,7 +15,7 @@ import java.util.Map;
  * Dedicated dashboard domain without Controller suffix.
  */
 @RestController
-@RequestMapping({"/admin/stats", "/admin/api/stats", "/internal/stats", "/api/stats"})
+@RequestMapping("/admin/stats")
 public class DashboardStats {
 
     private final DashboardService dashboardService;

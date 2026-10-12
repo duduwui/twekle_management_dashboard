@@ -19,7 +19,7 @@ import java.util.Map;
  * Dedicated followup domain without Controller suffix.
  */
 @RestController
-@RequestMapping({"/admin/followups", "/admin/api/followups", "/internal/followups", "/api/followups"})
+@RequestMapping("/admin/followups")
 public class Followup {
 
     private final FollowupService followupService;

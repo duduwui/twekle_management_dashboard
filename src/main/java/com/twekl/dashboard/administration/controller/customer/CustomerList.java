@@ -6,7 +6,6 @@ import com.twekl.dashboard.administration.model.order.CustomerFeedback;
 import com.twekl.dashboard.administration.model.order.CustomerOrder;
 import com.twekl.dashboard.administration.response.ApiResponse;
 import com.twekl.dashboard.administration.service.customer.CustomerService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +22,10 @@ import java.util.Map;
 
 /**
  * Read and Query operations for Customers.
+ * Canonical route /admin/customers without legacy aliases.
  */
 @RestController
-@RequestMapping({"/admin/customers", "/admin/api/customers", "/internal/customers", "/api/customers"})
+@RequestMapping("/admin/customers")
 public class CustomerList {
 
     private final CustomerService customerService;
@@ -36,23 +36,16 @@ public class CustomerList {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> getAllCustomers(
-            @RequestParam(required = false, defaultValue = "ALL") String timeFilter,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllCustomers(
+            @RequestParam(required = false, defaultValue = "ALL") String timeFilter) {
         List<Map<String, Object>> data = getCustomersData(timeFilter);
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(data);
-        }
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> getCustomerStats(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomerStats() {
         Map<String, Object> stats = customerService.getStats();
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(stats);
-        }
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
@@ -74,11 +67,8 @@ public class CustomerList {
 
     @GetMapping(value = "/{customerId:\\d+}/orders", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> getCustomerOrders(@PathVariable("customerId") Long customerId, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<CustomerOrder>>> getCustomerOrders(@PathVariable("customerId") Long customerId) {
         List<CustomerOrder> orders = customerService.findOrdersByCustomerId(customerId);
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(orders);
-        }
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 

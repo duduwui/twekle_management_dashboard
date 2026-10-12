@@ -4,7 +4,7 @@
  */
 angular.module('tweklApp')
 .factory('TimeFilterService', ['$http', function($http) {
-    var BASE = '/internal/time-filters';
+    var BASE = '/admin/time-filters';
 
     function request(method, path, data) {
         return $http({ method: method, url: BASE + (path || ''), data: data });

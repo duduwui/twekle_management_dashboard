@@ -3,7 +3,6 @@ package com.twekl.dashboard.administration.controller.timefilter;
 import com.twekl.dashboard.administration.model.timefilter.TimeFilterPreset;
 import com.twekl.dashboard.administration.response.ApiResponse;
 import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +13,10 @@ import java.util.List;
 
 /**
  * REST API for Dynamic Time Filter & Milestone Presets.
- * Serves Angular/API services (/internal/time-filters, /api/time-filters, /admin/api/timelines).
+ * Canonical route /admin/time-filters without legacy aliases.
  */
 @RestController
-@RequestMapping({"/internal/time-filters", "/api/time-filters", "/admin/api/timelines"})
+@RequestMapping("/admin/time-filters")
 public class TimeFilterRest {
 
     private final TimeFilterPresetService presetService;
@@ -28,21 +27,15 @@ public class TimeFilterRest {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> getAllPresets(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<TimeFilterPreset>>> getAllPresets() {
         List<TimeFilterPreset> presets = presetService.findAll();
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(presets);
-        }
         return ResponseEntity.ok(ApiResponse.success(presets));
     }
 
     @GetMapping(value = "/active", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<?> getActivePresets(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<TimeFilterPreset>>> getActivePresets() {
         List<TimeFilterPreset> activePresets = presetService.findActive();
-        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
-            return ResponseEntity.ok(activePresets);
-        }
         return ResponseEntity.ok(ApiResponse.success(activePresets));
     }
 

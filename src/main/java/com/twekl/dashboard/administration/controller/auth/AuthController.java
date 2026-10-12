@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Standardized under /admin/auth route.
  */
 @RestController
-@RequestMapping({"/admin/auth", "/internal/auth"})
+@RequestMapping({"/admin/auth", "/admin/api/auth", "/api/auth", "/internal/auth", "/auth"})
 public class AuthController {
 
     private final AuthService authService;

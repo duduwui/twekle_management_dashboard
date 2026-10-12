@@ -33,7 +33,7 @@ public class Customer {
     private String name;
 
     @NotBlank(message = "Phone number is required")
-    @Column(name = "PHONE_NUMBER", nullable = false, length = 50)
+    @Column(name = "PHONE_NUMBER", nullable = false, length = 20)
     private String phoneNumber;
 
     @Column(name = "EMAIL")

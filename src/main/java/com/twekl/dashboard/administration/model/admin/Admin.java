@@ -38,7 +38,7 @@ public class Admin {
     private Long id;
 
     @NotBlank(message = "Username is required")
-    @Column(name = "USERNAME", nullable = false, unique = true, length = 64)
+    @Column(name = "USERNAME", nullable = false, unique = true, length = 50)
     private String username;
 
     @NotBlank(message = "Password is required")

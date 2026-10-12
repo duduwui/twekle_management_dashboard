@@ -58,7 +58,7 @@ public class OrderFollowupCheck {
     @Column(name = "IMAGE_URL", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
-    @Column(name = "CHECKED_BY", length = 128)
+    @Column(name = "CHECKED_BY", length = 64)
     private String checkedBy;
 
     @Column(name = "CHECKED_AT")

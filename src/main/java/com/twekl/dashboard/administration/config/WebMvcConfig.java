@@ -67,13 +67,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/", "classpath:/administration/css/");
-        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/", "classpath:/administration/js/");
-        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/", "classpath:/administration/images/");
-        registry.addResourceHandler("/administration/**").addResourceLocations("classpath:/administration/", "classpath:/static/");
-        registry.addResourceHandler("/resources/**").addResourceLocations("classpath:/static/resources/", "classpath:/static/", "classpath:/administration/");
-        registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/", "classpath:/administration/");
-        registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/static/favicon.ico", "classpath:/administration/favicon.ico");
+        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/administration/css/");
+        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/administration/js/");
+        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/administration/images/");
+        registry.addResourceHandler("/administration/**").addResourceLocations("classpath:/administration/");
+        registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/administration/favicon.ico");
     }
 
     @Override

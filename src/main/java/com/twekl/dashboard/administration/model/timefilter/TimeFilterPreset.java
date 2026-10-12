@@ -21,17 +21,17 @@ public class TimeFilterPreset {
     private Long id;
 
     @NotBlank(message = "Preset key is required")
-    @Column(name = "PRESET_KEY", nullable = false, unique = true, length = 64)
+    @Column(name = "PRESET_KEY", nullable = false, unique = true, length = 32)
     private String presetKey;
 
     @NotBlank(message = "English label is required")
-    @Column(name = "LABEL_EN", nullable = false, length = 100)
+    @Column(name = "LABEL_EN", nullable = false, length = 80)
     private String labelEn;
 
-    @Column(name = "LABEL_AR", length = 100)
+    @Column(name = "LABEL_AR", length = 80)
     private String labelAr;
 
-    @Column(name = "LABEL_KU", length = 100)
+    @Column(name = "LABEL_KU", length = 80)
     private String labelKu;
 
     @Column(name = "DURATION_VALUE", nullable = false)

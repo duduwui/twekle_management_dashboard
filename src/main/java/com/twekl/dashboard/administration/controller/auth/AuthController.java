@@ -1,4 +1,4 @@
-package com.twekl.dashboard.administration.controller.admin;
+package com.twekl.dashboard.administration.controller.auth;
 
 import com.twekl.dashboard.administration.dto.admin.LoginRequest;
 import com.twekl.dashboard.administration.response.ApiResponse;
@@ -53,4 +53,3 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
-

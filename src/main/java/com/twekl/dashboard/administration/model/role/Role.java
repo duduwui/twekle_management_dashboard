@@ -23,7 +23,7 @@ public class Role {
     private Long id;
 
     @NotBlank(message = "Role name is required")
-    @Column(name = "NAME", nullable = false, unique = true, length = 64)
+    @Column(name = "NAME", nullable = false, unique = true, length = 50)
     private String name;
 
     @Column(name = "CAN_CREATE", nullable = false)

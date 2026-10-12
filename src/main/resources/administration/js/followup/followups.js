@@ -1,98 +1,46 @@
 /**
  * Customer Service
- * Handles customer retrieval, stats, and related orders.
- * Endpoints: /internal/customers (fallback: /api/customers)
+ * Retrieves customers, their orders, and summary stats.
  */
 angular.module('tweklApp')
 .factory('CustomerService', ['$http', function($http) {
-    var BASE = '/internal/customers';
-    var FALLBACK = '/api/customers';
-
-    function request(method, path, config) {
-        config = config || {};
-        config.method = method;
-        config.url = BASE + (path || '');
-        var fallbackUrl = FALLBACK + (path || '');
-
-        return $http(config).catch(function() {
-            var fallbackConfig = angular.copy(config);
-            fallbackConfig.url = fallbackUrl;
-            return $http(fallbackConfig);
-        });
-    }
-
+    var BASE = '/admin/followups';
+    var CUSTOMERS = '/internal/customers';
     return {
         getAll: function(timeFilter) {
-            var params = timeFilter ? { timeFilter: timeFilter } : {};
-            return request('GET', '', { params: params });
+            return $http.get(CUSTOMERS, { params: timeFilter ? { timeFilter: timeFilter } : {} });
         },
         getById: function(id) {
-            return request('GET', '/' + id);
+            return $http.get(CUSTOMERS + '/' + id);
         },
         getOrders: function(customerId) {
-            return request('GET', '/' + customerId + '/orders');
+            return $http.get(CUSTOMERS + '/' + customerId + '/orders');
         },
         getStats: function() {
-            return request('GET', '/stats');
+            return $http.get(CUSTOMERS + '/stats');
         }
     };
-}])
-// Backward-compatibility aliases for micro-services
-.factory('CustomerGetAllService', ['CustomerService', function(CustomerService) {
-    return { execute: function(timeFilter) { return CustomerService.getAll(timeFilter); } };
-}])
-.factory('CustomerGetByIdService', ['CustomerService', function(CustomerService) {
-    return { execute: function(id) { return CustomerService.getById(id); } };
-}])
-.factory('CustomerGetOrdersService', ['CustomerService', function(CustomerService) {
-    return { execute: function(customerId) { return CustomerService.getOrders(customerId); } };
-}])
-.factory('CustomerGetStatsService', ['CustomerService', function(CustomerService) {
-    return { execute: function() { return CustomerService.getStats(); } };
 }]);
 
 /**
  * Follow-up Service
- * Manages customer order follow-up checkpoints, milestones, and status toggles.
- * Endpoints: /internal/orders/{orderId}/followups, /internal/followups/{id}
+ * Manages follow-up checkpoints, milestone toggles, and note/photo updates.
  */
 angular.module('tweklApp')
 .factory('FollowupService', ['$http', function($http) {
+    var BASE = '/admin/followups';
+    var ORDERS = '/internal/orders';
     return {
         getFollowups: function(orderId) {
-            return $http.get('/internal/orders/' + orderId + '/followups').catch(function() {
-                return $http.get('/api/orders/' + orderId + '/followups');
-            });
-        },
-        createFollowup: function(orderId, data) {
-            return $http.post('/internal/orders/' + orderId + '/followups', data).catch(function() {
-                return $http.post('/api/orders/' + orderId + '/followups', data);
-            });
+            return $http.get(ORDERS + '/' + orderId + '/followups');
         },
         updateFollowup: function(id, data) {
-            return $http.put('/internal/followups/' + id, data).catch(function() {
-                return $http.put('/api/followups/' + id, data);
-            });
+            return $http.put(BASE + '/' + id, data);
         },
         toggleStatus: function(id) {
-            return $http.patch('/internal/followups/' + id + '/status', {}).catch(function() {
-                return $http.patch('/api/followups/' + id + '/status', {});
-            });
+            return $http.patch(BASE + '/' + id + '/status', {});
         }
     };
-}])
-// Backward-compatibility aliases for micro-services
-.factory('FollowupGetService', ['FollowupService', function(FollowupService) {
-    return { execute: function(orderId) { return FollowupService.getFollowups(orderId); } };
-}])
-.factory('FollowupCreateService', ['FollowupService', function(FollowupService) {
-    return { execute: function(orderId, data) { return FollowupService.createFollowup(orderId, data); } };
-}])
-.factory('FollowupUpdateService', ['FollowupService', function(FollowupService) {
-    return { execute: function(id, data) { return FollowupService.updateFollowup(id, data); } };
-}])
-.factory('FollowupToggleStatusService', ['FollowupService', function(FollowupService) {
-    return { execute: function(id) { return FollowupService.toggleStatus(id); } };
 }]);
 
 /**

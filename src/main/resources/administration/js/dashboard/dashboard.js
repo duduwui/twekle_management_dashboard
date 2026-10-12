@@ -5,24 +5,16 @@ angular.module('tweklApp')
 .factory('DashboardStatsService', ['$http', function($http) {
     return {
         getSummary: function() {
-            return $http.get('/admin/api/stats/summary').catch(function() {
-                return $http.get('/internal/stats/summary');
-            });
+            return $http.get('/admin/api/stats/summary');
         },
         getCustomers: function() {
-            return $http.get('/admin/api/customers').catch(function() {
-                return $http.get('/internal/customers');
-            });
+            return $http.get('/admin/api/customers');
         },
         getSatisfactionDetails: function() {
-            return $http.get('/admin/api/reports/satisfaction?period=ALL').catch(function() {
-                return $http.get('/internal/reports/satisfaction?period=ALL');
-            });
+            return $http.get('/admin/api/reports/satisfaction?period=ALL');
         },
         getReports: function() {
-            return $http.get('/admin/api/reports?period=ALL').catch(function() {
-                return $http.get('/internal/reports?period=ALL');
-            });
+            return $http.get('/admin/api/reports?period=ALL');
         }
     };
 }])

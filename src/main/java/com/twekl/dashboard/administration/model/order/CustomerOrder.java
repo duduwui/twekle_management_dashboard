@@ -24,7 +24,7 @@ public class CustomerOrder {
     @Column(name = "ID")
     private Long id;
 
-    @Column(name = "ORDER_NUMBER", nullable = false, unique = true, length = 64)
+    @Column(name = "ORDER_NUMBER", nullable = false, unique = true, length = 32)
     private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,7 +32,7 @@ public class CustomerOrder {
     @JsonIgnore
     private Customer customer;
 
-    @Column(name = "ITEMS_SUMMARY", length = 1000)
+    @Column(name = "ITEMS_SUMMARY", length = 500)
     private String itemsSummary;
 
     @Column(name = "QUANTITY")
@@ -41,7 +41,7 @@ public class CustomerOrder {
     @Column(name = "TOTAL_AMOUNT")
     private Double totalAmount = 0.0;
 
-    @Column(name = "ORDER_STATUS", length = 50)
+    @Column(name = "ORDER_STATUS", length = 20)
     private String orderStatus = "DELIVERED"; // PENDING, DELIVERED, CANCELLED
 
     @CreationTimestamp

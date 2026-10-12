@@ -3,15 +3,13 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{administration/fragments/adminLayout}">
 <head>
-    <title>Customer Follow-ups | Twekl Administration</title>
+    <title>Follow-ups | Twekl Administration</title>
 </head>
 <body>
     <div layout:fragment="content">
         <section class="comic-card" ng-controller="FollowupController">
             <!-- 3.1 Customer Follow-up Directory -->
-            <div ng-show="customerView === 'list'">
-                    <!-- 4.1 CUSTOMERS LIST & FOLLOW-UP DIRECTORY (DEFAULT) -->
-                    <div ng-show="customerView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
+            <div ng-if="customerView === 'list'" style="display: flex; flex-direction: column; gap: 16px;">
                         
 
 
@@ -42,7 +40,7 @@
                             <!-- Live Search Bar -->
                             <div class="filter-search-box">
                                 <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="search" name="search_customer_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search customers by name, phone, city..." ng-model="customerFilters.search">
+                                <input type="search" name="search_customer_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search follow-ups by customer name, phone, city..." ng-model="customerFilters.search">
                                 <button type="button" class="search-clear-btn" ng-show="customerFilters.search" ng-click="customerFilters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
                             </div>
                         </div>
@@ -155,16 +153,10 @@
                                 <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(dt.currentPage + 1)">Next »</button>
                             </div>
                         </div>
-
                     </div>
 
-            </div>
-
             <!-- 3.2 Customer Purchase History / Order Log -->
-            <div ng-show="customerView === 'orders'">
-
-                    <!-- 4.2 DEDICATED CUSTOMER PURCHASE HISTORY / ORDER LOG PAGE (VIEW-ONLY AUDIT MODE) -->
-                    <div ng-show="customerView === 'orders'" style="display: flex; flex-direction: column; gap: 20px;">
+            <div ng-if="customerView === 'orders'" style="display: flex; flex-direction: column; gap: 20px;">
                         
                         <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 4px;">
                             <div style="display: flex; align-items: center; gap: 12px;">
@@ -365,16 +357,10 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
-            </div>
-
             <!-- 3.3 Customer Feedback & Notes -->
-            <div ng-show="customerView === 'feedback'">
-
-                    <!-- 4.3 DEDICATED CUSTOMER REVIEWS, NOTES & FEEDBACK PAGE -->
-                    <div ng-show="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 20px;">
+            <div ng-if="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 20px;">
                         
                         <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 4px;">
                             <div style="display: flex; align-items: center; gap: 12px;">
@@ -551,8 +537,10 @@
                                     <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === 1" ng-click="setOrderPage(orderDt.currentPage - 1)">« Prev</button>
                                     <button type="button" class="page-btn" ng-repeat="p in getOrderPageNumbers(getFilteredCustomerOrders().length)" ng-class="{'active': orderDt.currentPage === p}" ng-click="setOrderPage(p)" ng-bind="p"></button>
                                     <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === getTotalOrderPages(getFilteredCustomerOrders().length)" ng-click="setOrderPage(orderDt.currentPage + 1)">Next »</button>
-
-            </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
         </section>
     </div>
 </body>

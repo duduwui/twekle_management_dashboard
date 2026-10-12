@@ -79,8 +79,12 @@ public class CustomerController {
 
     @GetMapping(value = "/{customerId:\\d+}/orders", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<CustomerOrder>>> getCustomerOrders(@PathVariable("customerId") Long customerId) {
-        return ResponseEntity.ok(ApiResponse.success(customerService.findOrdersByCustomerId(customerId)));
+    public ResponseEntity<?> getCustomerOrders(@PathVariable("customerId") Long customerId, HttpServletRequest request) {
+        List<CustomerOrder> orders = customerService.findOrdersByCustomerId(customerId);
+        if (request != null && request.getRequestURI() != null && request.getRequestURI().startsWith("/internal/")) {
+            return ResponseEntity.ok(orders);
+        }
+        return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
     @GetMapping(value = "/{customerId:\\d+}/feedbacks", produces = MediaType.APPLICATION_JSON_VALUE)

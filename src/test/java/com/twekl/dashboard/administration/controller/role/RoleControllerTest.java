@@ -49,6 +49,21 @@ public class RoleControllerTest {
                 .build();
     }
 
+    @org.junit.jupiter.api.AfterEach
+    public void cleanupTestRoles() {
+        roleService.findAll().stream()
+                .filter(r -> r.getName() != null && (
+                        r.getName().startsWith("SSR Test Role") ||
+                        r.getName().startsWith("Test Update Role") ||
+                        r.getName().startsWith("Test Delete Role")
+                ))
+                .forEach(r -> {
+                    try {
+                        roleService.deleteRole(r.getRoleId());
+                    } catch (Exception ignored) {}
+                });
+    }
+
     @Test
     @DisplayName("GET /admin/roles without authentication should redirect to /login")
     public void testGetRolesHtmlUnauthenticated() throws Exception {

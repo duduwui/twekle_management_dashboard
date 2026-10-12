@@ -84,28 +84,48 @@ function($scope, $rootScope, $interval, DashboardStatsService, ToastService) {
     };
 
     $scope.filterAlert = function() {
-        $rootScope.$broadcast('filter:followupStatusChanged', 'ALERT');
-        if ($scope.setTab) $scope.setTab('customers');
+        if ($scope.setTab) {
+            $rootScope.$broadcast('filter:followupStatusChanged', 'ALERT');
+            $scope.setTab('customers');
+        } else {
+            window.location.href = '/admin/followups?status=ALERT';
+        }
     };
 
     $scope.filterPendingQueue = function() {
-        $rootScope.$broadcast('filter:followupStatusChanged', 'IDLE');
-        if ($scope.setTab) $scope.setTab('customers');
+        if ($scope.setTab) {
+            $rootScope.$broadcast('filter:followupStatusChanged', 'IDLE');
+            $scope.setTab('customers');
+        } else {
+            window.location.href = '/admin/followups?status=IDLE';
+        }
     };
 
     $scope.filterDone = function() {
-        $rootScope.$broadcast('filter:followupStatusChanged', 'DONE');
-        if ($scope.setTab) $scope.setTab('customers');
+        if ($scope.setTab) {
+            $rootScope.$broadcast('filter:followupStatusChanged', 'DONE');
+            $scope.setTab('customers');
+        } else {
+            window.location.href = '/admin/followups?status=DONE';
+        }
     };
 
     $scope.goToFollowups = function() {
-        if ($scope.setTab) $scope.setTab('customers');
+        if ($scope.setTab) {
+            $scope.setTab('customers');
+        } else {
+            window.location.href = '/admin/followups';
+        }
     };
 
     $scope.goToSatisfactionReports = function() {
         $scope.closeUnsatisfiedModal();
-        if ($scope.setTab) $scope.setTab('reports');
-        if ($scope.setReportSubTab) $scope.setReportSubTab('satisfaction');
+        if ($scope.setTab) {
+            $scope.setTab('reports');
+            if ($scope.setReportSubTab) $scope.setReportSubTab('satisfaction');
+        } else {
+            window.location.href = '/admin/reports?tab=satisfaction';
+        }
     };
 
     $scope.showUnsatisfiedModal = false;
@@ -133,23 +153,32 @@ function($scope, $rootScope, $interval, DashboardStatsService, ToastService) {
         if (!cust) return '-';
         var mins = cust.nextPendingMinutesLeft;
         if (mins === null || mins === undefined) return 'Scheduled';
-        if (mins <= 0) {
-            var over = Math.abs(mins);
-            if (over < 60) return over + 'm overdue';
-            var h = Math.floor(over / 60);
-            var m = over % 60;
-            return h + 'h ' + m + 'm overdue';
+        if (mins >= 0) {
+            if (mins < 60) return mins + 'm left';
+            var hours = Math.floor(mins / 60);
+            if (hours < 24) return hours + 'h ' + (mins % 60) + 'm left';
+            var days = Math.floor(hours / 24);
+            var remH = hours % 24;
+            return remH > 0 ? (days + 'd ' + remH + 'h left') : (days + 'd left');
+        } else {
+            var overdue = Math.abs(mins);
+            if (overdue < 60) return overdue + 'm overdue';
+            var ovH = Math.floor(overdue / 60);
+            if (ovH < 24) return ovH + 'h overdue';
+            var ovD = Math.floor(ovH / 24);
+            var ovRH = ovH % 24;
+            return ovRH > 0 ? (ovD + 'd ' + ovRH + 'h overdue') : (ovD + 'd overdue');
         }
-        if (mins < 60) return mins + 'm left';
-        var hours = Math.floor(mins / 60);
-        var remMins = mins % 60;
-        return hours + 'h ' + remMins + 'm left';
     };
 
     $scope.openCustomer = function(cust) {
         if (!cust) return;
-        $rootScope.$broadcast('customer:openDetail', cust.id);
-        if ($scope.setTab) $scope.setTab('customers');
+        if ($scope.setTab) {
+            $rootScope.$broadcast('customer:openDetail', cust.id);
+            $scope.setTab('customers');
+        } else {
+            window.location.href = '/admin/followups/orders/' + cust.id;
+        }
     };
 
     // Hydrate from server-injected state

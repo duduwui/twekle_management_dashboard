@@ -6,6 +6,7 @@ import com.twekl.dashboard.administration.service.admin.AdminService;
 import com.twekl.dashboard.administration.service.customer.CustomerService;
 import com.twekl.dashboard.administration.service.report.ReportService;
 import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -81,21 +82,24 @@ public class AdminWebController {
         return "administration/dashboard/dashboard";
     }
 
-    @GetMapping({"/admin/customers", "/admin/followups", "/followups", "/customers"})
+    @GetMapping(value = {"/admin/followups", "/admin/followups/**", "/admin/customers", "/admin/customers/**", "/followups", "/followups/**", "/customers", "/customers/**"}, produces = MediaType.TEXT_HTML_VALUE)
     public String showCustomers(Model model) {
         if (!isAuthenticated()) return "redirect:/login";
 
-        model.addAttribute("activeTab", "customers");
+        model.addAttribute("activeTab", "followups");
         model.addAttribute("followupSummaries", customerService.findAllSummaries("ALL"));
         model.addAttribute("presets", timeFilterPresetService.findAll());
         return "administration/customer/customers";
     }
 
-    @GetMapping({"/admin/reports", "/reports"})
-    public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period, Model model) {
+    @GetMapping(value = {"/admin/reports", "/reports"}, produces = MediaType.TEXT_HTML_VALUE)
+    public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                              @RequestParam(value = "tab", defaultValue = "milestones") String tab,
+                              Model model) {
         if (!isAuthenticated()) return "redirect:/login";
 
         model.addAttribute("activeTab", "reports");
+        model.addAttribute("reportSubTab", tab);
         model.addAttribute("period", period);
         model.addAttribute("reportData", reportService.generateReport(period));
         model.addAttribute("presets", timeFilterPresetService.findAll());

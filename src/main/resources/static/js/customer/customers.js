@@ -124,11 +124,11 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
         totalItems: 0
     };
 
-    // Filter criteria (Customer List) - Default: Today to Tomorrow matching other tabs
+    // Filter criteria (Customer List) - Default: null (All Time) so customers display on load
     $scope.customerFilters = {
         search: '',
-        dateFrom: FilterHelperService.getToday(),
-        dateTo: FilterHelperService.getTomorrow(),
+        dateFrom: null,
+        dateTo: null,
         followupStatus: 'ALL'
     };
 
@@ -141,11 +141,11 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
         totalItems: 0
     };
 
-    // Filter criteria (Customer Orders) - Default: Today to Tomorrow matching other tabs
+    // Filter criteria (Customer Orders) - Default: null (All Time)
     $scope.orderFilters = {
         search: '',
-        dateFrom: FilterHelperService.getToday(),
-        dateTo: FilterHelperService.getTomorrow()
+        dateFrom: null,
+        dateTo: null
     };
 
     // Modals state
@@ -161,14 +161,14 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
      */
     function initFollowupRoute() {
         var path = window.location.pathname;
-        if (path.indexOf('/admin/followups/orders/') === 0) {
+        if (path.indexOf('/admin/followups/orders/') === 0 || path.indexOf('/admin/customers/orders/') === 0) {
             var parts = path.split('/');
             var targetId = parts[4] ? parseInt(parts[4], 10) : null;
             if (targetId) {
                 $scope.customerView = 'orders';
                 pendingTargetCustomerId = targetId;
             }
-        } else if (path.indexOf('/admin/followups/feedback/') === 0) {
+        } else if (path.indexOf('/admin/followups/feedback/') === 0 || path.indexOf('/admin/customers/feedback/') === 0) {
             var parts = path.split('/');
             var targetId = parts[4] ? parseInt(parts[4], 10) : null;
             if (targetId) {
@@ -177,6 +177,13 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
             }
         } else {
             $scope.customerView = 'list';
+        }
+
+        if (window.location.search) {
+            var match = window.location.search.match(/status=([^&]+)/i);
+            if (match && match[1]) {
+                $scope.customerFilters.followupStatus = decodeURIComponent(match[1]).toUpperCase();
+            }
         }
     }
 
@@ -298,9 +305,11 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
     $scope.loadCustomerOrders = function(customerId) {
         if (!customerId) return;
         CustomerService.getOrders(customerId).then(function(res) {
-            $scope.customerOrders = res.data || [];
+            var raw = res.data;
+            var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+            $scope.customerOrders = list;
             // Auto-load follow-ups for all orders
-            $scope.customerOrders.forEach(function(ord) {
+            list.forEach(function(ord) {
                 $scope.loadOrderFollowups(ord.id);
             });
         }, function(err) {
@@ -314,7 +323,8 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
     $scope.loadOrderFollowups = function(orderId) {
         if (!orderId) return;
         FollowupService.getFollowups(orderId).then(function(res) {
-            $scope.orderFollowups[orderId] = res.data || [];
+            var raw = res.data;
+            $scope.orderFollowups[orderId] = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
         });
     };
 

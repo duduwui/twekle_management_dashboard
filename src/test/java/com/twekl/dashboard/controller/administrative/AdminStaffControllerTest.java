@@ -1,11 +1,11 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.config.JpaConfig;
 import com.twekl.dashboard.config.SecurityConfig;
 import com.twekl.dashboard.config.WebMvcConfig;
 import com.twekl.dashboard.dto.admin.CreateAdminRequest;
 import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.service.admin.AdminService;
+import com.twekl.dashboard.service.administrative.AdminService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

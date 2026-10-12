@@ -1,9 +1,9 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.dto.auth.LoginRequest;
 import com.twekl.dashboard.response.ApiResponse;
 import com.twekl.dashboard.response.AuthResponse;
-import com.twekl.dashboard.service.admin.AuthService;
+import com.twekl.dashboard.service.administrative.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

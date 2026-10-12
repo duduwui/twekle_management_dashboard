@@ -1,12 +1,12 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.dto.customer.CustomerFollowupSummary;
 import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.service.admin.AdminService;
-import com.twekl.dashboard.service.admin.CustomerService;
-import com.twekl.dashboard.service.admin.FollowupService;
-import com.twekl.dashboard.service.admin.ReportService;
-import com.twekl.dashboard.service.admin.TimeFilterService;
+import com.twekl.dashboard.service.administrative.AdminService;
+import com.twekl.dashboard.service.administrative.CustomerService;
+import com.twekl.dashboard.service.administrative.FollowupService;
+import com.twekl.dashboard.service.administrative.ReportService;
+import com.twekl.dashboard.service.administrative.TimeFilterService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;

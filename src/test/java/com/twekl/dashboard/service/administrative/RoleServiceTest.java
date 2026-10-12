@@ -1,4 +1,4 @@
-package com.twekl.dashboard.service.admin;
+package com.twekl.dashboard.service.administrative;
 
 import com.twekl.dashboard.dto.role.RoleDto;
 import com.twekl.dashboard.model.role.Role;

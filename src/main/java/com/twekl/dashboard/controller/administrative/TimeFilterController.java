@@ -1,9 +1,9 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.model.timefilter.TimeFilterPreset;
 import com.twekl.dashboard.response.ApiResponse;
-import com.twekl.dashboard.service.admin.AdminService;
-import com.twekl.dashboard.service.admin.TimeFilterService;
+import com.twekl.dashboard.service.administrative.AdminService;
+import com.twekl.dashboard.service.administrative.TimeFilterService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

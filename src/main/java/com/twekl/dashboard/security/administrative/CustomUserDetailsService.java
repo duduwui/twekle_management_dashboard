@@ -1,4 +1,4 @@
-package com.twekl.dashboard.security;
+package com.twekl.dashboard.security.administrative;
 
 import com.twekl.dashboard.model.admin.Admin;
 import com.twekl.dashboard.model.role.Role;

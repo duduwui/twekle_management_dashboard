@@ -1,8 +1,8 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.dto.report.SatisfactionReportDto;
 import com.twekl.dashboard.response.ApiResponse;
-import com.twekl.dashboard.service.admin.ReportService;
+import com.twekl.dashboard.service.administrative.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

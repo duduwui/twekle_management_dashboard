@@ -1,4 +1,4 @@
-package com.twekl.dashboard.service.admin;
+package com.twekl.dashboard.service.administrative;
 
 import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.timefilter.TimeFilterPreset;

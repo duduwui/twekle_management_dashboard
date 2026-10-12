@@ -1,4 +1,4 @@
-package com.twekl.dashboard.service.admin;
+package com.twekl.dashboard.service.administrative;
 
 import com.twekl.dashboard.dto.customer.CustomerFollowupSummary;
 import com.twekl.dashboard.dto.followup.FollowupCheckRequest;

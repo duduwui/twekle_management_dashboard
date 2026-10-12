@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.config.JpaConfig;
 import com.twekl.dashboard.config.SecurityConfig;
@@ -8,7 +8,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -25,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {JpaConfig.class, WebMvcConfig.class, SecurityConfig.class})
-public class CustomerControllerTest {
+public class AuthControllerTest {
 
     @Autowired
     private WebApplicationContext context;
@@ -41,30 +40,19 @@ public class CustomerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("GET /admin/customers as JSON should return customer lifecycle list")
-    public void testGetAllCustomersCleanRoute() throws Exception {
-        mockMvc.perform(get("/admin/customers").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
+    @DisplayName("GET /admin/auth/me for unauthenticated user should return 401 Unauthorized")
+    public void testGetCurrentUserUnauthenticated() throws Exception {
+        mockMvc.perform(get("/admin/auth/me"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("GET /admin/customers with timeFilter should return customer lifecycle list")
-    public void testGetAllCustomersWithTimeFilter() throws Exception {
-        mockMvc.perform(get("/admin/customers").param("timeFilter", "ALL").accept(MediaType.APPLICATION_JSON))
+    @DisplayName("GET /admin/auth/me for authenticated user should return profile")
+    public void testGetCurrentUserAuthenticated() throws Exception {
+        mockMvc.perform(get("/admin/auth/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
-    }
-
-    @Test
-    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
-    @DisplayName("GET /admin/customers/stats should return follow-up breakdown statistics")
-    public void testGetCustomerStats() throws Exception {
-        mockMvc.perform(get("/admin/customers/stats").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalCustomers").exists());
+                .andExpect(jsonPath("$.data.username").value("twekl_super_admin"));
     }
 }
 

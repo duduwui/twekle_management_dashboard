@@ -14,7 +14,7 @@ import com.twekl.dashboard.repository.order.CustomerOrderRepository;
 import com.twekl.dashboard.repository.followup.OrderFollowupCheckRepository;
 import com.twekl.dashboard.repository.role.RoleRepository;
 import com.twekl.dashboard.repository.timefilter.TimeFilterPresetRepository;
-import com.twekl.dashboard.service.admin.AdminService;
+import com.twekl.dashboard.service.administrative.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

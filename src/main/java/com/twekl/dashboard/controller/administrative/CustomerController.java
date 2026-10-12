@@ -1,12 +1,12 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.dto.customer.CustomerFollowupSummary;
 import com.twekl.dashboard.model.customer.Customer;
 import com.twekl.dashboard.model.order.CustomerFeedback;
 import com.twekl.dashboard.model.order.CustomerOrder;
 import com.twekl.dashboard.response.ApiResponse;
-import com.twekl.dashboard.service.admin.CustomerService;
-import com.twekl.dashboard.service.admin.FollowupService;
+import com.twekl.dashboard.service.administrative.CustomerService;
+import com.twekl.dashboard.service.administrative.FollowupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

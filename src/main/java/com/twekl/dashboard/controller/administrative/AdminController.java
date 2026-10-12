@@ -1,11 +1,11 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
 import com.twekl.dashboard.dto.admin.CreateAdminRequest;
 import com.twekl.dashboard.dto.admin.UpdateAdminRequest;
 import com.twekl.dashboard.model.admin.Admin;
 import com.twekl.dashboard.response.ApiResponse;
-import com.twekl.dashboard.service.admin.AdminService;
-import com.twekl.dashboard.service.admin.RoleService;
+import com.twekl.dashboard.service.administrative.AdminService;
+import com.twekl.dashboard.service.administrative.RoleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

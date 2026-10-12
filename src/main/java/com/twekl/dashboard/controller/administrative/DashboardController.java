@@ -1,6 +1,6 @@
-package com.twekl.dashboard.controller.admin;
+package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.service.admin.DashboardService;
+import com.twekl.dashboard.service.administrative.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

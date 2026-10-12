@@ -1,7 +1,7 @@
 package com.twekl.dashboard.config;
 
-import com.twekl.dashboard.security.RestAccessDeniedHandler;
-import com.twekl.dashboard.security.RestAuthenticationEntryPoint;
+import com.twekl.dashboard.security.administrative.RestAccessDeniedHandler;
+import com.twekl.dashboard.security.administrative.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

@@ -63,6 +63,7 @@ public class CustomerService {
         for (TimeFilterPreset p : activePresets) {
             if (p.getId() != null) activePresetIds.add(p.getId());
             if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
             if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
         }
 
@@ -138,12 +139,14 @@ public class CustomerService {
 
         for (CustomerOrder ord : orders) {
             List<OrderFollowupCheck> checks = new ArrayList<>(checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList()));
-            checks.sort(Comparator.comparingInt(OrderFollowupCheck::getTargetDays));
+            checks.sort(Comparator.comparingInt(OrderFollowupCheck::getEquivalentDurationMinutes));
 
             for (OrderFollowupCheck ch : checks) {
-                boolean isActive = (ch.getPresetId() != null && activePresetIds.contains(ch.getPresetId()))
+                boolean isPresetActive = (ch.getPreset() != null && activePresetIds.contains(ch.getPreset().getId()))
                         || (ch.getMilestoneName() != null && activePresetNames.contains(ch.getMilestoneName().trim().toLowerCase()));
-                if (!isActive) continue;
+                if (!isPresetActive) {
+                    continue; // Skip inactive presets and check the nearest active filter time
+                }
 
                 if (!ch.isCompleted()) {
                     pendingCount++;
@@ -286,7 +289,7 @@ public class CustomerService {
             }
         }
 
-        result.sort(Comparator.comparingInt(OrderFollowupCheck::getTargetDays));
+        result.sort(Comparator.comparingInt(OrderFollowupCheck::getEquivalentDurationMinutes));
         return result;
     }
 
@@ -390,9 +393,33 @@ public class CustomerService {
     public Map<String, Object> getStats() {
         long totalCustomers = customerRepository.count();
         long totalOrders = orderRepository.count();
-        long totalFollowups = followupCheckRepository.count();
-        long completedFollowups = followupCheckRepository.countByCompletedTrue();
+        Instant now = Instant.now();
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        Set<Long> activePresetIds = new HashSet<>();
+        Set<String> activePresetNames = new HashSet<>();
+        for (TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+
+        List<OrderFollowupCheck> allChecksList = followupCheckRepository.findAll().stream().filter(c -> {
+            return (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
+                    || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));
+        }).collect(Collectors.toList());
+
+        long totalFollowups = allChecksList.size();
+        long completedFollowups = allChecksList.stream().filter(OrderFollowupCheck::isCompleted).count();
         long pendingFollowups = totalFollowups - completedFollowups;
+
+        long overdueFollowups = allChecksList.stream().filter(c -> {
+            if (c.isCompleted() || c.getOrder() == null || c.getOrder().getOrderDate() == null) return false;
+            Instant dueTime = calculateDueTime(c.getOrder().getOrderDate(), c.getDurationUnit(), c.getDurationValue());
+            return dueTime != null && now.isAfter(dueTime);
+        }).count();
+        long inQueueFollowups = pendingFollowups - overdueFollowups;
+        if (inQueueFollowups < 0) inQueueFollowups = 0;
 
         List<CustomerFollowupSummary> summaries = findAllSummaries("ALL");
         long alertFollowups = summaries.stream().filter(s -> "ALERT".equalsIgnoreCase(s.getFollowupStatus())).count();
@@ -404,7 +431,6 @@ public class CustomerService {
                 .sum();
 
         List<CustomerFeedback> feedbacks = feedbackRepository.findAll();
-        List<OrderFollowupCheck> allChecksList = followupCheckRepository.findAll();
 
         long satisfiedFeedbacks = feedbacks.stream().filter(f -> f.getRating() >= 4).count();
         long neutralFeedbacks = feedbacks.stream().filter(f -> f.getRating() == 3).count();
@@ -430,7 +456,6 @@ public class CustomerService {
         double checkRatingSum = (satisfiedChecks * 5.0) + (neutralChecks * 3.0) + (unsatisfiedChecks * 1.0);
         double avgRating = totalRated > 0 ? ((feedbackRatingSum + checkRatingSum) / totalRated) : 5.0;
 
-        Instant now = Instant.now();
         Instant oneDayAgo = now.minus(1, ChronoUnit.DAYS);
         Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS);
         Instant thirtyDaysAgo = now.minus(30, ChronoUnit.DAYS);
@@ -448,17 +473,25 @@ public class CustomerService {
                 .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().isAfter(thirtyDaysAgo))
                 .count();
 
+        long completedPercentage = totalFollowups > 0 ? Math.round(((double) completedFollowups / totalFollowups) * 100.0) : 0L;
+        long overduePercentage = totalFollowups > 0 ? Math.round(((double) overdueFollowups / totalFollowups) * 100.0) : 0L;
+        long inQueuePercentage = totalFollowups > 0 ? Math.max(0, 100L - completedPercentage - overduePercentage) : 0L;
+
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalCustomers", totalCustomers);
         stats.put("customersToday", customersToday);
         stats.put("customersThisWeek", customersThisWeek);
         stats.put("customersThisMonth", customersThisMonth);
         stats.put("totalOrders", totalOrders);
-        long completionPercentage = totalFollowups > 0 ? Math.round(((double) completedFollowups / totalFollowups) * 100.0) : 0L;
         stats.put("completedFollowups", completedFollowups);
         stats.put("pendingFollowups", pendingFollowups);
         stats.put("totalFollowups", totalFollowups);
-        stats.put("completionPercentage", completionPercentage);
+        stats.put("overdueFollowups", overdueFollowups);
+        stats.put("inQueueFollowups", inQueueFollowups);
+        stats.put("completionPercentage", completedPercentage);
+        stats.put("completedPercentage", completedPercentage);
+        stats.put("overduePercentage", overduePercentage);
+        stats.put("inQueuePercentage", inQueuePercentage);
         stats.put("alertFollowups", alertFollowups);
         stats.put("idleFollowups", idleFollowups);
         stats.put("doneFollowups", doneFollowups);

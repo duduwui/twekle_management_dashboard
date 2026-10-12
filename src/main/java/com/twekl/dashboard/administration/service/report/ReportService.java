@@ -58,6 +58,14 @@ public class ReportService {
         List<CustomerFeedback> allFeedbacks = feedbackRepository.findAll();
         List<OrderFollowupCheck> allChecks = followupCheckRepository.findAllWithOrderCustomerAndPreset();
         List<TimeFilterPreset> activePresets = presetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        java.util.Set<Long> activePresetIds = new java.util.HashSet<>();
+        java.util.Set<String> activePresetNames = new java.util.HashSet<>();
+        for (TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
 
         // 1. High-level Summary Metrics
         long newCustomers = allCustomers.stream()
@@ -76,6 +84,10 @@ public class ReportService {
 
         List<OrderFollowupCheck> checksInPeriod = allChecks.stream()
                 .filter(c -> {
+                    boolean isPresetActive = (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
+                            || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));
+                    if (!isPresetActive) return false;
+
                     if (cutoff == null) return true;
                     Instant checkDate = c.getCheckedAt() != null ? c.getCheckedAt() :
                                         (c.getUpdatedAt() != null ? c.getUpdatedAt() :
@@ -107,7 +119,8 @@ public class ReportService {
         summary.put("averageRating", Math.round(avgRating * 10.0) / 10.0);
         summary.put("totalFeedbacks", allFeedbacks.size());
 
-        // 2. Milestones Matrix (Health by Preset)
+        // 2. Milestones Matrix (Health by Active Preset)
+        activePresets.sort(Comparator.comparingInt(TimeFilterPreset::getEquivalentDurationMinutes));
         Map<String, int[]> presetCounts = new LinkedHashMap<>();
         for (TimeFilterPreset p : activePresets) {
             presetCounts.put(p.getName(), new int[]{0, 0});
@@ -115,10 +128,10 @@ public class ReportService {
 
         for (OrderFollowupCheck c : checksInPeriod) {
             String name = c.getMilestoneName();
-            if (name != null && presetCounts.containsKey(name)) {
-                presetCounts.get(name)[0]++;
+            if (name != null && !name.trim().isEmpty() && presetCounts.containsKey(name.trim())) {
+                presetCounts.get(name.trim())[0]++;
                 if (c.isCompleted()) {
-                    presetCounts.get(name)[1]++;
+                    presetCounts.get(name.trim())[1]++;
                 }
             }
         }
@@ -277,7 +290,9 @@ public class ReportService {
             for (CustomerOrder o : custOrders) {
                 if (o.getChecks() != null) {
                     for (OrderFollowupCheck chk : o.getChecks()) {
-                        if (!chk.isCompleted()) {
+                        boolean isPresetActive = (chk.getPreset() != null && activePresetIds.contains(chk.getPreset().getId()))
+                                || (chk.getMilestoneName() != null && activePresetNames.contains(chk.getMilestoneName().trim().toLowerCase()));
+                        if (isPresetActive && !chk.isCompleted()) {
                             pendingFollowups++;
                         }
                     }
@@ -330,8 +345,21 @@ public class ReportService {
             result.add(dto);
         }
 
+        List<TimeFilterPreset> activePresets = presetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        java.util.Set<Long> activePresetIds = new java.util.HashSet<>();
+        java.util.Set<String> activePresetNames = new java.util.HashSet<>();
+        for (TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+
         List<OrderFollowupCheck> checks = followupCheckRepository.findAllWithOrderCustomerAndPreset();
         for (OrderFollowupCheck c : checks) {
+            boolean isPresetActive = (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
+                    || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));
+            if (!isPresetActive) continue;
             if (c.getSatisfaction() == null || c.getSatisfaction().trim().isEmpty()) continue;
             Instant checkDate = c.getCheckedAt() != null ? c.getCheckedAt() :
                                 (c.getUpdatedAt() != null ? c.getUpdatedAt() :

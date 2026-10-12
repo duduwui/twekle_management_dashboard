@@ -63,7 +63,13 @@ function($scope, $rootScope, $interval, DashboardStatsService, ToastService) {
                 angular.extend($scope.stats, data);
                 var total = $scope.stats.totalFollowups || (($scope.stats.completedFollowups || 0) + ($scope.stats.pendingFollowups || 0)) || 0;
                 var completed = $scope.stats.completedFollowups || 0;
-                $scope.stats.completionPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                var overdue = $scope.stats.overdueFollowups != null ? $scope.stats.overdueFollowups : ($scope.stats.alertFollowups || 0);
+                var inQueue = $scope.stats.inQueueFollowups != null ? $scope.stats.inQueueFollowups : Math.max(0, total - completed - overdue);
+
+                $scope.stats.completedPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                $scope.stats.overduePercentage = total > 0 ? Math.round((overdue / total) * 100) : 0;
+                $scope.stats.inQueuePercentage = total > 0 ? Math.max(0, 100 - $scope.stats.completedPercentage - $scope.stats.overduePercentage) : 0;
+                $scope.stats.completionPercentage = $scope.stats.completedPercentage;
             }
         }).finally(function() {
             $scope.loading = false;

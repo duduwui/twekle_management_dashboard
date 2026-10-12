@@ -124,11 +124,12 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
         totalItems: 0
     };
 
-    // Filter criteria (Customer List) - Default: null (All Time) so customers display on load
+    // Filter criteria (Customer List) - Default Today/Tomorrow displayed, dateFilterApplied: false on initial load
     $scope.customerFilters = {
         search: '',
-        dateFrom: null,
-        dateTo: null,
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow(),
+        dateFilterApplied: false,
         followupStatus: 'ALL'
     };
 
@@ -141,11 +142,12 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
         totalItems: 0
     };
 
-    // Filter criteria (Customer Orders) - Default: null (All Time)
+    // Filter criteria (Customer Orders) - Default Today/Tomorrow displayed
     $scope.orderFilters = {
         search: '',
-        dateFrom: null,
-        dateTo: null
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow(),
+        dateFilterApplied: false
     };
 
     // Modals state
@@ -514,59 +516,137 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
     // =========================================================
     // FEEDBACK & CHECKPOINT MODAL ACTIONS
     // =========================================================
-    $scope.openEditFollowupModal = function(order, check) {
-        $scope.editingFollowup = angular.copy(check) || {};
-        $scope.editingFollowup.orderId = order ? order.id : null;
-        $scope.editingFollowup.note = check.note || check.notes || '';
-        $scope.editingFollowup.imageUrl = check.imageUrl || check.photoUrl || '';
+    $scope.openEditFollowupModal = function(order, check, $event) {
+        if ($event) $event.stopPropagation();
+        var item = angular.copy(check) || {};
+        item.orderId = order ? order.id : null;
+        item.note = check.note || check.notes || '';
+        item.imageUrl = check.imageUrl || check.photoUrl || '';
+        item.satisfaction = (check.satisfaction && check.satisfaction.trim() !== '') ? check.satisfaction.toUpperCase() : 'NEUTRAL';
+        $scope.editingFollowup = item;
         $scope.showEditFollowupModal = true;
+        if ($scope.$parent && $scope.$parent.openEditFollowupModal) {
+            $scope.$parent.openEditFollowupModal(order, check, $event);
+        }
     };
 
     $scope.closeEditFollowupModal = function() {
         $scope.showEditFollowupModal = false;
         $scope.editingFollowup = {};
+        if ($scope.$parent && $scope.$parent.closeEditFollowupModal) {
+            $scope.$parent.closeEditFollowupModal();
+        }
     };
 
     $scope.saveFollowupCheck = function() {
         if (!$scope.editingFollowup || !$scope.editingFollowup.id) return;
+        var sat = $scope.editingFollowup.satisfaction || 'NEUTRAL';
         var payload = {
             notes: $scope.editingFollowup.note || '',
-            photoUrl: $scope.editingFollowup.imageUrl || ''
+            photoUrl: $scope.editingFollowup.imageUrl || '',
+            satisfaction: sat
         };
         FollowupService.updateFollowup($scope.editingFollowup.id, payload).then(function(res) {
-            ToastService.success('Checkpoint updated successfully');
-            if ($scope.editingFollowup.orderId) {
-                $scope.loadOrderFollowups($scope.editingFollowup.orderId);
+            ToastService.success('Feedback saved successfully');
+            if ($scope.editingFollowup.orderId && $scope.orderFollowups[$scope.editingFollowup.orderId]) {
+                var list = $scope.orderFollowups[$scope.editingFollowup.orderId];
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].id === $scope.editingFollowup.id) {
+                        list[i].note = $scope.editingFollowup.note;
+                        list[i].notes = $scope.editingFollowup.note;
+                        list[i].imageUrl = $scope.editingFollowup.imageUrl;
+                        list[i].photoUrl = $scope.editingFollowup.imageUrl;
+                        list[i].satisfaction = sat;
+                        break;
+                    }
+                }
             }
             $scope.closeEditFollowupModal();
+            $scope.loadCustomers();
+            $scope.loadStats();
         }, function(err) {
-            ToastService.error('Failed to update checkpoint');
+            ToastService.error('Failed to save feedback');
         });
     };
 
     $scope.goToFeedbackForCheck = function(order, check, $event) {
         if ($event) $event.stopPropagation();
-        $scope.customerView = 'feedback';
-        $scope.expandedOrderId = order.id;
-        $scope.openEditFollowupModal(order, check);
+        $scope.openEditFollowupModal(order, check, $event);
     };
 
     $scope.toggleSatisfaction = function(target, val) {
         if (!target) return;
-        target.satisfaction = (target.satisfaction === val) ? null : val;
+        target.satisfaction = val;
     };
 
     $scope.handleFollowupImageUpload = function(element) {
         if (element.files && element.files[0]) {
+            var file = element.files[0];
+            if (!file.type.match('image.*')) {
+                ToastService.error('Please select an image file');
+                return;
+            }
             var reader = new FileReader();
             reader.onload = function(e) {
-                $scope.$apply(function() {
-                    $scope.editingFollowup.imageUrl = e.target.result;
-                });
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var MAX_WIDTH = 1200;
+                    var MAX_HEIGHT = 1200;
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    $scope.$apply(function() {
+                        $scope.editingFollowup.imageUrl = dataUrl;
+                        if ($scope.$parent && $scope.$parent.editingFollowup) {
+                            $scope.$parent.editingFollowup.imageUrl = dataUrl;
+                        }
+                    });
+                };
+                img.src = e.target.result;
             };
-            reader.readAsDataURL(element.files[0]);
+            reader.readAsDataURL(file);
         }
     };
+
+    $scope.$on('followup:updated', function(event, data) {
+        if (data && data.orderId && $scope.orderFollowups[data.orderId]) {
+            var list = $scope.orderFollowups[data.orderId];
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === data.checkId) {
+                    list[i].note = data.note;
+                    list[i].notes = data.note;
+                    list[i].imageUrl = data.imageUrl;
+                    list[i].photoUrl = data.imageUrl;
+                    list[i].satisfaction = data.satisfaction;
+                    break;
+                }
+            }
+        }
+        $scope.loadCustomers();
+        $scope.loadStats();
+    });
+
+    $scope.$on('customer:reload', function() {
+        $scope.loadCustomers();
+        $scope.loadStats();
+    });
 
     // Listen for preset change from LayoutController
     $scope.$on('filter:timePresetChanged', function(event, preset) {
@@ -574,10 +654,13 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
             var range = FilterHelperService.getPresetDateRange(preset);
             $scope.customerFilters.dateFrom = range.dateFrom;
             $scope.customerFilters.dateTo = range.dateTo;
+            $scope.customerFilters.dateFilterApplied = true;
         } else {
-            $scope.customerFilters.dateFrom = null;
-            $scope.customerFilters.dateTo = null;
+            $scope.customerFilters.dateFrom = FilterHelperService.getToday();
+            $scope.customerFilters.dateTo = FilterHelperService.getTomorrow();
+            $scope.customerFilters.dateFilterApplied = false;
         }
+        $scope.dt.currentPage = 1;
         $scope.loadCustomers();
     });
 
@@ -587,9 +670,11 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
             var range = FilterHelperService.getPresetDateRange(preset);
             $scope.orderFilters.dateFrom = range.dateFrom;
             $scope.orderFilters.dateTo = range.dateTo;
+            $scope.orderFilters.dateFilterApplied = true;
         } else {
-            $scope.orderFilters.dateFrom = null;
-            $scope.orderFilters.dateTo = null;
+            $scope.orderFilters.dateFrom = FilterHelperService.getToday();
+            $scope.orderFilters.dateTo = FilterHelperService.getTomorrow();
+            $scope.orderFilters.dateFilterApplied = false;
         }
         $scope.orderDt.currentPage = 1;
     });

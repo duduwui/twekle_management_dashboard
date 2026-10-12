@@ -62,6 +62,27 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         preset: null
     };
 
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    $scope.reportSubTab = tabParam || window.SERVER_REPORT_SUBTAB || ($scope.$parent && $scope.$parent.reportSubTab) || 'milestones';
+
+    $scope.setReportSubTab = function(subTab) {
+        $scope.reportSubTab = subTab;
+        if ($scope.$parent && $scope.$parent.setReportSubTab) {
+            $scope.$parent.setReportSubTab(subTab);
+        } else if ($scope.$parent) {
+            $scope.$parent.reportSubTab = subTab;
+        }
+        if (window.history && window.history.replaceState) {
+            var newUrl = window.location.pathname + '?tab=' + encodeURIComponent(subTab);
+            window.history.replaceState(null, '', newUrl);
+        }
+    };
+
+    $scope.$on('reportSubTab:changed', function(event, subTab) {
+        $scope.reportSubTab = subTab;
+    });
+
     /**
      * Loads report data from backend
      */
@@ -200,6 +221,10 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
 
     // Auto-reload when time filter presets change or login occurs
     $scope.$on('timePresets:changed', function() {
+        $scope.loadReportData();
+    });
+
+    $scope.$on('report:reload', function() {
         $scope.loadReportData();
     });
 

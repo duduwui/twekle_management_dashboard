@@ -68,20 +68,15 @@
                                 </span>
                             </td>
                             <td>
-                                <form th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${admin.id})}" method="post" style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
-                                    <button type="submit" class="comic-tag" th:classappend="${admin.active} ? 'tag-primary' : 'tag-muted'" style="cursor: pointer; border: 1.5px solid var(--border-black); background: none;" th:title="'Click to toggle status'" th:text="${admin.active} ? 'Active' : 'Inactive'">Active</button>
+                                <form th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${admin.id})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
+                                    <button type="submit" class="status-pill-btn" th:classappend="${admin.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
+                                        <span class="status-dot"></span>
+                                        <span th:text="${admin.active} ? 'Active' : 'Inactive'">Active</span>
+                                    </button>
                                 </form>
                             </td>
                             <td style="text-align: right;">
                                 <div style="display: inline-flex; gap: 8px; align-items: center;">
-                                    <button type="button" class="comic-btn-sm" 
-                                            th:data-admin-id="${admin.id}"
-                                            th:data-username="${admin.username}"
-                                            th:data-phone="${admin.phoneNumber}"
-                                            th:data-super-admin="${admin.superAdmin}"
-                                            onclick="openInspectAdminModal(this)">
-                                        Inspect &amp; Perms
-                                    </button>
                                     <form th:action="@{/admin/admins/{adminId}/delete-admin(adminId=${admin.id})}" method="post" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete administrator \'' + this.getAttribute('data-uname') + '\'?');" th:data-uname="${admin.username}">
                                         <button type="submit" class="comic-btn-danger" style="cursor: pointer;">Delete</button>
                                     </form>
@@ -149,237 +144,17 @@
                     <span class="comic-tag tag-primary" id="superAdminStatusBadge" style="display: none;">SUPER ADMIN</span>
                 </div>
 
-                <!-- Role Template Quick-Applicator Bar -->
-                <div style="margin-top: 18px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
-                        <span style="font-size: 0.88rem; font-weight: 800; color: var(--text-main);">
-                            Apply Role Template to Initial Permissions:
-                        </span>
-                    </div>
-
-                    <div class="role-template-pills-row">
-                        <button type="button" 
-                                class="role-pill-btn" 
-                                th:each="role : ${roleList}"
-                                th:data-role-name="${role.name}"
-                                th:data-can-create="${role.canCreate}"
-                                th:data-can-read="${role.canRead}"
-                                th:data-can-update="${role.canUpdate}"
-                                th:data-can-delete="${role.canDelete}"
-                                onclick="applyRoleToAdminCreate(this)"
-                                th:title="'Click to apply ' + ${role.name} + ' permissions'">
-                            <span th:text="${role.name}">Role</span>
-                            <span style="font-size: 0.72rem; opacity: 0.85;" 
-                                  th:text="'(' + (${role.canCreate}?'C':'') + (${role.canRead}?'R':'') + (${role.canUpdate}?'U':'') + (${role.canDelete}?'D':'') + ')'">
-                            </span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 2. 3-Module CRUD Matrix -->
-                <div style="margin-top: 24px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-                        <div style="font-size: 1.05rem; font-weight: 900; color: #000000;">
-                            2. Module Permissions Matrix (Configure Direct Switches)
+                <!-- Active Status Switch Banner -->
+                <div style="margin-top: 14px; background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <label class="comic-switch">
+                            <input type="checkbox" name="active" value="true" checked>
+                            <span class="comic-slider"></span>
+                        </label>
+                        <div>
+                            <strong style="color: #0F172A; font-size: 0.95rem;">Active Account</strong>
+                            <div style="font-size: 0.8rem; color: #64748B; font-weight: 600;">Enable or disable immediate login access for this administrator.</div>
                         </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" class="comic-btn-sm" onclick="applyAdminCreateGlobalPreset('full')">Full CRUD</button>
-                            <button type="button" class="comic-btn-sm" onclick="applyAdminCreateGlobalPreset('readonly')">Read Only</button>
-                            <button type="button" class="comic-btn-sm" onclick="applyAdminCreateGlobalPreset('revoke')">Revoke All</button>
-                        </div>
-                    </div>
-
-                    <div class="module-cards-grid">
-                        
-                        <!-- MODULE 1: Administration & Staff -->
-                        <div class="comic-module-card">
-                            <div class="module-card-header">
-                                <div class="module-title-group">
-                                    <h3 class="module-title">Administration &amp; Staff</h3>
-                                </div>
-                                <span class="module-tag" style="background-color: #E2E8F0;">ADMIN_MANAGEMENT</span>
-                            </div>
-                            <input type="hidden" name="permissions[0].moduleKey" value="ADMIN_MANAGEMENT">
-                            <input type="hidden" name="permissions[0].moduleNameEn" value="Administration &amp; Staff">
-
-                            <p class="module-desc">Manage administrator accounts, security credentials, role assignments, and system privilege matrix.</p>
-
-                            <div class="crud-switches-box">
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_0_create">C</span>
-                                        <span>Create</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[0].canCreate" id="c_sw_0_create" value="true" onchange="syncAdminCreateBadge(0, 'create')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge active" id="c_badge_0_read">R</span>
-                                        <span>Read</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[0].canRead" id="c_sw_0_read" value="true" checked onchange="syncAdminCreateBadge(0, 'read')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_0_update">U</span>
-                                        <span>Update</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[0].canUpdate" id="c_sw_0_update" value="true" onchange="syncAdminCreateBadge(0, 'update')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_0_delete">D</span>
-                                        <span>Delete</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[0].canDelete" id="c_sw_0_delete" value="true" onchange="syncAdminCreateBadge(0, 'delete')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="module-quick-actions">
-                                <button type="button" class="preset-btn" onclick="applyAdminCreateCardPreset(0, 'full')">Full CRUD</button>
-                                <button type="button" class="preset-btn" onclick="applyAdminCreateCardPreset(0, 'readonly')">Read Only</button>
-                                <button type="button" class="preset-btn-danger" onclick="applyAdminCreateCardPreset(0, 'revoke')">Revoke</button>
-                            </div>
-                        </div>
-
-                        <!-- MODULE 2: Customer Follow-ups -->
-                        <div class="comic-module-card">
-                            <div class="module-card-header">
-                                <div class="module-title-group">
-                                    <h3 class="module-title">Customer Follow-ups</h3>
-                                </div>
-                                <span class="module-tag" style="background-color: #E2E8F0;">CUSTOMER_FOLLOWUP</span>
-                            </div>
-                            <input type="hidden" name="permissions[1].moduleKey" value="CUSTOMER_FOLLOWUP">
-                            <input type="hidden" name="permissions[1].moduleNameEn" value="Customer Follow-ups">
-
-                            <p class="module-desc">Customer directory, sales order timelines, checkpoint checklists, note documentation &amp; photo attachments.</p>
-
-                            <div class="crud-switches-box">
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_1_create">C</span>
-                                        <span>Create</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[1].canCreate" id="c_sw_1_create" value="true" onchange="syncAdminCreateBadge(1, 'create')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge active" id="c_badge_1_read">R</span>
-                                        <span>Read</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[1].canRead" id="c_sw_1_read" value="true" checked onchange="syncAdminCreateBadge(1, 'read')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_1_update">U</span>
-                                        <span>Update</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[1].canUpdate" id="c_sw_1_update" value="true" onchange="syncAdminCreateBadge(1, 'update')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_1_delete">D</span>
-                                        <span>Delete</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[1].canDelete" id="c_sw_1_delete" value="true" onchange="syncAdminCreateBadge(1, 'delete')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="module-quick-actions">
-                                <button type="button" class="preset-btn" onclick="applyAdminCreateCardPreset(1, 'full')">Full CRUD</button>
-                                <button type="button" class="preset-btn" onclick="applyAdminCreateCardPreset(1, 'readonly')">Read Only</button>
-                                <button type="button" class="preset-btn-danger" onclick="applyAdminCreateCardPreset(1, 'revoke')">Revoke</button>
-                            </div>
-                        </div>
-
-                        <!-- MODULE 3: Reports & Analytics -->
-                        <div class="comic-module-card">
-                            <div class="module-card-header">
-                                <div class="module-title-group">
-                                    <h3 class="module-title">Reports &amp; Analytics</h3>
-                                </div>
-                                <span class="module-tag" style="background-color: #E2E8F0;">REPORTS_INSIGHTS</span>
-                            </div>
-                            <input type="hidden" name="permissions[2].moduleKey" value="REPORTS_INSIGHTS">
-                            <input type="hidden" name="permissions[2].moduleNameEn" value="Reports &amp; Analytics">
-
-                            <p class="module-desc">Operational milestone turnaround metrics, customer satisfaction feedback, product reviews, and period export.</p>
-
-                            <div class="crud-switches-box">
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_2_create">C</span>
-                                        <span>Create</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[2].canCreate" id="c_sw_2_create" value="true" onchange="syncAdminCreateBadge(2, 'create')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge active" id="c_badge_2_read">R</span>
-                                        <span>Read</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[2].canRead" id="c_sw_2_read" value="true" checked onchange="syncAdminCreateBadge(2, 'read')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_2_update">U</span>
-                                        <span>Update</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[2].canUpdate" id="c_sw_2_update" value="true" onchange="syncAdminCreateBadge(2, 'update')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="crud-switch-row">
-                                    <div class="crud-switch-label">
-                                        <span class="crud-unified-badge" id="c_badge_2_delete">D</span>
-                                        <span>Delete</span>
-                                    </div>
-                                    <label class="comic-switch">
-                                        <input type="checkbox" name="permissions[2].canDelete" id="c_sw_2_delete" value="true" onchange="syncAdminCreateBadge(2, 'delete')">
-                                        <span class="comic-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="module-quick-actions">
-                                <button type="button" class="preset-btn" onclick="applyAdminCreateCardPreset(2, 'full')">Full CRUD</button>
-                                <button type="button" class="preset-btn" onclick="applyAdminCreateCardPreset(2, 'readonly')">Read Only</button>
-                                <button type="button" class="preset-btn-danger" onclick="applyAdminCreateCardPreset(2, 'revoke')">Revoke</button>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 

@@ -46,7 +46,8 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
     // Active Feature Tab: 'dashboard', 'admins', 'roles', 'customers', 'time-filters', 'reports'
     $scope.currentTab = window.SERVER_ACTIVE_TAB || 'dashboard';
     $scope.activeTab = $scope.currentTab;
-    $scope.reportSubTab = 'milestones'; // 'milestones', 'satisfaction', 'products', 'customers'
+    var initialUrlParams = new URLSearchParams(window.location.search);
+    $scope.reportSubTab = initialUrlParams.get('tab') || window.SERVER_REPORT_SUBTAB || 'milestones'; // 'milestones', 'satisfaction', 'products', 'customers'
 
     /**
      * Resolves initial active tab based on window pathname and server state
@@ -71,13 +72,17 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
             $scope.categories.admin = true;
         } else if (path.indexOf('/admin/timelines') === 0 || path.indexOf('/admin/time-filters') === 0) {
             $scope.currentTab = 'time-filters';
-        } else if (path.indexOf('/admin/reports') === 0) {
+        } else if (path.indexOf('/admin/reports') === 0 || path.indexOf('/reports') === 0) {
             $scope.currentTab = 'reports';
             $scope.categories.reports = true;
+            var urlParams = new URLSearchParams(window.location.search);
+            var tabParam = urlParams.get('tab');
             var parts = path.split('/');
-            var sub = parts[3];
+            var sub = (parts.length > 3 && parts[3]) ? parts[3] : (tabParam || window.SERVER_REPORT_SUBTAB);
             if (sub && ['milestones','satisfaction','products','customers'].indexOf(sub) !== -1) {
                 $scope.reportSubTab = sub;
+            } else {
+                $scope.reportSubTab = 'milestones';
             }
         } else if (path.indexOf('/admin/followups') === 0 || path.indexOf('/admin/customers') === 0) {
             $scope.currentTab = 'customers';
@@ -122,6 +127,11 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
      */
     $scope.setReportSubTab = function(subTab) {
         $scope.reportSubTab = subTab;
+        $scope.$broadcast('reportSubTab:changed', subTab);
+        if (window.history && window.history.replaceState) {
+            var newUrl = window.location.pathname + '?tab=' + encodeURIComponent(subTab);
+            window.history.replaceState(null, '', newUrl);
+        }
     };
 
     // Initialize immediately from server-injected user if available
@@ -276,7 +286,8 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
      */
     $scope.loadTimeFilterPresets = function() {
         return TimeFilterService.getAll().then(function(res) {
-            var arr = res.data || [];
+            var raw = res.data;
+            var arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
             arr.forEach(function(p) {
                 p.name = p.name || p.labelEn || p.presetKey;
                 p.isActive = (p.isActive != null ? p.isActive : (p.active !== false));
@@ -496,52 +507,110 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
     };
 
     // =========================================================
+    // =========================================================
     // FOLLOW-UP & FEEDBACK MODALS (Global)
     // =========================================================
     $scope.showEditFollowupModal = false;
     $scope.editingFollowup = {};
-    $scope.showAddFeedbackModal = false;
-    $scope.newCustomerFeedback = { content: '', satisfaction: null, imageUrl: '', authorName: '', orderId: null };
-    $scope.showEditFeedbackModal = false;
-    $scope.editingCustomerFeedback = {};
+
+    $scope.openEditFollowupModal = function(order, check, $event) {
+        if ($event) $event.stopPropagation();
+        var item = angular.copy(check) || {};
+        item.orderId = order ? order.id : null;
+        item.note = check.note || check.notes || '';
+        item.imageUrl = check.imageUrl || check.photoUrl || '';
+        item.satisfaction = (check.satisfaction && check.satisfaction.trim() !== '') ? check.satisfaction.toUpperCase() : 'NEUTRAL';
+        $scope.editingFollowup = item;
+        $scope.showEditFollowupModal = true;
+    };
 
     $scope.closeEditFollowupModal = function() {
         $scope.showEditFollowupModal = false;
         $scope.editingFollowup = {};
     };
 
-    $scope.closeAddFeedbackModal = function() {
-        $scope.showAddFeedbackModal = false;
+    $scope.toggleSatisfaction = function(target, val) {
+        if (!target) return;
+        target.satisfaction = val;
     };
 
-    $scope.closeEditFeedbackModal = function() {
-        $scope.showEditFeedbackModal = false;
-        $scope.editingCustomerFeedback = {};
+    $scope.handleFollowupImageUpload = function(element) {
+        if (element.files && element.files[0]) {
+            var file = element.files[0];
+            if (!file.type.match('image.*')) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var MAX_WIDTH = 1200;
+                    var MAX_HEIGHT = 1200;
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    $scope.$apply(function() {
+                        $scope.editingFollowup.imageUrl = dataUrl;
+                    });
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     $scope.saveFollowupCheck = function() {
-        $scope.$broadcast('modal:saveFollowupCheck', $scope.editingFollowup);
-    };
-
-    $scope.submitCustomerFeedback = function() {
-        $scope.$broadcast('modal:submitCustomerFeedback', $scope.newCustomerFeedback);
-    };
-
-    $scope.saveEditFeedback = function() {
-        $scope.$broadcast('modal:saveEditFeedback', $scope.editingCustomerFeedback);
-    };
-
-    $scope.clearFeedbackImage = function() {
-        $scope.newCustomerFeedback.imageUrl = '';
-    };
-
-    $scope.clearEditFeedbackImage = function() {
-        $scope.editingCustomerFeedback.imageUrl = '';
-    };
-
-    $scope.toggleSatisfaction = function(target, val) {
-        if (!target) return;
-        target.satisfaction = (target.satisfaction === val) ? null : val;
+        if (!$scope.editingFollowup || !$scope.editingFollowup.id) return;
+        var sat = $scope.editingFollowup.satisfaction || 'NEUTRAL';
+        var payload = {
+            notes: $scope.editingFollowup.note || '',
+            photoUrl: $scope.editingFollowup.imageUrl || '',
+            satisfaction: sat
+        };
+        $http.post('/internal/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
+            $scope.showEditFollowupModal = false;
+            $scope.$broadcast('followup:updated', {
+                checkId: $scope.editingFollowup.id,
+                orderId: $scope.editingFollowup.orderId,
+                note: $scope.editingFollowup.note,
+                imageUrl: $scope.editingFollowup.imageUrl,
+                satisfaction: sat
+            });
+            $scope.$broadcast('dashboard:reload');
+            $scope.$broadcast('customer:reload');
+            $scope.$broadcast('report:reload');
+        }).catch(function() {
+            $http.put('/internal/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
+                $scope.showEditFollowupModal = false;
+                $scope.$broadcast('followup:updated', {
+                    checkId: $scope.editingFollowup.id,
+                    orderId: $scope.editingFollowup.orderId,
+                    note: $scope.editingFollowup.note,
+                    imageUrl: $scope.editingFollowup.imageUrl,
+                    satisfaction: sat
+                });
+                $scope.$broadcast('dashboard:reload');
+                $scope.$broadcast('customer:reload');
+                $scope.$broadcast('report:reload');
+            });
+        });
     };
 
     // =========================================================

@@ -124,7 +124,7 @@ angular.module('tweklApp')
                 var searchStr = JSON.stringify(item);
                 if (!searchMatch(searchStr, filterState.search)) return false;
             }
-            if (filterState && (filterState.dateFrom || filterState.dateTo)) {
+            if (filterState && (filterState.dateFilterApplied !== false) && (filterState.dateFrom || filterState.dateTo)) {
                 var dateVal = item.createdAt || item.orderDate || item.lastOrderDate || item.updatedAt || item.createdDate || item.date;
                 if (!isWithinDateRange(dateVal, filterState.dateFrom, filterState.dateTo)) return false;
             }
@@ -191,6 +191,7 @@ angular.module('tweklApp')
         var from = new Date(now.getTime() - (mins * 60 * 1000));
         from.setHours(0, 0, 0, 0);
         var to = new Date();
+        to.setDate(to.getDate() + 1);
         to.setHours(23, 59, 59, 999);
         return { dateFrom: from, dateTo: to };
     }

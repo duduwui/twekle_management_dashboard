@@ -123,6 +123,17 @@ public class OrderFollowupCheck {
         this.completed = false;
     }
 
+    public int getEquivalentDurationMinutes() {
+        String u = durationUnit != null ? durationUnit.toUpperCase() : "DAYS";
+        int v = durationValue != null && durationValue > 0 ? durationValue : (targetDays > 0 ? targetDays : 1);
+        return switch (u) {
+            case "HOURS" -> v * 60;
+            case "WEEKS" -> v * 7 * 1440;
+            case "MONTHS" -> v * 30 * 1440;
+            default -> v * 1440;
+        };
+    }
+
     // Standard JPA ID getters & explicit domain checkId bridges
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

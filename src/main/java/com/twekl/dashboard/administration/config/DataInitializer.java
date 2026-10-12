@@ -76,10 +76,10 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
         if (timeFilterPresetRepository.count() == 0) {
             log.info("Seeding Dynamic Time Filter Presets...");
             timeFilterPresetRepository.save(new TimeFilterPreset("24_HOURS", "Last 24 Hours", "آخر 24 ساعة", "٢٤ کاتژمێری ڕابردوو", 24, "HOURS", 1));
-            timeFilterPresetRepository.save(new TimeFilterPreset("7_DAYS", "Last 7 Days", "آخر 7 أيام", "٧ ڕۆژی ڕابردوو", 7, "DAYS", 2));
-            timeFilterPresetRepository.save(new TimeFilterPreset("30_DAYS", "Last 30 Days", "آخر 30 يوم", "٣٠ ڕۆژی ڕابردوو", 30, "DAYS", 3));
-            timeFilterPresetRepository.save(new TimeFilterPreset("2_MONTHS", "Last 2 Months", "آخر شهرين", "٢ مانگی ڕابردوو", 2, "MONTHS", 4));
-            timeFilterPresetRepository.save(new TimeFilterPreset("3_DAYS", "3 Days Ago", "منذ 3 أيام", "٣ ڕۆژ لەمەوبەر", 3, "DAYS", 5));
+            timeFilterPresetRepository.save(new TimeFilterPreset("3_DAYS", "3 Days Ago", "منذ 3 أيام", "٣ ڕۆژ لەمەوبەر", 3, "DAYS", 2));
+            timeFilterPresetRepository.save(new TimeFilterPreset("7_DAYS", "Last 7 Days", "آخر 7 أيام", "٧ ڕۆژی ڕابردوو", 7, "DAYS", 3));
+            timeFilterPresetRepository.save(new TimeFilterPreset("30_DAYS", "Last 30 Days", "آخر 30 يوم", "٣٠ ڕۆژی ڕابردوو", 30, "DAYS", 4));
+            timeFilterPresetRepository.save(new TimeFilterPreset("2_MONTHS", "Last 2 Months", "آخر شهرين", "٢ مانگی ڕابردوو", 2, "MONTHS", 5));
             timeFilterPresetRepository.save(new TimeFilterPreset("60_DAYS", "60 Days Review", "مراجعة 60 يوم", "پێداچوونەوەی ٦٠ ڕۆژ", 60, "DAYS", 6));
         }
 
@@ -142,6 +142,13 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch1a.setStatus("PENDING");
             ch1a.setCompleted(false);
 
+            OrderFollowupCheck ch1_3d = new OrderFollowupCheck(o1, "3_DAYS", "3 Days Ago", 3);
+            ch1_3d.setDurationValue(3);
+            ch1_3d.setDurationUnit("DAYS");
+            ch1_3d.setTargetDays(3);
+            ch1_3d.setStatus("PENDING");
+            ch1_3d.setCompleted(false);
+
             OrderFollowupCheck ch1b = new OrderFollowupCheck(o1, "7_DAYS", "Last 7 Days", 7);
             ch1b.setDurationValue(7);
             ch1b.setDurationUnit("DAYS");
@@ -157,6 +164,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch1c.setCompleted(false);
 
             followupCheckRepository.save(ch1a);
+            followupCheckRepository.save(ch1_3d);
             followupCheckRepository.save(ch1b);
             followupCheckRepository.save(ch1c);
 
@@ -177,6 +185,13 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch2a.setStatus("PENDING");
             ch2a.setCompleted(false);
 
+            OrderFollowupCheck ch2_3d = new OrderFollowupCheck(o2, "3_DAYS", "3 Days Ago", 3);
+            ch2_3d.setDurationValue(3);
+            ch2_3d.setDurationUnit("DAYS");
+            ch2_3d.setTargetDays(3);
+            ch2_3d.setStatus("PENDING");
+            ch2_3d.setCompleted(false);
+
             OrderFollowupCheck ch2b = new OrderFollowupCheck(o2, "7_DAYS", "Last 7 Days", 7);
             ch2b.setDurationValue(7);
             ch2b.setDurationUnit("DAYS");
@@ -192,6 +207,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch2c.setCompleted(false);
 
             followupCheckRepository.save(ch2a);
+            followupCheckRepository.save(ch2_3d);
             followupCheckRepository.save(ch2b);
             followupCheckRepository.save(ch2c);
 
@@ -216,6 +232,17 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch3a.setSatisfaction("5");
             ch3a.setNotes("Initial setup and calibration verified with store manager.");
 
+            OrderFollowupCheck ch3_3d = new OrderFollowupCheck(o3, "3_DAYS", "3 Days Ago", 3);
+            ch3_3d.setDurationValue(3);
+            ch3_3d.setDurationUnit("DAYS");
+            ch3_3d.setTargetDays(3);
+            ch3_3d.setCompleted(true);
+            ch3_3d.setStatus("COMPLETED");
+            ch3_3d.setCompletedDate(now.minus(32, ChronoUnit.DAYS));
+            ch3_3d.setCheckedBy("Sara Hassan");
+            ch3_3d.setSatisfaction("5");
+            ch3_3d.setNotes("Setup verified.");
+
             OrderFollowupCheck ch3b = new OrderFollowupCheck(o3, "7_DAYS", "Last 7 Days", 7);
             ch3b.setDurationValue(7);
             ch3b.setDurationUnit("DAYS");
@@ -239,6 +266,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch3c.setNotes("Monthly review complete. Client requested quote for 2 extra branches.");
 
             followupCheckRepository.save(ch3a);
+            followupCheckRepository.save(ch3_3d);
             followupCheckRepository.save(ch3b);
             followupCheckRepository.save(ch3c);
 
@@ -266,6 +294,17 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch4a.setSatisfaction("4");
             ch4a.setNotes("Delivery confirmed. Device online.");
 
+            OrderFollowupCheck ch4_3d = new OrderFollowupCheck(o4, "3_DAYS", "3 Days Ago", 3);
+            ch4_3d.setDurationValue(3);
+            ch4_3d.setDurationUnit("DAYS");
+            ch4_3d.setTargetDays(3);
+            ch4_3d.setCompleted(true);
+            ch4_3d.setStatus("COMPLETED");
+            ch4_3d.setCompletedDate(now.minus(6, ChronoUnit.DAYS));
+            ch4_3d.setCheckedBy("Ahmed Al-Iraqi");
+            ch4_3d.setSatisfaction("4");
+            ch4_3d.setNotes("Initial 3-day verification done.");
+
             OrderFollowupCheck ch4b = new OrderFollowupCheck(o4, "7_DAYS", "Last 7 Days", 7);
             ch4b.setDurationValue(7);
             ch4b.setDurationUnit("DAYS");
@@ -281,6 +320,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch4c.setCompleted(false);
 
             followupCheckRepository.save(ch4a);
+            followupCheckRepository.save(ch4_3d);
             followupCheckRepository.save(ch4b);
             followupCheckRepository.save(ch4c);
 
@@ -305,6 +345,17 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch5a.setSatisfaction("5");
             ch5a.setNotes("Kiosk operational in main Duhok showroom.");
 
+            OrderFollowupCheck ch5_3d = new OrderFollowupCheck(o5, "3_DAYS", "3 Days Ago", 3);
+            ch5_3d.setDurationValue(3);
+            ch5_3d.setDurationUnit("DAYS");
+            ch5_3d.setTargetDays(3);
+            ch5_3d.setCompleted(true);
+            ch5_3d.setStatus("COMPLETED");
+            ch5_3d.setCompletedDate(now.minus(1, ChronoUnit.DAYS));
+            ch5_3d.setCheckedBy("Sara Hassan");
+            ch5_3d.setSatisfaction("5");
+            ch5_3d.setNotes("3-day check passed.");
+
             OrderFollowupCheck ch5b = new OrderFollowupCheck(o5, "7_DAYS", "Last 7 Days", 7);
             ch5b.setDurationValue(7);
             ch5b.setDurationUnit("DAYS");
@@ -320,6 +371,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch5c.setCompleted(false);
 
             followupCheckRepository.save(ch5a);
+            followupCheckRepository.save(ch5_3d);
             followupCheckRepository.save(ch5b);
             followupCheckRepository.save(ch5c);
 
@@ -397,6 +449,13 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch7a.setStatus("PENDING");
             ch7a.setCompleted(false);
 
+            OrderFollowupCheck ch7_3d = new OrderFollowupCheck(o7, "3_DAYS", "3 Days Ago", 3);
+            ch7_3d.setDurationValue(3);
+            ch7_3d.setDurationUnit("DAYS");
+            ch7_3d.setTargetDays(3);
+            ch7_3d.setStatus("PENDING");
+            ch7_3d.setCompleted(false);
+
             OrderFollowupCheck ch7b = new OrderFollowupCheck(o7, "7_DAYS", "Last 7 Days", 7);
             ch7b.setDurationValue(7);
             ch7b.setDurationUnit("DAYS");
@@ -412,6 +471,7 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             ch7c.setCompleted(false);
 
             followupCheckRepository.save(ch7a);
+            followupCheckRepository.save(ch7_3d);
             followupCheckRepository.save(ch7b);
             followupCheckRepository.save(ch7c);
 

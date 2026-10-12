@@ -111,5 +111,16 @@ public class TimeFilterPreset {
         if ("MONTHS".equalsIgnoreCase(durationUnit)) return durationValue * 30;
         return durationValue;
     }
+
+    public int getEquivalentDurationMinutes() {
+        String u = durationUnit != null ? durationUnit.toUpperCase() : "DAYS";
+        int v = durationValue > 0 ? durationValue : 1;
+        return switch (u) {
+            case "HOURS" -> v * 60;
+            case "WEEKS" -> v * 7 * 1440;
+            case "MONTHS" -> v * 30 * 1440;
+            default -> v * 1440;
+        };
+    }
 }
 

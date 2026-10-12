@@ -93,8 +93,11 @@
                                     <span style="font-weight: 700; color: var(--text-muted);" th:text="${preset.durationValue + ' ' + preset.durationUnit}">24 HOURS</span>
                                 </td>
                                 <td>
-                                    <form th:action="@{/admin/timelines/{presetId}/toggle(presetId=${preset.presetId})}" method="post" style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
-                                        <button type="submit" class="comic-tag" th:classappend="${preset.active} ? 'tag-primary' : 'tag-muted'" style="cursor: pointer; border: 1.5px solid var(--border-black); background: none;" th:title="'Click to toggle status'" th:text="${preset.active} ? 'ACTIVE' : 'INACTIVE'">ACTIVE</button>
+                                    <form th:action="@{/admin/timelines/{presetId}/toggle(presetId=${preset.presetId})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
+                                        <button type="submit" class="status-pill-btn" th:classappend="${preset.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
+                                            <span class="status-dot"></span>
+                                            <span th:text="${preset.active} ? 'Active' : 'Inactive'">Active</span>
+                                        </button>
                                     </form>
                                 </td>
                                 <td style="text-align: right;">

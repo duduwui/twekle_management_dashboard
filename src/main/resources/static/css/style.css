@@ -1449,8 +1449,20 @@ input:checked + .comic-slider:before {
   transition: width 0.4s ease;
 }
 
+.visual-bar-overdue {
+  background-color: #EF4444;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.visual-bar-inqueue {
+  background-color: #F59E0B;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
 .visual-bar-pending {
-  background-color: #F1F5F9;
+  background-color: #CBD5E1;
   height: 100%;
   transition: width 0.4s ease;
 }
@@ -1475,14 +1487,21 @@ input:checked + .comic-slider:before {
   height: 10px;
   border-radius: 50%;
   display: inline-block;
+  border: 1px solid #000000;
 }
 
 .legend-dot.dot-completed {
-  background-color: var(--primary-color);
+  background-color: #10B981;
 }
 
+.legend-dot.dot-overdue,
+.legend-dot.dot-alert {
+  background-color: #EF4444;
+}
+
+.legend-dot.dot-inqueue,
 .legend-dot.dot-pending {
-  background-color: #CBD5E1;
+  background-color: #F59E0B;
 }
 
 .legend-dot.dot-alert {
@@ -3152,4 +3171,58 @@ section.comic-card {
 .reports-type-nav { display: none; }
 .report-type-btn  { display: none; }
 .report-kpi-grid  { display: none; }
+
+/* Crisp, High-Contrast Status Pill Buttons for Admins & Time Filters */
+.status-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.status-pill-btn.active {
+  background-color: #DCFCE7;
+  color: #166534;
+  border: 1.5px solid #166534;
+  box-shadow: 1px 1px 0px #166534;
+}
+
+.status-pill-btn.active:hover {
+  background-color: #BBF7D0;
+  transform: translateY(-1px);
+}
+
+.status-pill-btn.inactive {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1.5px solid #991B1B;
+  box-shadow: 1px 1px 0px #991B1B;
+}
+
+.status-pill-btn.inactive:hover {
+  background-color: #FECACA;
+  transform: translateY(-1px);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-pill-btn.active .status-dot {
+  background-color: #16A34A;
+}
+
+.status-pill-btn.inactive .status-dot {
+  background-color: #DC2626;
+}
 

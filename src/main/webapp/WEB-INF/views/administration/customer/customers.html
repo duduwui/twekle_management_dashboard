@@ -17,9 +17,9 @@
                         <div class="comic-filter-toolbar">
                             <div class="filter-left-controls">
                                 <span class="filter-date-label">From:</span>
-                                <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateFrom" title="Start Date">
+                                <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateFrom" ng-change="customerFilters.dateFilterApplied = true; dt.currentPage = 1;" title="Start Date">
                                 <span class="filter-date-label">To:</span>
-                                <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateTo" title="End Date">
+                                <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateTo" ng-change="customerFilters.dateFilterApplied = true; dt.currentPage = 1;" title="End Date">
                                 
                                 <!-- Big Filter Preset Selector Button -->
                                 <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset || (customerFilters.followupStatus && customerFilters.followupStatus !== 'ALL')}" ng-click="openFilterModal('customer')" title="Select Follow-up & Time Filters">
@@ -176,9 +176,9 @@
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
-                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
+                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateFrom" ng-change="orderFilters.dateFilterApplied = true; orderDt.currentPage = 1;" title="Start Date">
                                     <span class="filter-date-label">To:</span>
-                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
+                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateTo" ng-change="orderFilters.dateFilterApplied = true; orderDt.currentPage = 1;" title="End Date">
                                     
                                     <!-- Big Filter Preset Selector Button -->
                                     <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset}" ng-click="openFilterModal('order')" title="Select Time Filter Preset">
@@ -321,7 +321,7 @@
 
                                                             <!-- 5. Direct Action to Add/Edit Feedback for this checkpoint -->
                                                             <div class="check-col-action">
-                                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="goToFeedbackForCheck(order, check, $event)" title="Add or edit feedback & photos for this milestone">
+                                                                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check, $event)" title="Add or edit feedback & photos for this milestone">
                                                                     <span ng-if="!check.note && !check.imageUrl">+ Feedback</span>
                                                                     <span ng-if="check.note || check.imageUrl">Edit Feedback</span>
                                                                 </button>
@@ -380,9 +380,9 @@
                             <div class="comic-filter-toolbar">
                                 <div class="filter-left-controls">
                                     <span class="filter-date-label">From:</span>
-                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateFrom" title="Start Date">
+                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateFrom" ng-change="orderFilters.dateFilterApplied = true; orderDt.currentPage = 1;" title="Start Date">
                                     <span class="filter-date-label">To:</span>
-                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateTo" title="End Date">
+                                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateTo" ng-change="orderFilters.dateFilterApplied = true; orderDt.currentPage = 1;" title="End Date">
                                     
                                     <!-- Big Filter Preset Selector Button -->
                                     <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset}" ng-click="openFilterModal('order')" title="Select Time Filter Preset">

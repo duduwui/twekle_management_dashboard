@@ -70,7 +70,8 @@ function($scope, $rootScope, TimeFilterService, ToastService, FilterHelperServic
      */
     $scope.loadPresets = function() {
         TimeFilterService.getAll().then(function(res) {
-            var arr = res.data || [];
+            var raw = res.data;
+            var arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
             arr.sort(function(a, b) {
                 var minA = FilterHelperService.toDurationMinutes(a);
                 var minB = FilterHelperService.toDurationMinutes(b);

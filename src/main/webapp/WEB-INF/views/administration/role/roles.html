@@ -19,7 +19,7 @@
                 <div>
                     <h2 class="card-title" style="margin: 0;">Admin Roles &amp; Permissions Assignment</h2>
                     <span class="card-subtitle" style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-                        Select an administrator to assign defined role templates and configure CRUD permissions across core modules.
+                        Select an administrator to configure CRUD permissions across core modules.
                     </span>
                 </div>
             </div>
@@ -43,10 +43,9 @@
                             <th style="width: 70px;">ID</th>
                             <th>Staff Member</th>
                             <th>Phone Number</th>
-                            <th>Assigned Role Template</th>
                             <th style="width: 130px;">Access Level</th>
                             <th style="width: 100px;">Status</th>
-                            <th style="text-align: right; width: 170px;">Action</th>
+                            <th style="text-align: right; width: 180px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,6 +54,7 @@
                             class="admin-table-row"
                             th:data-admin-id="${adm.id}"
                             th:data-admin-username="${adm.username}"
+                            th:data-super-admin="${adm.superAdmin}"
                             onclick="selectAdminFromRow(this)"
                             style="cursor: pointer; transition: background-color 0.15s ease;">
                             <td>
@@ -67,18 +67,6 @@
                                 <span class="text-muted" style="font-size: 0.88rem;" th:text="${adm.phoneNumber != null ? adm.phoneNumber : '-'}">-</span>
                             </td>
                             <td>
-                                <span th:if="${#lists.isEmpty(adm.roles)}" class="comic-tag tag-gray" style="font-weight: 700;">
-                                    Unassigned
-                                </span>
-                                <span th:each="role : ${adm.roles}"
-                                      class="comic-tag tag-primary admin-role-badge"
-                                      th:data-role-id="${role.id}"
-                                      style="font-weight: 800;"
-                                      th:text="${role.name}">
-                                    Software Engineer
-                                </span>
-                            </td>
-                            <td>
                                 <span th:if="${adm.superAdmin}" class="comic-tag tag-primary" style="background-color: #7C3AED; color: #FFFFFF; font-weight: 800;">
                                     Super Admin
                                 </span>
@@ -87,13 +75,19 @@
                                 </span>
                             </td>
                             <td>
-                                <span th:if="${adm.active}" class="comic-tag tag-success" style="font-weight: 800;">Active</span>
-                                <span th:unless="${adm.active}" class="comic-tag tag-danger" style="font-weight: 800;">Inactive</span>
+                                <span th:if="${adm.active}" class="status-pill-btn active" style="cursor: default;">
+                                    <span class="status-dot"></span>
+                                    <span>Active</span>
+                                </span>
+                                <span th:unless="${adm.active}" class="status-pill-btn inactive" style="cursor: default;">
+                                    <span class="status-dot"></span>
+                                    <span>Inactive</span>
+                                </span>
                             </td>
                             <td style="text-align: right;">
                                 <button type="button" class="comic-btn-sm btn-select-admin"
                                         onclick="event.stopPropagation(); selectAdminFromRow(this.closest('tr'))">
-                                    Assign Role &amp; Matrix
+                                    Configure Permissions
                                 </button>
 
                                 <!-- Hidden Admin Permissions Payload -->
@@ -118,53 +112,27 @@
             </div>
         </div>
 
-        <!-- 2. ROLE & PERMISSIONS ASSIGNMENT PANEL -->
-        <div id="roleAssignmentSection" style="margin-top: 10px;">
+        <!-- 2. PERMISSIONS ASSIGNMENT PANEL (Shown when an admin row is clicked) -->
+        <div id="roleAssignmentSection" style="display: none; margin-top: 24px;">
             
             <form id="roleAssignForm" th:action="@{/admin/roles/assign}" method="post" autocomplete="off">
                 <input type="hidden" id="formAdminId" name="adminId" value="">
+                <input type="hidden" id="formRoleId" name="roleIds" value="">
 
-                <!-- Active Admin Target Banner & Role Selector -->
-                <div class="comic-form-box" style="margin-bottom: 22px; padding: 18px 22px; background-color: #F8FAFC;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-                        
-                        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1; min-width: 320px;">
-                            <span class="comic-tag tag-primary" style="font-size: 0.82rem; text-transform: uppercase; font-weight: 800;">Configuring Staff:</span>
-                            <strong id="selectedAdminDisplay" style="font-size: 1.12rem; color: #0F172A; text-decoration: underline;">
-                                Select an administrator above
-                            </strong>
-
-                            <div style="height: 24px; width: 2px; background: #CBD5E1; margin: 0 4px;"></div>
-
-                            <label class="form-label" style="white-space: nowrap; margin: 0; font-size: 0.92rem; font-weight: 800;">
-                                Assigned Role Template:
-                            </label>
-                            <select id="roleSelect" name="roleIds" class="comic-input" onchange="onRoleTemplateChanged(this)" style="max-width: 280px; font-weight: 700;">
-                                <option value="" disabled selected>-- Select Role Template --</option>
-                                <option th:each="role : ${roleList}"
-                                        th:value="${role.id}"
-                                        th:text="${role.name}"
-                                        th:data-role-id="${role.id}"
-                                        th:data-role-name="${role.name}"
-                                        th:data-can-create="${role.canCreate}"
-                                        th:data-can-read="${role.canRead}"
-                                        th:data-can-update="${role.canUpdate}"
-                                        th:data-can-delete="${role.canDelete}">
-                                </option>
-                            </select>
-                        </div>
-
-                        <!-- Presets & Save Toolbar -->
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-right: 4px;">Matrix Presets:</span>
-                            <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('full')">Full CRUD</button>
-                            <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('readonly')">Read Only</button>
-                            <button type="button" class="comic-btn-sm" onclick="applyGlobalPreset('revoke')">Revoke All</button>
-                            <div style="height: 24px; width: 1px; background: #CBD5E1; margin: 0 4px;"></div>
-                            <button type="submit" id="saveRoleBtn" class="comic-btn" style="padding: 8px 20px; font-size: 0.88rem;">
-                                Save Admin Role &amp; Permissions
-                            </button>
-                        </div>
+                <!-- Clean Permissions Header for Clicked Administrator -->
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 14px 20px; background: #EEF2FF; border: 2px solid var(--border-black); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span class="comic-tag tag-primary" style="font-weight: 800; font-size: 0.82rem;">PERMISSIONS FOR:</span>
+                        <strong id="selectedAdminDisplay" style="font-size: 1.15rem; color: #1E1B4B;">-</strong>
+                        <span id="selectedAdminAccessBadge" class="comic-tag tag-muted" style="font-size: 0.8rem; font-weight: 700;"></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" class="comic-btn-secondary" onclick="closeRoleAssignmentSection()" style="padding: 7px 16px;">
+                            Close
+                        </button>
+                        <button type="submit" id="saveRoleBtnTop" class="comic-btn" style="padding: 7px 20px;">
+                            Save Permissions
+                        </button>
                     </div>
                 </div>
 
@@ -478,20 +446,43 @@
         });
     }
 
+    function closeRoleAssignmentSection() {
+        var sec = document.getElementById('roleAssignmentSection');
+        if (sec) sec.style.display = 'none';
+        document.querySelectorAll('.admin-table-row').forEach(function(tr) {
+            tr.style.backgroundColor = '';
+        });
+        currentAdminId = null;
+    }
+
     function selectAdminFromRow(rowEl) {
         if (!rowEl) return;
         var adminId = rowEl.getAttribute('data-admin-id');
         var username = rowEl.getAttribute('data-admin-username');
         var roleBadge = rowEl.querySelector('.admin-role-badge');
         var roleId = roleBadge ? roleBadge.getAttribute('data-role-id') : null;
-        selectAdmin(adminId, username, roleId ? parseInt(roleId, 10) : null);
+        var isSuper = rowEl.getAttribute('data-super-admin') === 'true';
+        selectAdmin(adminId, username, roleId ? parseInt(roleId, 10) : null, isSuper);
     }
 
-    function selectAdmin(adminId, username, roleId) {
+    function selectAdmin(adminId, username, roleId, isSuper) {
         currentAdminId = adminId;
         document.getElementById('formAdminId').value = adminId;
+        document.getElementById('formRoleId').value = roleId || '';
         document.getElementById('selectedAdminDisplay').textContent = username;
+        var accessBadge = document.getElementById('selectedAdminAccessBadge');
+        if (accessBadge) {
+            accessBadge.textContent = isSuper ? 'SUPER ADMIN' : 'STAFF';
+            accessBadge.className = 'comic-tag ' + (isSuper ? 'tag-primary' : 'tag-muted');
+        }
         document.getElementById('roleAssignForm').action = '/admin/roles/' + adminId + '/assign';
+
+        // Show permissions section and scroll smoothly to it
+        var sec = document.getElementById('roleAssignmentSection');
+        if (sec) {
+            sec.style.display = 'block';
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         // Highlight selected row in table
         document.querySelectorAll('.admin-table-row').forEach(function(tr) {
@@ -502,22 +493,11 @@
             activeRow.style.backgroundColor = '#FEF3C7';
         }
 
-        // Set Role Select dropdown
-        var roleSelect = document.getElementById('roleSelect');
-        if (roleId) {
-            roleSelect.value = roleId;
-        } else {
-            roleSelect.value = '';
-        }
-
         // Read specific admin permissions if present
         var permsContainer = document.getElementById('perms-data-' + adminId);
-        var customFound = false;
-
         if (permsContainer) {
             var permSpans = permsContainer.querySelectorAll('span');
             if (permSpans && permSpans.length > 0) {
-                customFound = true;
                 permSpans.forEach(function(s) {
                     var mod = s.getAttribute('data-module');
                     var canC = s.getAttribute('data-create') === 'true';
@@ -541,18 +521,17 @@
                 });
             }
         }
-
-        // If no custom perms exist but role is selected, populate from role
-        if (!customFound && roleId) {
-            onRoleTemplateChanged(roleSelect);
-        }
     }
 
-    // Auto-select initial admin on load
+    // Auto-select admin on load ONLY if redirected with selectedAdminId
     document.addEventListener('DOMContentLoaded', function() {
-        var firstRow = document.querySelector('.admin-table-row');
-        if (firstRow) {
-            selectAdminFromRow(firstRow);
+        var params = new URLSearchParams(window.location.search);
+        var selectedId = params.get('selectedAdminId');
+        if (selectedId) {
+            var row = document.getElementById('admin-row-' + selectedId);
+            if (row) {
+                selectAdminFromRow(row);
+            }
         }
     });
     </script>

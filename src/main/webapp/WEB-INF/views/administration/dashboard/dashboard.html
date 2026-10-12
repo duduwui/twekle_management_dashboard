@@ -65,25 +65,26 @@
                     <span class="visual-progress-percent">{{ stats.completionPercentage || 0 }}% Completed</span>
                 </div>
                 
-                <!-- Segmented Progress Bar -->
+                <!-- Multi-Color Segmented Progress Bar: Green (Completed), Red (Overdue), Orange (In Queue) -->
                 <div class="visual-bar-track">
-                    <div class="visual-bar-completed" ng-style="{'width': (stats.completionPercentage || 0) + '%'}"></div>
-                    <div class="visual-bar-pending" ng-style="{'width': (100 - (stats.completionPercentage || 0)) + '%'}"></div>
+                    <div class="visual-bar-completed" ng-style="{'width': (stats.completedPercentage || stats.completionPercentage || 0) + '%'}" title="Completed: {{ stats.completedFollowups || 0 }} ({{ stats.completedPercentage || stats.completionPercentage || 0 }}%)"></div>
+                    <div class="visual-bar-overdue" ng-style="{'width': (stats.overduePercentage || 0) + '%'}" title="Overdue: {{ stats.overdueFollowups != null ? stats.overdueFollowups : stats.alertFollowups }} ({{ stats.overduePercentage || 0 }}%)"></div>
+                    <div class="visual-bar-inqueue" ng-style="{'width': (stats.inQueuePercentage || 0) + '%'}" title="In Queue: {{ stats.inQueueFollowups != null ? stats.inQueueFollowups : stats.pendingFollowups }} ({{ stats.inQueuePercentage || 0 }}%)"></div>
                 </div>
 
-                <!-- Centered Legend -->
+                <!-- Centered Legend with Multi-color Indicators -->
                 <div class="visual-legend-row" style="justify-content: center; text-align: center;">
                     <div class="legend-item">
                         <span class="legend-dot dot-completed"></span>
-                        <span>Completed: <strong>{{ stats.completedFollowups || 0 }}</strong></span>
+                        <span>Completed: <strong>{{ stats.completedFollowups || 0 }}</strong> ({{ stats.completedPercentage || stats.completionPercentage || 0 }}%)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-dot dot-pending"></span>
-                        <span>In Queue: <strong>{{ stats.pendingFollowups || 0 }}</strong></span>
+                        <span class="legend-dot dot-overdue"></span>
+                        <span>Overdue: <strong>{{ stats.overdueFollowups != null ? stats.overdueFollowups : stats.alertFollowups }}</strong> ({{ stats.overduePercentage || 0 }}%)</span>
                     </div>
-                    <div class="legend-item" ng-if="stats.alertFollowups > 0">
-                        <span class="legend-dot dot-alert"></span>
-                        <span>Overdue: <strong>{{ stats.alertFollowups }}</strong></span>
+                    <div class="legend-item">
+                        <span class="legend-dot dot-inqueue"></span>
+                        <span>In Queue: <strong>{{ stats.inQueueFollowups != null ? stats.inQueueFollowups : stats.pendingFollowups }}</strong> ({{ stats.inQueuePercentage || 0 }}%)</span>
                     </div>
                     <div class="legend-item">
                         <span>Total Checks: <strong>{{ stats.totalFollowups || (stats.completedFollowups + stats.pendingFollowups) || 0 }}</strong></span>

@@ -308,10 +308,15 @@
                         </div>
                         <div class="filter-preset-card-simple"
                              ng-repeat="preset in timeFilterPresets track by preset.id"
-                             ng-if="preset.active !== false || preset.isActive"
+                             ng-if="preset.active !== false && preset.isActive !== false"
                              ng-class="{'selected': isPendingPresetSelected(preset)}"
                              ng-click="selectPendingPreset(preset)">
-                            <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                            <div>
+                                <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-top: 2px;" ng-if="preset.durationValue">
+                                    {{ preset.durationValue }} {{ preset.durationUnit | lowercase }}
+                                </div>
+                            </div>
                             <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                         </div>
                     </div>
@@ -418,32 +423,38 @@
 
     <!-- Edit Follow-up Checkpoint Modal -->
     <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showEditFollowupModal ? 'flex' : 'none'}" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
-        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 500px;">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
             <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
-                <strong style="font-size: 1.05rem; color: #1E1B4B;">Follow-up: <span ng-bind="editingFollowup.presetName || 'Milestone Checkpoint'"></span></strong>
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Follow-up Feedback: <span ng-bind="editingFollowup.presetName || 'Milestone Checkpoint'"></span></strong>
                 <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
             </div>
             <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                 <div class="form-group">
-                    <label class="form-label">Note / Details</label>
-                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up note..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
+                    <label class="form-label">Description / Follow-up Notes</label>
+                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up description and details..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction Scale (Optional)</label>
-                    <div class="satisfaction-scale-bar">
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction</label>
+                    <div class="satisfaction-scale-bar" style="display: flex; gap: 8px;">
+                        <button type="button" class="scale-opt-btn" 
+                                ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" 
+                                ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
                             Satisfied
                         </button>
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-neutral': editingFollowup.satisfaction === 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
+                        <button type="button" class="scale-opt-btn" 
+                                ng-class="{'active-scale-neutral': (!editingFollowup.satisfaction || editingFollowup.satisfaction === 'NEUTRAL')}" 
+                                ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
                             Neutral
                         </button>
-                        <button type="button" class="scale-opt-btn" ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
+                        <button type="button" class="scale-opt-btn" 
+                                ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" 
+                                ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
                             Unsatisfied
                         </button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Upload Proof Image</label>
+                    <label class="form-label">Upload Proof Photo / Image</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
                         <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="editingFollowup.imageUrl" ng-click="editingFollowup.imageUrl = ''">
@@ -458,7 +469,7 @@
             </div>
             <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
                 <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
-                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Checkpoint</button>
+                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Feedback</button>
             </div>
         </div>
     </div>

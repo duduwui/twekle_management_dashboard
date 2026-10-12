@@ -25,7 +25,11 @@ import java.util.Map;
 @RequestMapping("/admin/reports")
 public class ReportController {
 
-    private final ReportService reportService;
+    @Autowired
+    private ReportService reportService;
+
+    public ReportController() {
+    }
 
     @Autowired
     public ReportController(ReportService reportService) {

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="dashboardDetailsModal" th:remove="tag">
+    <!-- 4. CATEGORIZED CUSTOMERS MODAL -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showCustomersModal ? 'flex' : 'none'}" ng-show="showCustomersModal">
+        <div class="comic-modal" style="max-width: 780px; width: 94%;">
+            <div class="comic-modal-header">
+                <div>
+                    <h3 class="modal-title">Customer Registrations</h3>
+                    <p class="modal-subtitle">Categorized customer details by registration date</p>
+                </div>
+                <button type="button" class="comic-modal-close" ng-click="closeCustomersModal()" title="Close">&times;</button>
+            </div>
+
+            <!-- Categorized Category Selector Tabs -->
+            <div style="display: flex; gap: 8px; padding: 14px 20px 0 20px; border-bottom: 1px solid var(--border-color);">
+                <button type="button" class="modal-cat-pill" ng-class="{'active': activeCustomerCategory === 'week'}" ng-click="setCustomerCategory('week')">
+                    This Week ({{ (categorizedCustomers.week || []).length }})
+                </button>
+                <button type="button" class="modal-cat-pill" ng-class="{'active': activeCustomerCategory === 'month'}" ng-click="setCustomerCategory('month')">
+                    This Month ({{ (categorizedCustomers.month || []).length }})
+                </button>
+                <button type="button" class="modal-cat-pill" ng-class="{'active': activeCustomerCategory === 'all'}" ng-click="setCustomerCategory('all')">
+                    All Customers ({{ (categorizedCustomers.all || []).length }})
+                </button>
+            </div>
+            
+            <div class="comic-modal-body" style="padding: 18px 20px; max-height: 420px; overflow-y: auto;">
+                <div class="table-responsive" ng-if="categorizedCustomers[activeCustomerCategory] && categorizedCustomers[activeCustomerCategory].length > 0">
+                    <table class="comic-table table-centered">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Phone Number</th>
+                                <th>City</th>
+                                <th>Registered Date</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="cust in categorizedCustomers[activeCustomerCategory] track by cust.id">
+                                <td>
+                                    <strong style="color: var(--text-main);" ng-bind="cust.name"></strong>
+                                </td>
+                                <td ng-bind="cust.phoneNumber"></td>
+                                <td>
+                                    <span class="comic-tag tag-gray" ng-bind="cust.city || '-'"></span>
+                                </td>
+                                <td>
+                                    <span class="text-muted" style="font-size: 0.8rem;" ng-bind="cust.createdAt ? (cust.createdAt | date:'mediumDate') : 'Recently'"></span>
+                                </td>
+                                <td>
+                                    <strong ng-bind="cust.totalOrders || 0"></strong>
+                                </td>
+                                <td>
+                                    <strong ng-bind="(cust.totalSpent || 0 | currency:'$':2)"></strong>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="priority-empty-state" ng-if="!categorizedCustomers[activeCustomerCategory] || categorizedCustomers[activeCustomerCategory].length === 0" style="text-align: center; padding: 24px;">
+                    <h4 class="priority-empty-title">No Customers in This Category</h4>
+                    <p class="priority-empty-desc">No customer registrations recorded for the selected time range.</p>
+                </div>
+            </div>
+
+            <div class="comic-modal-footer" style="justify-content: space-between;">
+                <button type="button" class="comic-btn btn-primary" ng-click="closeCustomersModal(); goToFollowups();">
+                    Open Customer Directory
+                </button>
+                <button type="button" class="comic-btn btn-ghost" ng-click="closeCustomersModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. UNSATISFIED USERS DETAILS MODAL -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showUnsatisfiedModal ? 'flex' : 'none'}" ng-show="showUnsatisfiedModal">
+        <div class="comic-modal" style="max-width: 760px; width: 94%;">
+            <div class="comic-modal-header">
+                <div>
+                    <h3 class="modal-title">Unsatisfied Customer Feedback</h3>
+                    <p class="modal-subtitle">Details and reasons for negative customer feedback</p>
+                </div>
+                <button type="button" class="comic-modal-close" ng-click="closeUnsatisfiedModal()" title="Close">&times;</button>
+            </div>
+            
+            <div class="comic-modal-body" style="padding: 20px; max-height: 420px; overflow-y: auto;">
+                <div class="table-responsive" ng-if="unsatisfiedList && unsatisfiedList.length > 0">
+                    <table class="comic-table table-centered">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Order</th>
+                                <th>Rating</th>
+                                <th>Reason / Why</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in unsatisfiedList">
+                                <td>
+                                    <strong>{{ item.customerName }}</strong>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ item.phoneNumber }} ({{ item.city }})</div>
+                                </td>
+                                <td>{{ item.orderNumber }}</td>
+                                <td>
+                                    <span class="comic-tag tag-danger">{{ item.rating }}</span>
+                                </td>
+                                <td style="text-align: left; max-width: 260px;">
+                                    <span>{{ item.reason }}</span>
+                                </td>
+                                <td class="nowrap text-muted" style="font-size: 0.75rem;">
+                                    {{ item.date | date:'mediumDate' }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="priority-empty-state" ng-if="!unsatisfiedList || unsatisfiedList.length === 0" style="padding: 28px 16px; text-align: center;">
+                    <h4 class="priority-empty-title">Zero Unsatisfied Users</h4>
+                    <p class="priority-empty-desc">
+                        All customer feedback, reviews, and milestone checks are currently positive or satisfied.
+                    </p>
+                </div>
+            </div>
+
+            <div class="comic-modal-footer" style="justify-content: space-between;">
+                <button type="button" class="comic-btn btn-primary" ng-click="goToSatisfactionReports()">
+                    View Full Satisfaction Reports
+                </button>
+                <button type="button" class="comic-btn btn-ghost" ng-click="closeUnsatisfiedModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

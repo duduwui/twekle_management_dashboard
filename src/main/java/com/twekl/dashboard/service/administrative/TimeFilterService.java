@@ -17,7 +17,11 @@ import java.util.Optional;
 @Transactional
 public class TimeFilterService {
 
-    private final TimeFilterPresetRepository timeFilterPresetRepository;
+    @Autowired
+    private TimeFilterPresetRepository timeFilterPresetRepository;
+
+    public TimeFilterService() {
+    }
 
     @Autowired
     public TimeFilterService(TimeFilterPresetRepository timeFilterPresetRepository) {

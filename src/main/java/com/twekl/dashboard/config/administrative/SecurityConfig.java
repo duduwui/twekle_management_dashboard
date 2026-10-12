@@ -25,9 +25,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
-    private final RestAuthenticationEntryPoint authenticationEntryPoint;
-    private final RestAccessDeniedHandler accessDeniedHandler;
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private RestAuthenticationEntryPoint authenticationEntryPoint;
+
+    @Autowired
+    private RestAccessDeniedHandler accessDeniedHandler;
+
+    public SecurityConfig() {
+    }
 
     @Autowired
     public SecurityConfig(UserDetailsService userDetailsService,

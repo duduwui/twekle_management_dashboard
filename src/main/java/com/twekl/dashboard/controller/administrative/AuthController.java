@@ -20,7 +20,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    @Autowired
+    private AuthService authService;
+
+    public AuthController() {
+    }
 
     @Autowired
     public AuthController(AuthService authService) {

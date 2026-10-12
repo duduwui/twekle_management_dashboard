@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="top-header" th:fragment="headerFragment">
+    <div>
+        <h1 class="header-page-title" th:if="${activeTab == 'dashboard'}" th:text="'Dashboard Overview'">Dashboard Overview</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'admins'}" th:text="'Admin Management'">Admin Management</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'roles'}" th:text="'Role Templates & Permissions'">Role Templates &amp; Permissions</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'followups' || activeTab == 'customers'}" th:text="'Follow-ups'">Follow-ups</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'timelines' || activeTab == 'time-filters'}" th:text="'Time Filters'">Time Filters</h1>
+        <h1 class="header-page-title" th:if="${activeTab == 'reports'}" th:text="'Reports & Analytics'">Reports &amp; Analytics</h1>
+        <h1 class="header-page-title" th:if="${activeTab == null}">Dashboard Overview</h1>
+    </div>
+</header>
+</body>
+</html>

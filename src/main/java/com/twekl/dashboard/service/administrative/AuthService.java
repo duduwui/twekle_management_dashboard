@@ -25,9 +25,16 @@ import java.util.Optional;
 @Service
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
-    private final AdminRepository adminRepository;
-    private final SecurityContextRepository securityContextRepository;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private AdminRepository adminRepository;
+
+    private SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+
+    public AuthService() {
+    }
 
     @Autowired
     public AuthService(AuthenticationManager authenticationManager,

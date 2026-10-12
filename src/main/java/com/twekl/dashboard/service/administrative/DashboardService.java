@@ -14,10 +14,20 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class DashboardService {
 
-    private final AdminService adminService;
-    private final RoleService roleService;
-    private final CustomerService customerService;
-    private final TimeFilterService timeFilterService;
+    @Autowired
+    private AdminService adminService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private TimeFilterService timeFilterService;
+
+    public DashboardService() {
+    }
 
     @Autowired
     public DashboardService(AdminService adminService,

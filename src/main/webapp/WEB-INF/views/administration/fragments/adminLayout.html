@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="tweklApp" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-<head th:replace="~{administration/fragments/admin-dashboard-fragments :: head}"></head>
+<head th:replace="~{administration/fragments/headFragment :: headFragment}"></head>
 <body ng-controller="LayoutController">
 
     <div class="app-container">
         <!-- Sidebar Navigation Fragment -->
-        <aside th:replace="~{administration/fragments/admin-dashboard-fragments :: sidebar}"></aside>
+        <aside th:replace="~{administration/fragments/sidebarFragment :: sidebarFragment}"></aside>
 
         <!-- Main Content Wrapper -->
         <div class="main-wrapper">
             <!-- Top Header Fragment -->
-            <header th:replace="~{administration/fragments/admin-dashboard-fragments :: header}"></header>
+            <header th:replace="~{administration/fragments/headerFragment :: headerFragment}"></header>
 
             <!-- Page Body: Content injected by individual view -->
             <main class="page-body">
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Common Modals & Toasts Fragment -->
-    <div th:replace="~{administration/fragments/admin-dashboard-fragments :: modals}"></div>
+    <div th:replace="~{administration/fragments/sharedModalsFragment :: sharedModalsFragment}"></div>
 
     <!-- Thymeleaf Server-Side Data Injection -->
     <script th:inline="javascript">
@@ -42,8 +42,7 @@
     </script>
 
     <!-- Scripts Fragment -->
-    <div th:replace="~{administration/fragments/admin-dashboard-fragments :: scripts}"></div>
+    <div th:replace="~{administration/fragments/scriptsFragment :: scriptsFragment}"></div>
 
 </body>
 </html>
-

@@ -29,11 +29,23 @@ import java.util.List;
 @Controller
 public class AdminWebController {
 
-    private final CustomerService customerService;
-    private final FollowupService followupService;
-    private final ReportService reportService;
-    private final AdminService adminService;
-    private final TimeFilterService timeFilterService;
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private FollowupService followupService;
+
+    @Autowired
+    private ReportService reportService;
+
+    @Autowired
+    private AdminService adminService;
+
+    @Autowired
+    private TimeFilterService timeFilterService;
+
+    public AdminWebController() {
+    }
 
     @Autowired
     public AdminWebController(CustomerService customerService,

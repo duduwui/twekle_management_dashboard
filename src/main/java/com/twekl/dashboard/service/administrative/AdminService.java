@@ -28,9 +28,17 @@ import java.util.Set;
 @Transactional
 public class AdminService {
 
-    private final AdminRepository adminRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private AdminRepository adminRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public AdminService() {
+    }
 
     @Autowired
     public AdminService(AdminRepository adminRepository,

@@ -29,10 +29,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Transactional
 public class FollowupService {
 
-    private final CustomerRepository customerRepository;
-    private final CustomerOrderRepository orderRepository;
-    private final OrderFollowupCheckRepository followupCheckRepository;
-    private final TimeFilterPresetRepository timeFilterPresetRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerOrderRepository orderRepository;
+
+    @Autowired
+    private OrderFollowupCheckRepository followupCheckRepository;
+
+    @Autowired
+    private TimeFilterPresetRepository timeFilterPresetRepository;
+
+    public FollowupService() {
+    }
 
     @Autowired
     public FollowupService(CustomerRepository customerRepository,

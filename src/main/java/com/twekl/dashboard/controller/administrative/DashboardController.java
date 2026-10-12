@@ -19,7 +19,11 @@ import java.util.Map;
 @RequestMapping("/admin/stats")
 public class DashboardController {
 
-    private final DashboardService dashboardService;
+    @Autowired
+    private DashboardService dashboardService;
+
+    public DashboardController() {
+    }
 
     @Autowired
     public DashboardController(DashboardService dashboardService) {

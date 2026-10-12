@@ -19,7 +19,11 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final AdminRepository adminRepository;
+    @Autowired
+    private AdminRepository adminRepository;
+
+    public CustomUserDetailsService() {
+    }
 
     @Autowired
     public CustomUserDetailsService(AdminRepository adminRepository) {

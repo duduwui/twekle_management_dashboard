@@ -26,8 +26,14 @@ import java.util.List;
 @Controller
 public class TimeFilterController {
 
-    private final TimeFilterService timeFilterService;
-    private final AdminService adminService;
+    @Autowired
+    private TimeFilterService timeFilterService;
+
+    @Autowired
+    private AdminService adminService;
+
+    public TimeFilterController() {
+    }
 
     @Autowired
     public TimeFilterController(TimeFilterService timeFilterService, AdminService adminService) {
@@ -56,7 +62,7 @@ public class TimeFilterController {
         return "administration/timefilter/timeFilters";
     }
 
-    @PostMapping({"/admin/timelines/create", "/admin/timelines/create-preset"})
+    @PostMapping({"/admin/timelines/create_preset", "/admin/timelines/create", "/admin/timelines/create-preset"})
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public String createPresetSsr(@ModelAttribute("newPreset") TimeFilterPreset preset, RedirectAttributes flash) {
         if (preset.getLabelEn() == null || preset.getLabelEn().trim().isEmpty()) {
@@ -72,7 +78,7 @@ public class TimeFilterController {
         return "redirect:/admin/timelines";
     }
 
-    @PostMapping({"/admin/timelines/{presetId:\\d+}/toggle", "/admin/timelines/{presetId:\\d+}/toggle-status"})
+    @PostMapping({"/admin/timelines/{presetId:\\d+}/toggle_status", "/admin/timelines/{presetId:\\d+}/toggle", "/admin/timelines/{presetId:\\d+}/toggle-status"})
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public String togglePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         try {
@@ -84,7 +90,7 @@ public class TimeFilterController {
         return "redirect:/admin/timelines";
     }
 
-    @PostMapping({"/admin/timelines/{presetId:\\d+}/delete", "/admin/timelines/{presetId:\\d+}/delete-preset"})
+    @PostMapping({"/admin/timelines/{presetId:\\d+}/delete_preset", "/admin/timelines/{presetId:\\d+}/delete", "/admin/timelines/{presetId:\\d+}/delete-preset"})
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public String deletePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         try {
@@ -100,21 +106,21 @@ public class TimeFilterController {
     // REST API ENDPOINTS (/admin/time-filters)
     // =========================================================
 
-    @GetMapping(value = "/admin/time-filters", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = {"/admin/time_filters", "/admin/time-filters"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<TimeFilterPreset>>> getAllPresetsRest() {
         return ResponseEntity.ok(ApiResponse.success(timeFilterService.findAll()));
     }
 
-    @GetMapping(value = "/admin/time-filters/active", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = {"/admin/time_filters/active", "/admin/time-filters/active"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<TimeFilterPreset>>> getActivePresetsRest() {
         return ResponseEntity.ok(ApiResponse.success(timeFilterService.findActive()));
     }
 
-    @GetMapping(value = "/admin/time-filters/{presetId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = {"/admin/time_filters/{presetId:\\d+}", "/admin/time-filters/{presetId:\\d+}"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<TimeFilterPreset>> getPresetByIdRest(@PathVariable("presetId") Long presetId) {
@@ -123,7 +129,7 @@ public class TimeFilterController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(value = "/admin/time-filters", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = {"/admin/time_filters", "/admin/time-filters"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<TimeFilterPreset>> createPresetRest(@Valid @RequestBody TimeFilterPreset preset) {
@@ -131,7 +137,7 @@ public class TimeFilterController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
     }
 
-    @PutMapping(value = "/admin/time-filters/{presetId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = {"/admin/time_filters/{presetId:\\d+}", "/admin/time-filters/{presetId:\\d+}"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<TimeFilterPreset>> updatePresetRest(@PathVariable("presetId") Long presetId,
@@ -140,7 +146,7 @@ public class TimeFilterController {
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
-    @PatchMapping(value = "/admin/time-filters/{presetId:\\d+}/toggle", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = {"/admin/time_filters/{presetId:\\d+}/toggle_status", "/admin/time_filters/{presetId:\\d+}/toggle", "/admin/time-filters/{presetId:\\d+}/toggle", "/admin/time-filters/{presetId:\\d+}/toggle-status"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<TimeFilterPreset>> togglePresetRest(@PathVariable("presetId") Long presetId) {
@@ -148,7 +154,7 @@ public class TimeFilterController {
         return ResponseEntity.ok(ApiResponse.success(toggled));
     }
 
-    @DeleteMapping(value = "/admin/time-filters/{presetId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = {"/admin/time_filters/{presetId:\\d+}", "/admin/time-filters/{presetId:\\d+}"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deletePresetRest(@PathVariable("presetId") Long presetId) {

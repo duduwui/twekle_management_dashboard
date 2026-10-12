@@ -32,8 +32,14 @@ import java.util.Set;
 @RequestMapping("/admin/roles")
 public class RoleController {
 
-    private final RoleService roleService;
-    private final AdminService adminService;
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private AdminService adminService;
+
+    public RoleController() {
+    }
 
     @Autowired
     public RoleController(RoleService roleService, AdminService adminService) {
@@ -75,7 +81,7 @@ public class RoleController {
         return "administration/role/roles";
     }
 
-    @PostMapping({"/create", "/create-role"})
+    @PostMapping({"/create_role", "/create", "/create-role"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String createRoleSsr(@ModelAttribute("newRole") RoleDto request, RedirectAttributes flash) {
         if (request.getName() == null || request.getName().trim().isEmpty()) {
@@ -91,7 +97,7 @@ public class RoleController {
         return "redirect:/admin/roles";
     }
 
-    @PostMapping({"/{roleId:\\d+}/update", "/{roleId:\\d+}/update-role"})
+    @PostMapping({"/{roleId:\\d+}/update_role", "/{roleId:\\d+}/update", "/{roleId:\\d+}/update-role"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
                                 @ModelAttribute RoleDto request,
@@ -105,7 +111,7 @@ public class RoleController {
         return "redirect:/admin/roles";
     }
 
-    @PostMapping({"/{adminId:\\d+}/assign", "/assign", "/assign-user-role"})
+    @PostMapping({"/{adminId:\\d+}/assign_user_role", "/{adminId:\\d+}/assign", "/assign", "/assign_user_role", "/assign-user-role"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS', 'PERMISSION_CREATE_ROLES')")
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
@@ -142,7 +148,7 @@ public class RoleController {
         return "redirect:/admin/roles?selectedAdminId=" + targetAdminId;
     }
 
-    @PostMapping({"/{roleId:\\d+}/delete", "/{roleId:\\d+}/delete-role"})
+    @PostMapping({"/{roleId:\\d+}/delete_role", "/{roleId:\\d+}/delete", "/{roleId:\\d+}/delete-role"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
         try {

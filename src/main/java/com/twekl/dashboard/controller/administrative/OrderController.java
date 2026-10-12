@@ -25,8 +25,14 @@ import java.util.List;
 @RequestMapping("/admin/orders")
 public class OrderController {
 
-    private final CustomerService customerService;
-    private final FollowupService followupService;
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private FollowupService followupService;
+
+    public OrderController() {
+    }
 
     @Autowired
     public OrderController(CustomerService customerService, FollowupService followupService) {

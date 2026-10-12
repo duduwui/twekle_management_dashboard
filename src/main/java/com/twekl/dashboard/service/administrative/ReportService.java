@@ -34,11 +34,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Transactional(readOnly = true)
 public class ReportService {
 
-    private final CustomerRepository customerRepository;
-    private final CustomerOrderRepository orderRepository;
-    private final CustomerFeedbackRepository feedbackRepository;
-    private final OrderFollowupCheckRepository followupCheckRepository;
-    private final TimeFilterPresetRepository presetRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerOrderRepository orderRepository;
+
+    @Autowired
+    private CustomerFeedbackRepository feedbackRepository;
+
+    @Autowired
+    private OrderFollowupCheckRepository followupCheckRepository;
+
+    @Autowired
+    private TimeFilterPresetRepository presetRepository;
+
+    public ReportService() {
+    }
 
     @Autowired
     public ReportService(CustomerRepository customerRepository,

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="scriptsFragment" th:remove="tag">
+    <!-- AngularJS Core Library (1.8.2) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    
+    <!-- Core Application & Services -->
+    <script src="/js/core/app.js?v=9.0"></script>
+    <script src="/js/core/common.js?v=9.0"></script>
+    <script src="/js/core/auth.js?v=9.0"></script>
+    <script src="/js/core/layoutController.js?v=9.0"></script>
+    <script src="/js/core/toastController.js?v=9.0"></script>
+
+    <!-- Modular Domain Services -->
+    <script src="/js/dashboard/dashboardService.js?v=9.0"></script>
+    <script src="/js/admin/adminService.js?v=9.0"></script>
+    <script src="/js/role/roleService.js?v=9.0"></script>
+    <script src="/js/customer/customerService.js?v=9.0"></script>
+    <script src="/js/customer/followupService.js?v=9.0"></script>
+    <script src="/js/timefilter/timeFilterService.js?v=9.0"></script>
+    <script src="/js/report/reportService.js?v=9.0"></script>
+
+    <!-- Modular Domain Controllers -->
+    <script src="/js/dashboard/dashboardController.js?v=9.0"></script>
+    <script src="/js/admin/adminController.js?v=9.0"></script>
+    <script src="/js/admin/adminFormController.js?v=9.0"></script>
+    <script src="/js/admin/adminUi.js?v=9.0"></script>
+    <script src="/js/role/roleController.js?v=9.0"></script>
+    <script src="/js/role/roleUi.js?v=9.0"></script>
+    <script src="/js/customer/customerController.js?v=9.0"></script>
+    <script src="/js/customer/orderController.js?v=9.0"></script>
+    <script src="/js/customer/feedbackController.js?v=9.0"></script>
+    <script src="/js/timefilter/timeFilterController.js?v=9.0"></script>
+    <script src="/js/report/reportController.js?v=9.0"></script>
+
+    <!-- Clean Sidebar Category Accordion Toggle -->
+    <script>
+    function toggleCategoryNav(name) {
+        var sub = document.getElementById('subnav-' + name);
+        var arrow = document.getElementById('arrow-' + name);
+        if (!sub) return;
+        var isHidden = (sub.style.display === 'none' || getComputedStyle(sub).display === 'none');
+        if (isHidden) {
+            sub.style.display = 'flex';
+            if (arrow) arrow.classList.add('expanded');
+        } else {
+            sub.style.display = 'none';
+            if (arrow) arrow.classList.remove('expanded');
+        }
+    }
+
+    // In-place async action interceptor: prevents full page reload on delete or toggle actions
+    document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("submit", function(e) {
+            var form = e.target;
+            var action = form.getAttribute("action") || "";
+            var isDelete = action.includes("/delete") || action.includes("delete-") || action.includes("delete_");
+            var isToggle = action.includes("/toggle") || action.includes("toggle-") || action.includes("toggle_");
+
+            if (!isDelete && !isToggle) {
+                return;
+            }
+
+            e.preventDefault();
+            var submitBtn = form.querySelector("button[type='submit']");
+            if (submitBtn) submitBtn.disabled = true;
+            var row = form.closest("tr");
+
+            fetch(action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            }).then(function(res) {
+                if (!res.ok && res.status !== 302 && res.status !== 200) {
+                    throw new Error("Action returned HTTP " + res.status);
+                }
+                if (isDelete && row) {
+                    row.style.transition = "all 0.3s ease-out";
+                    row.style.opacity = "0";
+                    row.style.transform = "translateX(20px)";
+                    setTimeout(function() {
+                        row.remove();
+                        var countEl = document.querySelector(".datatable-info strong");
+                        if (countEl) {
+                            var cur = parseInt(countEl.textContent, 10);
+                            if (!isNaN(cur) && cur > 0) countEl.textContent = (cur - 1);
+                        }
+                    }, 300);
+                    showActionToast("Item deleted successfully", "success");
+                } else if (isToggle && submitBtn) {
+                    submitBtn.disabled = false;
+                    var txt = submitBtn.textContent.trim().toUpperCase();
+                    var isCurrentlyActive = txt.includes("ACTIVE") && !txt.includes("INACTIVE");
+                    if (isCurrentlyActive) {
+                        submitBtn.classList.remove("tag-primary");
+                        submitBtn.classList.add("tag-muted");
+                        submitBtn.textContent = submitBtn.textContent.trim() === "ACTIVE" ? "INACTIVE" : "Inactive";
+                        showActionToast("Status deactivated", "info");
+                    } else {
+                        submitBtn.classList.remove("tag-muted");
+                        submitBtn.classList.add("tag-primary");
+                        submitBtn.textContent = submitBtn.textContent.trim() === "INACTIVE" ? "ACTIVE" : "Active";
+                        showActionToast("Status activated", "success");
+                    }
+                }
+            }).catch(function(err) {
+                if (submitBtn) submitBtn.disabled = false;
+                showActionToast("Action failed: " + err.message, "error");
+            });
+        });
+
+        function showActionToast(msg, type) {
+            var container = document.querySelector(".toast-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.className = "toast-container";
+                document.body.appendChild(container);
+            }
+            var toast = document.createElement("div");
+            toast.className = "comic-toast " + (type || "success");
+            var span = document.createElement("span");
+            span.textContent = msg;
+            toast.appendChild(span);
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.transition = "opacity 0.4s ease";
+                toast.style.opacity = "0";
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3200);
+        }
+    });
+    </script>
+</div>
+</body>
+</html>

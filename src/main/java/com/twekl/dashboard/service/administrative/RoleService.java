@@ -21,8 +21,14 @@ import java.util.Optional;
 @Transactional
 public class RoleService {
 
-    private final RoleRepository roleRepository;
-    private final AdminRepository adminRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private AdminRepository adminRepository;
+
+    public RoleService() {
+    }
 
     @Autowired
     public RoleService(RoleRepository roleRepository, AdminRepository adminRepository) {

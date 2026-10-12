@@ -26,8 +26,14 @@ import java.util.Map;
 @RequestMapping("/admin/customers")
 public class CustomerController {
 
-    private final CustomerService customerService;
-    private final FollowupService followupService;
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private FollowupService followupService;
+
+    public CustomerController() {
+    }
 
     @Autowired
     public CustomerController(CustomerService customerService, FollowupService followupService) {

@@ -28,12 +28,26 @@ import java.util.stream.Collectors;
 @Transactional
 public class CustomerService {
 
-    private final CustomerRepository customerRepository;
-    private final CustomerOrderRepository orderRepository;
-    private final CustomerFeedbackRepository feedbackRepository;
-    private final OrderFollowupCheckRepository followupCheckRepository;
-    private final TimeFilterPresetRepository timeFilterPresetRepository;
-    private final FollowupService followupService;
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerOrderRepository orderRepository;
+
+    @Autowired
+    private CustomerFeedbackRepository feedbackRepository;
+
+    @Autowired
+    private OrderFollowupCheckRepository followupCheckRepository;
+
+    @Autowired
+    private TimeFilterPresetRepository timeFilterPresetRepository;
+
+    @Autowired
+    private FollowupService followupService;
+
+    public CustomerService() {
+    }
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository,

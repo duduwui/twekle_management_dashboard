@@ -29,7 +29,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 })
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final ApplicationContext applicationContext;
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    public WebMvcConfig() {
+    }
 
     @Autowired
     public WebMvcConfig(ApplicationContext applicationContext) {

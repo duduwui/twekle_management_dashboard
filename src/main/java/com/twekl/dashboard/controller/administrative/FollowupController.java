@@ -23,8 +23,14 @@ import java.util.Map;
 @RequestMapping("/admin/followups")
 public class FollowupController {
 
-    private final FollowupService followupService;
-    private final AdminService adminService;
+    @Autowired
+    private FollowupService followupService;
+
+    @Autowired
+    private AdminService adminService;
+
+    public FollowupController() {
+    }
 
     @Autowired
     public FollowupController(FollowupService followupService, AdminService adminService) {

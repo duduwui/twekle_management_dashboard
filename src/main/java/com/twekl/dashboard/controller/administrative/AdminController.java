@@ -30,8 +30,14 @@ import java.util.List;
 @RequestMapping("/admin/admins")
 public class AdminController {
 
-    private final AdminService adminService;
-    private final RoleService roleService;
+    @Autowired
+    private AdminService adminService;
+
+    @Autowired
+    private RoleService roleService;
+
+    public AdminController() {
+    }
 
     @Autowired
     public AdminController(AdminService adminService, RoleService roleService) {
@@ -61,7 +67,7 @@ public class AdminController {
         return "administration/admin/admins";
     }
 
-    @PostMapping("/create-admin")
+    @PostMapping({"/create_admin", "/create-admin", "/create"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
@@ -79,7 +85,7 @@ public class AdminController {
         return "redirect:/admin/admins";
     }
 
-    @PostMapping("/{adminId:\\d+}/toggle-status")
+    @PostMapping({"/{adminId:\\d+}/toggle_status", "/{adminId:\\d+}/toggle-status"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
@@ -91,7 +97,7 @@ public class AdminController {
         return "redirect:/admin/admins";
     }
 
-    @PostMapping("/{adminId:\\d+}/delete-admin")
+    @PostMapping({"/{adminId:\\d+}/delete_admin", "/{adminId:\\d+}/delete-admin"})
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
@@ -140,7 +146,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
-    @PatchMapping(value = "/{adminId:\\d+}/toggle", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = {"/{adminId:\\d+}/toggle", "/{adminId:\\d+}/toggle_status", "/{adminId:\\d+}/toggle-status"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public ResponseEntity<ApiResponse<Admin>> toggleAdminStatusRest(@PathVariable("adminId") Long adminId) {
@@ -148,7 +154,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(toggled));
     }
 
-    @DeleteMapping(value = "/{adminId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = {"/{adminId:\\d+}", "/{adminId:\\d+}/delete_admin", "/{adminId:\\d+}/delete-admin"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public ResponseEntity<ApiResponse<Void>> deleteAdminRest(@PathVariable("adminId") Long adminId) {

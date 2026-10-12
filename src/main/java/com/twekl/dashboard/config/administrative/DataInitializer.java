@@ -35,15 +35,35 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    private final AdminRepository adminRepository;
-    private final RoleRepository roleRepository;
-    private final TimeFilterPresetRepository timeFilterPresetRepository;
-    private final CustomerRepository customerRepository;
-    private final CustomerOrderRepository orderRepository;
-    private final CustomerFeedbackRepository feedbackRepository;
-    private final OrderFollowupCheckRepository followupCheckRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AdminService adminService;
+    @Autowired
+    private AdminRepository adminRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private TimeFilterPresetRepository timeFilterPresetRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerOrderRepository orderRepository;
+
+    @Autowired
+    private CustomerFeedbackRepository feedbackRepository;
+
+    @Autowired
+    private OrderFollowupCheckRepository followupCheckRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AdminService adminService;
+
+    public DataInitializer() {
+    }
 
     @Autowired
     public DataInitializer(AdminRepository adminRepository, 

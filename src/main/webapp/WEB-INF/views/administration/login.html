@@ -238,14 +238,14 @@
             btnText.innerText = 'Signing In...';
 
             try {
-                let res = await fetch('/admin/api/auth/login', {
+                let res = await fetch('/admin/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
 
-                if (!res.ok && res.status === 404) {
-                    res = await fetch('/api/auth/login', {
+                if (!res.ok && (res.status === 404 || res.status === 500)) {
+                    res = await fetch('/admin/api/auth/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })

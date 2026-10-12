@@ -25,7 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = {
-    "com.twekl.dashboard.controller"
+    "com.twekl.dashboard.controller.administrative",
+    "com.twekl.dashboard.exception.administrative"
 })
 public class WebMvcConfig implements WebMvcConfigurer {
 

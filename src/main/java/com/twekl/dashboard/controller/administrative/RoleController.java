@@ -1,10 +1,10 @@
 package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.dto.admin.UpdateAdminRequest;
-import com.twekl.dashboard.dto.role.RoleDto;
-import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.model.role.Role;
-import com.twekl.dashboard.response.ApiResponse;
+import com.twekl.dashboard.dto.administrative.UpdateAdminRequest;
+import com.twekl.dashboard.dto.administrative.RoleDto;
+import com.twekl.dashboard.model.administrative.Admin;
+import com.twekl.dashboard.model.administrative.Role;
+import com.twekl.dashboard.response.administrative.ApiResponse;
 import com.twekl.dashboard.service.administrative.AdminService;
 import com.twekl.dashboard.service.administrative.RoleService;
 import jakarta.validation.Valid;

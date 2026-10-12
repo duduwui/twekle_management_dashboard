@@ -1,10 +1,10 @@
 package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.dto.customer.CustomerFollowupSummary;
-import com.twekl.dashboard.model.customer.Customer;
-import com.twekl.dashboard.model.order.CustomerFeedback;
-import com.twekl.dashboard.model.order.CustomerOrder;
-import com.twekl.dashboard.response.ApiResponse;
+import com.twekl.dashboard.dto.administrative.CustomerFollowupSummary;
+import com.twekl.dashboard.model.administrative.Customer;
+import com.twekl.dashboard.model.administrative.CustomerFeedback;
+import com.twekl.dashboard.model.administrative.CustomerOrder;
+import com.twekl.dashboard.response.administrative.ApiResponse;
 import com.twekl.dashboard.service.administrative.CustomerService;
 import com.twekl.dashboard.service.administrative.FollowupService;
 import org.springframework.beans.factory.annotation.Autowired;

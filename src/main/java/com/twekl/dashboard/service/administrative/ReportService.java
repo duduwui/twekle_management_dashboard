@@ -1,17 +1,17 @@
 package com.twekl.dashboard.service.administrative;
 
-import com.twekl.dashboard.dto.report.SatisfactionReportDto;
-import com.twekl.dashboard.model.customer.Customer;
-import com.twekl.dashboard.model.order.CustomerFeedback;
-import com.twekl.dashboard.model.order.CustomerOrder;
-import com.twekl.dashboard.model.order.OrderFollowupCheck;
-import com.twekl.dashboard.model.timefilter.TimeFilterPreset;
-import com.twekl.dashboard.repository.customer.CustomerRepository;
-import com.twekl.dashboard.repository.order.CustomerFeedbackRepository;
-import com.twekl.dashboard.repository.order.CustomerOrderRepository;
-import com.twekl.dashboard.repository.followup.OrderFollowupCheckRepository;
-import com.twekl.dashboard.repository.timefilter.TimeFilterPresetRepository;
-import com.twekl.dashboard.util.DateUtil;
+import com.twekl.dashboard.dto.administrative.SatisfactionReportDto;
+import com.twekl.dashboard.model.administrative.Customer;
+import com.twekl.dashboard.model.administrative.CustomerFeedback;
+import com.twekl.dashboard.model.administrative.CustomerOrder;
+import com.twekl.dashboard.model.administrative.OrderFollowupCheck;
+import com.twekl.dashboard.model.administrative.TimeFilterPreset;
+import com.twekl.dashboard.repository.administrative.CustomerRepository;
+import com.twekl.dashboard.repository.administrative.CustomerFeedbackRepository;
+import com.twekl.dashboard.repository.administrative.CustomerOrderRepository;
+import com.twekl.dashboard.repository.administrative.OrderFollowupCheckRepository;
+import com.twekl.dashboard.repository.administrative.TimeFilterPresetRepository;
+import com.twekl.dashboard.util.administrative.DateUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

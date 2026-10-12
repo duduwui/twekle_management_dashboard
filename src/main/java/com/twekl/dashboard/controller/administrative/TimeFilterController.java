@@ -1,7 +1,7 @@
 package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.model.timefilter.TimeFilterPreset;
-import com.twekl.dashboard.response.ApiResponse;
+import com.twekl.dashboard.model.administrative.TimeFilterPreset;
+import com.twekl.dashboard.response.administrative.ApiResponse;
 import com.twekl.dashboard.service.administrative.AdminService;
 import com.twekl.dashboard.service.administrative.TimeFilterService;
 import jakarta.validation.Valid;

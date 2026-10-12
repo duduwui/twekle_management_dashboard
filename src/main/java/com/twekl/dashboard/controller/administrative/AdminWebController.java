@@ -1,7 +1,7 @@
 package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.dto.customer.CustomerFollowupSummary;
-import com.twekl.dashboard.model.admin.Admin;
+import com.twekl.dashboard.dto.administrative.CustomerFollowupSummary;
+import com.twekl.dashboard.model.administrative.Admin;
 import com.twekl.dashboard.service.administrative.AdminService;
 import com.twekl.dashboard.service.administrative.CustomerService;
 import com.twekl.dashboard.service.administrative.FollowupService;

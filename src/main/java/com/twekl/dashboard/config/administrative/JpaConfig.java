@@ -22,7 +22,7 @@ import java.util.Properties;
  */
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackages = { "com.twekl.dashboard.repository" })
+@EnableJpaRepositories(basePackages = { "com.twekl.dashboard.repository.administrative" })
 @ComponentScan(
     basePackages = { "com.twekl.dashboard" },
     excludeFilters = @ComponentScan.Filter(
@@ -48,7 +48,7 @@ public class JpaConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("com.twekl.dashboard.model");
+        em.setPackagesToScan("com.twekl.dashboard.model.administrative");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         vendorAdapter.setGenerateDdl(true);

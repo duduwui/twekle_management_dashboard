@@ -1,8 +1,8 @@
 package com.twekl.dashboard.security.administrative;
 
-import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.model.role.Role;
-import com.twekl.dashboard.repository.admin.AdminRepository;
+import com.twekl.dashboard.model.administrative.Admin;
+import com.twekl.dashboard.model.administrative.Role;
+import com.twekl.dashboard.repository.administrative.AdminRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;

@@ -1,8 +1,8 @@
 package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.dto.followup.FollowupCheckRequest;
-import com.twekl.dashboard.model.order.OrderFollowupCheck;
-import com.twekl.dashboard.response.ApiResponse;
+import com.twekl.dashboard.dto.administrative.FollowupCheckRequest;
+import com.twekl.dashboard.model.administrative.OrderFollowupCheck;
+import com.twekl.dashboard.response.administrative.ApiResponse;
 import com.twekl.dashboard.service.administrative.AdminService;
 import com.twekl.dashboard.service.administrative.FollowupService;
 import org.springframework.beans.factory.annotation.Autowired;

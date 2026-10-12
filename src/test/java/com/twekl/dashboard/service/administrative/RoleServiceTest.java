@@ -1,8 +1,8 @@
 package com.twekl.dashboard.service.administrative;
 
-import com.twekl.dashboard.dto.role.RoleDto;
-import com.twekl.dashboard.model.role.Role;
-import com.twekl.dashboard.repository.role.RoleRepository;
+import com.twekl.dashboard.dto.administrative.RoleDto;
+import com.twekl.dashboard.model.administrative.Role;
+import com.twekl.dashboard.repository.administrative.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

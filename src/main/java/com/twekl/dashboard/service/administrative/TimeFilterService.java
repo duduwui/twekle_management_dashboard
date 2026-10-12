@@ -1,8 +1,8 @@
 package com.twekl.dashboard.service.administrative;
 
-import com.twekl.dashboard.exception.ResourceNotFoundException;
-import com.twekl.dashboard.model.timefilter.TimeFilterPreset;
-import com.twekl.dashboard.repository.timefilter.TimeFilterPresetRepository;
+import com.twekl.dashboard.exception.administrative.ResourceNotFoundException;
+import com.twekl.dashboard.model.administrative.TimeFilterPreset;
+import com.twekl.dashboard.repository.administrative.TimeFilterPresetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

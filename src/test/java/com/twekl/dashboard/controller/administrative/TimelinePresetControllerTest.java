@@ -3,7 +3,7 @@ package com.twekl.dashboard.controller.administrative;
 import com.twekl.dashboard.config.administrative.JpaConfig;
 import com.twekl.dashboard.config.administrative.SecurityConfig;
 import com.twekl.dashboard.config.administrative.WebMvcConfig;
-import com.twekl.dashboard.model.timefilter.TimeFilterPreset;
+import com.twekl.dashboard.model.administrative.TimeFilterPreset;
 import com.twekl.dashboard.service.administrative.TimeFilterService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

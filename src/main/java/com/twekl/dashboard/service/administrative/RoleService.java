@@ -1,11 +1,11 @@
 package com.twekl.dashboard.service.administrative;
 
-import com.twekl.dashboard.dto.role.RoleDto;
-import com.twekl.dashboard.exception.ResourceNotFoundException;
-import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.model.role.Role;
-import com.twekl.dashboard.repository.admin.AdminRepository;
-import com.twekl.dashboard.repository.role.RoleRepository;
+import com.twekl.dashboard.dto.administrative.RoleDto;
+import com.twekl.dashboard.exception.administrative.ResourceNotFoundException;
+import com.twekl.dashboard.model.administrative.Admin;
+import com.twekl.dashboard.model.administrative.Role;
+import com.twekl.dashboard.repository.administrative.AdminRepository;
+import com.twekl.dashboard.repository.administrative.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

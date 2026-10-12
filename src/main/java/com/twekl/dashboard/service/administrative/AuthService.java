@@ -1,9 +1,9 @@
 package com.twekl.dashboard.service.administrative;
 
-import com.twekl.dashboard.dto.auth.LoginRequest;
-import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.repository.admin.AdminRepository;
-import com.twekl.dashboard.response.AuthResponse;
+import com.twekl.dashboard.dto.administrative.LoginRequest;
+import com.twekl.dashboard.model.administrative.Admin;
+import com.twekl.dashboard.repository.administrative.AdminRepository;
+import com.twekl.dashboard.response.administrative.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;

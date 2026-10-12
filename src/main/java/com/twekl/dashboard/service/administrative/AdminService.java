@@ -1,14 +1,14 @@
 package com.twekl.dashboard.service.administrative;
 
-import com.twekl.dashboard.dto.admin.AdminPermissionDto;
-import com.twekl.dashboard.dto.admin.CreateAdminRequest;
-import com.twekl.dashboard.dto.admin.UpdateAdminRequest;
-import com.twekl.dashboard.exception.ResourceNotFoundException;
-import com.twekl.dashboard.model.admin.Admin;
-import com.twekl.dashboard.model.admin.AdminPermission;
-import com.twekl.dashboard.model.role.Role;
-import com.twekl.dashboard.repository.admin.AdminRepository;
-import com.twekl.dashboard.repository.role.RoleRepository;
+import com.twekl.dashboard.dto.administrative.AdminPermissionDto;
+import com.twekl.dashboard.dto.administrative.CreateAdminRequest;
+import com.twekl.dashboard.dto.administrative.UpdateAdminRequest;
+import com.twekl.dashboard.exception.administrative.ResourceNotFoundException;
+import com.twekl.dashboard.model.administrative.Admin;
+import com.twekl.dashboard.model.administrative.AdminPermission;
+import com.twekl.dashboard.model.administrative.Role;
+import com.twekl.dashboard.repository.administrative.AdminRepository;
+import com.twekl.dashboard.repository.administrative.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

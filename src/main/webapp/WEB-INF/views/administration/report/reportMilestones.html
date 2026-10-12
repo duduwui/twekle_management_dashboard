@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="reportMilestones" ng-show="reportSubTab === 'milestones'" style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="comic-filter-toolbar">
+        <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
+            <span class="filter-date-label">From:</span>
+            <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+            <span class="filter-date-label">To:</span>
+            <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+            <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <span>Filters</span>
+            </button>
+
+            <!-- Active Filter Badges -->
+            <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
+                <span ng-bind="selectedReportPreset.name"></span> ✕
+            </span>
+            <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="clearSatisfactionFilter()" title="Click to clear scale">
+                <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
+            </span>
+            <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.milestoneFilter && reportFilters.milestoneFilter !== 'all'" ng-click="reportFilters.milestoneFilter = 'all'" title="Click to clear milestone">
+                <span ng-bind="'Milestone: ' + reportFilters.milestoneFilter"></span> ✕
+            </span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="filter-search-box" style="min-width: 210px;">
+                <input type="search" class="comic-search-bar" placeholder="Filter pending by name, phone, order..." ng-model="reportFilters.searchPending">
+            </div>
+            <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportCsv()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Milestone Health Matrix -->
+    <div class="table-responsive">
+        <table class="comic-table">
+            <thead>
+                <tr>
+                    <th>Milestone Name</th>
+                    <th class="nowrap" style="text-align: center;">Total Scheduled</th>
+                    <th class="nowrap" style="text-align: center;">Completed</th>
+                    <th class="nowrap" style="text-align: center;">Pending Contact</th>
+                    <th class="nowrap" style="text-align: right;">Completion Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="m in reportData.milestones track by m.presetName">
+                    <td><strong ng-bind="m.presetName"></strong></td>
+                    <td class="nowrap" style="text-align: center;" ng-bind="m.total"></td>
+                    <td class="nowrap" style="text-align: center;">
+                        <span style="font-weight: 800; color: #166534;" ng-bind="m.completed"></span>
+                    </td>
+                    <td class="nowrap" style="text-align: center;">
+                        <span style="font-weight: 800; color: m.pending > 0 ? '#991B1B' : '#64748B';" ng-bind="m.pending"></span>
+                    </td>
+                    <td class="nowrap" style="text-align: right;">
+                        <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="m.completionRate + '%'"></strong>
+                    </td>
+                </tr>
+                <tr ng-if="!reportData.milestones || reportData.milestones.length === 0">
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748B;">
+                        No milestone checks recorded for the selected period.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -6,6 +6,8 @@ import com.twekl.dashboard.administration.service.admin.AdminService;
 import com.twekl.dashboard.administration.service.customer.CustomerService;
 import com.twekl.dashboard.administration.service.report.ReportService;
 import com.twekl.dashboard.administration.service.timefilter.TimeFilterPresetService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -55,6 +58,16 @@ public class AdminWebController {
             return "redirect:/admin/dashboard";
         }
         return "administration/login";
+    }
+
+    @PostMapping({"/admin/logout", "/logout"})
+    public String logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        SecurityContextHolder.clearContext();
+        return "redirect:/login";
     }
 
     @GetMapping({"/", "/admin", "/admin/"})

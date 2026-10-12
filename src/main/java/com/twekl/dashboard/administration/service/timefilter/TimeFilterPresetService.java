@@ -5,7 +5,7 @@ import com.twekl.dashboard.administration.model.order.CustomerOrder;
 import com.twekl.dashboard.administration.model.order.OrderFollowupCheck;
 import com.twekl.dashboard.administration.model.timefilter.TimeFilterPreset;
 import com.twekl.dashboard.administration.repository.order.CustomerOrderRepository;
-import com.twekl.dashboard.administration.repository.order.OrderFollowupCheckRepository;
+import com.twekl.dashboard.administration.repository.followup.OrderFollowupCheckRepository;
 import com.twekl.dashboard.administration.repository.timefilter.TimeFilterPresetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

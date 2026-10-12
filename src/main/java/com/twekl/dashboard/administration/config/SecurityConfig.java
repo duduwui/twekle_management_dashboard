@@ -80,7 +80,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 
                 // Public Authentication Endpoints
-                .requestMatchers("/admin/api/auth/**", "/internal/auth/**", "/api/auth/**").permitAll()
+                .requestMatchers("/admin/auth/**", "/auth/**", "/admin/api/auth/**", "/internal/auth/**", "/api/auth/**").permitAll()
                 
                 // Super Administrator Sensitive Operations
                 .requestMatchers(HttpMethod.POST, "/admin/api/admins/**", "/internal/admins/**", "/api/admins/**", "/api/admin/admins/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")

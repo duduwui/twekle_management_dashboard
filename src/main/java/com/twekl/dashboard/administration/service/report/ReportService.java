@@ -9,7 +9,7 @@ import com.twekl.dashboard.administration.model.timefilter.TimeFilterPreset;
 import com.twekl.dashboard.administration.repository.customer.CustomerRepository;
 import com.twekl.dashboard.administration.repository.order.CustomerFeedbackRepository;
 import com.twekl.dashboard.administration.repository.order.CustomerOrderRepository;
-import com.twekl.dashboard.administration.repository.order.OrderFollowupCheckRepository;
+import com.twekl.dashboard.administration.repository.followup.OrderFollowupCheckRepository;
 import com.twekl.dashboard.administration.repository.timefilter.TimeFilterPresetRepository;
 import com.twekl.dashboard.administration.util.DateUtil;
 import org.springframework.stereotype.Service;

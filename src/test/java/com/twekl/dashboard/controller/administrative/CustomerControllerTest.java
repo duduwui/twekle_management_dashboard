@@ -1,8 +1,8 @@
 package com.twekl.dashboard.controller.administrative;
 
-import com.twekl.dashboard.config.JpaConfig;
-import com.twekl.dashboard.config.SecurityConfig;
-import com.twekl.dashboard.config.WebMvcConfig;
+import com.twekl.dashboard.config.administrative.JpaConfig;
+import com.twekl.dashboard.config.administrative.SecurityConfig;
+import com.twekl.dashboard.config.administrative.WebMvcConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

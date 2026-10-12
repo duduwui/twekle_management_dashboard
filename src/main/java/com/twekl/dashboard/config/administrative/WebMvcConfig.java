@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config;
+package com.twekl.dashboard.config.administrative;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config;
+package com.twekl.dashboard.config.administrative;
 
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy;
 import org.hibernate.boot.model.naming.Identifier;

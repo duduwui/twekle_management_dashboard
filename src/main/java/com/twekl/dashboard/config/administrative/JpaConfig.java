@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config;
+package com.twekl.dashboard.config.administrative;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -56,7 +56,7 @@ public class JpaConfig {
 
         Properties jpaProperties = new Properties();
         jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        jpaProperties.put("hibernate.physical_naming_strategy", "com.twekl.dashboard.config.UpperCasePhysicalNamingStrategy");
+        jpaProperties.put("hibernate.physical_naming_strategy", UpperCasePhysicalNamingStrategy.class.getName());
         jpaProperties.put("hibernate.implicit_naming_strategy", "org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl");
         jpaProperties.put("hibernate.show_sql", "false");
         jpaProperties.put("hibernate.format_sql", "false");

@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config;
+package com.twekl.dashboard.config.administrative;
 
 import jakarta.servlet.Filter;
 import org.springframework.web.filter.CharacterEncodingFilter;

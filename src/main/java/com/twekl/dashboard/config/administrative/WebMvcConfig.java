@@ -75,11 +75,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/administration/css/");
-        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/administration/js/");
-        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/administration/images/");
-        registry.addResourceHandler("/administration/**").addResourceLocations("classpath:/administration/");
-        registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/administration/favicon.ico");
+        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/css/administration/", "classpath:/css/");
+        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/js/administration/", "classpath:/js/");
+        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/images/administration/", "classpath:/images/");
+        registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/images/administration/twekl-logo.png", "classpath:/images/twekl-logo.png");
     }
 
     @Override

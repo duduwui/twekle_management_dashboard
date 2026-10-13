@@ -120,7 +120,7 @@ public class AdminWebController {
         model.addAttribute("activeTab", "followups");
         model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
         model.addAttribute("presets", timeFilterService.findAll());
-        return "administration/customer/customers";
+        return "administration/followup/followups";
     }
 
     @GetMapping(value = "/admin/customers", produces = MediaType.TEXT_HTML_VALUE)

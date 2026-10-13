@@ -8,14 +8,14 @@
 <body>
     <div layout:fragment="content">
         <section class="comic-card" ng-controller="FollowupController">
-            <!-- 3.1 CUSTOMER DIRECTORY VIEW FRAGMENT -->
-            <div th:replace="~{administration/customer/customerDirectory :: customerDirectory}"></div>
+            <!-- 3.1 FOLLOW-UP DIRECTORY VIEW FRAGMENT -->
+            <div th:replace="~{administration/followup/followupDirectory :: followupDirectory}"></div>
 
             <!-- 3.2 CUSTOMER PURCHASE ORDERS FRAGMENT -->
-            <div th:replace="~{administration/customer/orderDirectory :: orderDirectory}"></div>
+            <div th:replace="~{administration/followup/orderDirectory :: orderDirectory}"></div>
 
             <!-- 3.3 CUSTOMER FEEDBACK & NOTES FRAGMENT -->
-            <div th:replace="~{administration/customer/feedbackDirectory :: feedbackDirectory}"></div>
+            <div th:replace="~{administration/followup/feedbackDirectory :: feedbackDirectory}"></div>
         </section>
     </div>
 </body>

@@ -1,15 +1,10 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
-import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
 import com.twekl.dashboard.model.administration.Admin;
-import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -108,58 +103,5 @@ public class AdminController {
             flash.addFlashAttribute("errorMessage", ex.getMessage());
         }
         return "redirect:/admin/admins";
-    }
-
-    // =========================================================
-    // REST API ENDPOINTS
-    // =========================================================
-
-    @GetMapping(value = "/api", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
-    public ResponseEntity<ApiResponse<List<Admin>>> getAllAdminsRest() {
-        return ResponseEntity.ok(ApiResponse.success(adminService.findAll()));
-    }
-
-    @GetMapping(value = "/{adminId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
-    public ResponseEntity<ApiResponse<Admin>> getAdminByIdRest(@PathVariable("adminId") Long adminId) {
-        return adminService.findById(adminId)
-                .map(admin -> ResponseEntity.ok(ApiResponse.success(admin)))
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
-    public ResponseEntity<ApiResponse<Admin>> createAdminRest(@Valid @RequestBody CreateAdminRequest request) {
-        Admin created = adminService.createAdmin(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
-    }
-
-    @PutMapping(value = "/{adminId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
-    public ResponseEntity<ApiResponse<Admin>> updateAdminRest(@PathVariable("adminId") Long adminId,
-                                                              @RequestBody UpdateAdminRequest request) {
-        Admin updated = adminService.updateAdmin(adminId, request);
-        return ResponseEntity.ok(ApiResponse.success(updated));
-    }
-
-    @PatchMapping(value = "/{adminId:\\d+}/toggle-status", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
-    public ResponseEntity<ApiResponse<Admin>> toggleAdminStatusRest(@PathVariable("adminId") Long adminId) {
-        Admin toggled = adminService.toggleStatus(adminId);
-        return ResponseEntity.ok(ApiResponse.success(toggled));
-    }
-
-    @DeleteMapping(value = "/{adminId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
-    public ResponseEntity<ApiResponse<Void>> deleteAdminRest(@PathVariable("adminId") Long adminId) {
-        adminService.deleteAdmin(adminId);
-        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

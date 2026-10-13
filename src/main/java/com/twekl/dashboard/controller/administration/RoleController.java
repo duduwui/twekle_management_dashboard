@@ -4,13 +4,8 @@ import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
 import com.twekl.dashboard.dto.administration.RoleDto;
 import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.Role;
-import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -149,7 +144,7 @@ public class RoleController {
         return "redirect:/admin/roles?selectedAdminId=" + targetAdminId;
     }
 
-    @PostMapping({"/{roleId:\\d+}/delete_role", "/{roleId:\\d+}/delete", "/{roleId:\\d+}/delete-role"})
+    @PostMapping("/{roleId:\\d+}/delete")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
         try {
@@ -159,50 +154,5 @@ public class RoleController {
             flash.addFlashAttribute("errorMessage", ex.getMessage());
         }
         return "redirect:/admin/roles";
-    }
-
-    // =========================================================
-    // REST API ENDPOINTS
-    // =========================================================
-
-    @GetMapping(value = {"", "/api"}, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
-    public ResponseEntity<ApiResponse<List<Role>>> getAllRolesRest() {
-        return ResponseEntity.ok(ApiResponse.success(roleService.findAll()));
-    }
-
-    @GetMapping(value = "/{roleId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
-    public ResponseEntity<ApiResponse<Role>> getRoleByIdRest(@PathVariable("roleId") Long roleId) {
-        return roleService.findById(roleId)
-                .map(role -> ResponseEntity.ok(ApiResponse.success(role)))
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
-    public ResponseEntity<ApiResponse<Role>> createRoleRest(@Valid @RequestBody RoleDto request) {
-        Role created = roleService.createRole(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
-    }
-
-    @PutMapping(value = "/{roleId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
-    public ResponseEntity<ApiResponse<Role>> updateRoleRest(@PathVariable("roleId") Long roleId,
-                                                            @Valid @RequestBody RoleDto request) {
-        Role updated = roleService.updateRole(roleId, request);
-        return ResponseEntity.ok(ApiResponse.success(updated));
-    }
-
-    @DeleteMapping(value = "/{roleId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
-    public ResponseEntity<ApiResponse<Void>> deleteRoleRest(@PathVariable("roleId") Long roleId) {
-        roleService.deleteRole(roleId);
-        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

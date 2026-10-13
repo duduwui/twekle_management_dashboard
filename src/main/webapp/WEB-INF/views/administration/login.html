@@ -17,30 +17,27 @@
             <span class="brand-badge">Management Dashboard</span>
         </div>
 
-        <form class="form" onsubmit="handleLogin(event)">
+        <form class="form" method="post" th:action="@{/login}">
             <div class="form_control">
                 <label class="label" for="username">Type username</label>
-                <input type="text" class="input" id="username" required="" autocomplete="username" placeholder="Enter username">
+                <input type="text" class="input" id="username" name="username" required="" autocomplete="username" placeholder="Enter username">
             </div>
 
             <div class="form_control">
                 <label class="label" for="password">Password</label>
-                <input type="password" class="input" id="password" required="" autocomplete="current-password" placeholder="••••••••">
+                <input type="password" class="input" id="password" name="password" required="" autocomplete="current-password" placeholder="••••••••">
             </div>
 
-            <div id="loginError" class="login-error"></div>
+            <div th:if="${param.error}" class="login-error" style="display: block;">Invalid username or password.</div>
 
             <button type="submit" id="loginBtn" class="login-btn">
                 <span class="spinner" id="loginSpinner"></span>
                 <span id="loginBtnText">Login</span>
             </button>
-            <div style="margin-top: 14px; text-align: center; font-size: 0.78rem; color: #64748B;">
-                Default credentials: <strong style="color: #0F172A;">twekl_super_admin</strong> / <strong style="color: #0F172A;">Super@2026</strong>
-            </div>
         </form>
     </div>
 
-    <script src="/js/core/login.js?v=11.0"></script>
+
 </body>
 </html>
 

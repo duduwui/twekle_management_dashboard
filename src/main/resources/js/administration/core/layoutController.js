@@ -4,8 +4,8 @@
  */
 angular.module('tweklApp')
 .controller('LayoutController', [
-    '$scope', '$http', '$location', '$window', '$timeout', 'AuthService', 'TimeFilterService', 'ToastService', 'FilterHelperService',
-function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterService, ToastService, FilterHelperService) {
+    '$scope', '$http', '$location', '$window', '$timeout', 'TimeFilterService', 'ToastService', 'FilterHelperService',
+function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastService, FilterHelperService) {
 
     // Sidebar Category Accordions (Closed by default as requested)
     $scope.categories = {
@@ -123,8 +123,10 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
             isSuperAdmin: !!su.superAdmin,
             canCreateRoles: su.canCreateRoles !== false,
             canManageUsers: su.canManageUsers !== false,
-            canReadFollowups: true,
-            canReadReports: true
+            canReadFollowups: !!su.superAdmin || !!su.canReadFollowups,
+            canReadReports: !!su.superAdmin || !!su.canReadReports,
+            canUpdateFollowups: !!su.superAdmin || !!su.canUpdateFollowups,
+            canCreateFollowups: !!su.superAdmin || !!su.canCreateFollowups
         };
     } else {
         $scope.currentUser = null;
@@ -146,113 +148,19 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
         password: ''
     };
 
-    /**
-     * Fetch authenticated user session profile
-     */
-    $scope.loadCurrentUser = function() {
-        AuthService.getMe().then(function(res) {
-            var d = (res && res.data && res.data.data) ? res.data.data : (res && res.data ? res.data : null);
-            if (d && d.authenticated) {
-                $scope.currentUser = d;
-                $scope.auth = {
-                    authenticated: true,
-                    username: d.username || '',
-                    role: d.superAdmin ? 'Super Admin' : (d.role || 'Admin'),
-                    isSuperAdmin: !!d.superAdmin,
-                    canCreateRoles: d.canCreateRoles !== false,
-                    canManageUsers: d.canManageUsers !== false,
-                    canReadFollowups: d.canReadFollowups !== false,
-                    canReadReports: !!d.canReadReports,
-                    canUpdateFollowups: !!d.superAdmin || !!d.canUpdateFollowups,
-                    canCreateFollowups: !!d.superAdmin || !!d.canCreateFollowups
-                };
-                $scope.loadTimeFilterPresets();
-                $scope.$broadcast('auth:loggedIn');
-            }
-        }, function(err) {
-            // Auto-login default super admin in local/demo environment
-            AuthService.login({ username: 'twekl_super_admin', password: 'Super@2026' }).then(function(loginRes) {
-                var ld = (loginRes && loginRes.data && loginRes.data.data) ? loginRes.data.data : (loginRes && loginRes.data ? loginRes.data : null);
-                if (ld) {
-                    $scope.currentUser = ld;
-                    $scope.auth = {
-                        authenticated: true,
-                        username: ld.username || 'twekl_super_admin',
-                        role: 'Super Admin',
-                        isSuperAdmin: true,
-                        canCreateRoles: true,
-                        canManageUsers: true,
-                        canReadFollowups: true,
-                        canReadReports: true,
-                        canUpdateFollowups: true,
-                        canCreateFollowups: true
-                    };
-                    $scope.loadTimeFilterPresets();
-                    $scope.$broadcast('auth:loggedIn');
-                }
-            }, function() {
-                if (!window.SERVER_CURRENT_USER) {
-                    $scope.auth = {
-                        authenticated: false,
-                        username: '',
-                        role: '',
-                        isSuperAdmin: false,
-                        canCreateRoles: false,
-                        canManageUsers: false,
-                        canReadFollowups: false,
-                        canReadReports: false
-                    };
-                    $scope.currentUser = null;
-                }
-            });
-        });
-    };
+    // Authentication belongs to the server-rendered login page.
+    $scope.openLoginModal = function() { window.location.href = '/login'; };
+    $scope.closeLoginModal = function() { $scope.showLoginModal = false; };
+    $scope.login = function() { window.location.href = '/login'; };
 
-    $scope.openLoginModal = function() {
-        $scope.loginForm = { username: '', password: '' };
-        $scope.showLoginModal = true;
-    };
-
-    $scope.closeLoginModal = function() {
-        $scope.showLoginModal = false;
-    };
-
-    /**
-     * Submits login credentials
-     */
-    $scope.login = function() {
-        if (!$scope.loginForm.username || !$scope.loginForm.password) {
-            ToastService.error('Please enter username and password');
-            return;
-        }
-
-        AuthService.login($scope.loginForm).then(function(res) {
-            $scope.closeLoginModal();
-            $scope.loadCurrentUser();
-            ToastService.success('Logged in successfully!');
-            $scope.$broadcast('auth:loggedIn');
-        }, function(err) {
-            ToastService.error(err.data && err.data.message ? err.data.message : 'Invalid credentials');
-        });
-    };
-
-    /**
-     * Executes user logout
-     */
     $scope.logout = function() {
-        AuthService.logout().then(function() {
-            $scope.auth = { authenticated: false, username: '', role: '' };
-            $scope.currentUser = null;
-            window.location.href = '/login';
-        }, function() {
-            window.location.href = '/login';
-        });
+        document.getElementById('logoutForm').submit();
     };
 
     // =========================================================
     // GLOBAL TIME FILTER PRESETS
     // =========================================================
-    $scope.timeFilterPresets = [];
+    $scope.timeFilterPresets = window.SERVER_PRESETS || [];
     $scope.selectedTimePreset = null;
     $scope.selectedOrderTimePreset = null;
     $scope.selectedReportPreset = null;
@@ -291,6 +199,7 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
     $scope.selectedUserTimePreset = null;
 
     $scope.openFilterModal = function(target) {
+        if (!window.SERVER_PRESETS && !$scope.timeFilterPresets.length) $scope.loadTimeFilterPresets();
         $scope.currentFilterTarget = target || 'customer';
         if ($scope.currentFilterTarget === 'customer') {
             $scope.pendingFilterPreset = $scope.selectedTimePreset;
@@ -577,19 +486,7 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
             $scope.$broadcast('customer:reload');
             $scope.$broadcast('report:reload');
         }).catch(function() {
-            $http.put('/admin/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
-                $scope.showEditFollowupModal = false;
-                $scope.$broadcast('followup:updated', {
-                    checkId: $scope.editingFollowup.id,
-                    orderId: $scope.editingFollowup.orderId,
-                    note: $scope.editingFollowup.note,
-                    imageUrl: $scope.editingFollowup.imageUrl,
-                    satisfaction: sat
-                });
-                $scope.$broadcast('dashboard:reload');
-                $scope.$broadcast('customer:reload');
-                $scope.$broadcast('report:reload');
-            });
+            ToastService.error('Could not save the follow-up. Your changes have not been submitted again.');
         });
     };
 
@@ -624,6 +521,5 @@ function($scope, $http, $location, $window, $timeout, AuthService, TimeFilterSer
 
     // Bootstrapping
     initRoute();
-    $scope.loadCurrentUser();
-    $scope.loadTimeFilterPresets();
+
 }]);

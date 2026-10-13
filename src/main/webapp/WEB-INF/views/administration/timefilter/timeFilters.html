@@ -40,17 +40,7 @@
     </section>
 
     <!-- Client-side filter helper -->
-    <script>
-    function filterPresetTable() {
-        var input = document.getElementById("presetSearchInput");
-        var filter = input.value.toLowerCase();
-        var rows = document.querySelectorAll("#presetTable tbody tr.preset-row");
-        rows.forEach(function(row) {
-            var text = row.innerText.toLowerCase();
-            row.style.display = text.indexOf(filter) > -1 ? "" : "none";
-        });
-    }
-    </script>
+
     </div>
 </body>
 </html>

@@ -1,71 +1,26 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
+<html xmlns:th="http://www.thymeleaf.org"><body>
 <div th:fragment="priorityTable" class="priority-table-card">
-    <div class="priority-header" style="justify-content: space-between;">
-        <h3 class="priority-title" style="margin: 0;">
-            <span>Priority Attention: Next Follow-ups (Most Overdue First)</span>
-        </h3>
-        <button type="button" class="comic-btn btn-sm btn-ghost" ng-click="goToFollowups()" title="View all customers in Follow-ups tab">
-            View All Customers
-        </button>
+    <div class="priority-header">
+        <h3 class="priority-title">Priority Attention: Next Follow-ups (Most Overdue First)</h3>
+        <a class="comic-btn btn-sm btn-ghost" th:href="@{/admin/followups}">View All Customers</a>
     </div>
-
-    <!-- When There Are Customers Needing Follow-up -->
-    <div class="table-responsive" ng-if="urgentCustomers && urgentCustomers.length > 0">
+    <div class="table-responsive" th:unless="${#lists.isEmpty(urgentCustomers)}">
         <table class="comic-table table-centered">
-            <thead>
-                <tr>
-                    <th>Customer Name</th>
-                    <th>Phone Number</th>
-                    <th>City</th>
-                    <th>Milestone</th>
-                    <th>Remaining Time</th>
-                    <th>Status</th>
-                    <th style="width: 120px;">Action</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Customer Name</th><th>Phone Number</th><th>City</th><th>Milestone</th><th>Minutes Until Due</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
-                <tr ng-repeat="cust in urgentCustomers track by cust.id">
-                    <td>
-                        <strong style="color: var(--text-main);" ng-bind="cust.name"></strong>
-                    </td>
-                    <td>
-                        <span class="text-muted" ng-bind="cust.phoneNumber"></span>
-                    </td>
-                    <td>
-                        <span class="comic-tag tag-gray" ng-bind="cust.city || '-'"></span>
-                    </td>
-                    <td>
-                        <span class="font-bold" ng-bind="cust.nextPendingFollowup || 'Pending Check'"></span>
-                    </td>
-                    <td>
-                        <span class="comic-tag" ng-class="isOverdue(cust) ? 'tag-danger' : 'tag-warning'">
-                            {{ getLiveCountdown(cust) }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="comic-tag" ng-class="isOverdue(cust) ? 'tag-danger' : 'tag-warning'">
-                            {{ isOverdue(cust) ? 'Overdue' : 'In Queue' }}
-                        </span>
-                    </td>
-                    <td>
-                        <button type="button" class="comic-btn btn-sm btn-primary" ng-click="openCustomer(cust)" title="Open customer follow-up orders">
-                            Open
-                        </button>
-                    </td>
+                <tr th:each="summary : ${urgentCustomers}">
+                    <td><strong th:text="${summary.customer.name}"></strong></td>
+                    <td th:text="${summary.customer.phoneNumber}"></td>
+                    <td th:text="${summary.customer.city ?: '-'}"></td>
+                    <td th:text="${summary.nextPendingFollowup}"></td>
+                    <td th:text="${summary.nextPendingMinutesLeft ?: 'Unscheduled'}"></td>
+                    <td><span class="comic-tag" th:classappend="${summary.followupStatus == 'ALERT' ? 'tag-danger' : 'tag-warning'}" th:text="${summary.followupStatus == 'ALERT' ? 'Overdue' : 'In Queue'}"></span></td>
+                    <td><a class="comic-btn btn-sm btn-primary" th:href="@{/admin/followups/orders/{id}(id=${summary.customer.customerId})}">Open</a></td>
                 </tr>
             </tbody>
         </table>
     </div>
-
-    <!-- Empty State -->
-    <div class="priority-empty-state" ng-if="!urgentCustomers || urgentCustomers.length === 0" style="text-align: center;">
-        <h4 class="priority-empty-title">All Caught Up</h4>
-        <p class="priority-empty-desc">
-            There are no pending or overdue follow-ups right now.
-        </p>
-    </div>
+    <p class="priority-empty-state" th:if="${#lists.isEmpty(urgentCustomers)}">There are no pending or overdue follow-ups right now.</p>
 </div>
-</body>
-</html>
+</body></html>

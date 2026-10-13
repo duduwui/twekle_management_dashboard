@@ -2,6 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:fragment="headFragment">
     <meta charset="UTF-8">
+    <th:block th:if="${_csrf != null}">
+        <meta name="_csrf" th:content="${_csrf.token}">
+        <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    </th:block>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twekl Admin Dashboard</title>
     <style>
@@ -16,6 +20,7 @@
             display: none !important;
         }
     </style>
+    <link th:if="${activeTab == 'dashboard'}" rel="stylesheet" th:href="@{/css/dashboard.css(v=14)}">
     <!-- Google Fonts (Non-blocking fallback to local system font stack) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

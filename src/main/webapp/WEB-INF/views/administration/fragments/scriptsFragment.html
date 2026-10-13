@@ -2,121 +2,26 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="scriptsFragment" th:remove="tag">
-    <!-- AngularJS Core Library (1.8.2) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    
-    <!-- Core Application & Services -->
-    <script src="/js/core/app.js?v=12.0"></script>
-    <script src="/js/core/dateFilterHelper.js?v=12.0"></script>
-    <script src="/js/core/authService.js?v=12.0"></script>
-    <script src="/js/core/layoutController.js?v=12.0"></script>
-    <script src="/js/core/toast.js?v=12.0"></script>
+    <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+        <script src="/js/core/app.js?v=14"></script>
+        <script src="/js/core/dateFilterHelper.js?v=14"></script>
+        <script src="/js/core/layoutController.js?v=14"></script>
+        <script src="/js/core/toast.js?v=14"></script>
+        <script src="/js/timefilter/timefilter.js?v=14"></script>
+    </th:block>
 
-    <!-- Feature Scripts (Consolidated Service & Controller per Domain) -->
-    <script src="/js/dashboard/dashboard.js?v=13.0"></script>
-    <script src="/js/admin/admin.js?v=13.0"></script>
-    <script src="/js/role/role.js?v=13.0"></script>
-    <script src="/js/followup/followup.js?v=13.0"></script>
-    <script src="/js/timefilter/timefilter.js?v=13.0"></script>
-    <script src="/js/report/report.js?v=13.0"></script>
+    <!-- Load only the current screen. -->
+    <script th:if="${activeTab == 'dashboard'}" src="/js/dashboard/dashboard.js?v=14"></script>
+    <script th:if="${activeTab == 'admins'}" src="/js/admin/admin.js?v=14"></script>
+    <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=14"></script>
+    <script th:if="${activeTab == 'followups'}" src="/js/followup/followup.js?v=15"></script>
+    <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=14"></script>
+    <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=14"></script>
 
     <!-- Clean Sidebar Category Accordion Toggle -->
-    <script>
-    function toggleCategoryNav(name) {
-        var sub = document.getElementById('subnav-' + name);
-        var arrow = document.getElementById('arrow-' + name);
-        if (!sub) return;
-        var isHidden = (sub.style.display === 'none' || getComputedStyle(sub).display === 'none');
-        if (isHidden) {
-            sub.style.display = 'flex';
-            if (arrow) arrow.classList.add('expanded');
-        } else {
-            sub.style.display = 'none';
-            if (arrow) arrow.classList.remove('expanded');
-        }
-    }
+    <script src="/js/core/navigation.js?v=14"></script>
 
-    // In-place async action interceptor: prevents full page reload on delete or toggle actions
-    document.addEventListener("DOMContentLoaded", function() {
-        document.addEventListener("submit", function(e) {
-            var form = e.target;
-            var action = form.getAttribute("action") || "";
-            var isDelete = action.includes("/delete") || action.includes("delete-") || action.includes("delete_");
-            var isToggle = action.includes("/toggle") || action.includes("toggle-") || action.includes("toggle_");
-
-            if (!isDelete && !isToggle) {
-                return;
-            }
-
-            e.preventDefault();
-            var submitBtn = form.querySelector("button[type='submit']");
-            if (submitBtn) submitBtn.disabled = true;
-            var row = form.closest("tr");
-
-            fetch(action, {
-                method: "POST",
-                body: new FormData(form),
-                headers: { "X-Requested-With": "XMLHttpRequest" }
-            }).then(function(res) {
-                if (!res.ok && res.status !== 302 && res.status !== 200) {
-                    throw new Error("Action returned HTTP " + res.status);
-                }
-                if (isDelete && row) {
-                    row.style.transition = "all 0.3s ease-out";
-                    row.style.opacity = "0";
-                    row.style.transform = "translateX(20px)";
-                    setTimeout(function() {
-                        row.remove();
-                        var countEl = document.querySelector(".datatable-info strong");
-                        if (countEl) {
-                            var cur = parseInt(countEl.textContent, 10);
-                            if (!isNaN(cur) && cur > 0) countEl.textContent = (cur - 1);
-                        }
-                    }, 300);
-                    showActionToast("Item deleted successfully", "success");
-                } else if (isToggle && submitBtn) {
-                    submitBtn.disabled = false;
-                    var txt = submitBtn.textContent.trim().toUpperCase();
-                    var isCurrentlyActive = txt.includes("ACTIVE") && !txt.includes("INACTIVE");
-                    if (isCurrentlyActive) {
-                        submitBtn.classList.remove("tag-primary");
-                        submitBtn.classList.add("tag-muted");
-                        submitBtn.textContent = submitBtn.textContent.trim() === "ACTIVE" ? "INACTIVE" : "Inactive";
-                        showActionToast("Status deactivated", "info");
-                    } else {
-                        submitBtn.classList.remove("tag-muted");
-                        submitBtn.classList.add("tag-primary");
-                        submitBtn.textContent = submitBtn.textContent.trim() === "INACTIVE" ? "ACTIVE" : "Active";
-                        showActionToast("Status activated", "success");
-                    }
-                }
-            }).catch(function(err) {
-                if (submitBtn) submitBtn.disabled = false;
-                showActionToast("Action failed: " + err.message, "error");
-            });
-        });
-
-        function showActionToast(msg, type) {
-            var container = document.querySelector(".toast-container");
-            if (!container) {
-                container = document.createElement("div");
-                container.className = "toast-container";
-                document.body.appendChild(container);
-            }
-            var toast = document.createElement("div");
-            toast.className = "comic-toast " + (type || "success");
-            var span = document.createElement("span");
-            span.textContent = msg;
-            toast.appendChild(span);
-            container.appendChild(toast);
-            setTimeout(function() {
-                toast.style.transition = "opacity 0.4s ease";
-                toast.style.opacity = "0";
-                setTimeout(function() { toast.remove(); }, 400);
-            }, 3200);
-        }
-    });
-    </script>
 </div>
 </body>
 </html>

@@ -241,6 +241,5 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         $scope.reportData.followups = $scope.reportData.customers;
     }
 
-    // Auto-load on init
-    $scope.loadReportData();
+    // Initial data comes from the page model. No second request or REST fallback.
 }]);

@@ -1,87 +1,49 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
+<html xmlns:th="http://www.thymeleaf.org"><body>
 <div th:fragment="dashboardKpis" th:remove="tag">
-    <!-- 1. FIVE MAJOR KPI METRICS -->
     <div class="kpi-row-5">
-        
-        <!-- KPI 1: Customers This Week -->
-        <div class="comic-kpi-card kpi-card-clickable" ng-click="openCustomersModal('week')" title="Click to view customers registered this week">
-            <span class="kpi-label">THIS WEEK</span>
-            <span class="kpi-value kpi-primary" ng-bind="stats.customersThisWeek || 0">0</span>
-            <span class="kpi-subtext">Resets every 7 days</span>
-        </div>
-
-        <!-- KPI 2: Customers This Month -->
-        <div class="comic-kpi-card kpi-card-clickable" ng-click="openCustomersModal('month')" title="Click to view customers registered this month">
-            <span class="kpi-label">THIS MONTH</span>
-            <span class="kpi-value kpi-primary" ng-bind="stats.customersThisMonth || 0">0</span>
-            <span class="kpi-subtext">Resets every 30 days</span>
-        </div>
-
-        <!-- KPI 3: Total Customers -->
-        <div class="comic-kpi-card kpi-card-clickable" ng-click="openCustomersModal('all')" title="Click to view all registered customers">
+        <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="7">
+            <span class="kpi-label">LAST 7 DAYS</span>
+            <span class="kpi-value kpi-primary" th:text="${stats.customersThisWeek}">0</span>
+            <span class="kpi-subtext">Customer registrations</span>
+        </button>
+        <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="30">
+            <span class="kpi-label">LAST 30 DAYS</span>
+            <span class="kpi-value kpi-primary" th:text="${stats.customersThisMonth}">0</span>
+            <span class="kpi-subtext">Customer registrations</span>
+        </button>
+        <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="0">
             <span class="kpi-label">TOTAL CUSTOMERS</span>
-            <span class="kpi-value kpi-primary" ng-bind="stats.totalCustomers || 0">0</span>
+            <span class="kpi-value kpi-primary" th:text="${stats.totalCustomers}">0</span>
             <span class="kpi-subtext">All-time total</span>
-        </div>
-
-        <!-- KPI 4: Pending in Queue -->
-        <div class="comic-kpi-card kpi-card-clickable" ng-click="filterPendingQueue()" title="Click to filter Follow-ups table directly to queue">
-            <span class="kpi-label">PENDING IN QUEUE</span>
-            <span class="kpi-value kpi-primary" ng-bind="stats.pendingFollowups || 0">0</span>
-            <span class="kpi-subtext">Click to filter queue</span>
-        </div>
-
-        <!-- KPI 5: Unsatisfied Users -->
-        <div class="comic-kpi-card kpi-card-clickable" ng-class="{'kpi-card-alert': stats.unsatisfiedCount > 0}" ng-click="openUnsatisfiedModal()" title="Click to view unsatisfied customer details and reasons">
-            <span class="kpi-label">UNSATISFIED USERS</span>
-            <span class="kpi-value" ng-class="{'kpi-danger': stats.unsatisfiedCount > 0, 'kpi-primary': stats.unsatisfiedCount === 0}">
-                {{ stats.unsatisfiedCount || 0 }}
-            </span>
-            <span class="kpi-subtext" ng-if="stats.unsatisfiedCount > 0">
-                Click to see reasons
-            </span>
-            <span class="kpi-subtext" ng-if="!stats.unsatisfiedCount || stats.unsatisfiedCount === 0">
-                Zero complaints
-            </span>
-        </div>
-
+        </button>
+        <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=IDLE)}">
+            <span class="kpi-label">IN QUEUE</span>
+            <span class="kpi-value kpi-primary" th:text="${stats.inQueueFollowups}">0</span>
+            <span class="kpi-subtext">Pending checks not yet overdue</span>
+        </a>
+        <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="unsatisfiedFeedback">
+            <span class="kpi-label">UNSATISFIED FEEDBACK</span>
+            <span class="kpi-value" th:classappend="${stats.unsatisfiedCount > 0 ? 'kpi-danger' : 'kpi-primary'}" th:text="${stats.unsatisfiedCount}">0</span>
+            <span class="kpi-subtext">View feedback and reasons</span>
+        </button>
     </div>
-
-    <!-- 2. VISUAL PROGRESS -->
-    <div class="visual-progress-card visual-progress-clickable" ng-click="openProgressModal()" title="Click to view detailed follow-up completion breakdown">
+    <div class="visual-progress-card">
         <div class="visual-progress-header">
             <span class="visual-progress-title">Follow-up Completion Progress</span>
-            <span class="visual-progress-percent">{{ stats.completionPercentage || 0 }}% Completed</span>
+            <button type="button" class="comic-btn btn-sm btn-ghost" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|">View progress</button>
         </div>
-        
-        <!-- Multi-Color Segmented Progress Bar -->
-        <div class="visual-bar-track">
-            <div class="visual-bar-completed" ng-style="{'width': (stats.completedPercentage || stats.completionPercentage || 0) + '%'}" title="Completed: {{ stats.completedFollowups || 0 }} ({{ stats.completedPercentage || stats.completionPercentage || 0 }}%)"></div>
-            <div class="visual-bar-overdue" ng-style="{'width': (stats.overduePercentage || 0) + '%'}" title="Overdue: {{ stats.overdueFollowups != null ? stats.overdueFollowups : stats.alertFollowups }} ({{ stats.overduePercentage || 0 }}%)"></div>
-            <div class="visual-bar-inqueue" ng-style="{'width': (stats.inQueuePercentage || 0) + '%'}" title="In Queue: {{ stats.inQueueFollowups != null ? stats.inQueueFollowups : stats.pendingFollowups }} ({{ stats.inQueuePercentage || 0 }}%)"></div>
+        <div class="visual-bar-track" aria-hidden="true">
+            <div class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
+            <div class="visual-bar-overdue" th:style="|width: ${stats.overduePercentage}%|"></div>
+            <div class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
         </div>
-
-        <!-- Centered Legend -->
-        <div class="visual-legend-row" style="justify-content: center; text-align: center;">
-            <div class="legend-item">
-                <span class="legend-dot dot-completed"></span>
-                <span>Completed: <strong>{{ stats.completedFollowups || 0 }}</strong> ({{ stats.completedPercentage || stats.completionPercentage || 0 }}%)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot dot-overdue"></span>
-                <span>Overdue: <strong>{{ stats.overdueFollowups != null ? stats.overdueFollowups : stats.alertFollowups }}</strong> ({{ stats.overduePercentage || 0 }}%)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot dot-inqueue"></span>
-                <span>In Queue: <strong>{{ stats.inQueueFollowups != null ? stats.inQueueFollowups : stats.pendingFollowups }}</strong> ({{ stats.inQueuePercentage || 0 }}%)</span>
-            </div>
-            <div class="legend-item">
-                <span>Total Checks: <strong>{{ stats.totalFollowups || (stats.completedFollowups + stats.pendingFollowups) || 0 }}</strong></span>
-            </div>
+        <div class="visual-legend-row">
+            <span class="legend-item">Completed: <strong th:text="${stats.completedFollowups}">0</strong></span>
+            <span class="legend-item">Overdue: <strong th:text="${stats.overdueFollowups}">0</strong></span>
+            <span class="legend-item">In queue: <strong th:text="${stats.inQueueFollowups}">0</strong></span>
+            <span class="legend-item">Total checks: <strong th:text="${stats.totalFollowups}">0</strong></span>
         </div>
     </div>
 </div>
-</body>
-</html>
+</body></html>

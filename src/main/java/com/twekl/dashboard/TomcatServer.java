@@ -4,11 +4,8 @@ import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.catalina.webresources.StandardRoot;
-import org.springframework.web.SpringServletContainerInitializer;
-import com.twekl.dashboard.config.administrative.AppInitializer;
 
 import java.io.File;
-import java.util.Collections;
 
 /**
  * Pure Apache Tomcat 10.1 Standalone Runner.
@@ -27,7 +24,13 @@ public class TomcatServer {
 
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(port);
-        tomcat.getConnector();
+        // Conservative defaults for a shared host; tune from measured concurrency.
+        var connector = tomcat.getConnector();
+        connector.setProperty("maxThreads", System.getenv().getOrDefault("HTTP_MAX_THREADS", "40"));
+        connector.setProperty("minSpareThreads", "4");
+        connector.setProperty("maxConnections", System.getenv().getOrDefault("HTTP_MAX_CONNECTIONS", "256"));
+        connector.setProperty("acceptCount", "50");
+        connector.setProperty("connectionTimeout", "20000");
 
         String baseDir = new File("target/tomcat-work").getAbsolutePath();
         new File(baseDir).mkdirs();

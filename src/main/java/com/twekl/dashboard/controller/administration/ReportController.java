@@ -26,13 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RequestMapping("/admin/reports")
 public class ReportController {
 
-    @Autowired
-    private ReportService reportService;
+    private final ReportService reportService;
 
-    public ReportController() {
-    }
-
-    @Autowired
     public ReportController(ReportService reportService) {
         this.reportService = reportService;
     }

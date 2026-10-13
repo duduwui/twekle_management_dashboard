@@ -24,16 +24,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RequestMapping("/admin/followups")
 public class FollowupController {
 
-    @Autowired
-    private FollowupService followupService;
+    private final FollowupService followupService;
+    private final AdminService adminService;
 
-    @Autowired
-    private AdminService adminService;
-
-    public FollowupController() {
-    }
-
-    @Autowired
     public FollowupController(FollowupService followupService, AdminService adminService) {
         this.followupService = followupService;
         this.adminService = adminService;

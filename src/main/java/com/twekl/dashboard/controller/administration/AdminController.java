@@ -26,16 +26,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RequestMapping("/admin/admins")
 public class AdminController {
 
-    @Autowired
-    private AdminService adminService;
+    private final AdminService adminService;
+    private final RoleService roleService;
 
-    @Autowired
-    private RoleService roleService;
-
-    public AdminController() {
-    }
-
-    @Autowired
     public AdminController(AdminService adminService, RoleService roleService) {
         this.adminService = adminService;
         this.roleService = roleService;

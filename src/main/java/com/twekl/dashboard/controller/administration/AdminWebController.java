@@ -32,25 +32,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class AdminWebController {
 
-    @Autowired
-    private CustomerService customerService;
+    private final CustomerService customerService;
+    private final FollowupService followupService;
+    private final ReportService reportService;
+    private final AdminService adminService;
+    private final TimeFilterService timeFilterService;
 
-    @Autowired
-    private FollowupService followupService;
-
-    @Autowired
-    private ReportService reportService;
-
-    @Autowired
-    private AdminService adminService;
-
-    @Autowired
-    private TimeFilterService timeFilterService;
-
-    public AdminWebController() {
-    }
-
-    @Autowired
     public AdminWebController(CustomerService customerService,
                               FollowupService followupService,
                               ReportService reportService,

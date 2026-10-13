@@ -27,16 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RequestMapping("/admin/customers")
 public class CustomerController {
 
-    @Autowired
-    private CustomerService customerService;
+    private final CustomerService customerService;
+    private final FollowupService followupService;
 
-    @Autowired
-    private FollowupService followupService;
-
-    public CustomerController() {
-    }
-
-    @Autowired
     public CustomerController(CustomerService customerService, FollowupService followupService) {
         this.customerService = customerService;
         this.followupService = followupService;

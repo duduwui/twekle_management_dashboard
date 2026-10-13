@@ -20,13 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RequestMapping("/admin/stats")
 public class DashboardController {
 
-    @Autowired
-    private DashboardService dashboardService;
+    private final DashboardService dashboardService;
 
-    public DashboardController() {
-    }
-
-    @Autowired
     public DashboardController(DashboardService dashboardService) {
         this.dashboardService = dashboardService;
     }

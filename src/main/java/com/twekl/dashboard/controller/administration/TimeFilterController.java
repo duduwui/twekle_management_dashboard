@@ -107,7 +107,7 @@ public class TimeFilterController {
     // REST API ENDPOINTS (/admin/time-filters)
     // =========================================================
 
-    @GetMapping(value = {"/admin/time_filters", "/admin/time-filters"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = {"/admin/time_filters", "/admin/time-filters", "/admin/presets"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<TimeFilterPreset>>> getAllPresetsRest() {

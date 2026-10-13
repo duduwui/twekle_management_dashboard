@@ -30,6 +30,9 @@ public class TomcatServer {
         connector.setProperty("maxConnections", System.getenv().getOrDefault("HTTP_MAX_CONNECTIONS", "1024"));
         connector.setProperty("acceptCount", System.getenv().getOrDefault("HTTP_ACCEPT_COUNT", "200"));
         connector.setProperty("connectionTimeout", "20000");
+        connector.setProperty("compression", "on");
+        connector.setProperty("compressionMinSize", "256");
+        connector.setProperty("compressableMimeType", "text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json");
 
         String baseDir = new File("target/tomcat-work").getAbsolutePath();
         new File(baseDir).mkdirs();

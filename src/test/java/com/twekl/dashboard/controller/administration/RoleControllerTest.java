@@ -67,8 +67,8 @@ public class RoleControllerTest {
         mockMvc.perform(get("/admin/roles").accept(org.springframework.http.MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(view().name("administration/role/roles"))
-                .andExpect(model().attributeExists("roleList"))
-                .andExpect(model().attributeExists("adminList"));
+                .andExpect(model().attributeExists("roles"))
+                .andExpect(model().attributeExists("admins"));
     }
 
     @Test

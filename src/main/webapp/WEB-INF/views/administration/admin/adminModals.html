@@ -35,7 +35,7 @@
                     <div class="role-template-pills-row">
                         <button type="button" 
                                 class="role-pill-btn" 
-                                th:each="role : ${roleList}"
+                                th:each="role : ${roles}"
                                 th:data-role-name="${role.name}"
                                 th:data-can-create="${role.canCreate}"
                                 th:data-can-read="${role.canRead}"

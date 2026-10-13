@@ -18,11 +18,10 @@ import java.util.Set;
 /**
  * Controller for Role & Permission templates management.
  * Consolidates SSR view rendering and administrative role actions.
- * Implements RoleOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/roles")
-public class RoleController implements RoleOperations {
+public class RoleController {
 
     private final RoleService roleService;
     private final AdminService adminService;
@@ -36,7 +35,6 @@ public class RoleController implements RoleOperations {
     // SSR VIEW ENDPOINTS
     // =========================================================
 
-    @Override
     @GetMapping
     public String showRoles(@RequestParam(value = "selectedAdminId", required = false) Long selectedAdminId,
                             Model model) {
@@ -45,8 +43,6 @@ public class RoleController implements RoleOperations {
         List<Role> roles = roleService.findAll();
         model.addAttribute("admins", admins);
         model.addAttribute("roles", roles);
-        model.addAttribute("adminList", admins);
-        model.addAttribute("roleList", roles);
         model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
 
         Admin selectedAdmin = null;
@@ -63,7 +59,6 @@ public class RoleController implements RoleOperations {
         return "administration/role/roles";
     }
 
-    @Override
     @PostMapping({"/create_role", "/create", "/create-role"})
     public String createRoleSsr(@ModelAttribute("newRole") RoleDto request, RedirectAttributes flash) {
         if (request.getName() == null || request.getName().trim().isEmpty()) {
@@ -79,7 +74,6 @@ public class RoleController implements RoleOperations {
         return "redirect:/admin/roles";
     }
 
-    @Override
     @PostMapping({"/{roleId:\\d+}/update_role", "/{roleId:\\d+}/update", "/{roleId:\\d+}/update-role"})
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
                                 @ModelAttribute RoleDto request,
@@ -93,7 +87,6 @@ public class RoleController implements RoleOperations {
         return "redirect:/admin/roles";
     }
 
-    @Override
     @PostMapping({"/{adminId:\\d+}/assign_user_role", "/{adminId:\\d+}/assign", "/assign", "/assign_user_role", "/assign-user-role"})
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
@@ -130,7 +123,6 @@ public class RoleController implements RoleOperations {
         return "redirect:/admin/roles?selectedAdminId=" + targetAdminId;
     }
 
-    @Override
     @PostMapping("/{roleId:\\d+}/delete")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
         try {

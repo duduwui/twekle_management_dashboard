@@ -1,54 +1,164 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
+import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
 import com.twekl.dashboard.model.administration.Admin;
-import com.twekl.dashboard.model.administration.Role;
-import com.twekl.dashboard.service.administration.AdminService;
-import com.twekl.dashboard.service.administration.RoleService;
+import com.twekl.dashboard.service.administration.*;
 import jakarta.validation.Valid;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.File;
+import java.util.Comparator;
 import java.util.List;
 
 /**
- * Controller for Staff Administrators and Permissions management.
+ * Primary Administrative & Web Portal Controller.
  * Consolidates SSR view rendering and administrative actions.
- * Implements AdminOperations interface contract.
  */
 @Controller
-@RequestMapping("/admin/admins")
-public class AdminController implements AdminOperations {
+public class AdminController {
 
     private final AdminService adminService;
     private final RoleService roleService;
+    private final CustomerService customerService;
+    private final FollowupService followupService;
+    private final ReportService reportService;
+    private final TimeFilterService timeFilterService;
 
-    public AdminController(AdminService adminService, RoleService roleService) {
+    public AdminController(AdminService adminService,
+                           RoleService roleService,
+                           CustomerService customerService,
+                           FollowupService followupService,
+                           ReportService reportService,
+                           TimeFilterService timeFilterService) {
         this.adminService = adminService;
         this.roleService = roleService;
+        this.customerService = customerService;
+        this.followupService = followupService;
+        this.reportService = reportService;
+        this.timeFilterService = timeFilterService;
+    }
+
+    private boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
+    }
+
+    @ModelAttribute("currentUser")
+    public Admin populateCurrentUser() {
+        return adminService.getCurrentAdmin().orElse(null);
     }
 
     // =========================================================
-    // SSR VIEW ENDPOINTS
+    // GENERAL PORTAL & AUTH ENDPOINTS
     // =========================================================
 
-    @Override
-    @GetMapping
+    @GetMapping(value = "/k6-report.html", produces = MediaType.TEXT_HTML_VALUE)
+    @ResponseBody
+    public ResponseEntity<Resource> showK6Report() {
+        File file = new File("src/main/webapp/k6-report.html");
+        if (!file.exists()) {
+            file = new File("/opt/twekl-dashboard/src/main/webapp/k6-report.html");
+        }
+        if (file.exists()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_HTML)
+                    .body(new FileSystemResource(file));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/login")
+    public String showLoginForm() {
+        if (isAuthenticated()) {
+            return "redirect:/admin/dashboard";
+        }
+        return "administration/login";
+    }
+
+    @GetMapping({"/", "/admin", "/admin/"})
+    public String handleRootRedirect() {
+        if (isAuthenticated()) {
+            return "redirect:/admin/dashboard";
+        }
+        return "redirect:/login";
+    }
+
+    @GetMapping("/admin/dashboard")
+    public String showDashboard(Model model) {
+        if (!isAuthenticated()) return "redirect:/login";
+
+        List<CustomerFollowupSummary> summaries = followupService.findAllSummaries("ALL");
+        List<CustomerFollowupSummary> urgent = summaries.stream()
+                .filter(s -> !s.isAllFollowupsCompleted() && ("ALERT".equalsIgnoreCase(s.getFollowupStatus()) || "IDLE".equalsIgnoreCase(s.getFollowupStatus())))
+                .sorted(Comparator.comparing(CustomerFollowupSummary::getNextPendingMinutesLeft,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
+        model.addAttribute("activeTab", "dashboard");
+        model.addAttribute("stats", customerService.getStats());
+        model.addAttribute("urgentCustomers", urgent);
+        model.addAttribute("allCustomers", summaries);
+        model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL").stream()
+                .filter(item -> item.getRating() <= 2 || "UNSATISFIED".equalsIgnoreCase(item.getSatisfaction()))
+                .toList());
+        return "administration/dashboard/dashboard";
+    }
+
+    @GetMapping(value = {"/admin/followups", "/admin/followups/**"}, produces = MediaType.TEXT_HTML_VALUE)
+    public String showCustomers(Model model) {
+        if (!isAuthenticated()) return "redirect:/login";
+
+        model.addAttribute("activeTab", "followups");
+        model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
+        model.addAttribute("presets", timeFilterService.findAll());
+        return "administration/followup/followups";
+    }
+
+    @GetMapping(value = "/admin/customers", produces = MediaType.TEXT_HTML_VALUE)
+    public String redirectCustomers() {
+        return "redirect:/admin/followups";
+    }
+
+    @GetMapping(value = "/admin/reports", produces = MediaType.TEXT_HTML_VALUE)
+    public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                              @RequestParam(value = "tab", defaultValue = "milestones") String tab,
+                              Model model) {
+        if (!isAuthenticated()) return "redirect:/login";
+
+        Admin admin = adminService.getCurrentAdmin().orElse(null);
+        if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
+            return "redirect:/admin/dashboard";
+        }
+
+        model.addAttribute("activeTab", "reports");
+        model.addAttribute("reportSubTab", tab);
+        model.addAttribute("period", period);
+        model.addAttribute("reportData", reportService.generateReport(period));
+        model.addAttribute("presets", timeFilterService.findAll());
+        return "administration/report/reports";
+    }
+
+    // =========================================================
+    // STAFF ADMINISTRATORS ENDPOINTS
+    // =========================================================
+
+    @GetMapping("/admin/admins")
     public String showAdmins(Model model) {
+        if (!isAuthenticated()) return "redirect:/login";
         model.addAttribute("activeTab", "admins");
-        List<Admin> admins = adminService.findAll();
-        List<Role> roles = roleService.findAll();
-        model.addAttribute("admins", admins);
-        model.addAttribute("roles", roles);
-        model.addAttribute("adminList", admins);
-        model.addAttribute("roleList", roles);
+        model.addAttribute("admins", adminService.findAll());
+        model.addAttribute("roles", roleService.findAll());
         model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
         if (!model.containsAttribute("newAdmin")) {
             model.addAttribute("newAdmin", new CreateAdminRequest());
@@ -56,8 +166,7 @@ public class AdminController implements AdminOperations {
         return "administration/admin/admins";
     }
 
-    @Override
-    @PostMapping("/create-admin")
+    @PostMapping("/admin/admins/create-admin")
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
                                  RedirectAttributes flash) {
@@ -74,8 +183,7 @@ public class AdminController implements AdminOperations {
         return "redirect:/admin/admins";
     }
 
-    @Override
-    @PostMapping("/{adminId:\\d+}/toggle-status")
+    @PostMapping("/admin/admins/{adminId:\\d+}/toggle-status")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
             Admin toggled = adminService.toggleStatus(adminId);
@@ -86,8 +194,7 @@ public class AdminController implements AdminOperations {
         return "redirect:/admin/admins";
     }
 
-    @Override
-    @PostMapping("/{adminId:\\d+}/delete-admin")
+    @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
             adminService.deleteAdmin(adminId);

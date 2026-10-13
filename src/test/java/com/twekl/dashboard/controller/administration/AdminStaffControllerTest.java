@@ -67,8 +67,8 @@ public class AdminStaffControllerTest {
         mockMvc.perform(get("/admin/admins").accept(org.springframework.http.MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(view().name("administration/admin/admins"))
-                .andExpect(model().attributeExists("adminList"))
-                .andExpect(model().attributeExists("roleList"));
+                .andExpect(model().attributeExists("admins"))
+                .andExpect(model().attributeExists("roles"));
     }
 
     @Test

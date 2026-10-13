@@ -24,7 +24,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr th:each="adm : ${adminList}"
+                <tr th:each="adm : ${admins}"
                     th:id="'admin-row-' + ${adm.id}"
                     class="admin-table-row"
                     th:data-admin-id="${adm.id}"
@@ -77,7 +77,7 @@
                         </div>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(adminList)}">
+                <tr th:if="${#lists.isEmpty(admins)}">
                     <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 700;">
                         No administrators found.
                     </td>

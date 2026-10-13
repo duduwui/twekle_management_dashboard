@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="reportCustomers" ng-show="reportSubTab === 'customers'" style="display: flex; flex-direction: column; gap: 16px;">
+<div th:fragment="reportFollowups" ng-show="reportSubTab === 'followups' || reportSubTab === 'customers'" style="display: flex; flex-direction: column; gap: 16px;">
     <div class="comic-filter-toolbar">
         <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
             <span class="filter-date-label">From:</span>
@@ -27,7 +27,7 @@
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div class="filter-search-box" style="min-width: 210px;">
-                <input type="search" class="comic-search-bar" placeholder="Search customer by name, phone, city..." ng-model="reportFilters.searchCustomers">
+                <input type="search" class="comic-search-bar" placeholder="Search follow-ups by name, phone, city..." ng-model="reportFilters.searchCustomers">
             </div>
             <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportCsv()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV
@@ -40,7 +40,7 @@
             <thead>
                 <tr>
                     <th class="nowrap" style="width: 80px;">ID</th>
-                    <th>Customer Name</th>
+                    <th>Name</th>
                     <th class="nowrap col-phone">Phone Number</th>
                     <th>City</th>
                     <th class="nowrap" style="text-align: center;">Orders in Period</th>
@@ -75,7 +75,7 @@
                 </tr>
                 <tr ng-if="getFilteredReportCustomers().length === 0">
                     <td colspan="8" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
-                        No customer records found for the selected period.
+                        No follow-up records found for the selected period.
                     </td>
                 </tr>
             </tbody>

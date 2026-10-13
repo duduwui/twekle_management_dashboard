@@ -124,10 +124,10 @@
                    th:classappend="${activeTab == 'reports' and reportSubTab == 'products'} ? 'active' : ''">
                     <span>Product Insights</span>
                 </a>
-                <a th:href="@{/admin/reports(tab='customers')}" 
+                <a th:href="@{/admin/reports(tab='followups')}" 
                    class="nav-sub-item" 
-                   th:classappend="${activeTab == 'reports' and reportSubTab == 'customers'} ? 'active' : ''">
-                    <span>Customer Directory</span>
+                   th:classappend="${activeTab == 'reports' and (reportSubTab == 'customers' or reportSubTab == 'followups')} ? 'active' : ''">
+                    <span>Follow-ups Summary</span>
                 </a>
             </div>
         </div>

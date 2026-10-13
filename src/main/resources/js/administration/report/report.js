@@ -1,8 +1,22 @@
 /**
- * Report Feature Controller
- * Manages Report Navigation, Milestone Turnaround, Satisfaction Scores, Product Insights, and Customer Summaries.
+ * Report Feature - Service & Controller
+ * Consolidated service and controller for Report Navigation, Milestone Turnaround, Satisfaction Scores, Product Insights, and Follow-up Summaries.
  */
 angular.module('tweklApp')
+.factory('ReportService', ['$http', function($http) {
+    var BASE = '/admin/reports';
+
+    function get(period, params) {
+        var config = { params: params || {} };
+        if (period) config.params.period = period;
+        return $http.get(BASE, config);
+    }
+
+    return {
+        getReports: function(period, params) { return get(period, params); },
+        get: function(period, params) { return get(period, params); }
+    };
+}])
 .controller('ReportController', [
     '$scope', '$http', 'ReportService', 'ToastService', 'FilterHelperService',
 function($scope, $http, ReportService, ToastService, FilterHelperService) {
@@ -12,7 +26,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         milestones: [],
         satisfaction: { breakdown: [], totalRated: 0, positiveRate: 0, recentNotes: [] },
         products: [],
-        customers: []
+        customers: [],
+        followups: []
     };
 
     // Default Date From: Today, Date To: Tomorrow / Next Day
@@ -24,7 +39,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         searchPending: '',
         searchNotes: '',
         searchProducts: '',
-        searchCustomers: ''
+        searchCustomers: '',
+        searchFollowups: ''
     };
 
     $scope.showReportFilterModal = false;
@@ -36,6 +52,9 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     $scope.reportSubTab = tabParam || window.SERVER_REPORT_SUBTAB || ($scope.$parent && $scope.$parent.reportSubTab) || 'milestones';
+    if ($scope.reportSubTab === 'customers') {
+        $scope.reportSubTab = 'followups';
+    }
 
     $scope.setReportSubTab = function(subTab) {
         $scope.reportSubTab = subTab;
@@ -51,7 +70,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     $scope.$on('reportSubTab:changed', function(event, subTab) {
-        $scope.reportSubTab = subTab;
+        $scope.reportSubTab = (subTab === 'customers') ? 'followups' : subTab;
     });
 
     /**
@@ -68,6 +87,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             $scope.reportData.satisfaction = data.satisfaction || { breakdown: [], recentNotes: [] };
             $scope.reportData.products = data.products || [];
             $scope.reportData.customers = data.customers || [];
+            $scope.reportData.followups = $scope.reportData.customers;
         }, function(err) {
             $scope.loading = false;
             ToastService.error('Failed to load report analytics');
@@ -180,12 +200,14 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     $scope.getFilteredReportCustomers = function() {
-        var custs = $scope.reportData.customers || [];
+        var custs = $scope.reportData.followups || $scope.reportData.customers || [];
+        var search = $scope.reportFilters.searchFollowups || $scope.reportFilters.searchCustomers;
         return custs.filter(function(c) {
-            if ($scope.reportFilters.searchCustomers && !FilterHelperService.searchMatch(JSON.stringify(c), $scope.reportFilters.searchCustomers)) return false;
+            if (search && !FilterHelperService.searchMatch(JSON.stringify(c), search)) return false;
             return true;
         });
     };
+    $scope.getFilteredReportFollowups = $scope.getFilteredReportCustomers;
 
     $scope.exportReportCsv = function() {
         ToastService.info('Exporting CSV report...');
@@ -216,6 +238,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         $scope.reportData.satisfaction = srd.satisfaction || { breakdown: [], recentNotes: [] };
         $scope.reportData.products = srd.products || [];
         $scope.reportData.customers = srd.customers || [];
+        $scope.reportData.followups = $scope.reportData.customers;
     }
 
     // Auto-load on init

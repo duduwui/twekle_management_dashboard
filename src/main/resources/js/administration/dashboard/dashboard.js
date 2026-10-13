@@ -1,8 +1,24 @@
 /**
- * Dashboard Feature Controller
- * Manages KPI Cards, Visual Progress Bar, and Urgent Priority Attention Table.
+ * Dashboard Feature Service & Controller
+ * Consolidated service and controller for dashboard statistics, KPIs, and priority follow-ups.
  */
 angular.module('tweklApp')
+.factory('DashboardStatsService', ['$http', function($http) {
+    return {
+        getSummary: function() {
+            return $http.get('/admin/stats/summary');
+        },
+        getCustomers: function() {
+            return $http.get('/admin/customers');
+        },
+        getSatisfactionDetails: function() {
+            return $http.get('/admin/reports/satisfaction?period=ALL');
+        },
+        getReports: function() {
+            return $http.get('/admin/reports?period=ALL');
+        }
+    };
+}])
 .controller('DashboardController', [
     '$scope', '$rootScope', '$interval', 'DashboardStatsService', 'ToastService',
 function($scope, $rootScope, $interval, DashboardStatsService, ToastService) {
@@ -38,6 +54,7 @@ function($scope, $rootScope, $interval, DashboardStatsService, ToastService) {
             var data = (res && res.data && res.data.data !== undefined) ? res.data.data : (res ? res.data : {});
             if (data) {
                 angular.extend($scope.stats, data);
+
                 var total = $scope.stats.totalFollowups || (($scope.stats.completedFollowups || 0) + ($scope.stats.pendingFollowups || 0)) || 0;
                 var completed = $scope.stats.completedFollowups || 0;
                 var overdue = $scope.stats.overdueFollowups != null ? $scope.stats.overdueFollowups : ($scope.stats.alertFollowups || 0);

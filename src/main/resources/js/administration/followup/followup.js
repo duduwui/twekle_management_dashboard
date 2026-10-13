@@ -1,7 +1,54 @@
 /**
- * Follow-up & Customer Feature Coordinator Controller
- * Manages Customer Directory (4.1), Order Logs (4.2), Follow-up Checklists, and Reviews/Feedback (4.3).
+ * Follow-up Feature - Services & Controllers
+ * Consolidated service and controllers for Follow-up Directory, Order Timelines, Milestone Checklists, and Customer Feedback Reviews.
  */
+angular.module('tweklApp')
+
+/* =========================================================
+   FOLLOWUP SERVICE & CUSTOMER SERVICE ALIAS
+   ========================================================= */
+.factory('FollowupService', ['$http', function($http) {
+    var BASE = '/admin/followups';
+    var CUSTOMERS = '/admin/customers';
+    var ORDERS = '/admin/orders';
+
+    var service = {
+        // Customer directory & stats
+        getAll: function(timeFilter) {
+            return $http.get(CUSTOMERS, { params: timeFilter ? { timeFilter: timeFilter } : {} });
+        },
+        getById: function(id) {
+            return $http.get(CUSTOMERS + '/' + id);
+        },
+        getOrders: function(customerId) {
+            return $http.get(CUSTOMERS + '/' + customerId + '/orders');
+        },
+        getStats: function() {
+            return $http.get(CUSTOMERS + '/stats');
+        },
+
+        // Follow-up checklists & milestone updates
+        getFollowups: function(orderId) {
+            return $http.get(ORDERS + '/' + orderId + '/followups');
+        },
+        updateFollowup: function(id, data) {
+            return $http.put(BASE + '/' + id, data);
+        },
+        toggleStatus: function(id) {
+            return $http.patch(BASE + '/' + id + '/status', {});
+        }
+    };
+
+    return service;
+}])
+.factory('CustomerService', ['FollowupService', function(FollowupService) {
+    // Backward-compatible alias for existing controllers
+    return FollowupService;
+}]);
+
+/* =========================================================
+   FOLLOWUP CONTROLLER (MAIN FEATURE COORDINATOR)
+   ========================================================= */
 var followupControllerDefinition = [
     '$scope', '$http', '$timeout', '$window', '$interval', 'CustomerService', 'FollowupService', 'ToastService', 'FilterHelperService',
 function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupService, ToastService, FilterHelperService) {
@@ -379,7 +426,7 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
     };
 
     /**
-     * Toggle milestone checkpoint status (Yes ✔ / No ✖)
+     * Toggle milestone checkpoint status (Yes / No)
      */
     $scope.toggleFollowupCheck = function(order, check) {
         FollowupService.toggleStatus(check.id).then(function(res) {
@@ -584,7 +631,7 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
 
     // Listen for tab activation to ensure data is loaded
     $scope.$on('tab:changed', function(event, tab) {
-        if (tab === 'customers') {
+        if (tab === 'customers' || tab === 'followups') {
             if (!$scope.customers || $scope.customers.length === 0) {
                 $scope.loadCustomers();
             }
@@ -612,7 +659,303 @@ function($scope, $http, $timeout, $window, $interval, CustomerService, FollowupS
     $scope.loadCustomers();
 }];
 
-// Register under both FollowupController and CustomerController
+// Register FollowupController and CustomerController
 angular.module('tweklApp')
 .controller('FollowupController', followupControllerDefinition)
-.controller('CustomerController', followupControllerDefinition);
+.controller('CustomerController', followupControllerDefinition)
+
+/* =========================================================
+   ORDER CONTROLLER (SUB-VIEW CONTROLLER)
+   ========================================================= */
+.controller('OrderController', [
+    '$scope', '$timeout', 'CustomerService', 'FollowupService', 'ToastService', 'FilterHelperService',
+function($scope, $timeout, CustomerService, FollowupService, ToastService, FilterHelperService) {
+
+    $scope.customerOrders = $scope.customerOrders || [];
+    $scope.orderFollowups = $scope.orderFollowups || {};
+    $scope.expandedOrderId = null;
+    $scope.targetMilestoneHighlight = null;
+
+    $scope.orderDt = {
+        currentPage: 1,
+        pageSize: 10,
+        sortField: 'id',
+        sortReverse: true,
+        totalItems: 0
+    };
+
+    $scope.orderFilters = {
+        search: '',
+        dateFrom: FilterHelperService.getToday(),
+        dateTo: FilterHelperService.getTomorrow(),
+        dateFilterApplied: false
+    };
+
+    $scope.loadCustomerOrders = function(customerId) {
+        if (!customerId) return;
+        CustomerService.getOrders(customerId).then(function(res) {
+            var raw = res.data;
+            var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+            $scope.customerOrders = list;
+            list.forEach(function(ord) {
+                $scope.loadOrderFollowups(ord.id);
+            });
+        }, function(err) {
+            ToastService.error('Failed to load customer orders');
+        });
+    };
+
+    $scope.loadOrderFollowups = function(orderId) {
+        if (!orderId) return;
+        FollowupService.getFollowups(orderId).then(function(res) {
+            var raw = res.data;
+            $scope.orderFollowups[orderId] = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+        });
+    };
+
+    $scope.getFilteredCustomerOrders = function() {
+        return FilterHelperService.filterTable($scope.customerOrders, $scope.orderFilters, null);
+    };
+
+    $scope.getPagedCustomerOrders = function() {
+        return FilterHelperService.filterTable($scope.customerOrders, $scope.orderFilters, $scope.orderDt);
+    };
+
+    $scope.sortOrdersBy = function(field) {
+        if ($scope.orderDt.sortField === field) {
+            $scope.orderDt.sortReverse = !$scope.orderDt.sortReverse;
+        } else {
+            $scope.orderDt.sortField = field;
+            $scope.orderDt.sortReverse = false;
+        }
+    };
+
+    $scope.getOrderSortIndicator = function(field) {
+        if ($scope.orderDt.sortField !== field) return '';
+        return $scope.orderDt.sortReverse ? '▼' : '▲';
+    };
+
+    $scope.toggleOrderExpand = function(order, $event) {
+        if ($event) $event.stopPropagation();
+        if ($scope.expandedOrderId === order.id) {
+            $scope.expandedOrderId = null;
+        } else {
+            $scope.expandedOrderId = order.id;
+            if (!$scope.orderFollowups[order.id]) {
+                $scope.loadOrderFollowups(order.id);
+            }
+        }
+    };
+
+    $scope.isOrderExpanded = function(orderId) {
+        return $scope.expandedOrderId === orderId;
+    };
+
+    $scope.isMilestoneHighlighted = function(check) {
+        if (!$scope.targetMilestoneHighlight || !check) return false;
+        return check.presetName === $scope.targetMilestoneHighlight;
+    };
+
+    $scope.formatOrderAge = function(order) {
+        if (!order || !order.orderDate) return 'Due';
+        var diffMs = Date.now() - new Date(order.orderDate).getTime();
+        var totalMins = Math.floor(diffMs / 60000);
+        if (totalMins < 60) return totalMins + 'm ago';
+        var hours = Math.floor(totalMins / 60);
+        if (hours < 24) return hours + 'h ago';
+        var days = Math.floor(hours / 24);
+        var remH = hours % 24;
+        return remH > 0 ? (days + 'd ' + remH + 'h ago') : (days + 'd ago');
+    };
+
+    $scope.formatCountdown = function(minutes) {
+        if (minutes == null || minutes < 0) return 'Soon';
+        if (minutes < 60) return minutes + 'm';
+        var hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + 'h';
+        var days = Math.floor(hours / 24);
+        var remH = hours % 24;
+        return remH > 0 ? (days + 'd ' + remH + 'h') : (days + 'd');
+    };
+
+    $scope.getTotalOrderPages = function(totalItems) {
+        return Math.ceil((totalItems || 1) / $scope.orderDt.pageSize) || 1;
+    };
+
+    $scope.getOrderPageNumbers = function(totalItems) {
+        var total = $scope.getTotalOrderPages(totalItems);
+        var pages = [];
+        for (var i = 1; i <= total; i++) pages.push(i);
+        return pages;
+    };
+
+    $scope.setOrderPage = function(page) {
+        if (page >= 1 && page <= $scope.getTotalOrderPages($scope.getFilteredCustomerOrders().length)) {
+            $scope.orderDt.currentPage = page;
+        }
+    };
+
+    $scope.toggleFollowupCheck = function(order, check) {
+        FollowupService.toggleStatus(check.id).then(function(res) {
+            var updated = res.data && res.data.data ? res.data.data : res.data;
+            if (updated) {
+                check.isCompleted = updated.completed != null ? updated.completed : !check.isCompleted;
+                check.completed = check.isCompleted;
+                check.status = updated.status || (check.isCompleted ? 'COMPLETED' : 'PENDING');
+            } else {
+                check.isCompleted = !check.isCompleted;
+                check.completed = check.isCompleted;
+            }
+            ToastService.success('Checkpoint status updated');
+            if (order && order.id) {
+                $scope.loadOrderFollowups(order.id);
+            }
+            if ($scope.$parent && $scope.$parent.loadCustomers) {
+                $scope.$parent.loadCustomers();
+            }
+        }, function() {
+            ToastService.error('Failed to toggle status');
+        });
+    };
+
+    $scope.$on('filter:orderTimePresetChanged', function(event, preset) {
+        if (preset) {
+            var range = FilterHelperService.getPresetDateRange(preset);
+            $scope.orderFilters.dateFrom = range.dateFrom;
+            $scope.orderFilters.dateTo = range.dateTo;
+            $scope.orderFilters.dateFilterApplied = true;
+        } else {
+            $scope.orderFilters.dateFrom = FilterHelperService.getToday();
+            $scope.orderFilters.dateTo = FilterHelperService.getTomorrow();
+            $scope.orderFilters.dateFilterApplied = false;
+        }
+        $scope.orderDt.currentPage = 1;
+    });
+
+}])
+
+/* =========================================================
+   FEEDBACK CONTROLLER (SUB-VIEW CONTROLLER)
+   ========================================================= */
+.controller('FeedbackController', [
+    '$scope', '$http', 'FollowupService', 'ToastService',
+function($scope, $http, FollowupService, ToastService) {
+
+    $scope.showEditFollowupModal = false;
+    $scope.editingFollowup = {};
+    $scope.showAddFeedbackModal = false;
+    $scope.newCustomerFeedback = { content: '', satisfaction: null, imageUrl: '', authorName: '', orderId: null };
+    $scope.showEditFeedbackModal = false;
+    $scope.editingCustomerFeedback = {};
+
+    $scope.openEditFollowupModal = function(order, check, $event) {
+        if ($event) $event.stopPropagation();
+        var item = angular.copy(check) || {};
+        item.orderId = order ? order.id : null;
+        item.note = check.note || check.notes || '';
+        item.imageUrl = check.imageUrl || check.photoUrl || '';
+        item.satisfaction = (check.satisfaction && check.satisfaction.trim() !== '') ? check.satisfaction.toUpperCase() : 'NEUTRAL';
+        $scope.editingFollowup = item;
+        $scope.showEditFollowupModal = true;
+        if ($scope.$parent && $scope.$parent.openEditFollowupModal) {
+            $scope.$parent.openEditFollowupModal(order, check, $event);
+        }
+    };
+
+    $scope.closeEditFollowupModal = function() {
+        $scope.showEditFollowupModal = false;
+        $scope.editingFollowup = {};
+        if ($scope.$parent && $scope.$parent.closeEditFollowupModal) {
+            $scope.$parent.closeEditFollowupModal();
+        }
+    };
+
+    $scope.toggleSatisfaction = function(target, val) {
+        if (!target) return;
+        target.satisfaction = val;
+    };
+
+    $scope.handleFollowupImageUpload = function(element) {
+        if (element.files && element.files[0]) {
+            var file = element.files[0];
+            if (!file.type.match('image.*')) {
+                ToastService.error('Please select an image file');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var MAX_WIDTH = 1200;
+                    var MAX_HEIGHT = 1200;
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    $scope.$apply(function() {
+                        $scope.editingFollowup.imageUrl = dataUrl;
+                        if ($scope.$parent && $scope.$parent.editingFollowup) {
+                            $scope.$parent.editingFollowup.imageUrl = dataUrl;
+                        }
+                    });
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    $scope.saveFollowupCheck = function() {
+        if (!$scope.editingFollowup || !$scope.editingFollowup.id) return;
+        var sat = $scope.editingFollowup.satisfaction || 'NEUTRAL';
+        var payload = {
+            notes: $scope.editingFollowup.note || '',
+            photoUrl: $scope.editingFollowup.imageUrl || '',
+            satisfaction: sat
+        };
+        FollowupService.updateFollowup($scope.editingFollowup.id, payload).then(function(res) {
+            ToastService.success('Feedback saved successfully');
+            if ($scope.editingFollowup.orderId && $scope.orderFollowups && $scope.orderFollowups[$scope.editingFollowup.orderId]) {
+                var list = $scope.orderFollowups[$scope.editingFollowup.orderId];
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].id === $scope.editingFollowup.id) {
+                        list[i].note = $scope.editingFollowup.note;
+                        list[i].notes = $scope.editingFollowup.note;
+                        list[i].imageUrl = $scope.editingFollowup.imageUrl;
+                        list[i].photoUrl = $scope.editingFollowup.imageUrl;
+                        list[i].satisfaction = sat;
+                        break;
+                    }
+                }
+            }
+            $scope.closeEditFollowupModal();
+            if ($scope.$parent && $scope.$parent.loadCustomers) {
+                $scope.$parent.loadCustomers();
+            }
+        }, function(err) {
+            ToastService.error('Failed to save feedback');
+        });
+    };
+
+    $scope.goToFeedbackForCheck = function(order, check, $event) {
+        if ($event) $event.stopPropagation();
+        $scope.openEditFollowupModal(order, check, $event);
+    };
+
+}]);

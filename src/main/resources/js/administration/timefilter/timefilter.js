@@ -1,8 +1,22 @@
 /**
- * Time Filter Feature Controller
- * Manages Dynamic Time Filter Presets, Creation, Status Toggling, and Deletion.
+ * Time Filter Feature - Service & Controller
+ * Consolidated service and controller for dynamic time filter presets, creation, status toggling, and deletion.
  */
 angular.module('tweklApp')
+.factory('TimeFilterService', ['$http', function($http) {
+    var BASE = '/admin/time-filters';
+
+    function request(method, path, data) {
+        return $http({ method: method, url: BASE + (path || ''), data: data });
+    }
+
+    return {
+        getAll: function() { return request('GET'); },
+        create: function(data) { return request('POST', '', data); },
+        toggle: function(id) { return request('PATCH', '/' + id + '/toggle'); },
+        delete: function(id) { return request('DELETE', '/' + id); }
+    };
+}])
 .controller('TimeFilterController', [
     '$scope', '$rootScope', 'TimeFilterService', 'ToastService', 'FilterHelperService',
 function($scope, $rootScope, TimeFilterService, ToastService, FilterHelperService) {

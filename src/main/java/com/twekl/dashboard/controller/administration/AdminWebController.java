@@ -16,9 +16,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.File;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Primary Web View Controller for the Admin Portal.
@@ -66,6 +71,21 @@ public class AdminWebController {
     @ModelAttribute("currentUser")
     public Admin populateCurrentUser() {
         return adminService.getCurrentAdmin().orElse(null);
+    }
+
+    @GetMapping(value = "/k6-report.html", produces = MediaType.TEXT_HTML_VALUE)
+    @ResponseBody
+    public ResponseEntity<Resource> showK6Report() {
+        File file = new File("src/main/webapp/k6-report.html");
+        if (!file.exists()) {
+            file = new File("/opt/twekl-dashboard/src/main/webapp/k6-report.html");
+        }
+        if (file.exists()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_HTML)
+                    .body(new FileSystemResource(file));
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/login")

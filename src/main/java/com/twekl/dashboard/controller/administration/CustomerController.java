@@ -10,14 +10,11 @@ import com.twekl.dashboard.service.administration.FollowupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Controller for Customer Directory, Lifecycle History, and Statistics.
@@ -36,7 +33,6 @@ public class CustomerController {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllCustomers(
             @RequestParam(required = false, defaultValue = "ALL") String timeFilter) {
         List<Map<String, Object>> data = getCustomersData(timeFilter);
@@ -44,21 +40,18 @@ public class CustomerController {
     }
 
     @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomerStats() {
         Map<String, Object> stats = customerService.getStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
     @GetMapping(value = "/followups", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerFollowupSummary>>> getCustomerFollowups(
             @RequestParam(required = false, defaultValue = "ALL") String timeFilter) {
         return ResponseEntity.ok(ApiResponse.success(followupService.findAllSummaries(timeFilter)));
     }
 
     @GetMapping(value = "/{customerId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Customer>> getCustomerById(@PathVariable("customerId") Long customerId) {
         return customerService.findByCustomerId(customerId)
                 .map(c -> ResponseEntity.ok(ApiResponse.success(c)))
@@ -67,20 +60,17 @@ public class CustomerController {
     }
 
     @GetMapping(value = "/{customerId:\\d+}/orders", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerOrder>>> getCustomerOrders(@PathVariable("customerId") Long customerId) {
         List<CustomerOrder> orders = customerService.findOrdersByCustomerId(customerId);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
     @GetMapping(value = "/{customerId:\\d+}/feedbacks", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerFeedback>>> getCustomerFeedbacks(@PathVariable("customerId") Long customerId) {
         return ResponseEntity.ok(ApiResponse.success(customerService.findFeedbacksByCustomerId(customerId)));
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CUSTOMER_FOLLOWUP_CREATE', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Customer>> createCustomer(@RequestBody Customer customer) {
         Customer created = customerService.createCustomer(customer);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -88,7 +78,6 @@ public class CustomerController {
     }
 
     @PutMapping(value = "/{customerId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Customer>> updateCustomer(@PathVariable("customerId") Long customerId,
                                                                 @RequestBody Customer customer) {
         Customer updated = customerService.updateCustomer(customerId, customer);
@@ -96,7 +85,6 @@ public class CustomerController {
     }
 
     @DeleteMapping(value = "/{customerId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCustomer(@PathVariable("customerId") Long customerId) {
         customerService.deleteCustomer(customerId);
         return ResponseEntity.ok(ApiResponse.success(null));

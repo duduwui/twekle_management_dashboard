@@ -56,5 +56,12 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("twekl_super_admin"));
     }
+
+    @Test
+    @DisplayName("GET /login should render administration/login view")
+    public void testGetLoginView() throws Exception {
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isOk());
+    }
 }
 

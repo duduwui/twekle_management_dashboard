@@ -1,4 +1,4 @@
-package com.twekl.dashboard.controller.administration;
+package com.twekl.dashboard.security.administration;
 
 import com.twekl.dashboard.dto.administration.LoginRequest;
 import com.twekl.dashboard.response.administration.ApiResponse;
@@ -9,16 +9,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Controller for Admin Authentication and Profile Session.
- * Dedicated auth domain controller.
+ * Handles SSR login view rendering and REST authentication endpoints.
  */
-@RestController
-@RequestMapping("/admin/auth")
+@Controller
 public class AuthController {
 
     private final AuthService authService;
@@ -27,21 +27,45 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/login")
+    private boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
+    }
+
+    // =========================================================
+    // SSR LOGIN VIEW
+    // =========================================================
+
+    @GetMapping("/login")
+    public String showLoginForm() {
+        if (isAuthenticated()) {
+            return "redirect:/admin/dashboard";
+        }
+        return "administration/login";
+    }
+
+    // =========================================================
+    // REST AUTH ENDPOINTS
+    // =========================================================
+
+    @PostMapping("/admin/auth/login")
+    @ResponseBody
     public ResponseEntity<ApiResponse<AuthResponse>> loginAdmin(@Valid @RequestBody LoginRequest request,
-                                                               HttpServletRequest httpRequest,
-                                                               HttpServletResponse httpResponse) {
+                                                                HttpServletRequest httpRequest,
+                                                                HttpServletResponse httpResponse) {
         AuthResponse response = authService.login(request, httpRequest, httpResponse);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/admin/auth/logout")
+    @ResponseBody
     public ResponseEntity<ApiResponse<Void>> logoutAdmin(HttpServletRequest httpRequest) {
         authService.logout(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/admin/auth/me")
+    @ResponseBody
     public ResponseEntity<ApiResponse<AuthResponse>> getCurrentAuthenticatedAdmin(HttpServletRequest httpRequest) {
         AuthResponse response = authService.getCurrentUser(httpRequest);
         if (response == null || !response.isAuthenticated()) {

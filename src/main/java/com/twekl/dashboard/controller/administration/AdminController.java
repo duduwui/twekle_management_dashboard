@@ -9,8 +9,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,11 +20,12 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Primary Administrative & Web Portal Controller.
+ * Primary Administrative Controller.
  * Consolidates SSR view rendering and administrative actions.
+ * Implements AdminOperations interface contract.
  */
 @Controller
-public class AdminController {
+public class AdminController implements AdminOperations {
 
     private final AdminService adminService;
     private final RoleService roleService;
@@ -49,18 +48,8 @@ public class AdminController {
         this.timeFilterService = timeFilterService;
     }
 
-    private boolean isAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
-    }
-
-    @ModelAttribute("currentUser")
-    public Admin populateCurrentUser() {
-        return adminService.getCurrentAdmin().orElse(null);
-    }
-
     // =========================================================
-    // GENERAL PORTAL & AUTH ENDPOINTS
+    // GENERAL NAVIGATION & REPORTS
     // =========================================================
 
     @GetMapping(value = "/k6-report.html", produces = MediaType.TEXT_HTML_VALUE)
@@ -78,26 +67,13 @@ public class AdminController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/login")
-    public String showLoginForm() {
-        if (isAuthenticated()) {
-            return "redirect:/admin/dashboard";
-        }
-        return "administration/login";
-    }
-
     @GetMapping({"/", "/admin", "/admin/"})
     public String handleRootRedirect() {
-        if (isAuthenticated()) {
-            return "redirect:/admin/dashboard";
-        }
-        return "redirect:/login";
+        return "redirect:/admin/dashboard";
     }
 
     @GetMapping("/admin/dashboard")
     public String showDashboard(Model model) {
-        if (!isAuthenticated()) return "redirect:/login";
-
         List<CustomerFollowupSummary> summaries = followupService.findAllSummaries("ALL");
         List<CustomerFollowupSummary> urgent = summaries.stream()
                 .filter(s -> !s.isAllFollowupsCompleted() && ("ALERT".equalsIgnoreCase(s.getFollowupStatus()) || "IDLE".equalsIgnoreCase(s.getFollowupStatus())))
@@ -117,8 +93,6 @@ public class AdminController {
 
     @GetMapping(value = {"/admin/followups", "/admin/followups/**"}, produces = MediaType.TEXT_HTML_VALUE)
     public String showCustomers(Model model) {
-        if (!isAuthenticated()) return "redirect:/login";
-
         model.addAttribute("activeTab", "followups");
         model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
         model.addAttribute("presets", timeFilterService.findAll());
@@ -134,8 +108,6 @@ public class AdminController {
     public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
                               @RequestParam(value = "tab", defaultValue = "milestones") String tab,
                               Model model) {
-        if (!isAuthenticated()) return "redirect:/login";
-
         Admin admin = adminService.getCurrentAdmin().orElse(null);
         if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
             return "redirect:/admin/dashboard";
@@ -150,22 +122,22 @@ public class AdminController {
     }
 
     // =========================================================
-    // STAFF ADMINISTRATORS ENDPOINTS
+    // STAFF ADMINISTRATORS ENDPOINTS (AdminOperations Contract)
     // =========================================================
 
+    @Override
     @GetMapping("/admin/admins")
     public String showAdmins(Model model) {
-        if (!isAuthenticated()) return "redirect:/login";
         model.addAttribute("activeTab", "admins");
         model.addAttribute("admins", adminService.findAll());
         model.addAttribute("roles", roleService.findAll());
-        model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
         if (!model.containsAttribute("newAdmin")) {
             model.addAttribute("newAdmin", new CreateAdminRequest());
         }
         return "administration/admin/admins";
     }
 
+    @Override
     @PostMapping("/admin/admins/create-admin")
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
@@ -183,6 +155,7 @@ public class AdminController {
         return "redirect:/admin/admins";
     }
 
+    @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/toggle-status")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
@@ -194,6 +167,7 @@ public class AdminController {
         return "redirect:/admin/admins";
     }
 
+    @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
@@ -204,4 +178,14 @@ public class AdminController {
         }
         return "redirect:/admin/admins";
     }
+}
+
+/**
+ * Interface defining administrative operations contract in the same file.
+ */
+interface AdminOperations {
+    String showAdmins(Model model);
+    String createAdminSsr(CreateAdminRequest request, BindingResult bindingResult, RedirectAttributes flash);
+    String toggleAdminStatusSsr(Long adminId, RedirectAttributes flash);
+    String deleteAdminSsr(Long adminId, RedirectAttributes flash);
 }

@@ -8,13 +8,10 @@ import com.twekl.dashboard.service.administration.FollowupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Controller for Managing Follow-up Milestone Checks.
@@ -39,7 +36,6 @@ public class FollowupController {
     }
 
     @PatchMapping("/{checkId:\\d+}/status")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> toggleFollowupStatus(@PathVariable("checkId") Long checkId) {
         if (!canUpdate()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -50,7 +46,6 @@ public class FollowupController {
     }
 
     @RequestMapping(value = "/{checkId:\\d+}", method = {RequestMethod.POST, RequestMethod.PUT})
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> updateFollowupDetails(
             @PathVariable("checkId") Long checkId,
             @RequestBody(required = false) Map<String, String> body) {
@@ -66,7 +61,6 @@ public class FollowupController {
     }
 
     @PostMapping("/{checkId:\\d+}/complete")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> completeCheck(
             @PathVariable("checkId") Long checkId,
             @RequestBody(required = false) FollowupCheckRequest request) {
@@ -80,7 +74,6 @@ public class FollowupController {
     }
 
     @GetMapping(value = {"/orders/{orderId:\\d+}", "/orders/{orderId:\\d+}/checks"}, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderChecks(@PathVariable("orderId") Long orderId) {
         return ResponseEntity.ok(ApiResponse.success(followupService.findChecksByOrderId(orderId)));
     }

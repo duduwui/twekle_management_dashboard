@@ -25,6 +25,7 @@ import java.util.List;
 @EnableWebMvc
 @ComponentScan(basePackages = {
     "com.twekl.dashboard.controller.administration",
+    "com.twekl.dashboard.security.administration",
     "com.twekl.dashboard.exception.administration"
 })
 public class WebMvcConfig implements WebMvcConfigurer {

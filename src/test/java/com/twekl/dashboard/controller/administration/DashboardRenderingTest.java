@@ -45,6 +45,8 @@ class DashboardRenderingTest {
         mvc.perform(get("/admin/dashboard").accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Priority Attention")))
+                .andExpect(content().string(containsString("Remaining Time")))
+                .andExpect(content().string(containsString("Customer Name")))
                 .andExpect(content().string(containsString("customerRegistrations")))
                 .andExpect(content().string(not(containsString("angular.min.js"))))
                 .andExpect(content().string(not(containsString("ng-controller"))))

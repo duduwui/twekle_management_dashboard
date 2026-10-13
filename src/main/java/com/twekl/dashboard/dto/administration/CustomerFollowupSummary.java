@@ -48,5 +48,32 @@ public class CustomerFollowupSummary {
 
     public Integer getNextPendingMinutesLeft() { return nextPendingMinutesLeft; }
     public void setNextPendingMinutesLeft(Integer nextPendingMinutesLeft) { this.nextPendingMinutesLeft = nextPendingMinutesLeft; }
+
+    public boolean isOverdue() {
+        return "ALERT".equalsIgnoreCase(followupStatus) || (nextPendingMinutesLeft != null && nextPendingMinutesLeft <= 0);
+    }
+
+    public String getFormattedRemainingTime() {
+        if (nextPendingMinutesLeft == null) {
+            return "Scheduled";
+        }
+        int mins = nextPendingMinutesLeft;
+        if (mins >= 0) {
+            if (mins < 60) return mins + "m left";
+            int hours = mins / 60;
+            if (hours < 24) return hours + "h " + (mins % 60) + "m left";
+            int days = hours / 24;
+            int remH = hours % 24;
+            return remH > 0 ? (days + "d " + remH + "h left") : (days + "d left");
+        } else {
+            int overdue = Math.abs(mins);
+            if (overdue < 60) return overdue + "m overdue";
+            int ovH = overdue / 60;
+            if (ovH < 24) return ovH + "h overdue";
+            int ovD = ovH / 24;
+            int ovRH = ovH % 24;
+            return ovRH > 0 ? (ovD + "d " + ovRH + "h overdue") : (ovD + "d overdue");
+        }
+    }
 }
 

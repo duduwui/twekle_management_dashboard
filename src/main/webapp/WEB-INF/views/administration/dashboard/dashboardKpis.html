@@ -38,11 +38,11 @@
             <div class="visual-bar-overdue" th:style="|width: ${stats.overduePercentage}%|"></div>
             <div class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
         </div>
-        <div class="visual-legend-row">
-            <span class="legend-item">Completed: <strong th:text="${stats.completedFollowups}">0</strong></span>
-            <span class="legend-item">Overdue: <strong th:text="${stats.overdueFollowups}">0</strong></span>
-            <span class="legend-item">In queue: <strong th:text="${stats.inQueueFollowups}">0</strong></span>
-            <span class="legend-item">Total checks: <strong th:text="${stats.totalFollowups}">0</strong></span>
+        <div class="visual-legend-row" style="justify-content: center; text-align: center;">
+            <div class="legend-item"><span class="legend-dot dot-completed"></span> Completed: <strong th:text="${stats.completedFollowups}">0</strong></div>
+            <div class="legend-item"><span class="legend-dot dot-overdue"></span> Overdue: <strong th:text="${stats.overdueFollowups}">0</strong></div>
+            <div class="legend-item"><span class="legend-dot dot-inqueue"></span> In queue: <strong th:text="${stats.inQueueFollowups}">0</strong></div>
+            <div class="legend-item">Total checks: <strong th:text="${stats.totalFollowups}">0</strong></div>
         </div>
     </div>
 </div>

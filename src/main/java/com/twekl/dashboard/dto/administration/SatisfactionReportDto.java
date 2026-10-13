@@ -54,6 +54,7 @@ public class SatisfactionReportDto {
 
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
+    public String getReason() { return comment; }
 
     public Instant getFeedbackDate() { return feedbackDate; }
     public void setFeedbackDate(Instant feedbackDate) { this.feedbackDate = feedbackDate; }

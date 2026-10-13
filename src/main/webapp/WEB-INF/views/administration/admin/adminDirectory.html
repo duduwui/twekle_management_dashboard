@@ -13,7 +13,7 @@
     <!-- Clean Admin Toolbar (+ Create Admin & Client-side Filter) -->
     <div class="comic-filter-toolbar">
         <div class="filter-left-controls">
-            <button type="button" class="comic-btn-sm" onclick="showCreateAdminSection()" th:if="${@portalAccess.allows('ADMIN_MANAGEMENT','CREATE')}">
+            <button type="button" class="comic-btn-sm" onclick="showCreateAdminSection()">
                 + Create Admin
             </button>
         </div>
@@ -21,7 +21,7 @@
         <!-- Fast Filter Input -->
         <div class="filter-search-box">
             <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="search" id="adminSearchInput" class="comic-search-bar" placeholder="Filter this page..." oninput="filterAdminTable()">
+            <input type="search" id="adminSearchInput" class="comic-search-bar" placeholder="Filter administrators..." oninput="filterAdminTable()">
         </div>
     </div>
 
@@ -55,7 +55,7 @@
                     </td>
                     <td>
                         <form th:action="@{/admin/admins/{adminId}/toggle_status(adminId=${admin.id})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
-                            <button type="submit" th:disabled="${!@portalAccess.allows('ADMIN_MANAGEMENT','UPDATE')}" class="status-pill-btn" th:classappend="${admin.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
+                            <button type="submit" class="status-pill-btn" th:classappend="${admin.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
                                 <span class="status-dot"></span>
                                 <span th:text="${admin.active} ? 'Active' : 'Inactive'">Active</span>
                             </button>
@@ -64,7 +64,7 @@
                     <td style="text-align: right;">
                         <div style="display: inline-flex; gap: 8px; align-items: center;">
                             <form th:action="@{/admin/admins/{adminId}/delete_admin(adminId=${admin.id})}" method="post" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete administrator \'' + this.getAttribute('data-uname') + '\'?');" th:data-uname="${admin.username}">
-                                <button type="submit" th:disabled="${!@portalAccess.allows('ADMIN_MANAGEMENT','DELETE')}" class="comic-btn-danger" style="cursor: pointer;">Delete</button>
+                                <button type="submit" class="comic-btn-danger" style="cursor: pointer;">Delete</button>
                             </form>
                         </div>
                     </td>
@@ -81,7 +81,7 @@
     <!-- Footer summary -->
     <div class="datatable-footer" th:if="${!#lists.isEmpty(adminList)}">
         <div class="datatable-info">
-            Total Registered Administrators: <strong th:text="${rows.totalElements}">0</strong>
+            Total Registered Administrators: <strong th:text="${#lists.size(adminList)}">0</strong>
         </div>
     </div>
 </div>

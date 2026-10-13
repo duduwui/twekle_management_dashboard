@@ -33,7 +33,7 @@
         <div style="margin-top: 14px; background: #EEF2FF; border: 1.5px solid #C7D2FE; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <label class="comic-switch">
-                    <input th:disabled="${!currentUser.superAdmin}" type="checkbox" name="superAdmin" id="createIsSuperAdmin" value="true" onchange="toggleCreateSuperAdmin(this.checked)">
+                    <input type="checkbox" name="superAdmin" id="createIsSuperAdmin" value="true" onchange="toggleCreateSuperAdmin(this.checked)">
                     <span class="comic-slider"></span>
                 </label>
                 <div>
@@ -48,7 +48,7 @@
         <div style="margin-top: 14px; background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <label class="comic-switch">
-                    <input type="hidden" name="_active" value="on"><input type="checkbox" name="active" value="true" checked>
+                    <input type="checkbox" name="active" value="true" checked>
                     <span class="comic-slider"></span>
                 </label>
                 <div>

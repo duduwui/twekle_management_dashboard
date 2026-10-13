@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html lang="en" th:attr="ng-app=${activeTab == 'followups' || activeTab == 'reports' ? 'tweklApp' : null}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head th:replace="~{administration/fragments/headFragment :: headFragment}"></head>
-<body>
+<body th:attr="ng-controller=${activeTab == 'followups' || activeTab == 'reports' ? 'LayoutController' : null}">
 
     <div class="app-container">
         <!-- Sidebar Navigation Fragment -->
@@ -22,6 +22,25 @@
     </div>
 
     <form id="logoutForm" method="post" th:action="@{/logout}" hidden></form>
+
+    <!-- Common Modals & Toasts Fragment -->
+    <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
+        <div th:replace="~{administration/fragments/sharedModalsFragment :: sharedModalsFragment}"></div>
+    </th:block>
+
+    <!-- Thymeleaf Server-Side Data Injection -->
+    <script th:if="${activeTab == 'followups' || activeTab == 'reports'}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.SERVER_ACTIVE_TAB = /*[[${activeTab}]]*/ 'dashboard';
+        window.SERVER_FOLLOWUPS = /*[[${followupSummaries}]]*/ null;
+        window.SERVER_REPORT_DATA = /*[[${reportData}]]*/ null;
+        window.SERVER_REPORT_SUBTAB = /*[[${reportSubTab}]]*/ 'milestones';
+        window.SERVER_PRESETS = /*[[${presets}]]*/ null;
+        window.SERVER_ADMIN_LIST = /*[[${adminList}]]*/ null;
+        window.SERVER_ROLE_LIST = /*[[${roleList}]]*/ null;
+        window.SERVER_CURRENT_USER = /*[[${currentUser}]]*/ null;
+        /*]]>*/
+    </script>
 
     <!-- Scripts Fragment -->
     <div th:replace="~{administration/fragments/scriptsFragment :: scriptsFragment}"></div>

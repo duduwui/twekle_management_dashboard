@@ -2,22 +2,17 @@ package com.twekl.dashboard.model.administration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
+import com.twekl.dashboard.model.administration.TimeFilterPreset;
 import jakarta.persistence.*;
 
 import java.time.Instant;
 
 /**
- * Pure JPA Entity representing Follow-up milestones for customer orders. Isolated in order domain
- * with explicit checkId and orderId bridges.
+ * Pure JPA Entity representing Follow-up milestones for customer orders.
+ * Isolated in order domain with explicit checkId and orderId bridges.
  */
 @Entity
-@Table(
-        name = "ORDER_FOLLOWUP_CHECKS",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "UK_CHECK_ORDER_PRESET",
-                        columnNames = {"ORDER_ID", "PRESET_ID"}))
+@Table(name = "ORDER_FOLLOWUP_CHECKS")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class OrderFollowupCheck {
 
@@ -105,13 +100,9 @@ public class OrderFollowupCheck {
         this.completed = false;
     }
 
-    public OrderFollowupCheck(
-            CustomerOrder order, String presetName, String milestoneLabel, int targetDays) {
+    public OrderFollowupCheck(CustomerOrder order, String presetName, String milestoneLabel, int targetDays) {
         this.order = order;
-        this.milestoneName =
-                (milestoneLabel != null && !milestoneLabel.trim().isEmpty())
-                        ? milestoneLabel
-                        : presetName;
+        this.milestoneName = (milestoneLabel != null && !milestoneLabel.trim().isEmpty()) ? milestoneLabel : presetName;
         this.targetDays = targetDays;
         this.durationValue = targetDays;
         this.durationUnit = "DAYS";
@@ -134,10 +125,7 @@ public class OrderFollowupCheck {
 
     public int getEquivalentDurationMinutes() {
         String u = durationUnit != null ? durationUnit.toUpperCase() : "DAYS";
-        int v =
-                durationValue != null && durationValue > 0
-                        ? durationValue
-                        : (targetDays > 0 ? targetDays : 1);
+        int v = durationValue != null && durationValue > 0 ? durationValue : (targetDays > 0 ? targetDays : 1);
         return switch (u) {
             case "HOURS" -> v * 60;
             case "WEEKS" -> v * 7 * 1440;
@@ -147,41 +135,21 @@ public class OrderFollowupCheck {
     }
 
     // Standard JPA ID getters & explicit domain checkId bridges
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getCheckId() {
-        return id;
-    }
-
-    public void setCheckId(Long checkId) {
-        this.id = checkId;
-    }
+    public Long getCheckId() { return id; }
+    public void setCheckId(Long checkId) { this.id = checkId; }
 
     public Long getOrderId() {
         return (order != null) ? order.getId() : null;
     }
 
-    public CustomerOrder getOrder() {
-        return order;
-    }
+    public CustomerOrder getOrder() { return order; }
+    public void setOrder(CustomerOrder order) { this.order = order; }
 
-    public void setOrder(CustomerOrder order) {
-        this.order = order;
-    }
-
-    public TimeFilterPreset getPreset() {
-        return preset;
-    }
-
-    public void setPreset(TimeFilterPreset preset) {
-        this.preset = preset;
-    }
+    public TimeFilterPreset getPreset() { return preset; }
+    public void setPreset(TimeFilterPreset preset) { this.preset = preset; }
 
     public Long getPresetId() {
         return (preset != null) ? preset.getId() : null;
@@ -198,43 +166,21 @@ public class OrderFollowupCheck {
         return "Follow-up Milestone";
     }
 
-    public void setMilestoneName(String milestoneName) {
-        this.milestoneName = milestoneName;
-    }
+    public void setMilestoneName(String milestoneName) { this.milestoneName = milestoneName; }
 
     @com.fasterxml.jackson.annotation.JsonProperty("presetName")
-    public String getPresetName() {
-        return getMilestoneName();
-    }
-
-    public void setPresetName(String presetName) {
-        setMilestoneName(presetName);
-    }
+    public String getPresetName() { return getMilestoneName(); }
+    public void setPresetName(String presetName) { setMilestoneName(presetName); }
 
     @com.fasterxml.jackson.annotation.JsonProperty("milestoneLabel")
-    public String getMilestoneLabel() {
-        return getMilestoneName();
-    }
+    public String getMilestoneLabel() { return getMilestoneName(); }
+    public void setMilestoneLabel(String milestoneLabel) { setMilestoneName(milestoneLabel); }
 
-    public void setMilestoneLabel(String milestoneLabel) {
-        setMilestoneName(milestoneLabel);
-    }
+    public Integer getDurationValue() { return durationValue != null ? durationValue : targetDays; }
+    public void setDurationValue(Integer durationValue) { this.durationValue = durationValue; }
 
-    public Integer getDurationValue() {
-        return durationValue != null ? durationValue : targetDays;
-    }
-
-    public void setDurationValue(Integer durationValue) {
-        this.durationValue = durationValue;
-    }
-
-    public String getDurationUnit() {
-        return durationUnit != null ? durationUnit : "DAYS";
-    }
-
-    public void setDurationUnit(String durationUnit) {
-        this.durationUnit = durationUnit;
-    }
+    public String getDurationUnit() { return durationUnit != null ? durationUnit : "DAYS"; }
+    public void setDurationUnit(String durationUnit) { this.durationUnit = durationUnit; }
 
     public int getTargetDays() {
         if (targetDays > 0) return targetDays;
@@ -247,76 +193,34 @@ public class OrderFollowupCheck {
         return 1;
     }
 
-    public void setTargetDays(int targetDays) {
-        this.targetDays = targetDays;
-    }
+    public void setTargetDays(int targetDays) { this.targetDays = targetDays; }
 
-    public String getStatus() {
-        return (status != null && !status.isEmpty()) ? status : "PENDING";
-    }
+    public String getStatus() { return (status != null && !status.isEmpty()) ? status : "PENDING"; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public boolean isCompleted() {
-        return completed;
-    }
-
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
-    }
+    public boolean isCompleted() { return completed; }
+    public void setCompleted(boolean completed) { this.completed = completed; }
 
     @com.fasterxml.jackson.annotation.JsonProperty("isCompleted")
-    public boolean getIsCompleted() {
-        return isCompleted();
-    }
+    public boolean getIsCompleted() { return isCompleted(); }
+    public void setIsCompleted(boolean isCompleted) { setCompleted(isCompleted); }
 
-    public void setIsCompleted(boolean isCompleted) {
-        setCompleted(isCompleted);
-    }
+    public Instant getCompletedDate() { return completedDate; }
+    public void setCompletedDate(Instant completedDate) { this.completedDate = completedDate; }
 
-    public Instant getCompletedDate() {
-        return completedDate;
-    }
-
-    public void setCompletedDate(Instant completedDate) {
-        this.completedDate = completedDate;
-    }
-
-    public String getNotes() {
-        return notes != null ? notes : "";
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
+    public String getNotes() { return notes != null ? notes : ""; }
+    public void setNotes(String notes) { this.notes = notes; }
 
     @com.fasterxml.jackson.annotation.JsonProperty("note")
-    public String getNote() {
-        return getNotes();
-    }
+    public String getNote() { return getNotes(); }
+    public void setNote(String note) { setNotes(note); }
 
-    public void setNote(String note) {
-        setNotes(note);
-    }
-
-    public String getImageUrl() {
-        return imageUrl != null ? imageUrl : "";
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
+    public String getImageUrl() { return imageUrl != null ? imageUrl : ""; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     @com.fasterxml.jackson.annotation.JsonProperty("photoUrl")
-    public String getPhotoUrl() {
-        return getImageUrl();
-    }
-
-    public void setPhotoUrl(String photoUrl) {
-        setImageUrl(photoUrl);
-    }
+    public String getPhotoUrl() { return getImageUrl(); }
+    public void setPhotoUrl(String photoUrl) { setImageUrl(photoUrl); }
 
     @Transient
     @com.fasterxml.jackson.annotation.JsonProperty("isDue")
@@ -326,59 +230,24 @@ public class OrderFollowupCheck {
     @com.fasterxml.jackson.annotation.JsonProperty("minutesUntilDue")
     private Integer minutesUntilDue;
 
-    public Boolean getIsDue() {
-        return isDue;
-    }
+    public Boolean getIsDue() { return isDue; }
+    public void setIsDue(Boolean isDue) { this.isDue = isDue; }
 
-    public void setIsDue(Boolean isDue) {
-        this.isDue = isDue;
-    }
+    public Integer getMinutesUntilDue() { return minutesUntilDue; }
+    public void setMinutesUntilDue(Integer minutesUntilDue) { this.minutesUntilDue = minutesUntilDue; }
 
-    public Integer getMinutesUntilDue() {
-        return minutesUntilDue;
-    }
+    public String getCheckedBy() { return checkedBy; }
+    public void setCheckedBy(String checkedBy) { this.checkedBy = checkedBy; }
 
-    public void setMinutesUntilDue(Integer minutesUntilDue) {
-        this.minutesUntilDue = minutesUntilDue;
-    }
+    public Instant getCheckedAt() { return checkedAt; }
+    public void setCheckedAt(Instant checkedAt) { this.checkedAt = checkedAt; }
 
-    public String getCheckedBy() {
-        return checkedBy;
-    }
+    public String getSatisfaction() { return satisfaction; }
+    public void setSatisfaction(String satisfaction) { this.satisfaction = satisfaction; }
 
-    public void setCheckedBy(String checkedBy) {
-        this.checkedBy = checkedBy;
-    }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    public Instant getCheckedAt() {
-        return checkedAt;
-    }
-
-    public void setCheckedAt(Instant checkedAt) {
-        this.checkedAt = checkedAt;
-    }
-
-    public String getSatisfaction() {
-        return satisfaction;
-    }
-
-    public void setSatisfaction(String satisfaction) {
-        this.satisfaction = satisfaction;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

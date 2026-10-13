@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 /**
  * Service for administrative roles and permission templates.
  */
@@ -20,10 +22,16 @@ import java.util.Optional;
 @Transactional
 public class RoleService {
 
-    private final RoleRepository roleRepository;
+    @Autowired
+    private RoleRepository roleRepository;
 
-    private final AdminRepository adminRepository;
+    @Autowired
+    private AdminRepository adminRepository;
 
+    public RoleService() {
+    }
+
+    @Autowired
     public RoleService(RoleRepository roleRepository, AdminRepository adminRepository) {
         this.roleRepository = roleRepository;
         this.adminRepository = adminRepository;

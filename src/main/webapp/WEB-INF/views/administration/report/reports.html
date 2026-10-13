@@ -1,16 +1,25 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{administration/fragments/adminLayout}">
-<head><title>Twekl Administration</title></head><body><section layout:fragment="content" class="comic-card portal-page">
-<div th:if="${successMessage}" class="portal-message" role="status" th:text="${successMessage}"></div>
-<h1>Reports and insights</h1>
-<nav class="portal-toolbar"><a th:each="t : ${ {'milestones','satisfaction','products','followups'} }" th:href="@{/admin/reports(tab=${t},period=${period})}" th:text="${#strings.capitalize(t)}" th:attr="aria-current=${reportSubTab == t ? 'page' : null}"></a></nav>
-<form method="get" th:action="@{/admin/reports}" class="portal-toolbar"><input type="hidden" name="tab" th:value="${reportSubTab}">
-<label>Period <select th:replace="~{administration/fragments/pageNavigation :: period}"></select></label>
-<label th:if="${reportSubTab == 'satisfaction'}">Satisfaction <select name="satisfaction"><option th:each="s : ${ {'ALL','SATISFIED','NEUTRAL','UNSATISFIED'} }" th:value="${s}" th:selected="${s == satisfaction}" th:text="${s}"></option></select></label>
-<button class="comic-btn btn-primary">Apply filters</button><a th:href="@{/admin/reports/export(period=${period})}">Download satisfaction CSV</a></form>
-<div th:if="${reportSubTab == 'milestones'}" th:insert="~{administration/report/reportMilestones :: table}"></div>
-<div th:if="${reportSubTab == 'satisfaction'}" th:insert="~{administration/report/reportSatisfaction :: table}"></div>
-<div th:if="${reportSubTab == 'products'}" th:insert="~{administration/report/reportProducts :: table}"></div>
-<div th:if="${reportSubTab == 'followups'}" th:insert="~{administration/report/reportFollowups :: table}"></div>
-<nav th:replace="~{administration/fragments/pageNavigation :: pager('/admin/reports', ${'&amp;tab=' + reportSubTab + '&amp;period=' + period + '&amp;satisfaction=' + satisfaction})}"></nav>
-</section></body></html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{administration/fragments/adminLayout}">
+<head>
+    <title>Reports &amp; Analytics | Twekl Administration</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <section class="comic-card page-slide-fade" ng-controller="ReportController">
+            <!-- REPORT TAB 1: FOLLOW-UPS & MILESTONES -->
+            <div th:replace="~{administration/report/reportMilestones :: reportMilestones}"></div>
+
+            <!-- REPORT TAB 2: CUSTOMER SATISFACTION & NOTES -->
+            <div th:replace="~{administration/report/reportSatisfaction :: reportSatisfaction}"></div>
+
+            <!-- REPORT TAB 3: PRODUCT INSIGHTS & REVIEWS -->
+            <div th:replace="~{administration/report/reportProducts :: reportProducts}"></div>
+
+            <!-- REPORT TAB 4: FOLLOW-UP SUMMARY -->
+            <div th:replace="~{administration/report/reportFollowups :: reportFollowups}"></div>
+        </section>
+    </div>
+</body>
+</html>

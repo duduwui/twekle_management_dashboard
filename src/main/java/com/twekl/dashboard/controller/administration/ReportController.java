@@ -1,78 +1,82 @@
 package com.twekl.dashboard.controller.administration;
 
+import com.twekl.dashboard.dto.administration.SatisfactionReportDto;
+import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.ReportService;
-
-import jakarta.servlet.http.HttpServletResponse;
-
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
-@Controller
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Controller for Analytics and Satisfaction Reports.
+ * Dedicated report domain controller.
+ */
+@RestController
 @RequestMapping("/admin/reports")
-@PreAuthorize("@portalAccess.allows('REPORTS_INSIGHTS','READ')")
 public class ReportController {
-    private final ReportService reports;
 
-    public ReportController(ReportService reports) {
-        this.reports = reports;
+    @Autowired
+    private ReportService reportService;
+
+    public ReportController() {
     }
 
-    @GetMapping
-    public String report(
-            @RequestParam(defaultValue = "ALL") String period,
-            @RequestParam(defaultValue = "milestones") String tab,
-            @RequestParam(defaultValue = "ALL") String satisfaction,
-            @RequestParam(defaultValue = "0") int page,
-            Model model) {
-        model.addAttribute("rows", reports.report(tab, period, satisfaction, page));
-        model.addAttribute("activeTab", "reports");
-        model.addAttribute("reportSubTab", tab);
-        model.addAttribute("period", period);
-        model.addAttribute("satisfaction", satisfaction);
-        return "administration/report/reports";
+    @Autowired
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
     }
 
-    /** A file download is a normal MVC response, not a JSON fallback. Each batch is bounded. */
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateAnalyticsReport(
+            @RequestParam(required = false, defaultValue = "ALL") String period) {
+        Map<String, Object> data = reportService.generateReport(period);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @GetMapping(value = "/satisfaction", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<SatisfactionReportDto>>> getSatisfactionDetails(
+            @RequestParam(required = false, defaultValue = "ALL") String period) {
+        return ResponseEntity.ok(ApiResponse.success(reportService.getSatisfactionDetails(period)));
+    }
+
     @GetMapping("/export")
-    public void export(
-            @RequestParam(defaultValue = "ALL") String period, HttpServletResponse response)
-            throws IOException {
-        var batch = reports.exportBatch(period, "");
-        response.setContentType("text/csv;charset=UTF-8");
-        response.setHeader("Content-Disposition", "attachment; filename=\"satisfaction.csv\"");
-        var writer = response.getWriter();
-        List<String> columns =
-                List.of(
-                        "id",
-                        "customer",
-                        "phone",
-                        "orderNumber",
-                        "milestone",
-                        "satisfaction",
-                        "notes",
-                        "date");
-        writer.println(String.join(",", columns));
-        while (!batch.isEmpty()) {
-            for (var row : batch) {
-                writer.println(
-                        columns.stream()
-                                .map(key -> csv(row.get(key)))
-                                .collect(java.util.stream.Collectors.joining(",")));
-            }
-            writer.flush();
-            if (writer.checkError() || batch.size() < 500) break;
-            batch = reports.exportBatch(period, batch.getLast().get("id").toString());
-        }
-    }
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<byte[]> exportSatisfactionCsv(@RequestParam(required = false, defaultValue = "ALL") String period) {
+        List<SatisfactionReportDto> list = reportService.getSatisfactionDetails(period);
 
-    static String csv(Object value) {
-        String text = value == null ? "" : value.toString();
-        if (text.stripLeading().matches("^[=+@\\-].*")) text = "'" + text;
-        return "\"" + text.replace("\"", "\"\"") + "\"";
+        StringBuilder sb = new StringBuilder();
+        sb.append("ID,Customer Name,Phone,City,Order ID,Order Number,Rating,Feedback Date,Comment\n");
+
+        for (SatisfactionReportDto item : list) {
+            sb.append(item.getId() != null ? item.getId() : "").append(",")
+              .append("\"").append(item.getCustomerName() != null ? item.getCustomerName().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(item.getPhoneNumber() != null ? item.getPhoneNumber() : "").append("\",")
+              .append("\"").append(item.getCity() != null ? item.getCity() : "").append("\",")
+              .append(item.getOrderId() != null ? item.getOrderId() : "").append(",")
+              .append("\"").append(item.getOrderNumber() != null ? item.getOrderNumber() : "").append("\",")
+              .append(item.getRating()).append(",")
+              .append("\"").append(item.getFeedbackDate() != null ? item.getFeedbackDate().toString() : "").append("\",")
+              .append("\"").append(item.getComment() != null ? item.getComment().replace("\"", "\"\"") : "").append("\"\n");
+        }
+
+        byte[] bytes = ("\uFEFF" + sb.toString()).getBytes(StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Twekl_Report_satisfaction_" + period.toLowerCase() + ".csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(bytes);
     }
 }

@@ -14,12 +14,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Service
 @Transactional(readOnly = true)
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final AdminRepository adminRepository;
+    @Autowired
+    private AdminRepository adminRepository;
 
+    public CustomUserDetailsService() {
+    }
+
+    @Autowired
     public CustomUserDetailsService(AdminRepository adminRepository) {
         this.adminRepository = adminRepository;
     }

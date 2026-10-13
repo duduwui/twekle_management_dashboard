@@ -1,9 +1,17 @@
 package com.twekl.dashboard.service.administration;
 
+import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
+import com.twekl.dashboard.dto.administration.FollowupCheckRequest;
 import com.twekl.dashboard.exception.administration.ResourceNotFoundException;
-import com.twekl.dashboard.model.administration.*;
-import com.twekl.dashboard.repository.administration.*;
-
+import com.twekl.dashboard.model.administration.Customer;
+import com.twekl.dashboard.model.administration.CustomerOrder;
+import com.twekl.dashboard.model.administration.OrderFollowupCheck;
+import com.twekl.dashboard.model.administration.TimeFilterPreset;
+import com.twekl.dashboard.repository.administration.CustomerRepository;
+import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepository;
+import com.twekl.dashboard.repository.administration.CustomerOrderRepository;
+import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
+import com.twekl.dashboard.util.administration.DateUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,160 +19,303 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Core Service for Follow-up Milestones and Order Checks.
+ * Dedicated followup domain service.
+ */
+
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class FollowupService {
-    private final CustomerOrderRepository orders;
-    private final OrderFollowupCheckRepository checks;
-    private final TimeFilterPresetRepository presets;
 
-    public FollowupService(
-            CustomerOrderRepository orders,
-            OrderFollowupCheckRepository checks,
-            TimeFilterPresetRepository presets) {
-        this.orders = orders;
-        this.checks = checks;
-        this.presets = presets;
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerOrderRepository orderRepository;
+
+    @Autowired
+    private OrderFollowupCheckRepository followupCheckRepository;
+
+    @Autowired
+    private TimeFilterPresetRepository timeFilterPresetRepository;
+
+    public FollowupService() {
     }
 
-    public String image(long checkId) {
-        return checks.findImage(checkId)
-                .orElseThrow(() -> new ResourceNotFoundException("Photo not found"));
+    @Autowired
+    public FollowupService(CustomerRepository customerRepository,
+                           CustomerOrderRepository orderRepository,
+                           OrderFollowupCheckRepository followupCheckRepository,
+                           TimeFilterPresetRepository timeFilterPresetRepository) {
+        this.customerRepository = customerRepository;
+        this.orderRepository = orderRepository;
+        this.followupCheckRepository = followupCheckRepository;
+        this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
-    public CustomerOrder order(long orderId) {
-        return orders.findWithCustomerById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-    }
+    @Transactional(readOnly = true)
+    public List<CustomerFollowupSummary> findAllSummaries(String timeFilter) {
+        Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
+        List<Customer> allCustomers = cutoff == null ? customerRepository.findAll()
+                : customerRepository.findByLastOrderDateAfter(cutoff);
+        if (allCustomers.isEmpty()) return List.of();
+        List<Long> customerIds = allCustomers.stream().map(Customer::getId).toList();
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
 
-    /** GET reads stored history; adding presets is an explicit, authorized POST. */
-    public List<OrderFollowupCheck> findChecksByOrderId(Long orderId) {
-        CustomerOrder order = order(orderId);
-        Instant now = Instant.now();
-        List<OrderFollowupCheck> result = checks.findByOrderId(orderId);
-        for (OrderFollowupCheck check : result) {
-            Instant due =
-                    calculateDueTime(
-                            order.getOrderDate(),
-                            check.getDurationUnit(),
-                            check.getDurationValue() == null ? 1 : check.getDurationValue());
-            if (due != null) {
-                long minutes = java.time.Duration.between(now, due).toMinutes();
-                check.setMinutesUntilDue(
-                        (int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, minutes)));
-                check.setIsDue(!check.isCompleted() && due.isBefore(now));
+        Set<Long> activePresetIds = new HashSet<>();
+        Set<String> activePresetNames = new HashSet<>();
+        for (TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+
+        List<CustomerOrder> allOrders = orderRepository.findByCustomerIds(customerIds);
+        List<OrderFollowupCheck> allChecks = followupCheckRepository.findByCustomerIds(customerIds);
+
+        Map<Long, List<CustomerOrder>> ordersByCustId = new HashMap<>();
+        for (CustomerOrder o : allOrders) {
+            if (o.getCustomer() != null && o.getCustomer().getId() != null) {
+                ordersByCustId.computeIfAbsent(o.getCustomer().getId(), k -> new ArrayList<>()).add(o);
             }
         }
+
+        Map<Long, List<OrderFollowupCheck>> checksByOrderId = new HashMap<>();
+        for (OrderFollowupCheck ch : allChecks) {
+            if (ch.getOrder() != null && ch.getOrder().getId() != null) {
+                checksByOrderId.computeIfAbsent(ch.getOrder().getId(), k -> new ArrayList<>()).add(ch);
+            }
+        }
+
+        Instant now = Instant.now();
+        List<CustomerFollowupSummary> results = new ArrayList<>();
+
+        for (Customer c : allCustomers) {
+            List<CustomerOrder> orders = ordersByCustId.getOrDefault(c.getId(), Collections.emptyList());
+            c.setTotalOrders(orders.size());
+            double totalSpent = orders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
+            c.setTotalSpent(totalSpent);
+
+            CustomerFollowupSummary summary = buildSummary(c, orders, checksByOrderId, activePresetIds, activePresetNames, now);
+            results.add(summary);
+        }
+
+        return results;
+    }
+
+    private CustomerFollowupSummary buildSummary(Customer c,
+                                                 List<CustomerOrder> orders,
+                                                 Map<Long, List<OrderFollowupCheck>> checksByOrderId,
+                                                 Set<Long> activePresetIds,
+                                                 Set<String> activePresetNames, Instant now) {
+        CustomerFollowupSummary summary = new CustomerFollowupSummary();
+        summary.setCustomer(c);
+
+        if (orders.isEmpty()) {
+            summary.setFollowupStatus("IDLE");
+            summary.setNextPendingFollowup("-");
+            summary.setAllFollowupsCompleted(false);
+            summary.setRemainingFollowupsCount(0);
+            return summary;
+        }
+
+        int pendingCount = 0;
+        OrderFollowupCheck mostOverdueCheck = null;
+        Instant earliestOverdueTime = null;
+        Long overdueOrderId = null;
+
+        OrderFollowupCheck earliestUpcomingCheck = null;
+        Instant earliestUpcomingTime = null;
+        Long upcomingOrderId = null;
+
+        for (CustomerOrder ord : orders) {
+            List<OrderFollowupCheck> checks = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
+
+            for (OrderFollowupCheck ch : checks) {
+                boolean isPresetActive = (ch.getPreset() != null && activePresetIds.contains(ch.getPreset().getId()))
+                        || (ch.getMilestoneName() != null && activePresetNames.contains(ch.getMilestoneName().trim().toLowerCase()));
+                if (!isPresetActive) {
+                    continue;
+                }
+
+                if (!ch.isCompleted()) {
+                    pendingCount++;
+                    Instant dueTime = calculateDueTime(ord.getOrderDate(), ch.getDurationUnit(), ch.getDurationValue());
+                    if (dueTime != null && now.isAfter(dueTime)) {
+                        if (mostOverdueCheck == null || dueTime.isBefore(earliestOverdueTime)) {
+                            mostOverdueCheck = ch;
+                            earliestOverdueTime = dueTime;
+                            overdueOrderId = ord.getId();
+                        }
+                    } else if (dueTime != null) {
+                        if (earliestUpcomingCheck == null || dueTime.isBefore(earliestUpcomingTime)) {
+                            earliestUpcomingCheck = ch;
+                            earliestUpcomingTime = dueTime;
+                            upcomingOrderId = ord.getId();
+                        }
+                    }
+                }
+            }
+        }
+
+        summary.setRemainingFollowupsCount(pendingCount);
+
+        if (pendingCount == 0) {
+            summary.setFollowupStatus("DONE");
+            summary.setAllFollowupsCompleted(true);
+            summary.setNextPendingFollowup("All Done");
+            summary.setNextPendingOrderId(null);
+            summary.setNextPendingMinutesLeft(null);
+        } else if (mostOverdueCheck != null) {
+            summary.setFollowupStatus("ALERT");
+            summary.setAllFollowupsCompleted(false);
+            summary.setNextPendingFollowup(mostOverdueCheck.getMilestoneName());
+            summary.setNextPendingOrderId(overdueOrderId);
+            summary.setNextPendingMinutesLeft((int) java.time.Duration.between(now, earliestOverdueTime).toMinutes());
+        } else {
+            summary.setFollowupStatus("IDLE");
+            summary.setAllFollowupsCompleted(false);
+            summary.setNextPendingFollowup(earliestUpcomingCheck != null ? earliestUpcomingCheck.getMilestoneName() : "Pending");
+            summary.setNextPendingOrderId(upcomingOrderId);
+            summary.setNextPendingMinutesLeft(earliestUpcomingTime != null ? (int) java.time.Duration.between(now, earliestUpcomingTime).toMinutes() : null);
+        }
+
+        return summary;
+    }
+
+    @Transactional
+    public List<OrderFollowupCheck> findChecksByOrderId(Long orderId) {
+        CustomerOrder order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return Collections.emptyList();
+
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        List<OrderFollowupCheck> existingChecks = followupCheckRepository.findByOrderId(orderId);
+
+        Map<Long, OrderFollowupCheck> byPresetId = new HashMap<>();
+        Map<String, OrderFollowupCheck> byName = new HashMap<>();
+        for (OrderFollowupCheck ch : existingChecks) {
+            if (ch.getPreset() != null && ch.getPreset().getId() != null) {
+                byPresetId.put(ch.getPreset().getId(), ch);
+            }
+            if (ch.getMilestoneName() != null) {
+                byName.put(ch.getMilestoneName().trim().toLowerCase(), ch);
+            }
+        }
+
+        List<OrderFollowupCheck> result = new ArrayList<>();
+        for (TimeFilterPreset preset : activePresets) {
+            OrderFollowupCheck check = byPresetId.get(preset.getId());
+            if (check == null && preset.getName() != null) {
+                check = byName.get(preset.getName().trim().toLowerCase());
+            }
+            if (check == null) {
+                check = new OrderFollowupCheck(order, preset);
+                check = followupCheckRepository.save(check);
+            } else {
+                if (check.getPreset() == null) {
+                    check.setPreset(preset);
+                }
+                check.setMilestoneName(preset.getName());
+                check.setDurationValue(preset.getDurationValue());
+                check.setDurationUnit(preset.getDurationUnit());
+                check.setTargetDays(preset.getTargetDays());
+                check = followupCheckRepository.save(check);
+            }
+            result.add(check);
+        }
+
+        for (OrderFollowupCheck ch : result) {
+            Instant dueTime = calculateDueTime(order.getOrderDate(), ch.getDurationUnit(), ch.getDurationValue());
+            if (dueTime != null) {
+                int mins = (int) java.time.Duration.between(Instant.now(), dueTime).toMinutes();
+                ch.setMinutesUntilDue(mins);
+                ch.setIsDue(!ch.isCompleted() && Instant.now().isAfter(dueTime));
+            }
+        }
+
+        result.sort(Comparator.comparingInt(OrderFollowupCheck::getEquivalentDurationMinutes));
         return result;
     }
 
-    /** Lock the parent so concurrent reconciliation cannot insert the same preset twice. */
     @Transactional
-    public void synchronizeChecks(long orderId) {
-        CustomerOrder order =
-                orders.lockById(orderId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        List<OrderFollowupCheck> existing = checks.findByOrderId(orderId);
-        Set<Long> ids = new HashSet<>();
-        for (OrderFollowupCheck check : existing)
-            if (check.getPreset() != null) ids.add(check.getPreset().getId());
-        for (TimeFilterPreset preset : presets.findByActiveTrueOrderByDisplayOrderAsc()) {
-            if (ids.contains(preset.getId())) continue;
-            OrderFollowupCheck legacy =
-                    existing.stream()
-                            .filter(
-                                    c ->
-                                            c.getPreset() == null
-                                                    && c.getMilestoneName() != null
-                                                    && (c.getMilestoneName()
-                                                                    .equalsIgnoreCase(
-                                                                            preset.getLabelEn())
-                                                            || c.getMilestoneName()
-                                                                    .equalsIgnoreCase(
-                                                                            preset.getPresetKey())))
-                            .findFirst()
-                            .orElse(null);
-            if (legacy != null) legacy.setPreset(preset);
-            else checks.save(new OrderFollowupCheck(order, preset));
-            ids.add(preset.getId());
+    public OrderFollowupCheck toggleFollowupStatus(Long checkId) {
+        OrderFollowupCheck check = followupCheckRepository.findById(checkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found with ID: " + checkId));
+
+        if (check.isCompleted()) {
+            check.setCompleted(false);
+            check.setStatus("PENDING");
+            check.setCompletedDate(null);
+        } else {
+            check.setCompleted(true);
+            check.setStatus("COMPLETED");
+            check.setCompletedDate(Instant.now());
         }
+        return followupCheckRepository.save(check);
     }
 
     @Transactional
-    public long saveCheck(
-            long checkId,
-            String notes,
-            String imageUrl,
-            String satisfaction,
-            boolean completed,
-            String actor) {
-        if (notes.length() > 10000)
-            throw new IllegalArgumentException("Notes must be at most 10,000 characters");
-        if (!Set.of("", "SATISFIED", "NEUTRAL", "UNSATISFIED").contains(satisfaction))
-            throw new IllegalArgumentException("Choose a valid satisfaction level");
-        if (imageUrl.length() > 2048
-                || (!imageUrl.isBlank() && !imageUrl.matches("https?://[^\\s]+")))
-            throw new IllegalArgumentException(
-                    "Photo must be an HTTP or HTTPS URL of at most 2,048 characters");
-        OrderFollowupCheck check =
-                checks.findById(checkId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found"));
+    public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction) {
+        OrderFollowupCheck check = followupCheckRepository.findById(checkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found with ID: " + checkId));
+
+        if (notes != null) check.setNotes(notes);
+        if (photoUrl != null) check.setImageUrl(photoUrl);
+
+        if (satisfaction != null && !satisfaction.trim().isEmpty()) {
+            check.setSatisfaction(satisfaction.toUpperCase());
+        } else if (check.getSatisfaction() == null && ((notes != null && !notes.trim().isEmpty()) || (photoUrl != null && !photoUrl.trim().isEmpty()))) {
+            check.setSatisfaction("NEUTRAL");
+        }
+
         Instant now = Instant.now();
-        check.setNotes(notes.trim());
-        // Empty input keeps legacy uploaded images; removal is explicit in the form.
-        if (!imageUrl.isBlank()) check.setImageUrl(imageUrl.trim());
-        check.setSatisfaction(satisfaction.isBlank() ? null : satisfaction);
-        if (completed != check.isCompleted()) check.setCompletedDate(completed ? now : null);
-        check.setCompleted(completed);
-        check.setStatus(completed ? "COMPLETED" : "PENDING");
         check.setCheckedAt(now);
-        check.setCheckedBy(actor);
-        return check.getOrder().getId();
+        check.setUpdatedAt(now);
+        if (check.getCheckedBy() == null || check.getCheckedBy().trim().isEmpty()) {
+            check.setCheckedBy("Admin");
+        }
+
+        return followupCheckRepository.save(check);
     }
 
     @Transactional
-    public long uploadImage(long checkId, byte[] bytes, String actor) {
-        if (bytes.length == 0 || bytes.length > 1048576)
-            throw new IllegalArgumentException("Photo must be at most 1 MB");
-        String mime;
-        if (bytes.length >= 8
-                && bytes[0] == (byte) 137
-                && bytes[1] == 80
-                && bytes[2] == 78
-                && bytes[3] == 71) mime = "image/png";
-        else if (bytes.length >= 3
-                && bytes[0] == (byte) 255
-                && bytes[1] == (byte) 216
-                && bytes[2] == (byte) 255) mime = "image/jpeg";
-        else throw new IllegalArgumentException("Choose a PNG or JPEG photo");
-        OrderFollowupCheck check =
-                checks.findById(checkId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found"));
-        check.setImageUrl("data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes));
-        check.setCheckedBy(actor);
-        check.setCheckedAt(Instant.now());
-        return check.getOrder().getId();
+    public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl) {
+        return updateFollowupDetails(checkId, notes, photoUrl, null);
     }
 
     @Transactional
-    public long removeImage(long checkId, String actor) {
-        OrderFollowupCheck check =
-                checks.findById(checkId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found"));
-        check.setImageUrl(null);
-        check.setCheckedBy(actor);
+    public OrderFollowupCheck completeCheck(Long checkId, FollowupCheckRequest req) {
+        OrderFollowupCheck check = followupCheckRepository.findById(checkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Follow-up check not found with ID: " + checkId));
+
+        check.setCompleted(true);
+        check.setCompletedDate(Instant.now());
         check.setCheckedAt(Instant.now());
-        return check.getOrder().getId();
+        check.setStatus("COMPLETED");
+
+        if (req != null) {
+            if (req.getNotes() != null) check.setNotes(req.getNotes());
+            if (req.getImageUrl() != null) check.setImageUrl(req.getImageUrl());
+            if (req.getCheckedBy() != null) check.setCheckedBy(req.getCheckedBy());
+            if (req.getSatisfaction() != null) check.setSatisfaction(req.getSatisfaction());
+        }
+
+        return followupCheckRepository.save(check);
     }
 
-    public static Instant calculateDueTime(Instant start, String unit, int value) {
-        if (start == null) return null;
-        long days = Math.max(value, 1);
-        return switch (unit == null ? "DAYS" : unit.toUpperCase(Locale.ROOT)) {
-            case "HOURS" -> start.plus(days, ChronoUnit.HOURS);
-            case "WEEKS" -> start.plus(days * 7, ChronoUnit.DAYS);
-            case "MONTHS" -> start.plus(days * 30, ChronoUnit.DAYS);
-            default -> start.plus(days, ChronoUnit.DAYS);
+    public static Instant calculateDueTime(Instant start, String unit, int val) {
+        if (start == null) return Instant.now();
+        String u = unit != null ? unit.toUpperCase() : "DAYS";
+        int v = val > 0 ? val : 1;
+        return switch (u) {
+            case "HOURS" -> start.plus(v, ChronoUnit.HOURS);
+            case "WEEKS" -> start.plus(v * 7L, ChronoUnit.DAYS);
+            case "MONTHS" -> start.plus(v * 30L, ChronoUnit.DAYS);
+            default -> start.plus(v, ChronoUnit.DAYS);
         };
     }
 }

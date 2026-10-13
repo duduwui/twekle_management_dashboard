@@ -3,9 +3,7 @@ package com.twekl.dashboard.config.administration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -22,26 +20,19 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import java.util.List;
 
+
 @Configuration
 @EnableWebMvc
-@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
-@ComponentScan(
-        basePackages = {
-            "com.twekl.dashboard.controller.administration",
-            "com.twekl.dashboard.exception.administration"
-        })
+@ComponentScan(basePackages = {
+    "com.twekl.dashboard.controller.administration",
+    "com.twekl.dashboard.exception.administration"
+})
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final ApplicationContext applicationContext;
 
     public WebMvcConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-    }
-
-    @Bean
-    public org.springframework.web.multipart.support.StandardServletMultipartResolver
-            multipartResolver() {
-        return new org.springframework.web.multipart.support.StandardServletMultipartResolver();
     }
 
     @Bean
@@ -52,10 +43,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         resolver.setSuffix(".html");
         resolver.setTemplateMode(TemplateMode.HTML);
         resolver.setCharacterEncoding("UTF-8");
-        resolver.setCacheable(
-                applicationContext
-                        .getEnvironment()
-                        .getProperty("thymeleaf.cache", Boolean.class, true));
+        resolver.setCacheable(applicationContext.getEnvironment().getProperty("thymeleaf.cache", Boolean.class, true));
         resolver.setOrder(1);
         resolver.setCheckExistence(true);
         return resolver;
@@ -81,16 +69,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**")
-                .addResourceLocations("classpath:/css/administration/", "classpath:/css/");
-        registry.addResourceHandler("/js/**")
-                .addResourceLocations("classpath:/js/administration/", "classpath:/js/");
-        registry.addResourceHandler("/images/**")
-                .addResourceLocations("classpath:/images/administration/", "classpath:/images/");
-        registry.addResourceHandler("/favicon.ico")
-                .addResourceLocations(
-                        "classpath:/images/administration/twekl-logo.png",
-                        "classpath:/images/twekl-logo.png");
+        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/css/administration/", "classpath:/css/");
+        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/js/administration/", "classpath:/js/");
+        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/images/administration/", "classpath:/images/");
+        registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/images/administration/twekl-logo.png", "classpath:/images/twekl-logo.png");
     }
 
     @Override
@@ -103,8 +85,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 return;
             }
         }
-        MappingJackson2HttpMessageConverter jacksonConverter =
-                new MappingJackson2HttpMessageConverter();
+        MappingJackson2HttpMessageConverter jacksonConverter = new MappingJackson2HttpMessageConverter();
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -112,3 +93,4 @@ public class WebMvcConfig implements WebMvcConfigurer {
         converters.add(0, jacksonConverter);
     }
 }
+

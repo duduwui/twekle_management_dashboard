@@ -35,24 +35,37 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    private final AdminRepository adminRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private AdminRepository adminRepository;
 
-    private final RoleRepository roleRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private RoleRepository roleRepository;
 
-    private final TimeFilterPresetRepository timeFilterPresetRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private TimeFilterPresetRepository timeFilterPresetRepository;
 
-    private final CustomerRepository customerRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private CustomerRepository customerRepository;
 
-    private final CustomerOrderRepository orderRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private CustomerOrderRepository orderRepository;
 
-    private final CustomerFeedbackRepository feedbackRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private CustomerFeedbackRepository feedbackRepository;
 
-    private final OrderFollowupCheckRepository followupCheckRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private OrderFollowupCheckRepository followupCheckRepository;
 
-    private final PasswordEncoder passwordEncoder;
+    @org.springframework.beans.factory.annotation.Autowired
+    private PasswordEncoder passwordEncoder;
 
-    private final AdminService adminService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private AdminService adminService;
 
+    public DataInitializer() {
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
     public DataInitializer(AdminRepository adminRepository, 
                            RoleRepository roleRepository,
                            TimeFilterPresetRepository timeFilterPresetRepository,

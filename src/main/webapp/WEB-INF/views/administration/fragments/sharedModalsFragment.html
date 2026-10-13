@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="sharedModalsFragment" th:remove="tag">
+    <!-- Comprehensive Report Filters Modal -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': (showReportFilterModal || (modalState && modalState.reportFilter)) ? 'flex' : 'none'}" ng-cloak ng-show="showReportFilterModal || (modalState && modalState.reportFilter)" ng-click="closeReportFilterModal()">
+        <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Report Filters</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
+            </div>
+
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                    <div class="filter-presets-grid-3">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingReportPresetSelected(null)}"
+                             ng-click="selectPendingReportPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.active !== false || preset.isActive"
+                             ng-class="{'selected': isPendingReportPresetSelected(preset)}"
+                             ng-click="selectPendingReportPreset(preset)">
+                            <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer Satisfaction Filter</div>
+                    <div class="filter-presets-grid-4">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction}"
+                             ng-click="pendingReportFilters.satisfaction = 'all'">
+                            <span class="filter-simple-name">All Reviews</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'satisfied'}"
+                             ng-click="pendingReportFilters.satisfaction = 'satisfied'">
+                            <span class="filter-simple-name">Satisfied</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'satisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'neutral'}"
+                             ng-click="pendingReportFilters.satisfaction = 'neutral'">
+                            <span class="filter-simple-name">Neutral</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'neutral'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': pendingReportFilters.satisfaction === 'unsatisfied'}"
+                             ng-click="pendingReportFilters.satisfaction = 'unsatisfied'">
+                            <span class="filter-simple-name">Unsatisfied</span>
+                            <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'unsatisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-modal-footer-simple">
+                <button type="button" class="comic-btn-secondary" ng-click="resetReportFilterModal()" style="padding: 9px 16px;">
+                    Reset
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeReportFilterModal()" style="padding: 9px 16px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyReportFilterModal()" style="padding: 9px 22px;">
+                        Apply Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Time & Follow-up Filter Modal -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showBigFilterModal ? 'flex' : 'none'}" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
+        <div class="filter-modal-card" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-header-simple">
+                <strong class="filter-modal-title-simple">Filter Criteria</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
+            </div>
+
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                    <div class="filter-presets-grid-3">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingPresetSelected(null)}"
+                             ng-click="selectPendingPreset(null)">
+                            <span class="filter-simple-name">All Time</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-repeat="preset in timeFilterPresets track by preset.id"
+                             ng-if="preset.active !== false && preset.isActive !== false"
+                             ng-class="{'selected': isPendingPresetSelected(preset)}"
+                             ng-click="selectPendingPreset(preset)">
+                            <div>
+                                <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-top: 2px;" ng-if="preset.durationValue">
+                                    {{ preset.durationValue }} {{ preset.durationUnit | lowercase }}
+                                </div>
+                            </div>
+                            <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-if="currentFilterTarget === 'customer'">
+                    <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Follow-up Progress State</div>
+                    <div class="filter-presets-grid-4">
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('ALL')}"
+                             ng-click="selectPendingFollowupStatus('ALL')">
+                            <span class="filter-simple-name">All Statuses</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALL')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('ALERT')}"
+                             ng-click="selectPendingFollowupStatus('ALERT')">
+                            <span class="filter-simple-name">Overdue</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALERT')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('IDLE')}"
+                             ng-click="selectPendingFollowupStatus('IDLE')">
+                            <span class="filter-simple-name">Pending</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('IDLE')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                        <div class="filter-preset-card-simple"
+                             ng-class="{'selected': isPendingFollowupStatusSelected('DONE')}"
+                             ng-click="selectPendingFollowupStatus('DONE')">
+                            <span class="filter-simple-name">Completed</span>
+                            <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('DONE')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-modal-footer-simple">
+                <button type="button" class="comic-btn-secondary" ng-click="selectPendingPreset(null); selectPendingFollowupStatus('ALL');" style="padding: 9px 16px;">
+                    Reset
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()" style="padding: 9px 16px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()" style="padding: 9px 22px;">
+                        Apply Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Lightbox Modal -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showImageModal ? 'flex' : 'none'}" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
+        <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; align-items: center; justify-content: center;" ng-click="$event.stopPropagation()">
+            <button type="button" class="comic-modal-close" ng-click="closeImageModal()" style="position: absolute; top: -14px; right: -14px; background: #FFFFFF; border-radius: 50%; width: 32px; height: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            <img ng-src="{{previewImageUrl}}" style="max-width: 88vw; max-height: 82vh; border-radius: 8px; border: 3px solid #FFFFFF; box-shadow: 0 10px 40px rgba(0,0,0,0.5); object-fit: contain;" alt="Image Preview">
+        </div>
+    </div>
+
+    <!-- Authentication / Login Popup Modal -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showLoginModal ? 'flex' : 'none'}" ng-show="showLoginModal" ng-click="closeLoginModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 420px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Administrator Login</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeLoginModal()">&times;</button>
+            </div>
+            <form ng-submit="login()">
+                <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="comic-input" placeholder="e.g. twekl_super_admin" ng-model="loginForm.username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="comic-input" placeholder="••••••••" ng-model="loginForm.password" required>
+                    </div>
+                </div>
+                <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeLoginModal()">Cancel</button>
+                    <button type="submit" class="comic-btn">Log In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Delete Confirmation Popup Modal -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showDeleteAdminModal ? 'flex' : 'none'}" ng-cloak ng-show="showDeleteAdminModal" ng-click="closeDeleteAdminModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 460px;">
+            <div class="comic-modal-header" style="background-color: #FEF2F2; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #991B1B;">Confirm Delete Administrator</strong>
+                <button type="button" class="comic-modal-close" ng-click="closeDeleteAdminModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 22px; font-size: 0.95rem; line-height: 1.5;">
+                <p>Are you sure you want to delete administrator <strong ng-bind="adminToDelete.username"></strong>?</p>
+                <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 10px;">This action will revoke all administrative privileges immediately.</p>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeDeleteAdminModal()">Cancel</button>
+                <button type="button" class="comic-btn-danger" ng-click="proceedToDeleteAdminPage()">Proceed to Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Follow-up Checkpoint Modal -->
+    <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showEditFollowupModal ? 'flex' : 'none'}" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
+        <div class="comic-modal-card" ng-click="$event.stopPropagation()" style="max-width: 520px;">
+            <div class="comic-modal-header" style="background-color: #EEF2FF; border-bottom: 2px solid var(--border-black);">
+                <strong style="font-size: 1.05rem; color: #1E1B4B;">Follow-up Feedback: <span ng-bind="editingFollowup.presetName || 'Milestone Checkpoint'"></span></strong>
+                <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
+            </div>
+            <div class="comic-modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Description / Follow-up Notes</label>
+                    <textarea class="comic-input" rows="3" placeholder="Enter follow-up description and details..." ng-model="editingFollowup.note" style="resize: vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Customer Satisfaction</label>
+                    <div class="satisfaction-scale-bar" style="display: flex; gap: 8px;">
+                        <button type="button" class="scale-opt-btn" 
+                                ng-class="{'active-scale-satisfied': editingFollowup.satisfaction === 'SATISFIED'}" 
+                                ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">
+                            Satisfied
+                        </button>
+                        <button type="button" class="scale-opt-btn" 
+                                ng-class="{'active-scale-neutral': (!editingFollowup.satisfaction || editingFollowup.satisfaction === 'NEUTRAL')}" 
+                                ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">
+                            Neutral
+                        </button>
+                        <button type="button" class="scale-opt-btn" 
+                                ng-class="{'active-scale-unsatisfied': editingFollowup.satisfaction === 'UNSATISFIED'}" 
+                                ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">
+                            Unsatisfied
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Upload Proof Photo / Image</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" accept="image/*" class="comic-input" style="padding: 7px;" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
+                        <button type="button" class="comic-btn-danger" style="padding: 7px 12px; font-size: 0.8rem; white-space: nowrap;" ng-if="editingFollowup.imageUrl" ng-click="editingFollowup.imageUrl = ''">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                <div ng-if="editingFollowup.imageUrl" style="display: flex; align-items: center; gap: 12px; background: #F1F5F9; padding: 10px; border-radius: 6px; border: 1.5px solid var(--border-black);">
+                    <img ng-src="{{editingFollowup.imageUrl}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000;" alt="Preview">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Image ready for save</span>
+                </div>
+            </div>
+            <div class="comic-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: #F8FAFC; border-top: 1.5px solid #E2E8F0;">
+                <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
+                <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Feedback</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comic Toast Alerts -->
+    <div class="toast-container">
+        <div class="comic-toast" ng-repeat="toast in toasts track by toast.id" ng-class="toast.type">
+            <span ng-bind="toast.message"></span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

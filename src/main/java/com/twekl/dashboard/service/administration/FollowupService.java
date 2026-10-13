@@ -20,6 +20,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 /**
  * Core Service for Follow-up Milestones and Order Checks.
@@ -56,6 +58,7 @@ public class FollowupService {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
+    @Cacheable(value = "followupSummaries", key = "#timeFilter != null ? #timeFilter : 'ALL'")
     @Transactional(readOnly = true)
     public List<CustomerFollowupSummary> findAllSummaries(String timeFilter) {
         Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
@@ -241,6 +244,7 @@ public class FollowupService {
         return result;
     }
 
+    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck toggleFollowupStatus(Long checkId) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
@@ -258,6 +262,7 @@ public class FollowupService {
         return followupCheckRepository.save(check);
     }
 
+    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
@@ -287,6 +292,7 @@ public class FollowupService {
         return updateFollowupDetails(checkId, notes, photoUrl, null);
     }
 
+    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck completeCheck(Long checkId, FollowupCheckRequest req) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)

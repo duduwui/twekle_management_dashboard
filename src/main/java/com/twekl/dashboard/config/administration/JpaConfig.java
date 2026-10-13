@@ -27,7 +27,7 @@ import java.util.Properties;
     "com.twekl.dashboard.service.administration",
     "com.twekl.dashboard.security.administration"
 })
-@org.springframework.context.annotation.Import(DataInitializer.class)
+@org.springframework.context.annotation.Import({DataInitializer.class, CacheConfig.class})
 @org.springframework.context.annotation.PropertySource("classpath:application.properties")
 public class JpaConfig {
 

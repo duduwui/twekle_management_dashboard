@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
     
     List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff);
+    long countByCreatedAtAfter(java.time.Instant cutoff);
 
     Optional<Customer> findByPhoneNumber(String phoneNumber);
     boolean existsByPhoneNumber(String phoneNumber);

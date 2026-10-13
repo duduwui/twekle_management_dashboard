@@ -41,6 +41,7 @@ public class DashboardService {
         this.timeFilterService = timeFilterService;
     }
 
+    @org.springframework.cache.annotation.Cacheable("dashboardSummary")
     public Map<String, Object> getDashboardSummary() {
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalAdmins", adminService.count());

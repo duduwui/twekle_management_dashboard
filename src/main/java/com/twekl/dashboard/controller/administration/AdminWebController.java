@@ -96,7 +96,7 @@ public class AdminWebController {
                 .toList();
 
         model.addAttribute("activeTab", "dashboard");
-        model.addAttribute("stats", customerService.getStats(summaries));
+        model.addAttribute("stats", customerService.getStats());
         model.addAttribute("urgentCustomers", urgent);
         model.addAttribute("allCustomers", summaries);
         model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL").stream()

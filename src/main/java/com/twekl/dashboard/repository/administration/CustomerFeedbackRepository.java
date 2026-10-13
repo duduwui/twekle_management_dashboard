@@ -20,5 +20,17 @@ public interface CustomerFeedbackRepository extends JpaRepository<CustomerFeedba
 
     @Query("SELECT f FROM CustomerFeedback f WHERE f.customer.id = :customerId ORDER BY f.feedbackDate DESC")
     List<CustomerFeedback> findByCustomerIdOrderByFeedbackDateDesc(@Param("customerId") Long customerId);
+
+    @Query("SELECT COUNT(f) FROM CustomerFeedback f WHERE f.rating <= 2")
+    long countUnsatisfied();
+
+    @Query("SELECT COUNT(f) FROM CustomerFeedback f WHERE f.rating >= 4")
+    long countSatisfied();
+
+    @Query("SELECT COUNT(f) FROM CustomerFeedback f WHERE f.rating = 3")
+    long countNeutral();
+
+    @Query("SELECT COALESCE(SUM(f.rating), 0) FROM CustomerFeedback f")
+    long sumRatings();
 }
 

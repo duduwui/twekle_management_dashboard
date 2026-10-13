@@ -30,5 +30,8 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.checks ORDER BY o.orderDate DESC")
     List<CustomerOrder> findAllWithCustomerAndChecks();
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM CustomerOrder o")
+    Double sumTotalRevenue();
 }
 

@@ -336,6 +336,7 @@ public class ReportService {
         return report;
     }
 
+    @org.springframework.cache.annotation.Cacheable("satisfactionDetails")
     public List<SatisfactionReportDto> getSatisfactionDetails(String period) {
         Instant cutoff = getCutoffForPeriod(period);
         List<SatisfactionReportDto> result = new ArrayList<>();

@@ -29,11 +29,13 @@ public class TimeFilterService {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
+    @org.springframework.cache.annotation.Cacheable("timeFilterPresets")
     @Transactional(readOnly = true)
     public List<TimeFilterPreset> findAll() {
         return timeFilterPresetRepository.findAllByOrderByDisplayOrderAsc();
     }
 
+    @org.springframework.cache.annotation.Cacheable("timeFilterPresets")
     @Transactional(readOnly = true)
     public List<TimeFilterPreset> findActive() {
         return timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
@@ -79,6 +81,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.save(preset);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = {"timeFilterPresets", "dashboardSummary"}, allEntries = true)
     public TimeFilterPreset updatePreset(Long presetId, TimeFilterPreset updated) {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
@@ -94,6 +97,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.save(preset);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = {"timeFilterPresets", "dashboardSummary"}, allEntries = true)
     public TimeFilterPreset toggleStatus(Long presetId) {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
@@ -102,6 +106,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.save(preset);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = {"timeFilterPresets", "dashboardSummary"}, allEntries = true)
     public void deletePreset(Long presetId) {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));

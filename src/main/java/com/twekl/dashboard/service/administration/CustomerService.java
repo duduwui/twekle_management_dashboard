@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 /**
  * Service for customer lifecycle directory, order history, statistics, and CRUD.
@@ -100,10 +102,12 @@ public class CustomerService {
         return customerRepository.count();
     }
 
+    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     public Customer createCustomer(Customer customer) {
         return customerRepository.save(customer);
     }
 
+    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     public Customer updateCustomer(Long customerId, Customer updated) {
         Customer existing = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));
@@ -118,12 +122,14 @@ public class CustomerService {
         return customerRepository.save(existing);
     }
 
+    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     public void deleteCustomer(Long customerId) {
         Customer existing = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));
         customerRepository.delete(existing);
     }
 
+    @Cacheable("customerStats")
     @Transactional(readOnly = true)
     public Map<String, Object> getStats() {
         return getStats(followupService.findAllSummaries("ALL"));
@@ -165,15 +171,13 @@ public class CustomerService {
         long idleFollowups = summaries.stream().filter(s -> "IDLE".equalsIgnoreCase(s.getFollowupStatus())).count();
         long doneFollowups = summaries.stream().filter(s -> "DONE".equalsIgnoreCase(s.getFollowupStatus())).count();
 
-        double totalRevenue = orderRepository.findAll().stream()
-                .mapToDouble(CustomerOrder::getTotalAmount)
-                .sum();
+        double totalRevenue = orderRepository.sumTotalRevenue();
 
-        List<CustomerFeedback> feedbacks = feedbackRepository.findAll();
-
-        long satisfiedFeedbacks = feedbacks.stream().filter(f -> f.getRating() >= 4).count();
-        long neutralFeedbacks = feedbacks.stream().filter(f -> f.getRating() == 3).count();
-        long unsatisfiedFeedbacks = feedbacks.stream().filter(f -> f.getRating() <= 2).count();
+        long satisfiedFeedbacks = feedbackRepository.countSatisfied();
+        long neutralFeedbacks = feedbackRepository.countNeutral();
+        long unsatisfiedFeedbacks = feedbackRepository.countUnsatisfied();
+        double feedbackRatingSum = feedbackRepository.sumRatings();
+        long totalFeedbackCount = satisfiedFeedbacks + neutralFeedbacks + unsatisfiedFeedbacks;
 
         long satisfiedChecks = allChecksList.stream()
                 .filter(c -> c.getSatisfaction() != null && ("SATISFIED".equalsIgnoreCase(c.getSatisfaction()) || "4".equals(c.getSatisfaction()) || "5".equals(c.getSatisfaction())))
@@ -185,13 +189,12 @@ public class CustomerService {
                 .filter(c -> c.getSatisfaction() != null && ("UNSATISFIED".equalsIgnoreCase(c.getSatisfaction()) || "1".equals(c.getSatisfaction()) || "2".equals(c.getSatisfaction())))
                 .count();
 
-        long totalRated = feedbacks.size() + (satisfiedChecks + neutralChecks + unsatisfiedChecks);
+        long totalRated = totalFeedbackCount + (satisfiedChecks + neutralChecks + unsatisfiedChecks);
         long totalSatisfied = satisfiedFeedbacks + satisfiedChecks;
         long totalNeutral = neutralFeedbacks + neutralChecks;
         long totalUnsatisfied = unsatisfiedFeedbacks + unsatisfiedChecks;
 
         double satisfactionRate = totalRated > 0 ? ((double) totalSatisfied / totalRated * 100.0) : 100.0;
-        double feedbackRatingSum = feedbacks.stream().mapToInt(CustomerFeedback::getRating).sum();
         double checkRatingSum = (satisfiedChecks * 5.0) + (neutralChecks * 3.0) + (unsatisfiedChecks * 1.0);
         double avgRating = totalRated > 0 ? ((feedbackRatingSum + checkRatingSum) / totalRated) : 5.0;
 
@@ -199,18 +202,9 @@ public class CustomerService {
         Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS);
         Instant thirtyDaysAgo = now.minus(30, ChronoUnit.DAYS);
 
-        List<Customer> allCustomersList = customerRepository.findAll();
-        long customersToday = allCustomersList.stream()
-                .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().isAfter(oneDayAgo))
-                .count();
-
-        long customersThisWeek = allCustomersList.stream()
-                .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().isAfter(sevenDaysAgo))
-                .count();
-
-        long customersThisMonth = allCustomersList.stream()
-                .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().isAfter(thirtyDaysAgo))
-                .count();
+        long customersToday = customerRepository.countByCreatedAtAfter(oneDayAgo);
+        long customersThisWeek = customerRepository.countByCreatedAtAfter(sevenDaysAgo);
+        long customersThisMonth = customerRepository.countByCreatedAtAfter(thirtyDaysAgo);
 
         long completedPercentage = totalFollowups > 0 ? Math.round(((double) completedFollowups / totalFollowups) * 100.0) : 0L;
         long overduePercentage = totalFollowups > 0 ? Math.round(((double) overdueFollowups / totalFollowups) * 100.0) : 0L;

@@ -24,12 +24,11 @@ public class TomcatServer {
 
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(port);
-        // Conservative defaults for a shared host; tune from measured concurrency.
         var connector = tomcat.getConnector();
-        connector.setProperty("maxThreads", System.getenv().getOrDefault("HTTP_MAX_THREADS", "40"));
-        connector.setProperty("minSpareThreads", "4");
-        connector.setProperty("maxConnections", System.getenv().getOrDefault("HTTP_MAX_CONNECTIONS", "256"));
-        connector.setProperty("acceptCount", "50");
+        connector.setProperty("maxThreads", System.getenv().getOrDefault("HTTP_MAX_THREADS", "150"));
+        connector.setProperty("minSpareThreads", System.getenv().getOrDefault("HTTP_MIN_SPARE_THREADS", "16"));
+        connector.setProperty("maxConnections", System.getenv().getOrDefault("HTTP_MAX_CONNECTIONS", "1024"));
+        connector.setProperty("acceptCount", System.getenv().getOrDefault("HTTP_ACCEPT_COUNT", "200"));
         connector.setProperty("connectionTimeout", "20000");
 
         String baseDir = new File("target/tomcat-work").getAbsolutePath();

@@ -139,7 +139,9 @@ public class PortalQueryRepository {
                 "",
                 """
                 SELECT f.ID AS id, f.MILESTONE_NAME AS milestoneName, f.COMPLETED AS completed,
-                    f.NOTES AS notes, f.SATISFACTION AS satisfaction, f.CHECKED_BY AS checkedBy,
+                    f.NOTES AS notes, CASE f.SATISFACTION WHEN '1' THEN 'UNSATISFIED' WHEN '2' THEN 'UNSATISFIED'
+                        WHEN '3' THEN 'NEUTRAL' WHEN '4' THEN 'SATISFIED' WHEN '5' THEN 'SATISFIED'
+                        ELSE f.SATISFACTION END AS satisfaction, f.CHECKED_BY AS checkedBy,
                     f.CHECKED_AT AS checkedAt, (NULLIF(f.IMAGE_URL,'') IS NOT NULL) AS hasImage,
                     TIMESTAMPDIFF(MINUTE,:now,TIMESTAMPADD(MINUTE,
                         GREATEST(COALESCE(f.DURATION_VALUE,1),1) * CASE f.DURATION_UNIT

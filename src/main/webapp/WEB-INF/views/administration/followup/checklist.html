@@ -20,6 +20,6 @@
 <label>Upload photo (PNG or JPEG, up to 1 MB) <input type="file" name="photo" accept="image/png,image/jpeg" required></label><button class="comic-btn">Upload photo</button></form>
 <details th:if="${check.hasImage}"><summary>Attached photo</summary><img loading="lazy" referrerpolicy="no-referrer" class="portal-photo" th:src="@{/admin/followups/checks/{id}/photo(id=${check.id})}" alt="Checkpoint attachment">
 <form th:if="${@portalAccess.allows('CUSTOMER_FOLLOWUP','UPDATE')}" method="post" th:action="@{/admin/followups/checks/{id}/remove-image(id=${check.id})}"><button class="comic-btn btn-sm">Remove photo</button></form></details>
-<p th:if="${check.checkedBy != null}" th:text="|Last checked by ${check.checkedBy} at ${check.checkedAt}|"></p></article>
+<p th:if="${check.checkedBy != null}" th:text="|Last checked by ${check.checkedBy} at ${check.checkedAt ?: 'an unknown time'}|"></p></article>
 <nav th:replace="~{administration/fragments/pageNavigation :: pager(${'/admin/followups/orders/' + order.id}, '')}"></nav>
 </section></body></html>

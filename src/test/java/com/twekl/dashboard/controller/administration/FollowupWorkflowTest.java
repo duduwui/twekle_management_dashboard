@@ -127,4 +127,29 @@ class FollowupWorkflowTest {
         assertEquals("\"'=SUM(A1)\"", ReportController.csv("=SUM(A1)"));
         assertEquals("\"a\"\"b\"", ReportController.csv("a\"b"));
     }
+    @Autowired AdminRepository admins;
+
+    @Test void livePermissionRevocationOverridesAnExistingSessionRole() throws Exception {
+        String username = "permission_" + UUID.randomUUID().toString().substring(0,12);
+        Admin admin = new Admin(null,username,"unused",null,false,false,false,true);
+        AdminPermission permission = new AdminPermission(admin,"CUSTOMER_FOLLOWUP","Follow-ups",false,true,false,false);
+        admin.getPermissions().add(permission);
+        admins.saveAndFlush(admin);
+        var sessionUser = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(username).roles("ADMIN");
+        mvc.perform(get("/admin/followups").with(sessionUser)).andExpect(status().isOk());
+        mvc.perform(post("/admin/customers").with(sessionUser).with(csrf()).param("name","Denied").param("phoneNumber","123"))
+            .andExpect(status().isForbidden());
+        permission.setCanRead(false); admins.flush();
+        mvc.perform(get("/admin/followups").with(sessionUser)).andExpect(status().isForbidden());
+    }
+
+    @Test void checkpointProjectionNormalizesLegacyRatingsAndOmitsImageBodies() {
+        var check = new OrderFollowupCheck(order,"Legacy",1);
+        check.setSatisfaction("4"); check.setImageUrl("data:image/png;base64,large-image-placeholder");
+        checks.saveAndFlush(check);
+        var row = queries.checklist(order.getId(),0).getContent().getFirst();
+        assertEquals("SATISFIED",row.get("satisfaction"));
+        assertFalse(row.containsKey("imageUrl"));
+    }
+
 }

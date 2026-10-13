@@ -54,7 +54,7 @@
                         </span>
                     </td>
                     <td>
-                        <form th:action="@{/admin/admins/{adminId}/toggle_status(adminId=${admin.id})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
+                        <form th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${admin.id})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
                             <button type="submit" class="status-pill-btn" th:classappend="${admin.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
                                 <span class="status-dot"></span>
                                 <span th:text="${admin.active} ? 'Active' : 'Inactive'">Active</span>
@@ -63,7 +63,7 @@
                     </td>
                     <td style="text-align: right;">
                         <div style="display: inline-flex; gap: 8px; align-items: center;">
-                            <form th:action="@{/admin/admins/{adminId}/delete_admin(adminId=${admin.id})}" method="post" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete administrator \'' + this.getAttribute('data-uname') + '\'?');" th:data-uname="${admin.username}">
+                            <form th:action="@{/admin/admins/{adminId}/delete-admin(adminId=${admin.id})}" method="post" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete administrator \'' + this.getAttribute('data-uname') + '\'?');" th:data-uname="${admin.username}">
                                 <button type="submit" class="comic-btn-danger" style="cursor: pointer;">Delete</button>
                             </form>
                         </div>

@@ -2,29 +2,30 @@ package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
 import com.twekl.dashboard.model.administration.Admin;
+import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
 import jakarta.validation.Valid;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 /**
  * Controller for Staff Administrators and Permissions management.
  * Consolidates SSR view rendering and administrative actions.
+ * Implements AdminOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/admins")
-public class AdminController {
+public class AdminController implements AdminOperations {
 
     private final AdminService adminService;
     private final RoleService roleService;
@@ -34,21 +35,20 @@ public class AdminController {
         this.roleService = roleService;
     }
 
-    private boolean isAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
-    }
-
     // =========================================================
     // SSR VIEW ENDPOINTS
     // =========================================================
 
+    @Override
     @GetMapping
     public String showAdmins(Model model) {
-        if (!isAuthenticated()) return "redirect:/login";
         model.addAttribute("activeTab", "admins");
-        model.addAttribute("adminList", adminService.findAll());
-        model.addAttribute("roleList", roleService.findAll());
+        List<Admin> admins = adminService.findAll();
+        List<Role> roles = roleService.findAll();
+        model.addAttribute("admins", admins);
+        model.addAttribute("roles", roles);
+        model.addAttribute("adminList", admins);
+        model.addAttribute("roleList", roles);
         model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
         if (!model.containsAttribute("newAdmin")) {
             model.addAttribute("newAdmin", new CreateAdminRequest());
@@ -56,8 +56,8 @@ public class AdminController {
         return "administration/admin/admins";
     }
 
+    @Override
     @PostMapping("/create-admin")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
                                  RedirectAttributes flash) {
@@ -74,8 +74,8 @@ public class AdminController {
         return "redirect:/admin/admins";
     }
 
+    @Override
     @PostMapping("/{adminId:\\d+}/toggle-status")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
             Admin toggled = adminService.toggleStatus(adminId);
@@ -86,8 +86,8 @@ public class AdminController {
         return "redirect:/admin/admins";
     }
 
+    @Override
     @PostMapping("/{adminId:\\d+}/delete-admin")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS')")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         try {
             adminService.deleteAdmin(adminId);

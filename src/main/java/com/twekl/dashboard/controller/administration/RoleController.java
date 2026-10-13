@@ -1,14 +1,11 @@
 package com.twekl.dashboard.controller.administration;
 
-import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
 import com.twekl.dashboard.dto.administration.RoleDto;
+import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
 import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,15 +15,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 /**
- * Controller for Administrative Roles and Permissions assignment.
- * Consolidates SSR view rendering and REST role actions.
+ * Controller for Role & Permission templates management.
+ * Consolidates SSR view rendering and administrative role actions.
+ * Implements RoleOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/roles")
-public class RoleController {
+public class RoleController implements RoleOperations {
 
     private final RoleService roleService;
     private final AdminService adminService;
@@ -36,31 +32,28 @@ public class RoleController {
         this.adminService = adminService;
     }
 
-    private boolean isAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
-    }
-
     // =========================================================
     // SSR VIEW ENDPOINTS
     // =========================================================
 
+    @Override
     @GetMapping
     public String showRoles(@RequestParam(value = "selectedAdminId", required = false) Long selectedAdminId,
                             Model model) {
-        if (!isAuthenticated()) return "redirect:/login";
         model.addAttribute("activeTab", "roles");
-        List<Admin> adminList = adminService.findAll();
-        List<Role> roleList = roleService.findAll();
-        model.addAttribute("adminList", adminList);
-        model.addAttribute("roleList", roleList);
+        List<Admin> admins = adminService.findAll();
+        List<Role> roles = roleService.findAll();
+        model.addAttribute("admins", admins);
+        model.addAttribute("roles", roles);
+        model.addAttribute("adminList", admins);
+        model.addAttribute("roleList", roles);
         model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
 
         Admin selectedAdmin = null;
         if (selectedAdminId != null) {
             selectedAdmin = adminService.findById(selectedAdminId).orElse(null);
-        } else if (!adminList.isEmpty()) {
-            selectedAdmin = adminList.get(0);
+        } else if (!admins.isEmpty()) {
+            selectedAdmin = admins.get(0);
         }
         model.addAttribute("selectedAdmin", selectedAdmin);
 
@@ -70,8 +63,8 @@ public class RoleController {
         return "administration/role/roles";
     }
 
+    @Override
     @PostMapping({"/create_role", "/create", "/create-role"})
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String createRoleSsr(@ModelAttribute("newRole") RoleDto request, RedirectAttributes flash) {
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             flash.addFlashAttribute("errorMessage", "Role template name is required.");
@@ -86,8 +79,8 @@ public class RoleController {
         return "redirect:/admin/roles";
     }
 
+    @Override
     @PostMapping({"/{roleId:\\d+}/update_role", "/{roleId:\\d+}/update", "/{roleId:\\d+}/update-role"})
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
                                 @ModelAttribute RoleDto request,
                                 RedirectAttributes flash) {
@@ -100,8 +93,8 @@ public class RoleController {
         return "redirect:/admin/roles";
     }
 
+    @Override
     @PostMapping({"/{adminId:\\d+}/assign_user_role", "/{adminId:\\d+}/assign", "/assign", "/assign_user_role", "/assign-user-role"})
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_MANAGE_USERS', 'PERMISSION_CREATE_ROLES')")
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
                                      @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
@@ -137,8 +130,8 @@ public class RoleController {
         return "redirect:/admin/roles?selectedAdminId=" + targetAdminId;
     }
 
+    @Override
     @PostMapping("/{roleId:\\d+}/delete")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'PERMISSION_CREATE_ROLES')")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
         try {
             roleService.deleteRole(roleId);

@@ -80,7 +80,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers(antMatcher("/admin/auth/**"))
+                .ignoringRequestMatchers(antMatcher("/login"), antMatcher("/login/**"), antMatcher("/admin/auth/**"))
             )
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .securityContext(securityContext -> securityContext

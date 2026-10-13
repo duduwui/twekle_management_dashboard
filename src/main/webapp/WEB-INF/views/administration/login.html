@@ -28,7 +28,10 @@
                 <input type="password" class="input" id="password" name="password" required="" autocomplete="current-password" placeholder="••••••••">
             </div>
 
-            <div th:if="${param.error}" class="login-error" style="display: block;">Invalid username or password.</div>
+            <div th:if="${param.error}" class="login-error" style="display: block;">
+                <span th:if="${#strings.equals(param.error, 'access_denied')}">Session expired or access denied. Please log in again.</span>
+                <span th:unless="${#strings.equals(param.error, 'access_denied')}">Invalid username or password.</span>
+            </div>
 
             <button type="submit" id="loginBtn" class="login-btn">
                 <span class="spinner" id="loginSpinner"></span>

@@ -31,7 +31,7 @@
         <div class="nav-divider"></div>
 
         <!-- Group 1: Administration Category Accordion -->
-        <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}">
+        <div class="nav-category-group" th:if="${@portalAccess.staff() || @portalAccess.roles()}">
             <button type="button" 
                     class="nav-category-toggle" 
                     th:classappend="${activeTab == 'admins' || activeTab == 'roles'} ? 'active-category' : ''"
@@ -56,25 +56,25 @@
                  th:style="${activeTab == 'admins' || activeTab == 'roles'} ? 'display: flex;' : 'display: none;'">
                 <a th:href="@{/admin/admins}" 
                    class="nav-sub-item" 
-                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers}"
+                   th:if="${@portalAccess.staff()}"
                    th:classappend="${activeTab == 'admins'} ? 'active' : ''">
                     <span>Admin Management</span>
                 </a>
                 <a th:href="@{/admin/roles}" 
                    class="nav-sub-item" 
-                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canCreateRoles}"
+                   th:if="${@portalAccess.roles()}"
                    th:classappend="${activeTab == 'roles'} ? 'active' : ''">
                     <span>Role Templates</span>
                 </a>
             </div>
         </div>
 
-        <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}"></div>
+        <div class="nav-divider" th:if="${@portalAccess.staff() || @portalAccess.roles()}"></div>
 
         <!-- Group 2: Follow-ups -->
         <a th:href="@{/admin/followups}" 
            class="nav-item" 
-           th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadFollowups}"
+           th:if="${@portalAccess.allows('CUSTOMER_FOLLOWUP','READ')}"
            th:classappend="${activeTab == 'followups' || activeTab == 'customers'} ? 'active' : ''">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -85,9 +85,9 @@
             </div>
         </a>
 
-        <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}"></div>
+        <div class="nav-divider" th:if="${@portalAccess.allows('REPORTS_INSIGHTS','READ')}"></div>
 
-        <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}">
+        <div class="nav-category-group" th:if="${@portalAccess.allows('REPORTS_INSIGHTS','READ')}">
             <button type="button" 
                     class="nav-category-toggle" 
                     th:classappend="${activeTab == 'reports'} ? 'active-category' : ''"

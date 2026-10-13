@@ -8,18 +8,7 @@
     </th:block>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twekl Admin Dashboard</title>
-    <style>
-        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
-            display: none !important;
-        }
-        .ng-hide {
-            display: none !important;
-        }
-        .comic-modal-overlay.ng-hide,
-        .comic-modal-overlay[style*="display: none"] {
-            display: none !important;
-        }
-    </style>
+
     <link th:if="${activeTab == 'dashboard'}" rel="stylesheet" th:href="@{/css/dashboard.css(v=14)}">
     <!-- Google Fonts (Non-blocking fallback to local system font stack) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -27,5 +16,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <!-- Custom Comic Design System Style -->
     <link rel="stylesheet" href="/css/style.css?v=4.3">
+    <link rel="stylesheet" th:href="@{/css/portal.css}">
 </head>
 </html>

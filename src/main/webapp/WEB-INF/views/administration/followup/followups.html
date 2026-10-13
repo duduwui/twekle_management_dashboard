@@ -1,22 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{administration/fragments/adminLayout}">
-<head>
-    <title>Follow-ups | Twekl Administration</title>
-</head>
-<body>
-    <div layout:fragment="content">
-        <section class="comic-card" ng-controller="FollowupController">
-            <!-- 3.1 FOLLOW-UP DIRECTORY VIEW FRAGMENT -->
-            <div th:replace="~{administration/followup/followupDirectory :: followupDirectory}"></div>
-
-            <!-- 3.2 CUSTOMER PURCHASE ORDERS FRAGMENT -->
-            <div th:replace="~{administration/followup/orderDirectory :: orderDirectory}"></div>
-
-            <!-- 3.3 CUSTOMER FEEDBACK & NOTES FRAGMENT -->
-            <div th:replace="~{administration/followup/feedbackDirectory :: feedbackDirectory}"></div>
-        </section>
-    </div>
-</body>
-</html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{administration/fragments/adminLayout}">
+<head><title>Twekl Administration</title></head><body><section layout:fragment="content" class="comic-card portal-page">
+<div th:if="${successMessage}" class="portal-message" role="status" th:text="${successMessage}"></div>
+<h1>Customer follow-ups</h1>
+<form method="get" th:action="@{/admin/followups}" class="portal-toolbar">
+<label>Search <input name="search" maxlength="100" th:value="${search}" placeholder="Customer name or phone"></label>
+<label>Status <select name="status"><option th:each="s : ${ {'ALL','ALERT','IDLE','DONE'} }" th:value="${s}" th:selected="${status == s}" th:text="${s}"></option></select></label>
+<label>Registered <select th:replace="~{administration/fragments/pageNavigation :: period}"></select></label>
+<button class="comic-btn btn-primary">Apply filters</button>
+<a th:if="${@portalAccess.allows('CUSTOMER_FOLLOWUP','CREATE')}" class="comic-btn" th:href="@{/admin/customers/new}">Add customer</a></form>
+<div th:replace="~{administration/followup/followupDirectory :: directory}"></div>
+<nav th:replace="~{administration/fragments/pageNavigation :: pager('/admin/followups', ${'&amp;search=' + #uris.escapeQueryParam(search) + '&amp;status=' + status + '&amp;period=' + period})}"></nav>
+</section></body></html>

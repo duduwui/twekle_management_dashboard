@@ -7,16 +7,16 @@
     </div>
     <div class="table-responsive" th:unless="${#lists.isEmpty(urgentCustomers)}">
         <table class="comic-table table-centered">
-            <thead><tr><th>Customer Name</th><th>Phone Number</th><th>City</th><th>Milestone</th><th>Minutes Until Due</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>Customer Name</th><th>Phone Number</th><th>City</th><th>Pending checks</th><th>Next due (UTC)</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
                 <tr th:each="summary : ${urgentCustomers}">
-                    <td><strong th:text="${summary.customer.name}"></strong></td>
-                    <td th:text="${summary.customer.phoneNumber}"></td>
-                    <td th:text="${summary.customer.city ?: '-'}"></td>
-                    <td th:text="${summary.nextPendingFollowup}"></td>
-                    <td th:text="${summary.nextPendingMinutesLeft ?: 'Unscheduled'}"></td>
-                    <td><span class="comic-tag" th:classappend="${summary.followupStatus == 'ALERT' ? 'tag-danger' : 'tag-warning'}" th:text="${summary.followupStatus == 'ALERT' ? 'Overdue' : 'In Queue'}"></span></td>
-                    <td><a class="comic-btn btn-sm btn-primary" th:href="@{/admin/followups/orders/{id}(id=${summary.customer.customerId})}">Open</a></td>
+                    <td><strong th:text="${summary.name}"></strong></td>
+                    <td th:text="${summary.phone}"></td>
+                    <td th:text="${summary.city ?: '-'}"></td>
+                    <td th:text="${summary.pendingCount}"></td>
+                    <td th:text="${summary.nextDue ?: 'Unscheduled'}"></td>
+                    <td><span class="comic-tag" th:classappend="${summary.status == 'ALERT' ? 'tag-danger' : 'tag-warning'}" th:text="${summary.status == 'ALERT' ? 'Overdue' : 'In Queue'}"></span></td>
+                    <td><a class="comic-btn btn-sm btn-primary" th:href="@{/admin/followups/customers/{id}/orders(id=${summary.id})}">Open</a></td>
                 </tr>
             </tbody>
         </table>

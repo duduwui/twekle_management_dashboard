@@ -1,0 +1,9 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><body>
+<nav th:fragment="pager(base, parameters)" class="portal-pager" aria-label="Pagination">
+    <a th:if="${rows.hasPrevious()}" th:href="@{${base}(page=${rows.number - 1})} + ${parameters}">Previous</a>
+    <span th:text="|Page ${rows.number + 1} of ${rows.totalPages == 0 ? 1 : rows.totalPages} · ${rows.totalElements} results|"></span>
+    <a th:if="${rows.hasNext()}" th:href="@{${base}(page=${rows.number + 1})} + ${parameters}">Next</a>
+</nav>
+<select th:fragment="period" name="period" aria-label="Period">
+<option th:each="p : ${ {'ALL','TODAY','7_DAYS','30_DAYS','THIS_MONTH','THIS_YEAR'} }" th:value="${p}" th:selected="${period == p}" th:text="${#strings.replace(p,'_',' ')}"></option>
+</select></body></html>

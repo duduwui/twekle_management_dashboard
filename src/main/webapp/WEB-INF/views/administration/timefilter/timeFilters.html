@@ -25,7 +25,7 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span class="comic-tag tag-primary" style="font-size: 0.82rem; padding: 4px 10px;">
-                        Total Rules: <strong th:text="${#lists.size(presetList)}">0</strong>
+                        Total Rules: <strong th:text="${rows.totalElements}">0</strong>
                     </span>
                 </div>
             </div>
@@ -37,6 +37,7 @@
             <div th:replace="~{administration/timefilter/timeFilterDirectory :: timeFilterDirectory}"></div>
 
         </div>
+<nav th:replace="~{administration/fragments/pageNavigation :: pager('/admin/timelines', '')}"></nav>
     </section>
 
     <!-- Client-side filter helper -->

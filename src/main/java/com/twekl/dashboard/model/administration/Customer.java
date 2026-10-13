@@ -2,22 +2,18 @@ package com.twekl.dashboard.model.administration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.twekl.dashboard.model.administration.CustomerFeedback;
-import com.twekl.dashboard.model.administration.CustomerOrder;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
-/**
- * Pure JPA Entity representing Customers.
- */
+/** Pure JPA Entity representing Customers. */
 @Entity
 @Table(name = "CUSTOMERS")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -55,11 +51,19 @@ public class Customer {
     private Instant lastOrderDate;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "customer",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private Set<CustomerOrder> orders = new LinkedHashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "customer",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private Set<CustomerFeedback> feedbacks = new LinkedHashSet<>();
 
     @CreationTimestamp
@@ -92,46 +96,115 @@ public class Customer {
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getCustomerId() { return id; }
-    public void setCustomerId(Long customerId) { this.id = customerId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public Long getCustomerId() {
+        return id;
+    }
 
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setCustomerId(Long customerId) {
+        this.id = customerId;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getName() {
+        return name;
+    }
 
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
 
-    public int getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(int totalOrders) { this.totalOrders = totalOrders; }
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
-    public double getTotalSpent() { return totalSpent; }
-    public void setTotalSpent(double totalSpent) { this.totalSpent = totalSpent; }
+    public String getEmail() {
+        return email;
+    }
 
-    public Instant getLastOrderDate() { return lastOrderDate; }
-    public void setLastOrderDate(Instant lastOrderDate) { this.lastOrderDate = lastOrderDate; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public Set<CustomerOrder> getOrders() { return orders; }
-    public void setOrders(Set<CustomerOrder> orders) { this.orders = orders; }
+    public String getCity() {
+        return city;
+    }
 
-    public Set<CustomerFeedback> getFeedbacks() { return feedbacks; }
-    public void setFeedbacks(Set<CustomerFeedback> feedbacks) { this.feedbacks = feedbacks; }
+    public void setCity(String city) {
+        this.city = city;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public boolean isActive() {
+        return active;
+    }
 
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public int getTotalOrders() {
+        return totalOrders;
+    }
+
+    public void setTotalOrders(int totalOrders) {
+        this.totalOrders = totalOrders;
+    }
+
+    public double getTotalSpent() {
+        return totalSpent;
+    }
+
+    public void setTotalSpent(double totalSpent) {
+        this.totalSpent = totalSpent;
+    }
+
+    public Instant getLastOrderDate() {
+        return lastOrderDate;
+    }
+
+    public void setLastOrderDate(Instant lastOrderDate) {
+        this.lastOrderDate = lastOrderDate;
+    }
+
+    public Set<CustomerOrder> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(Set<CustomerOrder> orders) {
+        this.orders = orders;
+    }
+
+    public Set<CustomerFeedback> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public void setFeedbacks(Set<CustomerFeedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
-

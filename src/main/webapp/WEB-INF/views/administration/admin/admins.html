@@ -20,8 +20,8 @@
         <div th:replace="~{administration/admin/adminForm :: adminForm}"></div>
 
         <!-- 1.3 INSPECT ADMIN MODAL FRAGMENT -->
-        <div th:replace="~{administration/admin/adminModals :: adminModals}"></div>
 
+<nav th:replace="~{administration/fragments/pageNavigation :: pager('/admin/admins', '')}"></nav>
     </section>
     </div>
 </body>

@@ -9,6 +9,7 @@ import com.twekl.dashboard.model.administration.AdminPermission;
 import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.repository.administration.AdminRepository;
 import com.twekl.dashboard.repository.administration.RoleRepository;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,9 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Service for staff administrators and permission management.
- */
+/** Service for staff administrators and permission management. */
 @Service
 @Transactional
 public class AdminService {
@@ -33,12 +32,20 @@ public class AdminService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public AdminService(AdminRepository adminRepository,
-                        RoleRepository roleRepository,
-                        PasswordEncoder passwordEncoder) {
+    public AdminService(
+            AdminRepository adminRepository,
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Admin> findPage(int page) {
+        return adminRepository.findAll(
+                org.springframework.data.domain.PageRequest.of(
+                        Math.max(0, page), 25, org.springframework.data.domain.Sort.by("id")));
     }
 
     @Transactional(readOnly = true)
@@ -69,13 +76,17 @@ public class AdminService {
     @Transactional(readOnly = true)
     public Optional<Admin> getCurrentAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+        if (auth == null
+                || !auth.isAuthenticated()
+                || "anonymousUser".equals(auth.getPrincipal())) {
             return Optional.empty();
         }
         return findByUsername(auth.getName());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(
+            readOnly = true,
+            propagation = org.springframework.transaction.annotation.Propagation.SUPPORTS)
     public boolean hasPermission(Admin admin, String moduleKey, String action) {
         if (admin == null || moduleKey == null || action == null) return false;
         if (admin.isSuperAdmin()) return true;
@@ -94,33 +105,70 @@ public class AdminService {
         }
         if (admin.getRoles() != null && !admin.getRoles().isEmpty()) {
             for (Role role : admin.getRoles()) {
-                boolean allowed = switch (action.toUpperCase()) {
-                    case "CREATE" -> role.isCanCreate();
-                    case "READ" -> role.isCanRead();
-                    case "UPDATE" -> role.isCanUpdate();
-                    case "DELETE" -> role.isCanDelete();
-                    default -> false;
-                };
+                boolean allowed =
+                        switch (action.toUpperCase()) {
+                            case "CREATE" -> role.isCanCreate();
+                            case "READ" -> role.isCanRead();
+                            case "UPDATE" -> role.isCanUpdate();
+                            case "DELETE" -> role.isCanDelete();
+                            default -> false;
+                        };
                 if (allowed) return true;
             }
         }
         return false;
     }
 
+    @Transactional(readOnly = true)
+    public List<AdminPermissionDto> permissionForm(Admin admin) {
+        return java.util.Map.of(
+                        "ADMIN_MANAGEMENT",
+                        "Administration and staff",
+                        "ROLE_MANAGEMENT",
+                        "Roles and permissions",
+                        "CUSTOMER_FOLLOWUP",
+                        "Customer follow-ups",
+                        "TIMELINES_PRESETS",
+                        "Milestone rules",
+                        "REPORTS_INSIGHTS",
+                        "Reports and insights")
+                .entrySet()
+                .stream()
+                .sorted(java.util.Map.Entry.comparingByKey())
+                .map(
+                        module ->
+                                new AdminPermissionDto(
+                                        module.getKey(),
+                                        module.getValue(),
+                                        hasPermission(admin, module.getKey(), "CREATE"),
+                                        hasPermission(admin, module.getKey(), "READ"),
+                                        hasPermission(admin, module.getKey(), "UPDATE"),
+                                        hasPermission(admin, module.getKey(), "DELETE")))
+                .toList();
+    }
+
+    private void protectSuperAdmin(Admin target) {
+        if (target.isSuperAdmin() && !getCurrentAdmin().map(Admin::isSuperAdmin).orElse(false))
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Only super administrators can change another super administrator");
+    }
+
     public Admin createAdmin(CreateAdminRequest req) {
         if (adminRepository.existsByUsername(req.getUsername())) {
-            throw new IllegalArgumentException("Username '" + req.getUsername() + "' is already taken");
+            throw new IllegalArgumentException(
+                    "Username '" + req.getUsername() + "' is already taken");
         }
 
-        Admin admin = Admin.builder()
-                .username(req.getUsername().trim())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .phoneNumber(req.getPhoneNumber())
-                .isSuperAdmin(req.isSuperAdmin())
-                .canCreateRoles(req.isCanCreateRoles())
-                .canManageUsers(req.isCanManageUsers())
-                .active(req.isActive())
-                .build();
+        Admin admin =
+                Admin.builder()
+                        .username(req.getUsername().trim())
+                        .password(passwordEncoder.encode(req.getPassword()))
+                        .phoneNumber(req.getPhoneNumber())
+                        .isSuperAdmin(req.isSuperAdmin())
+                        .canCreateRoles(req.isCanCreateRoles())
+                        .canManageUsers(req.isCanManageUsers())
+                        .active(req.isActive())
+                        .build();
 
         if (req.getRoleIds() != null && !req.getRoleIds().isEmpty()) {
             Set<Role> roles = new HashSet<>(roleRepository.findAllById(req.getRoleIds()));
@@ -129,8 +177,15 @@ public class AdminService {
 
         if (req.getPermissions() != null && !req.getPermissions().isEmpty()) {
             for (AdminPermissionDto dto : req.getPermissions()) {
-                AdminPermission p = new AdminPermission(admin, dto.getModuleKey(), dto.getModuleNameEn(),
-                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete());
+                AdminPermission p =
+                        new AdminPermission(
+                                admin,
+                                dto.getModuleKey(),
+                                dto.getModuleNameEn(),
+                                dto.isCanCreate(),
+                                dto.isCanRead(),
+                                dto.isCanUpdate(),
+                                dto.isCanDelete());
                 admin.getPermissions().add(p);
             }
         } else {
@@ -141,9 +196,15 @@ public class AdminService {
     }
 
     public Admin updateAdmin(Long adminId, UpdateAdminRequest req) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
+        Admin admin =
+                adminRepository
+                        .findById(adminId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Admin not found with ID: " + adminId));
 
+        protectSuperAdmin(admin);
         if (req.getPhoneNumber() != null) admin.setPhoneNumber(req.getPhoneNumber());
         if (req.getIsSuperAdmin() != null) admin.setSuperAdmin(req.getIsSuperAdmin());
         if (req.getCanCreateRoles() != null) admin.setCanCreateRoles(req.getCanCreateRoles());
@@ -157,10 +218,30 @@ public class AdminService {
             admin.setRoles(roles);
         }
         if (req.getPermissions() != null) {
+            Set<String> keys = new HashSet<>();
+            Set<String> modules =
+                    Set.of(
+                            "ADMIN_MANAGEMENT",
+                            "ROLE_MANAGEMENT",
+                            "CUSTOMER_FOLLOWUP",
+                            "TIMELINES_PRESETS",
+                            "REPORTS_INSIGHTS");
+            for (AdminPermissionDto permission : req.getPermissions()) {
+                if (!modules.contains(permission.getModuleKey())
+                        || !keys.add(permission.getModuleKey()))
+                    throw new IllegalArgumentException("Invalid or duplicate permission module");
+            }
             admin.getPermissions().clear();
             for (AdminPermissionDto dto : req.getPermissions()) {
-                AdminPermission p = new AdminPermission(admin, dto.getModuleKey(), dto.getModuleNameEn(),
-                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete());
+                AdminPermission p =
+                        new AdminPermission(
+                                admin,
+                                dto.getModuleKey(),
+                                dto.getModuleNameEn(),
+                                dto.isCanCreate(),
+                                dto.isCanRead(),
+                                dto.isCanUpdate(),
+                                dto.isCanDelete());
                 admin.getPermissions().add(p);
             }
         }
@@ -169,20 +250,34 @@ public class AdminService {
     }
 
     public Admin toggleStatus(Long adminId) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
+        Admin admin =
+                adminRepository
+                        .findById(adminId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Admin not found with ID: " + adminId));
+        protectSuperAdmin(admin);
         if ("twekl_super_admin".equalsIgnoreCase(admin.getUsername()) && admin.isActive()) {
-            throw new IllegalArgumentException("Primary super administrator account cannot be deactivated");
+            throw new IllegalArgumentException(
+                    "Primary super administrator account cannot be deactivated");
         }
         admin.setActive(!admin.isActive());
         return adminRepository.save(admin);
     }
 
     public void deleteAdmin(Long adminId) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
+        Admin admin =
+                adminRepository
+                        .findById(adminId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Admin not found with ID: " + adminId));
+        protectSuperAdmin(admin);
         if ("twekl_super_admin".equalsIgnoreCase(admin.getUsername())) {
-            throw new IllegalArgumentException("Primary super administrator account cannot be deleted");
+            throw new IllegalArgumentException(
+                    "Primary super administrator account cannot be deleted");
         }
         adminRepository.delete(admin);
     }
@@ -193,15 +288,55 @@ public class AdminService {
         boolean canManage = isSuper || admin.isCanManageUsers();
         boolean canCreateR = isSuper || admin.isCanCreateRoles();
 
-        admin.getPermissions().add(new AdminPermission(admin, "ADMIN_MANAGEMENT", "Administration & Staff",
-                canManage, canManage, canManage, canManage));
-        admin.getPermissions().add(new AdminPermission(admin, "ROLE_MANAGEMENT", "Roles & Permissions",
-                canCreateR, canCreateR, canCreateR, canCreateR));
-        admin.getPermissions().add(new AdminPermission(admin, "CUSTOMER_FOLLOWUP", "Customer Follow-ups",
-                true, true, true, isSuper));
-        admin.getPermissions().add(new AdminPermission(admin, "TIMELINES_PRESETS", "Time Filters & Presets",
-                isSuper, true, isSuper, isSuper));
-        admin.getPermissions().add(new AdminPermission(admin, "REPORTS_INSIGHTS", "Reports & Analytics",
-                true, true, true, false));
+        admin.getPermissions()
+                .add(
+                        new AdminPermission(
+                                admin,
+                                "ADMIN_MANAGEMENT",
+                                "Administration & Staff",
+                                canManage,
+                                canManage,
+                                canManage,
+                                canManage));
+        admin.getPermissions()
+                .add(
+                        new AdminPermission(
+                                admin,
+                                "ROLE_MANAGEMENT",
+                                "Roles & Permissions",
+                                canCreateR,
+                                canCreateR,
+                                canCreateR,
+                                canCreateR));
+        admin.getPermissions()
+                .add(
+                        new AdminPermission(
+                                admin,
+                                "CUSTOMER_FOLLOWUP",
+                                "Customer Follow-ups",
+                                true,
+                                true,
+                                true,
+                                isSuper));
+        admin.getPermissions()
+                .add(
+                        new AdminPermission(
+                                admin,
+                                "TIMELINES_PRESETS",
+                                "Time Filters & Presets",
+                                isSuper,
+                                true,
+                                isSuper,
+                                isSuper));
+        admin.getPermissions()
+                .add(
+                        new AdminPermission(
+                                admin,
+                                "REPORTS_INSIGHTS",
+                                "Reports & Analytics",
+                                true,
+                                true,
+                                true,
+                                false));
     }
 }

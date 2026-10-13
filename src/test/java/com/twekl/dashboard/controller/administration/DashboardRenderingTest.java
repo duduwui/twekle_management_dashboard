@@ -1,8 +1,15 @@
 package com.twekl.dashboard.controller.administration;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.twekl.dashboard.config.administration.JpaConfig;
 import com.twekl.dashboard.config.administration.SecurityConfig;
 import com.twekl.dashboard.config.administration.WebMvcConfig;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,17 +24,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @org.springframework.test.context.ContextHierarchy({
-        @ContextConfiguration(name = "root", classes = {JpaConfig.class, SecurityConfig.class}),
-        @ContextConfiguration(name = "mvc", classes = WebMvcConfig.class)
+    @ContextConfiguration(
+            name = "root",
+            classes = {JpaConfig.class, SecurityConfig.class}),
+    @ContextConfiguration(name = "mvc", classes = WebMvcConfig.class)
 })
 @Transactional
 class DashboardRenderingTest {
@@ -45,7 +48,7 @@ class DashboardRenderingTest {
         mvc.perform(get("/admin/dashboard").accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Priority Attention")))
-                .andExpect(content().string(containsString("customerRegistrations")))
+                .andExpect(content().string(containsString("Customer registrations")))
                 .andExpect(content().string(not(containsString("angular.min.js"))))
                 .andExpect(content().string(not(containsString("ng-controller"))))
                 .andExpect(content().string(not(containsString("SERVER_STATS"))))
@@ -55,7 +58,8 @@ class DashboardRenderingTest {
     @Test
     void htmlRequestsRedirectToLoginButJsonRequestsReturnUnauthorized() throws Exception {
         mvc.perform(get("/admin/dashboard").accept(MediaType.TEXT_HTML))
-                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
         mvc.perform(get("/admin/stats/summary").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }

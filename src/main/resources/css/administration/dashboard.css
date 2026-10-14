@@ -1,8 +1,0 @@
-/* Native dialogs retain keyboard focus and close with Escape. */
-.dashboard-dialog { border: 0; padding: 0; margin: auto; width: min(94vw, 900px); max-height: 85vh; }
-.dashboard-dialog:not([open]) { display: none; }
-.dashboard-dialog::backdrop { background: rgb(15 23 42 / 55%); }
-.dashboard-dialog .comic-modal-body { overflow: auto; max-height: 60vh; padding: 20px; }
-.dashboard-dialog [hidden] { display: none; }
-.kpi-row-5 button { font: inherit; text-align: left; }
-.kpi-row-5 a { text-decoration: none; }

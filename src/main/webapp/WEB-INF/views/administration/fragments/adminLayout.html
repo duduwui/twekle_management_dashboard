@@ -20,7 +20,6 @@
             display: none !important;
         }
     </style>
-    <link th:if="${activeTab == 'dashboard'}" rel="stylesheet" th:href="@{/css/dashboard.css(v=15)}">
     <!-- Google Fonts (Non-blocking fallback to local system font stack) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -184,19 +183,21 @@
             </div>
 
             <!-- User Footer Profile Box -->
-            <div class="user-profile-section">
-                <div class="user-avatar" th:text="${currentUser != null and currentUser.username != null and !currentUser.username.isEmpty() ? #strings.toUpperCase(#strings.substring(currentUser.username, 0, 1)) : 'A'}">A</div>
-                <div class="user-details">
-                    <span class="user-name" th:text="${currentUser != null ? currentUser.username : 'Administrator'}">Admin</span>
-                    <span class="user-role-badge" th:text="${currentUser != null and currentUser.superAdmin ? 'Super Admin' : 'Admin'}">Role</span>
+            <div class="sidebar-footer">
+                <div class="sidebar-user-card">
+                    <div class="sidebar-avatar" th:text="${currentUser != null and currentUser.username != null and !currentUser.username.isEmpty() ? #strings.toUpperCase(#strings.substring(currentUser.username, 0, 1)) : 'A'}">A</div>
+                    <div class="sidebar-user-details">
+                        <span class="sidebar-user-name" th:text="${currentUser != null ? currentUser.username : 'Administrator'}">Admin</span>
+                        <span class="sidebar-user-role" th:text="${currentUser != null and currentUser.superAdmin ? 'Super Admin' : 'Admin'}">Role</span>
+                    </div>
+                    <button type="button" class="sidebar-logout-btn" onclick="document.getElementById('logoutForm').submit()" title="Sign Out">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
                 </div>
-                <button type="button" class="logout-btn" onclick="document.getElementById('logoutForm').submit()" title="Sign Out">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                </button>
             </div>
         </aside>
 
@@ -473,15 +474,6 @@
     <script th:if="${activeTab == 'followups'}" src="/js/followup/followup.js?v=15"></script>
     <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=15"></script>
     <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=15"></script>
-
-    <!-- ========================================================= -->
-    <!-- 5. INLINE REUSABLE FRAGMENTS (e.g. Pagination Pager)       -->
-    <!-- ========================================================= -->
-    <nav th:fragment="pager(base, parameters)" class="portal-pager" aria-label="Pagination">
-        <a th:if="${rows != null and rows.hasPrevious()}" th:href="@{${base}(page=${rows.number - 1})} + ${parameters}">Previous</a>
-        <span th:if="${rows != null}" th:text="|Page ${rows.number + 1} of ${rows.totalPages == 0 ? 1 : rows.totalPages} · ${rows.totalElements} results|"></span>
-        <a th:if="${rows != null and rows.hasNext()}" th:href="@{${base}(page=${rows.number + 1})} + ${parameters}">Next</a>
-    </nav>
 
 </body>
 </html>

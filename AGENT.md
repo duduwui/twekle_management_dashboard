@@ -64,6 +64,17 @@ This guide records project conventions, architectural decisions, and update hist
 
 ## Change History & Memory Log
 
+### 2026-10-14: Sidebar Profile CSS Fix & Legacy Dead Code Cleanup
+- **Sidebar Profile CSS Fix**: Fixed unstyled layout at the bottom of the sidebar. Corrected HTML markup to `.sidebar-footer` and `.sidebar-user-card`, styled `.sidebar-avatar` as a circular initial badge, wrapped username and role in a flex container with text truncation, and styled the logout button with a clean hover effect.
+- **Dead File Cleanup**:
+  - Deleted `dashboard.css` (inlined dialog styles directly into `style.css`).
+  - Deleted `portal.css` (legacy prototype styling).
+  - Deleted `CustomerForm.java` (unused legacy DTO).
+  - Removed obsolete `pager` fragment in `adminLayout.html`.
+  - Re-styled `error.html` with the comic design system.
+- **Compiler Fix**: Added missing `Autowired` import to `DataInitializer.java`.
+- **Test Verification**: All 31 tests passed cleanly (`mvn test`).
+
 ### 2026-10-14: Complete Elimination of Orchestrator Shells Across All Modules
 - **Universal Single-File Architecture**: Consolidated every module into a single self-contained template, completely eliminating all intermediate `th:replace` shells and fragment sub-files:
   - `dashboard/`: Inlined `dashboardKpis`, `priorityTable`, `dashboardModals`, `dashboardDetailsModal`, `dashboardQuickActions` into `dashboard.html`. Deleted the 5 fragment files.

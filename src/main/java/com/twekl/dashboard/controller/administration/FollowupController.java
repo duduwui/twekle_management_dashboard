@@ -5,30 +5,37 @@ import com.twekl.dashboard.model.administration.OrderFollowupCheck;
 import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.FollowupService;
+import com.twekl.dashboard.service.administration.TimeFilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * Controller for Managing Follow-up Milestone Checks.
+ * Controller for Managing Follow-up Milestone Checks and Followups View.
  * Dedicated followup domain controller.
  */
-@RestController
+@Controller
 @RequestMapping("/admin/followups")
 public class FollowupController {
 
     private final FollowupService followupService;
     private final AdminService adminService;
+    private final TimeFilterService timeFilterService;
 
     @Autowired
-    public FollowupController(final FollowupService followupService, final AdminService adminService) {
+    public FollowupController(final FollowupService followupService,
+                              final AdminService adminService,
+                              final TimeFilterService timeFilterService) {
         this.followupService = followupService;
         this.adminService = adminService;
+        this.timeFilterService = timeFilterService;
     }
 
     private boolean canUpdate() {
@@ -37,7 +44,16 @@ public class FollowupController {
                 .orElse(false);
     }
 
+    @GetMapping
+    public String showFollowups(Model model) {
+        model.addAttribute("activeTab", "followups");
+        model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
+        model.addAttribute("presets", timeFilterService.findAll());
+        return "administration/followup/followups";
+    }
+
     @PatchMapping("/{checkId:\\d+}/status")
+    @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> toggleFollowupStatus(@PathVariable("checkId") Long checkId) {
         if (!canUpdate()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -48,6 +64,7 @@ public class FollowupController {
     }
 
     @RequestMapping(value = "/{checkId:\\d+}", method = {RequestMethod.POST, RequestMethod.PUT})
+    @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> updateFollowupDetails(
             @PathVariable("checkId") Long checkId,
             @RequestBody(required = false) Map<String, String> body) {
@@ -63,6 +80,7 @@ public class FollowupController {
     }
 
     @PostMapping("/{checkId:\\d+}/complete")
+    @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> completeCheck(
             @PathVariable("checkId") Long checkId,
             @RequestBody(required = false) FollowupCheckRequest request) {
@@ -76,7 +94,9 @@ public class FollowupController {
     }
 
     @GetMapping(value = {"/orders/{orderId:\\d+}", "/orders/{orderId:\\d+}/checks"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
     public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderChecks(@PathVariable("orderId") Long orderId) {
         return ResponseEntity.ok(ApiResponse.success(followupService.findChecksByOrderId(orderId)));
     }
 }
+

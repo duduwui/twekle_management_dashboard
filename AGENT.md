@@ -64,6 +64,15 @@ This guide records project conventions, architectural decisions, and update hist
 
 ## Change History & Memory Log
 
+### 2026-10-14: Domain Controller Segregation & Constructor Sanitization
+- **Domain Controller Responsibility**: Eliminated the 6-dependency "God constructor" in `AdminController`. Dispatched SSR views and route management directly to their respective domain controllers:
+  - `DashboardController`: Handles `/` redirect, `/admin/dashboard` SSR view, and `/admin/stats/summary` REST API. Injects `DashboardService`, `CustomerService`, `FollowupService`, `ReportService`.
+  - `FollowupController`: Handles `/admin/followups` SSR view and all milestone check operations. Injects `FollowupService`, `AdminService`, `TimeFilterService`.
+  - `ReportController`: Handles `/admin/reports` SSR view, analytics generation, satisfaction details, and CSV exports. Injects `ReportService`, `AdminService`, `TimeFilterService`.
+  - `AdminController`: Stripped down strictly to administrator staff management (`/admin/admins`, creation, status toggle, deletion). Injects only `AdminService` and `RoleService` (2 dependencies).
+- **Autowired Constructor Integrity**: Maintained explicit `@Autowired` constructor injection with `final` parameters across all refactored controllers.
+- **Test Suite Expansion**: Added test assertions in `DashboardRenderingTest` ensuring `/`, `/admin/followups`, and `/admin/reports` render cleanly. Total tests expanded to 34, all passing with zero failures.
+
 ### 2026-10-14: Sidebar Profile CSS Fix & Legacy Dead Code Cleanup
 - **Sidebar Profile CSS Fix**: Fixed unstyled layout at the bottom of the sidebar. Corrected HTML markup to `.sidebar-footer` and `.sidebar-user-card`, styled `.sidebar-avatar` as a circular initial badge, wrapped username and role in a flex container with text truncation, and styled the logout button with a clean hover effect.
 - **Dead File Cleanup**:

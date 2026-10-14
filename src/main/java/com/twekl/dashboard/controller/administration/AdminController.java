@@ -1,14 +1,8 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
-import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
-import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.service.administration.AdminService;
-import com.twekl.dashboard.service.administration.CustomerService;
-import com.twekl.dashboard.service.administration.FollowupService;
-import com.twekl.dashboard.service.administration.ReportService;
 import com.twekl.dashboard.service.administration.RoleService;
-import com.twekl.dashboard.service.administration.TimeFilterService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,8 +11,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * Functional interface mapping transactional actions that can throw exceptions.
@@ -51,77 +43,12 @@ public class AdminController implements AdminOperations {
 
     private final AdminService adminService;
     private final RoleService roleService;
-    private final CustomerService customerService;
-    private final FollowupService followupService;
-    private final ReportService reportService;
-    private final TimeFilterService timeFilterService;
 
     @Autowired
     public AdminController(final AdminService adminService,
-                           final RoleService roleService,
-                           final CustomerService customerService,
-                           final FollowupService followupService,
-                           final ReportService reportService,
-                           final TimeFilterService timeFilterService) {
+                           final RoleService roleService) {
         this.adminService = adminService;
         this.roleService = roleService;
-        this.customerService = customerService;
-        this.followupService = followupService;
-        this.reportService = reportService;
-        this.timeFilterService = timeFilterService;
-    }
-
-    // =========================================================
-    // SSR VIEW ENDPOINTS (ONE CANONICAL ROUTE ONLY)
-    // =========================================================
-
-    @GetMapping("/")
-    public String handleRootRedirect() {
-        return "redirect:/admin/dashboard";
-    }
-
-    @GetMapping("/admin/dashboard")
-    public String showDashboard(Model model) {
-        List<CustomerFollowupSummary> summaries = followupService.findAllSummaries("ALL");
-        List<CustomerFollowupSummary> urgent = summaries.stream()
-                .filter(s -> !s.isAllFollowupsCompleted() && ("ALERT".equalsIgnoreCase(s.getFollowupStatus()) || "IDLE".equalsIgnoreCase(s.getFollowupStatus())))
-                .sorted(Comparator.comparing(CustomerFollowupSummary::getNextPendingMinutesLeft,
-                        Comparator.nullsLast(Comparator.naturalOrder())))
-                .toList();
-
-        model.addAttribute("activeTab", "dashboard");
-        model.addAttribute("stats", customerService.getStats());
-        model.addAttribute("urgentCustomers", urgent);
-        model.addAttribute("allCustomers", summaries);
-        model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL").stream()
-                .filter(item -> item.getRating() <= 2 || "UNSATISFIED".equalsIgnoreCase(item.getSatisfaction()))
-                .toList());
-        return "administration/dashboard/dashboard";
-    }
-
-    @GetMapping("/admin/followups")
-    public String showCustomers(Model model) {
-        model.addAttribute("activeTab", "followups");
-        model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
-        model.addAttribute("presets", timeFilterService.findAll());
-        return "administration/followup/followups";
-    }
-
-    @GetMapping("/admin/reports")
-    public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
-                              @RequestParam(value = "tab", defaultValue = "milestones") String tab,
-                              Model model) {
-        Admin admin = adminService.getCurrentAdmin().orElse(null);
-        if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
-            return "redirect:/admin/dashboard";
-        }
-
-        model.addAttribute("activeTab", "reports");
-        model.addAttribute("reportSubTab", tab);
-        model.addAttribute("period", period);
-        model.addAttribute("reportData", reportService.generateReport(period));
-        model.addAttribute("presets", timeFilterService.findAll());
-        return "administration/report/reports";
     }
 
     // =========================================================

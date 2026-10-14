@@ -55,6 +55,30 @@ class DashboardRenderingTest {
     }
 
     @Test
+    @WithMockUser(username = "twekl_super_admin", roles = "SUPER_ADMIN")
+    void rootRedirectsToDashboard() throws Exception {
+        mvc.perform(get("/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/dashboard"));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = "SUPER_ADMIN")
+    void followupsRendersSuccessfully() throws Exception {
+        mvc.perform(get("/admin/followups").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Follow-ups | Twekl Administration")));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = "SUPER_ADMIN")
+    void reportsRendersSuccessfully() throws Exception {
+        mvc.perform(get("/admin/reports").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Reports &amp; Analytics")));
+    }
+
+    @Test
     void htmlRequestsRedirectToLoginButJsonRequestsReturnUnauthorized() throws Exception {
         mvc.perform(get("/admin/dashboard").accept(MediaType.TEXT_HTML))
                 .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));

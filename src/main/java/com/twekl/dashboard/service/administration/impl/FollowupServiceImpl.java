@@ -13,6 +13,7 @@ import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepositor
 import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
 import com.twekl.dashboard.service.administration.FollowupService;
 import com.twekl.dashboard.util.administration.DateUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class FollowupServiceImpl implements FollowupService {
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final TimeFilterPresetRepository timeFilterPresetRepository;
 
+    @Autowired
     public FollowupServiceImpl(CustomerRepository customerRepository,
                                CustomerOrderRepository orderRepository,
                                OrderFollowupCheckRepository followupCheckRepository,

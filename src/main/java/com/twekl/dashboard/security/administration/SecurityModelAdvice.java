@@ -1,6 +1,7 @@
 package com.twekl.dashboard.security.administration;
 
 import com.twekl.dashboard.model.administration.Admin;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -12,6 +13,7 @@ public class SecurityModelAdvice {
 
     private final PortalAccess access;
 
+    @Autowired
     public SecurityModelAdvice(PortalAccess access) {
         this.access = access;
     }

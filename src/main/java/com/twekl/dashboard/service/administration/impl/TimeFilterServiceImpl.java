@@ -6,6 +6,7 @@ import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
 import com.twekl.dashboard.service.administration.TimeFilterService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class TimeFilterServiceImpl implements TimeFilterService {
 
     private final TimeFilterPresetRepository timeFilterPresetRepository;
 
+    @Autowired
     public TimeFilterServiceImpl(TimeFilterPresetRepository timeFilterPresetRepository) {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
     }

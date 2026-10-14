@@ -16,6 +16,7 @@ import com.twekl.dashboard.service.administration.CustomerService;
 import com.twekl.dashboard.service.administration.FollowupService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,7 @@ public class CustomerServiceImpl implements CustomerService {
     private final TimeFilterPresetRepository timeFilterPresetRepository;
     private final FollowupService followupService;
 
+    @Autowired
     public CustomerServiceImpl(CustomerRepository customerRepository,
                                CustomerOrderRepository orderRepository,
                                CustomerFeedbackRepository feedbackRepository,

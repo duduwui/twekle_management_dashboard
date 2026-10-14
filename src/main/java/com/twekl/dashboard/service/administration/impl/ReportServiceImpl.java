@@ -13,6 +13,7 @@ import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepositor
 import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
 import com.twekl.dashboard.service.administration.ReportService;
 import com.twekl.dashboard.util.administration.DateUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class ReportServiceImpl implements ReportService {
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final TimeFilterPresetRepository presetRepository;
 
+    @Autowired
     public ReportServiceImpl(CustomerRepository customerRepository,
                              CustomerOrderRepository orderRepository,
                              CustomerFeedbackRepository feedbackRepository,

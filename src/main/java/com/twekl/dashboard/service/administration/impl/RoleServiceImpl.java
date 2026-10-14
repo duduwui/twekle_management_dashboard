@@ -7,6 +7,7 @@ import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.repository.administration.AdminRepository;
 import com.twekl.dashboard.repository.administration.RoleRepository;
 import com.twekl.dashboard.service.administration.RoleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
     private final AdminRepository adminRepository;
 
+    @Autowired
     public RoleServiceImpl(RoleRepository roleRepository, AdminRepository adminRepository) {
         this.roleRepository = roleRepository;
         this.adminRepository = adminRepository;

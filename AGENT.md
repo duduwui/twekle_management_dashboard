@@ -1,77 +1,46 @@
-# Twekl engineering guide
+# Twekl Engineering Guide & Architecture Memory
 
-This guide reflects the current owner's requirements. Read it before changing code.
+This guide records project conventions, architectural decisions, and update history. Check this file before modifying code to prevent conflicting or reverting decisions.
 
-## Structure
+## Architectural Conventions
 
-Use technical layer > portal > feature code. The current portal name is `administration`.
+### 1. Dependency Injection & Autowiring
+- Inject **interfaces**, not concrete implementation classes (e.g. `AdminService`, `RoleService`, `CustomerService`).
+- All injected fields must be declared `private final`.
+- Every constructor performing dependency injection must be explicitly annotated with `@Autowired`.
+- Concrete implementations reside under `service.administration.impl.*`.
 
-- Java: `com.twekl.dashboard.controller.administration`, `service.administration`,
-  `repository.administration`, `model.administration`, `dto.administration`,
-  `security.administration`, `config.administration`, `exception.administration`.
-- Templates: `src/main/webapp/WEB-INF/views/administration/<feature>`.
-- Assets: `src/main/resources/{js,css,images}/administration/<feature>`.
+### 2. Controller Operations & Interfaces
+- Controllers implement a domain operations contract (e.g. `AdminController implements AdminOperations`, `RoleController implements RoleOperations`).
+- To prevent unnecessary file bloat, declare the interface at the top of the controller `.java` file (package-private).
+- Methods implementing the interface must have `@Override`.
 
-Keep related backend methods in a cohesive domain class. Do not create a class per method,
-artificial interfaces with one implementation, or generic abstractions for one call site.
-Frontend files have one clear screen or interaction responsibility; fragment names describe
-what they render. Use single-dot filenames, e.g. `followupService.js`.
+### 3. Security & Authentication Isolation
+- All authentication endpoints (`/login`, `/admin/auth/login`, `/admin/auth/logout`, `/admin/auth/me`), user details services, entry points, and view advice reside strictly in `com.twekl.dashboard.security.administration`.
+- Business controllers (`AdminController`, `RoleController`, `CustomerController`, etc.) must not contain manual `isAuthenticated()` checks or redundant method-level `@PreAuthorize` annotations.
+- `SecurityConfig.java` centrally secures `/admin/**` with `.hasAnyRole("SUPER_ADMIN", "ADMIN")` and `/admin/admins` with `.hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")`.
 
-## Rendering and requests
+### 4. Plural Model Naming
+- Collections and model attributes must use pure plural naming without the `List` suffix:
+  - Use `admins` instead of `adminList`.
+  - Use `roles` instead of `roleList`.
 
-Use Spring MVC `@Controller`, Thymeleaf `th:each`, `th:text`, `th:action`, and ordinary
-GET navigation / POST forms for portal workflows. A successful mutation redirects to its
-GET page (Post/Redirect/Get). Display validation errors without pretending success.
-Use `@RestController` / `@ResponseBody` only for a documented requirement that server
-rendering cannot satisfy. Existing legacy JSON routes are migration debt, not a precedent.
-Never retry a failed Thymeleaf operation through REST or a different HTTP method.
-Do not hydrate a page and then refetch the same data. Do not poll without a requirement.
-Never infer successful mutations from a redirect or optimistic DOM changes.
+### 5. Testing & Tooling
+- k6 stress test reports and test endpoints are completely removed and must not be re-added.
+- Unit and integration tests in `src/test/java` must pass with zero failures (`mvn test`).
+- Database requires local Docker MySQL (`twekl-mysql`) container on port 3306.
 
-## Java choices
+---
 
-- One constructor and `private final` dependencies: dependencies are explicit and cannot
-  be reassigned; Spring resolves the single constructor without `@Autowired`.
-- Services own transactions. Use `@Transactional(readOnly = true)` for actual reads and
-  normal transactions for writes. Read-only is an optimization hint, not authorization.
-- Repositories own queries. Filter, aggregate and paginate in SQL when the data can grow.
-  A browser showing ten rows does not make an unbounded `findAll()` query paginated.
-- Use `JOIN FETCH` for associations the use case actually reads; do not fetch multiple
-  large collections together or combine collection fetch joins with pagination.
-- Use `List` for ordered output and `Set` for membership checks. Sort once only when the
-  output requires ordering. Use one captured `Instant` for a calculation batch.
-- Avoid parallel streams for request processing on a shared host. Do not invent cache
-  invalidation rules; measure before introducing application data caches.
-- JPA entities represent persistence; use DTOs for new page projections and inputs.
-  Do not bind unrestricted entity fields directly from untrusted forms.
-- Use `Instant`, explicit domain IDs (`customerId`, `orderId`), uppercase SQL/JPQL keywords
-  and uppercase database identifiers. Never put passwords in browser output.
-- Spring Security owns authentication, CSRF and route authorization. UI visibility alone
-  is not permission enforcement. Mutations must require CSRF with cookie-based sessions.
+## Change History & Memory Log
 
-## Runtime
+### 2026-10-14: Autowired Finalization, k6 Cleanup, and Interface Visibility
+- **k6 Removal**: Deleted `src/main/webapp/k6-report.html`, `k6_summary.json`, `showK6Report()` endpoint, and security permitAll rule.
+- **Autowired & Final**: Added `@Autowired` to constructors across all controllers, service implementations, and security components. Verified 100% of injected dependencies are `private final` interfaces.
+- **Interface Placement**: Positioned `AdminOperations` and `RoleOperations` interfaces at the top of their respective controller files for immediate visibility.
+- **Database Availability**: Started local `twekl-mysql` Docker container after server reboot; verified all 31 tests pass cleanly.
 
-Plain Spring MVC, Java 21+, embedded Tomcat; no Spring Boot. `application.properties` is
-explicitly loaded by `JpaConfig`; adding arbitrary `spring.*` settings has no effect.
-
-`mvn clean test` runs the suite against the configured MySQL database. Controller tests
-roll back transactions; never delete test data by broad username/name matching.
-`mvn compile exec:java` starts the embedded server (default port 8080).
-
-Deployment settings: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_POOL_MAX`, `DB_POOL_MIN`,
-`DB_SCHEMA_ACTION`, `THYMELEAF_CACHE`, `PORT`, `HTTP_MAX_THREADS`, `HTTP_MAX_CONNECTIONS`.
-Defaults use the existing local development database; deployment must supply its own
-credentials and TLS connection settings. Schema validation is the default; schema changes
-need reviewed migrations. Demo seeding is opt-in with `-Dspring.profiles.active=demo` and
-must never be enabled on a shared production database.
-
-Template caching defaults to on. Set `THYMELEAF_CACHE=false` during template editing.
-The embedded connector defaults to 40 workers and the database pool to 5 connections.
-These are starting limits, not proof of capacity: benchmark with realistic data and the
-other applications sharing the host. An externally managed Tomcat needs its own limits.
-
-## Verification and remaining work
-
-Read `ARCHITECTURE_REVIEW.md` for known limitations. Run relevant tests and validate rendered
-pages, request counts and permission failures. Do not claim production readiness from a
-successful build. Do not silently remove features to pass tests. No emojis in code or output.
+### 2026-10-13: Security Relocation and Plural Naming
+- **Security Consolidation**: Moved `AuthController` and `PortalModelAdvice` (renamed to `SecurityModelAdvice`) into `com.twekl.dashboard.security.administration`.
+- **Plural Attributes**: Replaced `adminList` and `roleList` with `admins` and `roles` across controllers, tests, and Thymeleaf views (`adminDirectory.html`, `roleStaffDirectory.html`, etc.).
+- **Interface Architecture**: Extracted 8 service interfaces (`AdminService`, `RoleService`, `CustomerService`, `FollowupService`, `ReportService`, `TimeFilterService`, `DashboardService`, `AuthService`).

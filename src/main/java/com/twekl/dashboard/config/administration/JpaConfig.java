@@ -20,6 +20,8 @@ import java.util.Properties;
  * Pure Spring MVC JPA & Hibernate Configuration
  * Manages DataSource (HikariCP) and EntityManagerFactory with automatic schema management.
  */
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "com.twekl.dashboard.repository.administration" })
@@ -33,6 +35,7 @@ public class JpaConfig {
 
     private final org.springframework.core.env.Environment environment;
 
+    @Autowired
     public JpaConfig(org.springframework.core.env.Environment environment) {
         this.environment = environment;
     }

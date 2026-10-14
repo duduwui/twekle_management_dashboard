@@ -3,6 +3,7 @@ package com.twekl.dashboard.security.administration;
 import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.service.administration.AdminService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -14,6 +15,7 @@ public class PortalAccess {
     private Admin current;
     private boolean loaded;
 
+    @Autowired
     public PortalAccess(AdminService admins) {
         this.admins = admins;
     }

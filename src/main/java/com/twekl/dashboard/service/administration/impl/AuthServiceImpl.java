@@ -8,6 +8,7 @@ import com.twekl.dashboard.service.administration.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,7 @@ public class AuthServiceImpl implements AuthService {
     private final AdminRepository adminRepository;
     private final SecurityContextRepository securityContextRepository;
 
+    @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            AdminRepository adminRepository) {
         this.authenticationManager = authenticationManager;

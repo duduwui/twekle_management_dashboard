@@ -21,6 +21,8 @@ import org.thymeleaf.templatemode.TemplateMode;
 import java.util.List;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = {
@@ -32,6 +34,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final ApplicationContext applicationContext;
 
+    @Autowired
     public WebMvcConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }

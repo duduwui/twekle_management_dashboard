@@ -1,13 +1,72 @@
 /**
- * Main Layout Coordinator Controller
- * Manages global application shell, active tab routing, authentication, shared modals, and presets.
+ * Consolidated Core Layout, Toast & Navigation Controller
+ * Merges LayoutController, ToastService/ToastController, and Sidebar Navigation into one unified core file.
  */
+
+// =========================================================
+// 1. TOAST SERVICE & CONTROLLER
+// =========================================================
+angular.module('tweklApp')
+.factory('ToastService', ['$timeout', '$rootScope', function($timeout, $rootScope) {
+    $rootScope.toasts = [];
+    var toastCounter = 0;
+
+    function show(message, type, duration) {
+        var id = ++toastCounter;
+        var toastType = type || 'success';
+        var toastDuration = duration || (toastType === 'error' ? 4500 : 3000);
+
+        var toast = {
+            id: id,
+            message: message,
+            type: toastType
+        };
+
+        $rootScope.toasts.push(toast);
+
+        $timeout(function() {
+            var index = $rootScope.toasts.findIndex(function(t) { return t.id === id; });
+            if (index !== -1) {
+                $rootScope.toasts.splice(index, 1);
+            }
+        }, toastDuration);
+    }
+
+    return {
+        show: show,
+        success: function(msg) { show(msg, 'success'); },
+        error: function(msg) { show(msg, 'error'); },
+        info: function(msg) { show(msg, 'info'); },
+        warning: function(msg) { show(msg, 'warning'); }
+    };
+}])
+.controller('ToastController', ['$scope', '$rootScope', 'ToastService', function($scope, $rootScope, ToastService) {
+    $scope.toasts = $rootScope.toasts || [];
+
+    $scope.dismissToast = function(toastId) {
+        var list = $rootScope.toasts || [];
+        var idx = list.findIndex(function(t) { return t.id === toastId; });
+        if (idx !== -1) {
+            list.splice(idx, 1);
+        }
+    };
+
+    $scope.$on('toast:show', function(event, data) {
+        if (data && data.message) {
+            ToastService.show(data.message, data.type, data.duration);
+        }
+    });
+}]);
+
+// =========================================================
+// 2. LAYOUT CONTROLLER
+// =========================================================
 angular.module('tweklApp')
 .controller('LayoutController', [
     '$scope', '$http', '$location', '$window', '$timeout', 'TimeFilterService', 'ToastService', 'FilterHelperService',
 function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastService, FilterHelperService) {
 
-    // Sidebar Category Accordions (Closed by default as requested)
+    // Sidebar Category Accordions
     $scope.categories = {
         admin: false,
         reports: false
@@ -21,15 +80,12 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         return !!$scope.categories[cat];
     };
 
-    // Active Feature Tab: 'dashboard', 'admins', 'roles', 'customers', 'time-filters', 'reports'
+    // Active Feature Tab
     $scope.currentTab = window.SERVER_ACTIVE_TAB || 'dashboard';
     $scope.activeTab = $scope.currentTab;
     var initialUrlParams = new URLSearchParams(window.location.search);
-    $scope.reportSubTab = initialUrlParams.get('tab') || window.SERVER_REPORT_SUBTAB || 'milestones'; // 'milestones', 'satisfaction', 'products', 'customers'
+    $scope.reportSubTab = initialUrlParams.get('tab') || window.SERVER_REPORT_SUBTAB || 'milestones';
 
-    /**
-     * Resolves initial active tab based on window pathname and server state
-     */
     function initRoute() {
         var path = window.location.pathname;
 
@@ -71,9 +127,6 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         $scope.activeTab = $scope.currentTab;
     }
 
-    /**
-     * Push a clean URL path or navigate to it
-     */
     $scope.updateUrl = function(path) {
         if (!path) return;
         if (window.location.pathname !== path) {
@@ -81,9 +134,6 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         }
     };
 
-    /**
-     * Navigate to feature tab using pure SSR navigation
-     */
     $scope.setTab = function(tabName) {
         if (tabName === 'admins') {
             window.location.href = '/admin/admins';
@@ -100,9 +150,6 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         }
     };
 
-    /**
-     * Set active report sub-tab and update URL
-     */
     $scope.setReportSubTab = function(subTab) {
         $scope.reportSubTab = subTab;
         $scope.$broadcast('reportSubTab:changed', subTab);
@@ -112,7 +159,6 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         }
     };
 
-    // Initialize immediately from server-injected user if available
     if (window.SERVER_CURRENT_USER) {
         var su = window.SERVER_CURRENT_USER;
         $scope.currentUser = su;
@@ -148,7 +194,6 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         password: ''
     };
 
-    // Authentication belongs to the server-rendered login page.
     $scope.openLoginModal = function() { window.location.href = '/login'; };
     $scope.closeLoginModal = function() { $scope.showLoginModal = false; };
     $scope.login = function() { window.location.href = '/login'; };
@@ -165,14 +210,11 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
     $scope.selectedOrderTimePreset = null;
     $scope.selectedReportPreset = null;
     $scope.showBigFilterModal = false;
-    $scope.currentFilterTarget = 'customer'; // 'customer', 'order', 'report'
+    $scope.currentFilterTarget = 'customer';
     $scope.pendingFilterPreset = null;
 
     $scope.toDurationMinutes = FilterHelperService.toDurationMinutes;
 
-    /**
-     * Loads time filter presets from backend
-     */
     $scope.loadTimeFilterPresets = function() {
         return TimeFilterService.getAll().then(function(res) {
             var raw = res.data;
@@ -352,7 +394,6 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         });
     };
 
-    // Event listeners to open and sync report filters from child scopes
     $scope.$on('modal:openReportFilter', function(event, data) {
         if (data) {
             if (data.preset !== undefined) $scope.selectedReportPreset = data.preset;
@@ -507,19 +548,33 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         $scope.previewImageUrl = '';
     };
 
-    // Listen to browser popstate
     $window.addEventListener('popstate', function() {
         $scope.$apply(function() {
             initRoute();
         });
     });
 
-    // When TimeFilterController creates/deletes/toggles a preset, reload global list
     $scope.$on('timePresets:changed', function() {
         $scope.loadTimeFilterPresets();
     });
 
-    // Bootstrapping
     initRoute();
 
 }]);
+
+// =========================================================
+// 3. NAVIGATION (Clean Sidebar Category Accordion Toggle)
+// =========================================================
+function toggleCategoryNav(name) {
+    var sub = document.getElementById('subnav-' + name);
+    var arrow = document.getElementById('arrow-' + name);
+    if (!sub) return;
+    var isHidden = (sub.style.display === 'none' || getComputedStyle(sub).display === 'none');
+    if (isHidden) {
+        sub.style.display = 'flex';
+        if (arrow) arrow.classList.add('expanded');
+    } else {
+        sub.style.display = 'none';
+        if (arrow) arrow.classList.remove('expanded');
+    }
+}

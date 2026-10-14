@@ -31,19 +31,28 @@ This guide records project conventions, architectural decisions, and update hist
   - `/admin/roles` -> Roles view
   - `/admin/timelines` -> Timelines view
 
-### 5. Security & Authentication Isolation
+### 5. Frontend & Template Architecture
+- **Single Layout Fragment File**: The `fragments/` directory contains solely `adminLayout.html`. All sub-fragments (`head`, `sidebar`, `header`, `sharedModals`, `scripts`, `pager`) are consolidated directly inside `adminLayout.html`.
+- **Admin Views Structure (Strictly 3 Files)**: The `admin/` view directory contains exactly 3 files:
+  - `admins.html` (main decorated page)
+  - `adminList.html` (directory table view with self-contained table filter and UI toggle scripts)
+  - `adminForm.html` (create admin form)
+  - `adminModals.html` and `admin.js` are eliminated.
+- **Core JS Consolidation**: Core layout coordination (`LayoutController`), toast notifications (`ToastService`), and sidebar navigation (`toggleCategoryNav`) are consolidated into a single `/js/core/layout.js` file.
+
+### 6. Security & Authentication Isolation
 - All authentication endpoints (`/login`, `/admin/auth/login`, `/admin/auth/logout`, `/admin/auth/me`), security configuration (`SecurityConfig`), user details services, entry points, and view advice reside strictly in `com.twekl.dashboard.security.administration`.
 - Password encryption (BCrypt) and role/permission checks (`isSuperAdmin`, `hasRole`, `hasPermission`, `canManageUsers`, etc.) are centralized and transparently accessible via `PortalAccess`.
 - Business controllers must not contain manual `isAuthenticated()` checks.
 - `SecurityConfig.java` centrally secures `/admin/**` with `.hasAnyRole("SUPER_ADMIN", "ADMIN")` and `/admin/admins` with `.hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")`.
 
-### 6. Plural Model Naming
+### 7. Plural Model Naming
 - Collections and model attributes must use pure plural naming without the `List` suffix:
   - Use `admins` instead of `adminList`.
   - Use `roles` instead of `roleList`.
   - Use `presets` instead of `presetList`.
 
-### 7. Clean Code & Dead Code Elimination
+### 8. Clean Code & Dead Code Elimination
 - Dead code such as unused query repositories (e.g. `PortalQueryRepository`) must be deleted.
 - k6 stress test reports and test endpoints are completely removed and must not be re-added.
 - Unit and integration tests in `src/test/java` must pass with zero failures (`mvn test`).
@@ -52,6 +61,12 @@ This guide records project conventions, architectural decisions, and update hist
 ---
 
 ## Change History & Memory Log
+
+### 2026-10-14: Frontend Consolidation (Layout, Fragments & Admin Views)
+- **Core JS Merge**: Merged `toast.js`, `layoutController.js`, and `navigation.js` into a single `/js/core/layout.js` file. Deleted the separate files.
+- **Unified Fragments**: Consolidated all 7 files in `fragments/` into single `adminLayout.html` (inlined head, sidebar, header, shared modals, scripts, and pager). Deleted the 6 redundant fragment files.
+- **Admin Views Simplification**: Enforced exactly 3 files in `admin/` (`admins.html`, `adminList.html`, `adminForm.html`). Renamed `adminDirectory.html` to `adminList.html`. Deleted unused `adminModals.html` and deleted `admin.js` (scripts inlined into `adminList.html`).
+- **Test Verification**: Verified all 31 tests pass cleanly.
 
 ### 2026-10-14: Action Deduplication via Functional Runners Across All Controllers
 - **Functional Runners**: Introduced `@FunctionalInterface` action runners (`AdminAction`, `RoleAction`, `TimeFilterAction`) with shared `executeAction(...)` engines in `AdminController`, `RoleController`, and `TimeFilterController`.
@@ -67,14 +82,3 @@ This guide records project conventions, architectural decisions, and update hist
 - **Security Centralization**: Moved `SecurityConfig` to `com.twekl.dashboard.security.administration.SecurityConfig`. Centralized BCrypt password encryption and explicit role/permission checks in `PortalAccess`.
 - **Dead Code Cleanup**: Deleted `PortalQueryRepository.java`.
 - **Test Verification**: All 31 tests passed with zero failures.
-
-### 2026-10-14: Autowired Finalization, k6 Cleanup, and Interface Visibility
-- **k6 Removal**: Deleted `src/main/webapp/k6-report.html`, `k6_summary.json`, `showK6Report()` endpoint, and security permitAll rule.
-- **Autowired & Final**: Added `@Autowired` to constructors across all controllers, service implementations, and security components. Verified 100% of injected dependencies are `private final`.
-- **Interface Placement**: Positioned `AdminOperations` and `RoleOperations` interfaces at the top of their respective controller files for immediate visibility.
-- **Database Availability**: Started local `twekl-mysql` Docker container after server reboot; verified all 31 tests pass cleanly.
-
-### 2026-10-13: Security Relocation and Plural Naming
-- **Security Consolidation**: Moved `AuthController` and `PortalModelAdvice` (renamed to `SecurityModelAdvice`) into `com.twekl.dashboard.security.administration`.
-- **Plural Attributes**: Replaced `adminList` and `roleList` with `admins` and `roles` across controllers, tests, and Thymeleaf views (`adminDirectory.html`, `roleStaffDirectory.html`, etc.).
-- **Interface Architecture**: Extracted 8 service interfaces (`AdminService`, `RoleService`, `CustomerService`, `FollowupService`, `ReportService`, `TimeFilterService`, `DashboardService`, `AuthService`).

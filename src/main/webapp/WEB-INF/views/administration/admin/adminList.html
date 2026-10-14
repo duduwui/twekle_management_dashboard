@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="adminDirectory" id="adminListSection" style="display: flex; flex-direction: column; gap: 16px;">
+<div th:fragment="adminList" id="adminListSection" style="display: flex; flex-direction: column; gap: 16px;">
     <!-- Section Header -->
     <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px;">
         <h2 class="card-title" style="margin: 0;">Staff Administrators</h2>
@@ -84,6 +84,36 @@
             Total Registered Administrators: <strong th:text="${#lists.size(admins)}">0</strong>
         </div>
     </div>
+
+    <!-- Clean, Self-Contained Local UI Scripts -->
+    <script>
+    function filterAdminTable() {
+        var input = document.getElementById("adminSearchInput");
+        if (!input) return;
+        var filter = input.value.toLowerCase();
+        var rows = document.querySelectorAll("#adminTable tbody tr.admin-row");
+        rows.forEach(function(row) {
+            var text = row.innerText.toLowerCase();
+            row.style.display = text.indexOf(filter) > -1 ? "" : "none";
+        });
+    }
+    function showCreateAdminSection() {
+        var list = document.getElementById('adminListSection');
+        var create = document.getElementById('createAdminSection');
+        if (list) list.style.display = 'none';
+        if (create) create.style.display = 'flex';
+    }
+    function hideCreateAdminSection() {
+        var list = document.getElementById('adminListSection');
+        var create = document.getElementById('createAdminSection');
+        if (create) create.style.display = 'none';
+        if (list) list.style.display = 'flex';
+    }
+    function toggleCreateSuperAdmin(isSuper) {
+        var badge = document.getElementById('superAdminStatusBadge');
+        if (badge) badge.style.display = isSuper ? 'inline-block' : 'none';
+    }
+    </script>
 </div>
 </body>
 </html>

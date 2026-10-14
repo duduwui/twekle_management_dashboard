@@ -1,16 +1,221 @@
 <!DOCTYPE html>
 <html lang="en" th:attr="ng-app=${activeTab == 'followups' || activeTab == 'reports' ? 'tweklApp' : null}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-<head th:replace="~{administration/fragments/headFragment :: headFragment}"></head>
+<head>
+    <meta charset="UTF-8">
+    <th:block th:if="${_csrf != null}">
+        <meta name="_csrf" th:content="${_csrf.token}">
+        <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    </th:block>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twekl Admin Dashboard</title>
+    <style>
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+            display: none !important;
+        }
+        .ng-hide {
+            display: none !important;
+        }
+        .comic-modal-overlay.ng-hide,
+        .comic-modal-overlay[style*="display: none"] {
+            display: none !important;
+        }
+    </style>
+    <link th:if="${activeTab == 'dashboard'}" rel="stylesheet" th:href="@{/css/dashboard.css(v=15)}">
+    <!-- Google Fonts (Non-blocking fallback to local system font stack) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <!-- Custom Comic Design System Style -->
+    <link rel="stylesheet" href="/css/style.css?v=4.3">
+</head>
 <body th:attr="ng-controller=${activeTab == 'followups' || activeTab == 'reports' ? 'LayoutController' : null}">
 
     <div class="app-container">
-        <!-- Sidebar Navigation Fragment -->
-        <aside th:replace="~{administration/fragments/sidebarFragment :: sidebarFragment}"></aside>
+        <!-- ========================================================= -->
+        <!-- 1. SIDEBAR NAVIGATION -->
+        <!-- ========================================================= -->
+        <aside class="sidebar">
+            <div class="brand-section">
+                <img src="/images/twekl-logo.png" alt="Twekl Logo" class="brand-logo-img">
+                <div class="brand-info">
+                    <span class="brand-title">Twekl</span>
+                    <span class="brand-subtitle">Management</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-label">Navigation</span>
+                
+                <!-- Group 0: Dashboard (Global Access) -->
+                <a th:href="@{/admin/dashboard}" 
+                   class="nav-item" 
+                   th:classappend="${activeTab == 'dashboard'} ? 'active' : ''">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>Dashboard</span>
+                    </div>
+                </a>
+
+                <div class="nav-divider"></div>
+
+                <!-- Group 1: Administration Category Accordion -->
+                <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}">
+                    <button type="button" 
+                            class="nav-category-toggle" 
+                            th:classappend="${activeTab == 'admins' || activeTab == 'roles'} ? 'active-category' : ''"
+                            onclick="toggleCategoryNav('admin')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="arrow-admin" 
+                                  class="category-arrow" 
+                                  th:classappend="${activeTab == 'admins' || activeTab == 'roles'} ? 'expanded' : ''">▶</span>
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span>Administration</span>
+                        </div>
+                    </button>
+
+                    <!-- Administration Sub-tabs -->
+                    <div id="subnav-admin" 
+                         class="nav-sub-items" 
+                         th:style="${activeTab == 'admins' || activeTab == 'roles'} ? 'display: flex;' : 'display: none;'">
+                        <a th:href="@{/admin/admins}" 
+                           class="nav-sub-item" 
+                           th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers}"
+                           th:classappend="${activeTab == 'admins'} ? 'active' : ''">
+                            <span>Admin Management</span>
+                        </a>
+                        <a th:href="@{/admin/roles}" 
+                           class="nav-sub-item" 
+                           th:if="${currentUser == null || currentUser.superAdmin || currentUser.canCreateRoles}"
+                           th:classappend="${activeTab == 'roles'} ? 'active' : ''">
+                            <span>Role Templates</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}"></div>
+
+                <!-- Group 2: Follow-ups -->
+                <a th:href="@{/admin/followups}" 
+                   class="nav-item" 
+                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadFollowups}"
+                   th:classappend="${activeTab == 'followups' || activeTab == 'customers'} ? 'active' : ''">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Follow-ups</span>
+                    </div>
+                </a>
+
+                <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}"></div>
+
+                <!-- Group 3: Reports Category Accordion -->
+                <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}">
+                    <button type="button" 
+                            class="nav-category-toggle" 
+                            th:classappend="${activeTab == 'reports'} ? 'active-category' : ''"
+                            onclick="toggleCategoryNav('reports')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="arrow-reports" 
+                                  class="category-arrow" 
+                                  th:classappend="${activeTab == 'reports'} ? 'expanded' : ''">▶</span>
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Reports</span>
+                        </div>
+                    </button>
+
+                    <!-- Reports Sub-tabs -->
+                    <div id="subnav-reports" 
+                         class="nav-sub-items" 
+                         th:style="${activeTab == 'reports'} ? 'display: flex;' : 'display: none;'">
+                        <a th:href="@{/admin/reports(tab='milestones')}" 
+                           class="nav-sub-item" 
+                           th:classappend="${activeTab == 'reports' and (reportSubTab == 'milestones' or reportSubTab == null)} ? 'active' : ''">
+                            <span>Follow-ups &amp; Milestones</span>
+                        </a>
+                        <a th:href="@{/admin/reports(tab='satisfaction')}" 
+                           class="nav-sub-item" 
+                           th:classappend="${activeTab == 'reports' and reportSubTab == 'satisfaction'} ? 'active' : ''">
+                            <span>Satisfaction &amp; Notes</span>
+                        </a>
+                        <a th:href="@{/admin/reports(tab='products')}" 
+                           class="nav-sub-item" 
+                           th:classappend="${activeTab == 'reports' and reportSubTab == 'products'} ? 'active' : ''">
+                            <span>Product Distribution</span>
+                        </a>
+                        <a th:href="@{/admin/reports(tab='customers')}" 
+                           class="nav-sub-item" 
+                           th:classappend="${activeTab == 'reports' and reportSubTab == 'customers'} ? 'active' : ''">
+                            <span>Customer Lifecycles</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}"></div>
+
+                <!-- Group 4: Time Filter Presets -->
+                <a th:href="@{/admin/timelines}" 
+                   class="nav-item" 
+                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canCreateRoles}"
+                   th:classappend="${activeTab == 'timelines' || activeTab == 'time-filters'} ? 'active' : ''">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Time Filters</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- User Footer Profile Box -->
+            <div class="user-profile-section">
+                <div class="user-avatar" th:text="${currentUser != null and currentUser.username != null and !currentUser.username.isEmpty() ? #strings.toUpperCase(#strings.substring(currentUser.username, 0, 1)) : 'A'}">A</div>
+                <div class="user-details">
+                    <span class="user-name" th:text="${currentUser != null ? currentUser.username : 'Administrator'}">Admin</span>
+                    <span class="user-role-badge" th:text="${currentUser != null and currentUser.superAdmin ? 'Super Admin' : 'Admin'}">Role</span>
+                </div>
+                <button type="button" class="logout-btn" onclick="document.getElementById('logoutForm').submit()" title="Sign Out">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+        </aside>
 
         <!-- Main Content Wrapper -->
         <div class="main-wrapper">
-            <!-- Top Header Fragment -->
-            <header th:replace="~{administration/fragments/headerFragment :: headerFragment}"></header>
+            <!-- ========================================================= -->
+            <!-- 2. TOP HEADER -->
+            <!-- ========================================================= -->
+            <header class="top-header">
+                <div>
+                    <h1 class="header-page-title" th:if="${activeTab == 'dashboard'}" th:text="'Dashboard Overview'">Dashboard Overview</h1>
+                    <h1 class="header-page-title" th:if="${activeTab == 'admins'}" th:text="'Admin Management'">Admin Management</h1>
+                    <h1 class="header-page-title" th:if="${activeTab == 'roles'}" th:text="'Role Templates & Permissions'">Role Templates &amp; Permissions</h1>
+                    <h1 class="header-page-title" th:if="${activeTab == 'followups' || activeTab == 'customers'}" th:text="'Follow-ups'">Follow-ups</h1>
+                    <h1 class="header-page-title" th:if="${activeTab == 'timelines' || activeTab == 'time-filters'}" th:text="'Time Filters'">Time Filters</h1>
+                    <h1 class="header-page-title" th:if="${activeTab == 'reports'}" th:text="'Reports & Analytics'">Reports &amp; Analytics</h1>
+                    <h1 class="header-page-title" th:if="${activeTab == null}">Dashboard Overview</h1>
+                </div>
+            </header>
 
             <!-- Page Body: Content injected by individual view -->
             <main class="page-body">
@@ -23,12 +228,218 @@
 
     <form id="logoutForm" method="post" th:action="@{/logout}" hidden></form>
 
-    <!-- Common Modals & Toasts Fragment -->
+    <!-- ========================================================= -->
+    <!-- 3. SHARED MODALS & TOASTS (Angular Follow-ups & Reports)   -->
+    <!-- ========================================================= -->
     <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
-        <div th:replace="~{administration/fragments/sharedModalsFragment :: sharedModalsFragment}"></div>
+        <!-- Report Filters Modal -->
+        <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': (showReportFilterModal || (modalState && modalState.reportFilter)) ? 'flex' : 'none'}" ng-cloak ng-show="showReportFilterModal || (modalState && modalState.reportFilter)" ng-click="closeReportFilterModal()">
+            <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
+                <div class="filter-modal-header-simple">
+                    <strong class="filter-modal-title-simple">Report Filters</strong>
+                    <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
+                </div>
+
+                <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                    <div>
+                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                        <div class="filter-presets-grid-3">
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': isPendingReportPresetSelected(null)}"
+                                 ng-click="selectPendingReportPreset(null)">
+                                <span class="filter-simple-name">All Time</span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-repeat="preset in timeFilterPresets track by preset.id"
+                                 ng-if="preset.active !== false || preset.isActive"
+                                 ng-class="{'selected': isPendingReportPresetSelected(preset)}"
+                                 ng-click="selectPendingReportPreset(preset)">
+                                <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer Satisfaction Filter</div>
+                        <div class="filter-presets-grid-4">
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction}"
+                                 ng-click="pendingReportFilters.satisfaction = 'all'">
+                                <span class="filter-simple-name">All Reviews</span>
+                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'satisfied'}"
+                                 ng-click="pendingReportFilters.satisfaction = 'satisfied'">
+                                <span class="filter-simple-name">Satisfied</span>
+                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'satisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'neutral'}"
+                                 ng-click="pendingReportFilters.satisfaction = 'neutral'">
+                                <span class="filter-simple-name">Neutral</span>
+                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'neutral'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'unsatisfied'}"
+                                 ng-click="pendingReportFilters.satisfaction = 'unsatisfied'">
+                                <span class="filter-simple-name">Unsatisfied</span>
+                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'unsatisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-modal-footer-simple">
+                    <button type="button" class="comic-btn-secondary" ng-click="resetReportFilterModal()" style="padding: 9px 16px;">
+                        Reset
+                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="comic-btn-secondary" ng-click="closeReportFilterModal()" style="padding: 9px 16px;">
+                            Cancel
+                        </button>
+                        <button type="button" class="comic-btn" ng-click="confirmApplyReportFilterModal()" style="padding: 9px 22px;">
+                            Apply Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Time & Follow-up Filter Modal -->
+        <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showBigFilterModal ? 'flex' : 'none'}" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
+            <div class="filter-modal-card" ng-click="$event.stopPropagation()">
+                <div class="filter-modal-header-simple">
+                    <strong class="filter-modal-title-simple">Filter Criteria</strong>
+                    <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
+                </div>
+
+                <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
+                    <div>
+                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
+                        <div class="filter-presets-grid-3">
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': isPendingPresetSelected(null)}"
+                                 ng-click="selectPendingPreset(null)">
+                                <span class="filter-simple-name">All Time</span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-repeat="preset in timeFilterPresets track by preset.id"
+                                 ng-if="preset.active !== false || preset.isActive"
+                                 ng-class="{'selected': isPendingPresetSelected(preset)}"
+                                 ng-click="selectPendingPreset(preset)">
+                                <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div ng-if="currentFilterTarget === 'customer'">
+                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Follow-up Status</div>
+                        <div class="filter-presets-grid-4">
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': isPendingFollowupStatusSelected('ALL')}"
+                                 ng-click="selectPendingFollowupStatus('ALL')">
+                                <span class="filter-simple-name">All Customers</span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALL')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': isPendingFollowupStatusSelected('ALERT')}"
+                                 ng-click="selectPendingFollowupStatus('ALERT')">
+                                <span class="filter-simple-name" style="color: #EF4444;">Needs Action</span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALERT')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': isPendingFollowupStatusSelected('UPCOMING')}"
+                                 ng-click="selectPendingFollowupStatus('UPCOMING')">
+                                <span class="filter-simple-name" style="color: #F59E0B;">Scheduled</span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('UPCOMING')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                            <div class="filter-preset-card-simple"
+                                 ng-class="{'selected': isPendingFollowupStatusSelected('COMPLETED')}"
+                                 ng-click="selectPendingFollowupStatus('COMPLETED')">
+                                <span class="filter-simple-name" style="color: #10B981;">Completed</span>
+                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('COMPLETED')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-modal-footer-simple">
+                    <button type="button" class="comic-btn-secondary" ng-click="selectPendingPreset(null); selectPendingFollowupStatus('ALL')" style="padding: 9px 16px;">
+                        Reset
+                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="comic-btn-secondary" ng-click="closeFilterModal()" style="padding: 9px 16px;">
+                            Cancel
+                        </button>
+                        <button type="button" class="comic-btn" ng-click="confirmApplyFilterModal()" style="padding: 9px 22px;">
+                            Apply Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox Full Image Preview Modal -->
+        <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showImageModal ? 'flex' : 'none'}" ng-cloak ng-show="showImageModal" ng-click="closeImageModal()">
+            <div class="lightbox-modal-content" ng-click="$event.stopPropagation()">
+                <button type="button" class="lightbox-close-btn" ng-click="closeImageModal()">&times;</button>
+                <img ng-src="{{ previewImageUrl }}" alt="Receipt / Photo Verification Preview" class="lightbox-preview-img">
+            </div>
+        </div>
+
+        <!-- Edit / Verify Follow-up Modal -->
+        <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showEditFollowupModal ? 'flex' : 'none'}" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
+            <div class="filter-modal-card" style="max-width: 600px;" ng-click="$event.stopPropagation()">
+                <div class="filter-modal-header-simple">
+                    <strong class="filter-modal-title-simple">Update Milestone Details</strong>
+                    <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <label class="form-label">Internal Notes / Log</label>
+                        <textarea class="comic-input" rows="3" ng-model="editingFollowup.note" placeholder="Write any internal operational remarks here..."></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Attached Photo / Receipt Link</label>
+                        <input type="text" class="comic-input" ng-model="editingFollowup.imageUrl" placeholder="https://... or upload below">
+                    </div>
+                    <div>
+                        <label class="form-label">Upload Local Photo</label>
+                        <input type="file" accept="image/*" class="comic-input" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
+                    </div>
+                    <div>
+                        <label class="form-label">Customer Satisfaction Rating</label>
+                        <div style="display: flex; gap: 8px; margin-top: 6px;">
+                            <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'SATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">Satisfied</button>
+                            <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'NEUTRAL', 'comic-btn-secondary': editingFollowup.satisfaction !== 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">Neutral</button>
+                            <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'UNSATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">Unsatisfied</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-modal-footer-simple">
+                    <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
+                    <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Milestone</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications Overlay -->
+        <div ng-controller="ToastController" class="toast-container">
+            <div ng-repeat="toast in toasts track by toast.id" 
+                 class="comic-toast" 
+                 ng-class="toast.type"
+                 ng-click="dismissToast(toast.id)">
+                <span ng-bind="toast.message"></span>
+            </div>
+        </div>
     </th:block>
 
-    <!-- Thymeleaf Server-Side Data Injection -->
+    <!-- Server-Side Data Injection -->
     <script th:if="${activeTab == 'followups' || activeTab == 'reports'}" th:inline="javascript">
         /*<![CDATA[*/
         window.SERVER_ACTIVE_TAB = /*[[${activeTab}]]*/ 'dashboard';
@@ -42,8 +453,35 @@
         /*]]>*/
     </script>
 
-    <!-- Scripts Fragment -->
-    <div th:replace="~{administration/fragments/scriptsFragment :: scriptsFragment}"></div>
+    <!-- ========================================================= -->
+    <!-- 4. SCRIPTS LOADING                                         -->
+    <!-- ========================================================= -->
+    <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+        <script src="/js/core/app.js?v=15"></script>
+        <script src="/js/core/dateFilterHelper.js?v=15"></script>
+        <script src="/js/core/layout.js?v=15"></script>
+        <script src="/js/timefilter/timefilter.js?v=15"></script>
+    </th:block>
+
+    <!-- Consolidated Core Layout & Navigation for SSR Screens -->
+    <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=15"></script>
+
+    <!-- Screen-Specific Scripts -->
+    <script th:if="${activeTab == 'dashboard'}" src="/js/dashboard/dashboard.js?v=15"></script>
+    <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=15"></script>
+    <script th:if="${activeTab == 'followups'}" src="/js/followup/followup.js?v=15"></script>
+    <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=15"></script>
+    <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=15"></script>
+
+    <!-- ========================================================= -->
+    <!-- 5. INLINE REUSABLE FRAGMENTS (e.g. Pagination Pager)       -->
+    <!-- ========================================================= -->
+    <nav th:fragment="pager(base, parameters)" class="portal-pager" aria-label="Pagination">
+        <a th:if="${rows != null and rows.hasPrevious()}" th:href="@{${base}(page=${rows.number - 1})} + ${parameters}">Previous</a>
+        <span th:if="${rows != null}" th:text="|Page ${rows.number + 1} of ${rows.totalPages == 0 ? 1 : rows.totalPages} · ${rows.totalElements} results|"></span>
+        <a th:if="${rows != null and rows.hasNext()}" th:href="@{${base}(page=${rows.number + 1})} + ${parameters}">Next</a>
+    </nav>
 
 </body>
 </html>

@@ -3,6 +3,7 @@ package com.twekl.dashboard.controller.administration;
 import com.twekl.dashboard.dto.administration.SatisfactionReportDto;
 import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.ReportService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ public class ReportController {
 
     private final ReportService reportService;
 
+    @Autowired
     public ReportController(ReportService reportService) {
         this.reportService = reportService;
     }

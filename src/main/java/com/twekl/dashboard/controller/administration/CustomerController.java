@@ -7,6 +7,7 @@ import com.twekl.dashboard.model.administration.CustomerOrder;
 import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.CustomerService;
 import com.twekl.dashboard.service.administration.FollowupService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class CustomerController {
     private final CustomerService customerService;
     private final FollowupService followupService;
 
+    @Autowired
     public CustomerController(CustomerService customerService, FollowupService followupService) {
         this.customerService = customerService;
         this.followupService = followupService;

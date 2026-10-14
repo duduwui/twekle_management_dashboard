@@ -5,6 +5,7 @@ import com.twekl.dashboard.model.administration.OrderFollowupCheck;
 import com.twekl.dashboard.response.administration.ApiResponse;
 import com.twekl.dashboard.service.administration.CustomerService;
 import com.twekl.dashboard.service.administration.FollowupService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ public class OrderController {
     private final CustomerService customerService;
     private final FollowupService followupService;
 
+    @Autowired
     public OrderController(CustomerService customerService, FollowupService followupService) {
         this.customerService = customerService;
         this.followupService = followupService;

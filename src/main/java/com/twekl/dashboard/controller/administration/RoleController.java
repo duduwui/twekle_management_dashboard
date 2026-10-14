@@ -6,6 +6,7 @@ import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,18 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Interface contract for Role and Permission Operations.
+ * Defined at the top of the file for full visibility.
+ */
+interface RoleOperations {
+    String showRoles(Long selectedAdminId, Model model);
+    String createRoleSsr(RoleDto request, RedirectAttributes flash);
+    String updateRoleSsr(Long roleId, RoleDto request, RedirectAttributes flash);
+    String assignAdminRoleSsr(Long pathAdminId, Long paramAdminId, Set<Long> roleIds, Long roleId, UpdateAdminRequest request, RedirectAttributes flash);
+    String deleteRoleSsr(Long roleId, RedirectAttributes flash);
+}
+
+/**
  * Controller for Role & Permission templates management.
  * Consolidates SSR view rendering and administrative role actions.
  * Implements RoleOperations interface contract.
@@ -24,9 +37,11 @@ import java.util.Set;
 @RequestMapping("/admin/roles")
 public class RoleController implements RoleOperations {
 
+    // All dependencies are interfaces, injected via @Autowired and marked final
     private final RoleService roleService;
     private final AdminService adminService;
 
+    @Autowired
     public RoleController(RoleService roleService, AdminService adminService) {
         this.roleService = roleService;
         this.adminService = adminService;
@@ -138,15 +153,4 @@ public class RoleController implements RoleOperations {
         }
         return "redirect:/admin/roles";
     }
-}
-
-/**
- * Interface defining role operations contract in the same file.
- */
-interface RoleOperations {
-    String showRoles(Long selectedAdminId, Model model);
-    String createRoleSsr(RoleDto request, RedirectAttributes flash);
-    String updateRoleSsr(Long roleId, RoleDto request, RedirectAttributes flash);
-    String assignAdminRoleSsr(Long pathAdminId, Long paramAdminId, Set<Long> roleIds, Long roleId, UpdateAdminRequest request, RedirectAttributes flash);
-    String deleteRoleSsr(Long roleId, RedirectAttributes flash);
 }

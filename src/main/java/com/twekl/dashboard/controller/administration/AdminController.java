@@ -3,21 +3,34 @@ package com.twekl.dashboard.controller.administration;
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
 import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
 import com.twekl.dashboard.model.administration.Admin;
-import com.twekl.dashboard.service.administration.*;
+import com.twekl.dashboard.service.administration.AdminService;
+import com.twekl.dashboard.service.administration.CustomerService;
+import com.twekl.dashboard.service.administration.FollowupService;
+import com.twekl.dashboard.service.administration.ReportService;
+import com.twekl.dashboard.service.administration.RoleService;
+import com.twekl.dashboard.service.administration.TimeFilterService;
 import jakarta.validation.Valid;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.File;
 import java.util.Comparator;
 import java.util.List;
+
+/**
+ * Interface contract for Staff Administrator Operations.
+ * Defined at the top of the file for full visibility.
+ */
+interface AdminOperations {
+    String showAdmins(Model model);
+    String createAdminSsr(CreateAdminRequest request, BindingResult bindingResult, RedirectAttributes flash);
+    String toggleAdminStatusSsr(Long adminId, RedirectAttributes flash);
+    String deleteAdminSsr(Long adminId, RedirectAttributes flash);
+}
 
 /**
  * Primary Administrative Controller.
@@ -27,6 +40,7 @@ import java.util.List;
 @Controller
 public class AdminController implements AdminOperations {
 
+    // All dependencies are interfaces, injected via @Autowired and marked final
     private final AdminService adminService;
     private final RoleService roleService;
     private final CustomerService customerService;
@@ -34,6 +48,7 @@ public class AdminController implements AdminOperations {
     private final ReportService reportService;
     private final TimeFilterService timeFilterService;
 
+    @Autowired
     public AdminController(AdminService adminService,
                            RoleService roleService,
                            CustomerService customerService,
@@ -49,23 +64,8 @@ public class AdminController implements AdminOperations {
     }
 
     // =========================================================
-    // GENERAL NAVIGATION & REPORTS
+    // GENERAL PORTAL NAVIGATION & VIEWS
     // =========================================================
-
-    @GetMapping(value = "/k6-report.html", produces = MediaType.TEXT_HTML_VALUE)
-    @ResponseBody
-    public ResponseEntity<Resource> showK6Report() {
-        File file = new File("src/main/webapp/k6-report.html");
-        if (!file.exists()) {
-            file = new File("/opt/twekl-dashboard/src/main/webapp/k6-report.html");
-        }
-        if (file.exists()) {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.TEXT_HTML)
-                    .body(new FileSystemResource(file));
-        }
-        return ResponseEntity.notFound().build();
-    }
 
     @GetMapping({"/", "/admin", "/admin/"})
     public String handleRootRedirect() {
@@ -178,14 +178,4 @@ public class AdminController implements AdminOperations {
         }
         return "redirect:/admin/admins";
     }
-}
-
-/**
- * Interface defining administrative operations contract in the same file.
- */
-interface AdminOperations {
-    String showAdmins(Model model);
-    String createAdminSsr(CreateAdminRequest request, BindingResult bindingResult, RedirectAttributes flash);
-    String toggleAdminStatusSsr(Long adminId, RedirectAttributes flash);
-    String deleteAdminSsr(Long adminId, RedirectAttributes flash);
 }

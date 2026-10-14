@@ -81,7 +81,7 @@ public class SecurityConfig {
             )
             // Explicit path matchers keep the root security context independent of MVC beans.
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(antMatcher("/"), antMatcher("/login"), antMatcher("/login/**"), antMatcher("/k6-report.html"), antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/images/**"), antMatcher("/favicon.ico")).permitAll()
+                .requestMatchers(antMatcher("/"), antMatcher("/login"), antMatcher("/login/**"), antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/images/**"), antMatcher("/favicon.ico")).permitAll()
                 .requestMatchers(antMatcher("/admin/auth/login")).permitAll()
                 .requestMatchers(antMatcher("/admin/admins"), antMatcher("/admin/admins/**")).hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")
                 .requestMatchers(antMatcher("/admin/roles"), antMatcher("/admin/roles/**")).hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES")

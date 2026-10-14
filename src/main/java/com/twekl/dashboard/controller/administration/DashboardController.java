@@ -1,6 +1,7 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.service.administration.DashboardService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    @Autowired
     public DashboardController(DashboardService dashboardService) {
         this.dashboardService = dashboardService;
     }

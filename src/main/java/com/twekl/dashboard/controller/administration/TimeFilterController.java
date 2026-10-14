@@ -3,6 +3,7 @@ package com.twekl.dashboard.controller.administration;
 import com.twekl.dashboard.model.administration.TimeFilterPreset;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.TimeFilterService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +23,7 @@ public class TimeFilterController {
     private final TimeFilterService timeFilterService;
     private final AdminService adminService;
 
+    @Autowired
     public TimeFilterController(TimeFilterService timeFilterService, AdminService adminService) {
         this.timeFilterService = timeFilterService;
         this.adminService = adminService;

@@ -468,9 +468,19 @@
     <!-- Consolidated Core Layout & Navigation for SSR Screens -->
     <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=15"></script>
 
-    <!-- Screen-Specific Scripts -->
-    <script th:if="${activeTab == 'dashboard'}" src="/js/dashboard/dashboard.js?v=15"></script>
-    <script th:if="${activeTab == 'admins'}" src="/js/admin/admin.js?v=15"></script>
+    <!-- Dashboard Feature (M-V-E Architecture) -->
+    <th:block th:if="${activeTab == 'dashboard'}">
+        <script src="/js/dashboard/dashboard-module.js?v=16"></script>
+        <script src="/js/dashboard/dashboard-view.js?v=16"></script>
+        <script src="/js/dashboard/dashboard-events.js?v=16"></script>
+    </th:block>
+
+    <!-- Admin Feature (M-V-E Architecture) -->
+    <th:block th:if="${activeTab == 'admins'}">
+        <script src="/js/admin/admin-module.js?v=16"></script>
+        <script src="/js/admin/admin-view.js?v=16"></script>
+        <script src="/js/admin/admin-events.js?v=16"></script>
+    </th:block>
     <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=15"></script>
     <script th:if="${activeTab == 'followups'}" src="/js/followup/followup.js?v=15"></script>
     <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=15"></script>

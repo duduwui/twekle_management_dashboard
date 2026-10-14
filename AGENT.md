@@ -40,6 +40,11 @@ This guide records project conventions, architectural decisions, and update hist
   - `role/` -> `roles.html` (staff member directory and CRUD permission matrix)
   - `timefilter/` -> `timeFilters.html` (create preset form and configured rule table)
   - `admin/` -> `admins.html` (administrator directory, creation form, and local filters)
+- **M-V-E (Module-View-Events) Client-Side Standard**: Feature scripts are strictly partitioned into a standardized 3-layer architecture:
+  1. `[feature]-module.js`: Pure data calculations, validation rules, formatting, and API fetch calls. Zero DOM queries or style modifications allowed.
+  2. `[feature]-view.js`: DOM queries (`getElementById`, `querySelectorAll`), UI manipulation, styling/classes, and modal opening/closing. Delegates calculations to Module.
+  3. `[feature]-events.js`: Event wireframe binding (`addEventListener`), page lifecycle initialization (`DOMContentLoaded`), and interval timers.
+  - Loaded in strict canonical order in `adminLayout.html`: `*-module.js` -> `*-view.js` -> `*-events.js`.
 - **Core JS Consolidation**: Core layout coordination (`LayoutController`), toast notifications (`ToastService`), and sidebar navigation (`toggleCategoryNav`) are consolidated into a single `/js/core/layout.js` file.
 
 ### 6. Security & Authentication Isolation

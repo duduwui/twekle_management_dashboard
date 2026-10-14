@@ -38,6 +38,7 @@ This guide records project conventions, architectural decisions, and update hist
   - `adminList.html` (directory table view with self-contained table filter and UI toggle scripts)
   - `adminForm.html` (create admin form)
   - `adminModals.html` and `admin.js` are eliminated.
+- **Report View Consolidation (Single File)**: The `report/` view directory contains solely `reports.html`. All tab fragments (`reportMilestones`, `reportSatisfaction`, `reportProducts`, `reportFollowups`) are inlined directly into `reports.html`, eliminating 4 redundant fragment files and empty include shells.
 - **Core JS Consolidation**: Core layout coordination (`LayoutController`), toast notifications (`ToastService`), and sidebar navigation (`toggleCategoryNav`) are consolidated into a single `/js/core/layout.js` file.
 
 ### 6. Security & Authentication Isolation
@@ -61,6 +62,11 @@ This guide records project conventions, architectural decisions, and update hist
 ---
 
 ## Change History & Memory Log
+
+### 2026-10-14: Reports Consolidation into Single Self-Contained Template
+- **Orchestrator Elimination**: Consolidated all 4 report tab fragments (`reportMilestones.html`, `reportSatisfaction.html`, `reportProducts.html`, `reportFollowups.html`) directly into `reports.html`.
+- **Eliminated File Bloat**: Deleted the 4 redundant sub-fragment files so `views/administration/report/` contains only `reports.html`.
+- **Test Verification**: All 31 tests passed cleanly.
 
 ### 2026-10-14: Frontend Consolidation (Layout, Fragments & Admin Views)
 - **Core JS Merge**: Merged `toast.js`, `layoutController.js`, and `navigation.js` into a single `/js/core/layout.js` file. Deleted the separate files.

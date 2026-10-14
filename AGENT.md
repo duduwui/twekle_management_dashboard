@@ -40,11 +40,11 @@ This guide records project conventions, architectural decisions, and update hist
   - `role/` -> `roles.html` (staff member directory and CRUD permission matrix)
   - `timefilter/` -> `timeFilters.html` (create preset form and configured rule table)
   - `admin/` -> `admins.html` (administrator directory, creation form, and local filters)
-- **M-V-E (Module-View-Events) Client-Side Standard**: Feature scripts are strictly partitioned into a standardized 3-layer architecture:
-  1. `[feature]-module.js`: Pure data calculations, validation rules, formatting, and API fetch calls. Zero DOM queries or style modifications allowed.
-  2. `[feature]-view.js`: DOM queries (`getElementById`, `querySelectorAll`), UI manipulation, styling/classes, and modal opening/closing. Delegates calculations to Module.
-  3. `[feature]-events.js`: Event wireframe binding (`addEventListener`), page lifecycle initialization (`DOMContentLoaded`), and interval timers.
-  - Loaded in strict canonical order in `adminLayout.html`: `*-module.js` -> `*-view.js` -> `*-events.js`.
+- **Service-Renderer-Main Client-Side Standard**: Feature scripts are strictly partitioned into a standardized 3-layer architecture:
+  1. `[feature]-service.js`: Pure data calculations, validation rules, formatting, and API fetch calls. Zero DOM queries or style modifications allowed.
+  2. `[feature]-renderer.js`: DOM queries (`getElementById`, `querySelectorAll`), UI manipulation, styling/classes, and modal opening/closing. Delegates calculations to Service.
+  3. `[feature]-main.js`: Event wireframe binding (`addEventListener`), page lifecycle initialization (`DOMContentLoaded`), and interval timers.
+  - Loaded in strict canonical order in `adminLayout.html`: `*-service.js` -> `*-renderer.js` -> `*-main.js`.
 - **Core JS Consolidation**: Core layout coordination (`LayoutController`), toast notifications (`ToastService`), and sidebar navigation (`toggleCategoryNav`) are consolidated into a single `/js/core/layout.js` file.
 
 ### 6. Security & Authentication Isolation
@@ -68,6 +68,17 @@ This guide records project conventions, architectural decisions, and update hist
 ---
 
 ## Change History & Memory Log
+
+### 2026-10-14: Client-Side Standardization with Service-Renderer-Main Architecture
+- **Standard Separation**: Standardized client-side JavaScript architecture using the `Service` / `Renderer` / `Main` 3-layer pattern across features:
+  - `admin-service.js`, `admin-renderer.js`, `admin-main.js` (under `js/administration/admin/`)
+  - `dashboard-service.js`, `dashboard-renderer.js`, `dashboard-main.js` (under `js/administration/dashboard/`)
+- **Strict Responsibilities**:
+  - `*-service.js`: Pure business and data logic, zero DOM access.
+  - `*-renderer.js`: DOM mutation and UI rendering, zero listeners.
+  - `*-main.js`: Lifecycle and event registration, delegating rendering to the renderer.
+- **Template Updates**: Updated `adminLayout.html` to load the 3-layer files in canonical order with cache-busting version query parameters (`?v=17`).
+- **Verification**: All 34 tests passing (`mvn test`). Synchronized and deployed to VPS (`2.58.82.215`).
 
 ### 2026-10-14: Domain Controller Segregation & Constructor Sanitization
 - **Domain Controller Responsibility**: Eliminated the 6-dependency "God constructor" in `AdminController`. Dispatched SSR views and route management directly to their respective domain controllers:

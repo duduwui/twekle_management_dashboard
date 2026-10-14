@@ -1,18 +1,18 @@
 /**
  * ============================================================================
- * Dashboard Feature: Event Wireframes & Lifecycle Registration (dashboard-events.js)
+ * Dashboard Feature - Main Entry & Event Wireframe (dashboard-main.js)
  * ============================================================================
  * 
- * Layer:    M-V-E Layer 3 (Events)
- * Location: src/main/resources/js/administration/dashboard/dashboard-events.js
+ * Layer:    Main Layer (Event Listeners, Page Init, Intervals)
+ * Location: src/main/resources/js/administration/dashboard/dashboard-main.js
  * 
  * Rules:
  *   - Attaches event listeners and interval timers.
- *   - Strictly delegates visual updates to DashboardView.
+ *   - Strictly delegates visual updates to DashboardRenderer.
  * ============================================================================
  */
 
-(function (View) {
+(function (Renderer) {
     'use strict';
 
     const pageLoadTime = Date.now();
@@ -23,7 +23,7 @@
             const opener = event.target.closest('[data-dialog]');
             if (opener) {
                 const daysAttr = opener.dataset.days;
-                View.toggleNativeDialog(
+                Renderer.toggleNativeDialog(
                     opener.dataset.dialog,
                     true,
                     daysAttr !== undefined ? Number(daysAttr) : null
@@ -34,13 +34,13 @@
             const closeBtn = event.target.closest('[data-close-dialog]');
             if (closeBtn) {
                 const parentDialog = closeBtn.closest('dialog');
-                if (parentDialog) View.toggleNativeDialog(parentDialog.id, false);
+                if (parentDialog) Renderer.toggleNativeDialog(parentDialog.id, false);
             }
 
             // 3. Handle Registration Days Filter Buttons
             const filterBtn = event.target.closest('[data-registration-days]');
             if (filterBtn) {
-                View.renderFilteredRegistrations(Number(filterBtn.dataset.registrationDays));
+                Renderer.renderFilteredRegistrations(Number(filterBtn.dataset.registrationDays));
             }
 
             // 4. Close On Dialog Backdrop Click
@@ -50,18 +50,18 @@
                     event.clientY < rect.top || event.clientY > rect.bottom ||
                     event.clientX < rect.left || event.clientX > rect.right
                 );
-                if (clickedOutside) View.toggleNativeDialog(event.target.id, false);
+                if (clickedOutside) Renderer.toggleNativeDialog(event.target.id, false);
             }
         });
     }
 
     function init() {
         setupInteractionListeners();
-        View.tickCountdowns(pageLoadTime);
+        Renderer.tickCountdowns(pageLoadTime);
 
         // Tick countdowns every 60 seconds
         setInterval(function () {
-            View.tickCountdowns(pageLoadTime);
+            Renderer.tickCountdowns(pageLoadTime);
         }, 60000);
     }
 
@@ -70,4 +70,4 @@
     } else {
         init();
     }
-})(DashboardView);
+})(DashboardRenderer);

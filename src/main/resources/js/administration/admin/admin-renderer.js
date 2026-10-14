@@ -1,19 +1,19 @@
 /**
  * ============================================================================
- * Staff Administration - UI Painter & DOM Manipulator (admin-view.js)
+ * Staff Administration - DOM & UI Renderer (admin-renderer.js)
  * ============================================================================
  * 
- * Layer:    M-V-E Layer 2 (View)
- * Location: src/main/resources/js/administration/admin/admin-view.js
+ * Layer:    Renderer Layer (DOM Manipulation, Visibility, UI Updates)
+ * Location: src/main/resources/js/administration/admin/admin-renderer.js
  * 
  * Rules:
  *   - Performs DOM lookups (getElementById, querySelectorAll).
  *   - Manipulates CSS styles, classes, and visibility.
- *   - Delegates business and filter logic to AdminModule.
+ *   - Delegates calculations to AdminService.
  * ============================================================================
  */
 
-const AdminView = (function (Module) {
+const AdminRenderer = (function (Service) {
     'use strict';
 
     /**
@@ -27,7 +27,7 @@ const AdminView = (function (Module) {
 
         rows.forEach(function (row) {
             var text = row.innerText;
-            var isVisible = Module.matchesQuery(text, query);
+            var isVisible = Service.matchesQuery(text, query);
             row.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleCount++;
         });
@@ -84,4 +84,4 @@ const AdminView = (function (Module) {
         hideCreateSection: hideCreateSection,
         toggleSuperAdminBadge: toggleSuperAdminBadge
     };
-})(AdminModule);
+})(AdminService);

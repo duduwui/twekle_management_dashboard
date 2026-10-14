@@ -1,10 +1,10 @@
 /**
  * ============================================================================
- * Dashboard Feature: Data Calculations & Metrics Engine (dashboard-module.js)
+ * Dashboard Feature - Metrics & Calculation Service (dashboard-service.js)
  * ============================================================================
  * 
- * Layer:    M-V-E Layer 1 (Module)
- * Location: src/main/resources/js/administration/dashboard/dashboard-module.js
+ * Layer:    Service Layer (Data, Algorithms, Calculations)
+ * Location: src/main/resources/js/administration/dashboard/dashboard-service.js
  * 
  * Rules:
  *   - Pure math, calculations, and data formatting.
@@ -12,7 +12,7 @@
  * ============================================================================
  */
 
-const DashboardModule = (function () {
+const DashboardService = (function () {
     'use strict';
 
     /**

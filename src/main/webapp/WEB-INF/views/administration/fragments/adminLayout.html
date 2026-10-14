@@ -468,18 +468,18 @@
     <!-- Consolidated Core Layout & Navigation for SSR Screens -->
     <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=15"></script>
 
-    <!-- Dashboard Feature (M-V-E Architecture) -->
+    <!-- Dashboard Feature (Service-Renderer-Main Architecture) -->
     <th:block th:if="${activeTab == 'dashboard'}">
-        <script src="/js/dashboard/dashboard-module.js?v=16"></script>
-        <script src="/js/dashboard/dashboard-view.js?v=16"></script>
-        <script src="/js/dashboard/dashboard-events.js?v=16"></script>
+        <script src="/js/dashboard/dashboard-service.js?v=17"></script>
+        <script src="/js/dashboard/dashboard-renderer.js?v=17"></script>
+        <script src="/js/dashboard/dashboard-main.js?v=17"></script>
     </th:block>
 
-    <!-- Admin Feature (M-V-E Architecture) -->
+    <!-- Admin Feature (Service-Renderer-Main Architecture) -->
     <th:block th:if="${activeTab == 'admins'}">
-        <script src="/js/admin/admin-module.js?v=16"></script>
-        <script src="/js/admin/admin-view.js?v=16"></script>
-        <script src="/js/admin/admin-events.js?v=16"></script>
+        <script src="/js/admin/admin-service.js?v=17"></script>
+        <script src="/js/admin/admin-renderer.js?v=17"></script>
+        <script src="/js/admin/admin-main.js?v=17"></script>
     </th:block>
     <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=15"></script>
     <script th:if="${activeTab == 'followups'}" src="/js/followup/followup.js?v=15"></script>

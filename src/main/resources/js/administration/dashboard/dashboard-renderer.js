@@ -1,19 +1,19 @@
 /**
  * ============================================================================
- * Dashboard Feature: UI Component Painters & View Controllers (dashboard-view.js)
+ * Dashboard Feature - UI Component Renderer (dashboard-renderer.js)
  * ============================================================================
  * 
- * Layer:    M-V-E Layer 2 (View)
- * Location: src/main/resources/js/administration/dashboard/dashboard-view.js
+ * Layer:    Renderer Layer (DOM Manipulation, Visibility, UI Updates)
+ * Location: src/main/resources/js/administration/dashboard/dashboard-renderer.js
  * 
  * Rules:
  *   - Performs DOM lookups and updates innerText / classes / attributes.
  *   - Opens and closes native HTML5 dialogs.
- *   - Delegates calculations to DashboardModule.
+ *   - Delegates calculations to DashboardService.
  * ============================================================================
  */
 
-const DashboardView = (function (Module) {
+const DashboardRenderer = (function (Service) {
     'use strict';
 
     /**
@@ -29,7 +29,7 @@ const DashboardView = (function (Module) {
             if (isNaN(initialMins)) return;
 
             const currentMins = initialMins - elapsedMins;
-            el.textContent = Module.formatCountdown(currentMins);
+            el.textContent = Service.formatCountdown(currentMins);
 
             if (currentMins <= 0) {
                 el.classList.add('tag-danger');
@@ -51,7 +51,7 @@ const DashboardView = (function (Module) {
         let visible = 0;
 
         document.querySelectorAll('[data-registered]').forEach(function (row) {
-            const isVisible = Module.isWithinCutoff(row.dataset.registered, cutoff);
+            const isVisible = Service.isWithinCutoff(row.dataset.registered, cutoff);
             row.hidden = !isVisible;
             if (isVisible) visible++;
         });
@@ -90,4 +90,4 @@ const DashboardView = (function (Module) {
         renderFilteredRegistrations: renderFilteredRegistrations,
         toggleNativeDialog: toggleNativeDialog
     };
-})(DashboardModule);
+})(DashboardService);

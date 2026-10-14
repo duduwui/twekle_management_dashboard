@@ -1,10 +1,10 @@
 /**
  * ============================================================================
- * Staff Administration - Data & Logic Engine (admin-module.js)
+ * Staff Administration - Business Logic & Service Engine (admin-service.js)
  * ============================================================================
  * 
- * Layer:    M-V-E Layer 1 (Module)
- * Location: src/main/resources/js/administration/admin/admin-module.js
+ * Layer:    Service Layer (Data, Algorithms, Calculations)
+ * Location: src/main/resources/js/administration/admin/admin-service.js
  * 
  * Rules:
  *   - Pure calculations, string matching, and validation logic.
@@ -12,7 +12,7 @@
  * ============================================================================
  */
 
-const AdminModule = (function () {
+const AdminService = (function () {
     'use strict';
 
     /**

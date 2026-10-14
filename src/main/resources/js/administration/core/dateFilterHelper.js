@@ -1,6 +1,20 @@
 /**
- * Date & Filter Helper Utilities
- * Table pagination, date range calculations, search matching, and preset helpers.
+ * ============================================================================
+ * Date & Filter Helper Utilities (dateFilterHelper.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/core/dateFilterHelper.js
+ * Used by:  LayoutController, FollowupController, ReportController
+ * 
+ * Purpose:
+ *   Reusable utility services for date calculations and table manipulations:
+ *   1. I18nService: Module titles and localized tab names (Dashboard, Follow-ups, etc.).
+ *   2. FilterHelperService:
+ *      - Calculates start/end date ranges (Today, Yesterday, 7 Days, 30 Days, Custom).
+ *      - Computes duration minutes and target day conversions from TimeFilterPresets.
+ *      - Reusable client-side pagination engine (`initPagination`, `nextPage`, `prevPage`).
+ *      - Date comparison checks (`isWithinDateRange`).
+ * ============================================================================
  */
 angular.module('tweklApp')
 .factory('I18nService', [function() {

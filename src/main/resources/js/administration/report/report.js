@@ -1,6 +1,20 @@
 /**
- * Report Feature - Service & Controller
- * Consolidated service and controller for Report Navigation, Milestone Turnaround, Satisfaction Scores, Product Insights, and Follow-up Summaries.
+ * ============================================================================
+ * Reports & Analytics Engine (report.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/report/report.js
+ * Used by:  /WEB-INF/views/administration/report/reports.html
+ * Route:    /admin/reports
+ * 
+ * Purpose:
+ *   Handles analytics, calculations, and reporting tab transitions across:
+ *   1. Milestones: Turnaround times, delay rates, and target day performance.
+ *   2. Customer Satisfaction: Rating breakdowns (1-5 stars), positive review %,
+ *      sentiment filters, and CSV data export.
+ *   3. Product Insights: High/low rated products and customer feedback remarks.
+ *   4. Follow-up Summary: Aggregated counts, overdue rates, and staff milestones.
+ * ============================================================================
  */
 angular.module('tweklApp')
 .factory('ReportService', ['$http', function($http) {

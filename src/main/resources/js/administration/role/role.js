@@ -1,4 +1,21 @@
-/** Local interactions for the server-rendered role page. */
+/**
+ * ============================================================================
+ * Roles & Permission Matrix Management (role.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/role/role.js
+ * Used by:  /WEB-INF/views/administration/role/roles.html
+ * Route:    /admin/roles
+ * 
+ * Purpose:
+ *   Handles client-side permission toggles and role assignments:
+ *   1. Module Privilege Matrix: Toggles Create, Read, Update, Delete for
+ *      ADMIN_MANAGEMENT, CUSTOMER_FOLLOWUP, and REPORTS_INSIGHTS.
+ *   2. Quick Presets: "Full Access", "Read Only", or "No Access" per module.
+ *   3. Modal Controllers: Opens/closes role creation and staff assignment dialogs.
+ * ============================================================================
+ */
+
 var roleModules = ['ADMIN_MANAGEMENT', 'CUSTOMER_FOLLOWUP', 'REPORTS_INSIGHTS'];
 var currentAdminId = null;
 

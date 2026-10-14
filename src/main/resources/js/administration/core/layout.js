@@ -1,11 +1,25 @@
 /**
- * Consolidated Core Layout, Toast & Navigation Controller
- * Merges LayoutController, ToastService/ToastController, and Sidebar Navigation into one unified core file.
+ * ============================================================================
+ * Core Layout, Toast & Navigation Controller (layout.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/core/layout.js
+ * Used by:  /WEB-INF/views/administration/fragments/adminLayout.html (All Pages)
+ * 
+ * Purpose:
+ *   Acts as the central frontend orchestrator across the entire portal:
+ *   1. Toast Notifications: ToastService & ToastController for success/error popups.
+ *   2. Sidebar Navigation: Expand/collapse category accordions, mobile drawer,
+ *      and active route highlighting based on current URL path.
+ *   3. Filter Modals: Handles universal Date Pickers & Time Preset selection
+ *      dialogs shared between Follow-ups and Reports.
+ *   4. User Profile & Session: Coordinates current admin badge state & logout action.
+ * ============================================================================
  */
 
-// =========================================================
-// 1. TOAST SERVICE & CONTROLLER
-// =========================================================
+// ============================================================================
+// 1. TOAST NOTIFICATIONS SERVICE & CONTROLLER
+// ============================================================================
 angular.module('tweklApp')
 .factory('ToastService', ['$timeout', '$rootScope', function($timeout, $rootScope) {
     $rootScope.toasts = [];

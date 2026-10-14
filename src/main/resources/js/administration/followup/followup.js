@@ -1,6 +1,22 @@
 /**
- * Follow-up Feature - Service & Controllers
- * Consolidated service and controllers for Follow-up Directory, Order Timelines, Milestone Checklists, and Customer Feedback Reviews.
+ * ============================================================================
+ * Follow-up Feature & Milestone Checklist (followup.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/followup/followup.js
+ * Used by:  /WEB-INF/views/administration/followup/followups.html
+ * Route:    /admin/followups
+ * 
+ * Purpose:
+ *   Consolidated AngularJS service and controller for customer follow-up tracking:
+ *   1. FollowupService: API interface for fetching customer orders, checks,
+ *      milestone checklists, toggling statuses, and posting satisfaction reviews.
+ *   2. FollowupController:
+ *      - Customer directory table with real-time status pills (ALERT, PENDING, DONE).
+ *      - Customer purchase orders history accordion view.
+ *      - Milestone inspection and checklist modal (editing check notes & photos).
+ *      - Time range and milestone completion filter controls.
+ * ============================================================================
  */
 angular.module('tweklApp')
 .factory('FollowupService', ['$http', function($http) {

@@ -1,5 +1,19 @@
 /**
- * Dashboard Overview Interactions: Live Countdown & Dialog Modals
+ * ============================================================================
+ * Dashboard Overview Interactions (dashboard.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/dashboard/dashboard.js
+ * Used by:  /WEB-INF/views/administration/dashboard/dashboard.html
+ * Route:    /admin/dashboard
+ * 
+ * Purpose:
+ *   Handles client-side real-time UI interactions on the Dashboard screen:
+ *   1. Live Countdown Timers: Dynamically ticks remaining minutes/hours
+ *      and overdue indicators on the Priority Attention follow-up table.
+ *   2. Dashboard Dialog Modals: Opens and closes quick-inspection modals
+ *      (e.g., viewing urgent customer notes and feedback details).
+ * ============================================================================
  */
 (function () {
     'use strict';

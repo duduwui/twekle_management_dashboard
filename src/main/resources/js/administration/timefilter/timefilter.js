@@ -1,6 +1,17 @@
 /**
- * Time Filter Feature - Service & Helpers
- * Consolidated service and table interaction helpers for dynamic time filter presets.
+ * ============================================================================
+ * Time Filter Presets Service (timefilter.js)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/js/administration/timefilter/timefilter.js
+ * Used by:  /WEB-INF/views/administration/timefilter/timeFilters.html & Filter Modals
+ * Route:    /admin/timelines
+ * 
+ * Purpose:
+ *   Handles Dynamic Time Filter presets management:
+ *   1. TimeFilterService: API client for querying available presets (24 Hours, 7 Days, etc.).
+ *   2. Provides client helpers for creating presets, toggling active status, and deletion.
+ * ============================================================================
  */
 angular.module('tweklApp')
 .factory('TimeFilterService', ['$http', function($http) {

@@ -1,3 +1,20 @@
+/**
+ * ============================================================================
+ * Login Screen Stylesheet (login.css)
+ * ============================================================================
+ * 
+ * Location: src/main/resources/css/administration/login.css
+ * Used by:  /WEB-INF/views/administration/login.html
+ * Route:    /login
+ * 
+ * Purpose:
+ *   Styles the authentication screen:
+ *   - Responsive card layout with centered viewport.
+ *   - Clean inputs with focus states and password visibility.
+ *   - Submit button with loading spinner state and error alert boxes.
+ * ============================================================================
+ */
+
 * {
     box-sizing: border-box;
     margin: 0;

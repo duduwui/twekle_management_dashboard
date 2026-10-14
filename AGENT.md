@@ -15,9 +15,13 @@ This guide records project conventions, architectural decisions, and update hist
 - Declare the interface contract at the top of the controller `.java` file (package-private) to avoid extra file bloat.
 - Methods implementing the interface must have `@Override`.
 
-### 3. Canonical SSR Routing
-- Pure Thymeleaf SSR: Exactly one canonical route per view.
-- Strictly eliminate fallback route arrays (e.g. `{"/", "/admin"}`), wildcard matchers (`/admin/followups/**`), and redundant redirect fallbacks.
+### 3. Action Deduplication & Functional Runners
+- Any controller handling form submissions or transactional actions with error feedback (flash attributes) MUST use a `@FunctionalInterface` action runner (e.g. `AdminAction`, `RoleAction`, `TimeFilterAction`) and a shared `executeAction(...)` helper.
+- Never write repetitive `try { service.call(); flash.addFlashAttribute(...); } catch (Exception ex) { ... }` blocks across individual controller methods. Keep action methods to clean 1-line execution calls.
+
+### 4. Canonical SSR Routing
+- Pure Thymeleaf SSR: Exactly one canonical route per view and per action.
+- Strictly eliminate fallback route arrays (e.g. `{"/", "/admin"}` or `{"/create", "/create_preset"}`), wildcard matchers (`/admin/followups/**`), and redundant redirect fallbacks.
 - Single clean path per endpoint:
   - `/` -> Root view (Administration Dashboard)
   - `/admin/dashboard` -> Dashboard view
@@ -25,19 +29,21 @@ This guide records project conventions, architectural decisions, and update hist
   - `/admin/followups` -> Followups view
   - `/admin/reports` -> Reports view
   - `/admin/roles` -> Roles view
+  - `/admin/timelines` -> Timelines view
 
-### 4. Security & Authentication Isolation
+### 5. Security & Authentication Isolation
 - All authentication endpoints (`/login`, `/admin/auth/login`, `/admin/auth/logout`, `/admin/auth/me`), security configuration (`SecurityConfig`), user details services, entry points, and view advice reside strictly in `com.twekl.dashboard.security.administration`.
 - Password encryption (BCrypt) and role/permission checks (`isSuperAdmin`, `hasRole`, `hasPermission`, `canManageUsers`, etc.) are centralized and transparently accessible via `PortalAccess`.
 - Business controllers must not contain manual `isAuthenticated()` checks.
 - `SecurityConfig.java` centrally secures `/admin/**` with `.hasAnyRole("SUPER_ADMIN", "ADMIN")` and `/admin/admins` with `.hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS")`.
 
-### 5. Plural Model Naming
+### 6. Plural Model Naming
 - Collections and model attributes must use pure plural naming without the `List` suffix:
   - Use `admins` instead of `adminList`.
   - Use `roles` instead of `roleList`.
+  - Use `presets` instead of `presetList`.
 
-### 6. Clean Code & Dead Code Elimination
+### 7. Clean Code & Dead Code Elimination
 - Dead code such as unused query repositories (e.g. `PortalQueryRepository`) must be deleted.
 - k6 stress test reports and test endpoints are completely removed and must not be re-added.
 - Unit and integration tests in `src/test/java` must pass with zero failures (`mvn test`).
@@ -46,6 +52,13 @@ This guide records project conventions, architectural decisions, and update hist
 ---
 
 ## Change History & Memory Log
+
+### 2026-10-14: Action Deduplication via Functional Runners Across All Controllers
+- **Functional Runners**: Introduced `@FunctionalInterface` action runners (`AdminAction`, `RoleAction`, `TimeFilterAction`) with shared `executeAction(...)` engines in `AdminController`, `RoleController`, and `TimeFilterController`.
+- **Boilerplate Elimination**: Replaced repetitive try-catch-flash blocks with clean 1-line execution calls.
+- **Route Normalization**: Removed fallback route arrays in `RoleController` (`/create`, `/{roleId}/update`, `/assign_user_role`, `/{roleId}/delete`) and `TimeFilterController` (`/create`, `/{presetId}/toggle`, `/{presetId}/delete`).
+- **Template Alignment**: Updated `timeFilterForm.html` and `timeFilterDirectory.html` action URLs to match canonical routes.
+- **Verification**: Verified 100% test pass rate (31/31 tests).
 
 ### 2026-10-14: Service Consolidation, Final Constructor Parameters, Single SSR Routes, Security Centralization
 - **Service Consolidation**: Removed `service/administration/impl/` completely. Consolidated all 8 services into single concrete `@Service` classes directly in `com.twekl.dashboard.service.administration`.

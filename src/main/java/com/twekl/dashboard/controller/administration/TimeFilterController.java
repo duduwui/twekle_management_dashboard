@@ -14,6 +14,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
+ * Functional interface mapping transactional actions that can throw exceptions.
+ * Enables clean 1-line execution blocks inside the controller endpoints.
+ */
+@FunctionalInterface
+interface TimeFilterAction {
+    void execute() throws Exception;
+}
+
+/**
  * Controller for Dynamic Time Filter & Milestone Presets.
  * Pure SSR view rendering and administrative actions.
  */
@@ -36,8 +45,9 @@ public class TimeFilterController {
     @GetMapping(value = "/admin/timelines", produces = MediaType.TEXT_HTML_VALUE)
     public String showTimelines(Model model) {
         model.addAttribute("activeTab", "timelines");
-        model.addAttribute("presetList", timeFilterService.findAll());
-        model.addAttribute("presets", timeFilterService.findAll());
+        var presets = timeFilterService.findAll();
+        model.addAttribute("presets", presets);
+        model.addAttribute("presetList", presets);
         model.addAttribute("currentUser", adminService.getCurrentAdmin().orElse(null));
         if (!model.containsAttribute("newPreset")) {
             model.addAttribute("newPreset", new TimeFilterPreset());
@@ -45,37 +55,40 @@ public class TimeFilterController {
         return "administration/timefilter/timeFilters";
     }
 
-    @PostMapping({"/admin/timelines/create", "/admin/timelines/create_preset"})
+    @PostMapping("/admin/timelines/create")
     public String createPresetSsr(@ModelAttribute("newPreset") TimeFilterPreset preset, RedirectAttributes flash) {
         if (preset.getLabelEn() == null || preset.getLabelEn().trim().isEmpty()) {
             flash.addFlashAttribute("errorMessage", "Preset name is required.");
             return "redirect:/admin/timelines";
         }
-        try {
-            timeFilterService.createPreset(preset);
-            flash.addFlashAttribute("successMessage", "Time filter preset '" + preset.getLabelEn().trim() + "' created successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/timelines";
+        return executeTimeFilterAction(flash, "Time filter preset '" + preset.getLabelEn().trim() + "' created successfully.",
+                () -> timeFilterService.createPreset(preset));
     }
 
-    @PostMapping({"/admin/timelines/{presetId:\\d+}/toggle", "/admin/timelines/{presetId:\\d+}/toggle_status"})
+    @PostMapping("/admin/timelines/{presetId:\\d+}/toggle")
     public String togglePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
-        try {
-            TimeFilterPreset toggled = timeFilterService.toggleStatus(presetId);
-            flash.addFlashAttribute("successMessage", "Preset '" + toggled.getLabelEn() + "' status updated successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/timelines";
+        return executeTimeFilterAction(flash, "Preset status updated successfully.",
+                () -> timeFilterService.toggleStatus(presetId));
     }
 
-    @PostMapping({"/admin/timelines/{presetId:\\d+}/delete", "/admin/timelines/{presetId:\\d+}/delete_preset"})
+    @PostMapping("/admin/timelines/{presetId:\\d+}/delete")
     public String deletePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
+        return executeTimeFilterAction(flash, "Time filter preset deleted successfully.",
+                () -> timeFilterService.deletePreset(presetId));
+    }
+
+    // =========================================================
+    // REUSABLE HELPER ENGINE
+    // =========================================================
+
+    /**
+     * Reusable logic block that manages try-catch boundaries and routing dynamically.
+     * Consolidates error feedback pipelines into one shared engine.
+     */
+    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, TimeFilterAction action) {
         try {
-            timeFilterService.deletePreset(presetId);
-            flash.addFlashAttribute("successMessage", "Preset deleted successfully.");
+            action.execute();
+            flash.addFlashAttribute("successMessage", successMessage);
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());
         }

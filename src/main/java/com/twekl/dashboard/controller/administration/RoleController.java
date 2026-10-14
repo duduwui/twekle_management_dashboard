@@ -17,6 +17,15 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Functional interface mapping transactional actions that can throw exceptions.
+ * Enables clean 1-line execution blocks inside the controller endpoints.
+ */
+@FunctionalInterface
+interface RoleAction {
+    void execute() throws Exception;
+}
+
+/**
  * Interface contract for Role and Permission Operations.
  * Defined at the top of the file for full visibility.
  */
@@ -37,7 +46,6 @@ interface RoleOperations {
 @RequestMapping("/admin/roles")
 public class RoleController implements RoleOperations {
 
-    // All dependencies are interfaces, injected via @Autowired and marked final
     private final RoleService roleService;
     private final AdminService adminService;
 
@@ -64,7 +72,8 @@ public class RoleController implements RoleOperations {
         Admin selectedAdmin = null;
         if (selectedAdminId != null) {
             selectedAdmin = adminService.findById(selectedAdminId).orElse(null);
-        } else if (!admins.isEmpty()) {
+        }
+        if (selectedAdmin == null && !admins.isEmpty()) {
             selectedAdmin = admins.get(0);
         }
         model.addAttribute("selectedAdmin", selectedAdmin);
@@ -76,37 +85,27 @@ public class RoleController implements RoleOperations {
     }
 
     @Override
-    @PostMapping({"/create_role", "/create", "/create-role"})
+    @PostMapping("/create")
     public String createRoleSsr(@ModelAttribute("newRole") RoleDto request, RedirectAttributes flash) {
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             flash.addFlashAttribute("errorMessage", "Role template name is required.");
             return "redirect:/admin/roles";
         }
-        try {
-            roleService.createRole(request);
-            flash.addFlashAttribute("successMessage", "Role template '" + request.getName().trim() + "' created successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/roles";
+        return executeRoleAction(flash, "Role template '" + request.getName().trim() + "' created successfully.",
+                "redirect:/admin/roles", () -> roleService.createRole(request));
     }
 
     @Override
-    @PostMapping({"/{roleId:\\d+}/update_role", "/{roleId:\\d+}/update", "/{roleId:\\d+}/update-role"})
+    @PostMapping("/{roleId:\\d+}/update")
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
                                 @ModelAttribute RoleDto request,
                                 RedirectAttributes flash) {
-        try {
-            roleService.updateRole(roleId, request);
-            flash.addFlashAttribute("successMessage", "Role template updated successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/roles";
+        return executeRoleAction(flash, "Role template updated successfully.",
+                "redirect:/admin/roles", () -> roleService.updateRole(roleId, request));
     }
 
     @Override
-    @PostMapping({"/{adminId:\\d+}/assign_user_role", "/{adminId:\\d+}/assign", "/assign", "/assign_user_role", "/assign-user-role"})
+    @PostMapping("/assign_user_role")
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
                                      @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
@@ -119,38 +118,48 @@ public class RoleController implements RoleOperations {
             return "redirect:/admin/roles";
         }
 
-        try {
-            Set<Long> targetRoleIds = new HashSet<>();
-            if (roleIds != null && !roleIds.isEmpty()) {
-                targetRoleIds.addAll(roleIds);
-            } else if (roleId != null && roleId > 0) {
-                targetRoleIds.add(roleId);
-            } else if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
-                targetRoleIds.addAll(request.getRoleIds());
-            }
+        return executeRoleAction(flash, "Assigned permissions updated successfully.",
+                "redirect:/admin/roles?selectedAdminId=" + targetAdminId, () -> {
+                    Set<Long> targetRoleIds = new HashSet<>();
+                    if (roleIds != null && !roleIds.isEmpty()) {
+                        targetRoleIds.addAll(roleIds);
+                    } else if (roleId != null && roleId > 0) {
+                        targetRoleIds.add(roleId);
+                    } else if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
+                        targetRoleIds.addAll(request.getRoleIds());
+                    }
 
-            UpdateAdminRequest updateReq = new UpdateAdminRequest();
-            updateReq.setRoleIds(targetRoleIds);
-            if (request.getPermissions() != null) {
-                updateReq.setPermissions(request.getPermissions());
-            }
-            adminService.updateAdmin(targetAdminId, updateReq);
-            flash.addFlashAttribute("successMessage", "Assigned permissions updated successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/roles?selectedAdminId=" + targetAdminId;
+                    UpdateAdminRequest updateReq = new UpdateAdminRequest();
+                    updateReq.setRoleIds(targetRoleIds);
+                    if (request.getPermissions() != null) {
+                        updateReq.setPermissions(request.getPermissions());
+                    }
+                    adminService.updateAdmin(targetAdminId, updateReq);
+                });
     }
 
     @Override
     @PostMapping("/{roleId:\\d+}/delete")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
+        return executeRoleAction(flash, "Role template deleted successfully.",
+                "redirect:/admin/roles", () -> roleService.deleteRole(roleId));
+    }
+
+    // =========================================================
+    // REUSABLE HELPER ENGINE
+    // =========================================================
+
+    /**
+     * Reusable logic block that manages try-catch boundaries and routing dynamically.
+     * Consolidates error feedback pipelines into one shared engine.
+     */
+    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, RoleAction action) {
         try {
-            roleService.deleteRole(roleId);
-            flash.addFlashAttribute("successMessage", "Role template deleted successfully.");
+            action.execute();
+            flash.addFlashAttribute("successMessage", successMessage);
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());
         }
-        return "redirect:/admin/roles";
+        return redirectTarget;
     }
 }

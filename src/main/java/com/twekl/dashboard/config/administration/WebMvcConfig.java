@@ -72,6 +72,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     }
 
     @Override
+    public void addViewControllers(org.springframework.web.servlet.config.annotation.ViewControllerRegistry registry) {
+        registry.addRedirectViewController("/", "/admin/dashboard");
+    }
+
+    @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/css/**").addResourceLocations("classpath:/css/administration/", "classpath:/css/");
         registry.addResourceHandler("/js/**").addResourceLocations("classpath:/js/administration/", "classpath:/js/");

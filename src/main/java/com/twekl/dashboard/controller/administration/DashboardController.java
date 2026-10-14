@@ -40,11 +40,6 @@ public class DashboardController {
         this.reportService = reportService;
     }
 
-    @GetMapping("/")
-    public String handleRootRedirect() {
-        return "redirect:/admin/dashboard";
-    }
-
     @GetMapping("/admin/dashboard")
     public String showDashboard(Model model) {
         List<CustomerFollowupSummary> summaries = followupService.findAllSummaries("ALL");

@@ -1,7 +1,7 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.config.administration.JpaConfig;
-import com.twekl.dashboard.config.administration.SecurityConfig;
+import com.twekl.dashboard.security.administration.SecurityConfig;
 import com.twekl.dashboard.config.administration.WebMvcConfig;
 import com.twekl.dashboard.dto.administration.RoleDto;
 import com.twekl.dashboard.model.administration.Role;

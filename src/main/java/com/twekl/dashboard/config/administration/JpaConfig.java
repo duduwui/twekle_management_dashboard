@@ -36,7 +36,7 @@ public class JpaConfig {
     private final org.springframework.core.env.Environment environment;
 
     @Autowired
-    public JpaConfig(org.springframework.core.env.Environment environment) {
+    public JpaConfig(final org.springframework.core.env.Environment environment) {
         this.environment = environment;
     }
 

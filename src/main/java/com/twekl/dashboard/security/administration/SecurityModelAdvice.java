@@ -14,7 +14,7 @@ public class SecurityModelAdvice {
     private final PortalAccess access;
 
     @Autowired
-    public SecurityModelAdvice(PortalAccess access) {
+    public SecurityModelAdvice(final PortalAccess access) {
         this.access = access;
     }
 

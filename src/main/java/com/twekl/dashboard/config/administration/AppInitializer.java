@@ -1,5 +1,6 @@
 package com.twekl.dashboard.config.administration;
 
+import com.twekl.dashboard.security.administration.SecurityConfig;
 import jakarta.servlet.Filter;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.filter.DelegatingFilterProxy;

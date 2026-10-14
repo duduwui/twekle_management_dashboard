@@ -26,7 +26,7 @@ public class FollowupController {
     private final AdminService adminService;
 
     @Autowired
-    public FollowupController(FollowupService followupService, AdminService adminService) {
+    public FollowupController(final FollowupService followupService, final AdminService adminService) {
         this.followupService = followupService;
         this.adminService = adminService;
     }

@@ -11,7 +11,6 @@ import com.twekl.dashboard.service.administration.RoleService;
 import com.twekl.dashboard.service.administration.TimeFilterService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -36,11 +35,11 @@ interface AdminOperations {
  * Primary Administrative Controller.
  * Consolidates SSR view rendering and administrative actions.
  * Implements AdminOperations interface contract.
+ * Uses constructor injection with final dependencies.
  */
 @Controller
 public class AdminController implements AdminOperations {
 
-    // All dependencies are interfaces, injected via @Autowired and marked final
     private final AdminService adminService;
     private final RoleService roleService;
     private final CustomerService customerService;
@@ -49,12 +48,12 @@ public class AdminController implements AdminOperations {
     private final TimeFilterService timeFilterService;
 
     @Autowired
-    public AdminController(AdminService adminService,
-                           RoleService roleService,
-                           CustomerService customerService,
-                           FollowupService followupService,
-                           ReportService reportService,
-                           TimeFilterService timeFilterService) {
+    public AdminController(final AdminService adminService,
+                           final RoleService roleService,
+                           final CustomerService customerService,
+                           final FollowupService followupService,
+                           final ReportService reportService,
+                           final TimeFilterService timeFilterService) {
         this.adminService = adminService;
         this.roleService = roleService;
         this.customerService = customerService;
@@ -64,10 +63,10 @@ public class AdminController implements AdminOperations {
     }
 
     // =========================================================
-    // GENERAL PORTAL NAVIGATION & VIEWS
+    // SSR VIEW ENDPOINTS (ONE CANONICAL ROUTE ONLY)
     // =========================================================
 
-    @GetMapping({"/", "/admin", "/admin/"})
+    @GetMapping("/")
     public String handleRootRedirect() {
         return "redirect:/admin/dashboard";
     }
@@ -91,7 +90,7 @@ public class AdminController implements AdminOperations {
         return "administration/dashboard/dashboard";
     }
 
-    @GetMapping(value = {"/admin/followups", "/admin/followups/**"}, produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping("/admin/followups")
     public String showCustomers(Model model) {
         model.addAttribute("activeTab", "followups");
         model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
@@ -99,12 +98,7 @@ public class AdminController implements AdminOperations {
         return "administration/followup/followups";
     }
 
-    @GetMapping(value = "/admin/customers", produces = MediaType.TEXT_HTML_VALUE)
-    public String redirectCustomers() {
-        return "redirect:/admin/followups";
-    }
-
-    @GetMapping(value = "/admin/reports", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping("/admin/reports")
     public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
                               @RequestParam(value = "tab", defaultValue = "milestones") String tab,
                               Model model) {

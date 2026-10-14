@@ -21,11 +21,11 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @Autowired
-    public DashboardController(DashboardService dashboardService) {
+    public DashboardController(final DashboardService dashboardService) {
         this.dashboardService = dashboardService;
     }
 
-    @GetMapping(value = {"", "/summary"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/summary", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> getDashboardSummary() {
         return ResponseEntity.ok(dashboardService.getDashboardSummary());
     }

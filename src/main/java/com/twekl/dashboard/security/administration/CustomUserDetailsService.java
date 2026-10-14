@@ -22,7 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final AdminRepository adminRepository;
 
     @Autowired
-    public CustomUserDetailsService(AdminRepository adminRepository) {
+    public CustomUserDetailsService(final AdminRepository adminRepository) {
         this.adminRepository = adminRepository;
     }
 

@@ -27,7 +27,7 @@ public class ReportController {
     private final ReportService reportService;
 
     @Autowired
-    public ReportController(ReportService reportService) {
+    public ReportController(final ReportService reportService) {
         this.reportService = reportService;
     }
 

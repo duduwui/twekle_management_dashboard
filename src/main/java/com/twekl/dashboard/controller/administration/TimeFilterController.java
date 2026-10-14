@@ -24,7 +24,7 @@ public class TimeFilterController {
     private final AdminService adminService;
 
     @Autowired
-    public TimeFilterController(TimeFilterService timeFilterService, AdminService adminService) {
+    public TimeFilterController(final TimeFilterService timeFilterService, final AdminService adminService) {
         this.timeFilterService = timeFilterService;
         this.adminService = adminService;
     }

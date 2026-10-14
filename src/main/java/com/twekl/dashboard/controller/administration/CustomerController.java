@@ -29,7 +29,7 @@ public class CustomerController {
     private final FollowupService followupService;
 
     @Autowired
-    public CustomerController(CustomerService customerService, FollowupService followupService) {
+    public CustomerController(final CustomerService customerService, final FollowupService followupService) {
         this.customerService = customerService;
         this.followupService = followupService;
     }

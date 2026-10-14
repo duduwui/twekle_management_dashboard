@@ -42,7 +42,7 @@ public class RoleController implements RoleOperations {
     private final AdminService adminService;
 
     @Autowired
-    public RoleController(RoleService roleService, AdminService adminService) {
+    public RoleController(final RoleService roleService, final AdminService adminService) {
         this.roleService = roleService;
         this.adminService = adminService;
     }

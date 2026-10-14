@@ -28,7 +28,7 @@ public class OrderController {
     private final FollowupService followupService;
 
     @Autowired
-    public OrderController(CustomerService customerService, FollowupService followupService) {
+    public OrderController(final CustomerService customerService, final FollowupService followupService) {
         this.customerService = customerService;
         this.followupService = followupService;
     }

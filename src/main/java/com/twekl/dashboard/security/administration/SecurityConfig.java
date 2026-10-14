@@ -1,9 +1,7 @@
-package com.twekl.dashboard.config.administration;
+package com.twekl.dashboard.security.administration;
 
-import com.twekl.dashboard.security.administration.RestAccessDeniedHandler;
-import com.twekl.dashboard.security.administration.RestAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,9 +16,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
+/**
+ * Enterprise Spring Security Configuration.
+ * Centralized inside the security folder for full visibility over:
+ * 1. BCrypt Password Encryption
+ * 2. Authentication Provider & Session Management
+ * 3. Role-Based and Permission-Based Access Control Rules
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -31,19 +37,27 @@ public class SecurityConfig {
     private final RestAccessDeniedHandler accessDeniedHandler;
 
     @Autowired
-    public SecurityConfig(UserDetailsService userDetailsService,
-                          RestAuthenticationEntryPoint authenticationEntryPoint,
-                          RestAccessDeniedHandler accessDeniedHandler) {
+    public SecurityConfig(final UserDetailsService userDetailsService,
+                          final RestAuthenticationEntryPoint authenticationEntryPoint,
+                          final RestAccessDeniedHandler accessDeniedHandler) {
         this.userDetailsService = userDetailsService;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
     }
 
+    /**
+     * Password Encoder: BCrypt with default 10 rounds of hashing.
+     * All system passwords are encrypted using this bean before storage.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Authentication Provider: Uses CustomUserDetailsService to load users,
+     * roles, and permissions, verifying raw credentials against the BCrypt password.
+     */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -53,7 +67,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(final AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
@@ -63,12 +77,16 @@ public class SecurityConfig {
     }
 
     @Bean(name = "mvcHandlerMappingIntrospector")
-    public org.springframework.web.servlet.handler.HandlerMappingIntrospector mvcHandlerMappingIntrospector() {
-        return new org.springframework.web.servlet.handler.HandlerMappingIntrospector();
+    public HandlerMappingIntrospector mvcHandlerMappingIntrospector() {
+        return new HandlerMappingIntrospector();
     }
 
+    /**
+     * Security Filter Chain: Defines authentication endpoints, session creation,
+     * CSRF protection, and role/permission authorization checks.
+     */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(antMatcher("/login"), antMatcher("/login/**"), antMatcher("/admin/auth/**"))
@@ -82,7 +100,11 @@ public class SecurityConfig {
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler)
             )
-            // Explicit path matchers keep the root security context independent of MVC beans.
+            // Explicit authorization checks:
+            // - Public assets & login form: permitAll
+            // - Staff administrator management: requires ROLE_SUPER_ADMIN or PERMISSION_MANAGE_USERS
+            // - Role & permission templates: requires ROLE_SUPER_ADMIN or PERMISSION_CREATE_ROLES
+            // - General portal routes (/admin/**): requires ROLE_ADMIN or ROLE_SUPER_ADMIN
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(antMatcher("/"), antMatcher("/login"), antMatcher("/login/**"), antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/images/**"), antMatcher("/favicon.ico")).permitAll()
                 .requestMatchers(antMatcher("/admin/auth/login")).permitAll()
@@ -102,4 +124,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

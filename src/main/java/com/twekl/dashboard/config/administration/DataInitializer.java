@@ -45,15 +45,16 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     private final PasswordEncoder passwordEncoder;
     private final AdminService adminService;
 
-    public DataInitializer(AdminRepository adminRepository, 
-                           RoleRepository roleRepository,
-                           TimeFilterPresetRepository timeFilterPresetRepository,
-                           CustomerRepository customerRepository,
-                           CustomerOrderRepository orderRepository,
-                           CustomerFeedbackRepository feedbackRepository,
-                           OrderFollowupCheckRepository followupCheckRepository,
-                           PasswordEncoder passwordEncoder,
-                           AdminService adminService) {
+    @Autowired
+    public DataInitializer(final AdminRepository adminRepository, 
+                           final RoleRepository roleRepository,
+                           final TimeFilterPresetRepository timeFilterPresetRepository,
+                           final CustomerRepository customerRepository,
+                           final CustomerOrderRepository orderRepository,
+                           final CustomerFeedbackRepository feedbackRepository,
+                           final OrderFollowupCheckRepository followupCheckRepository,
+                           final PasswordEncoder passwordEncoder,
+                           final AdminService adminService) {
         this.adminRepository = adminRepository;
         this.roleRepository = roleRepository;
         this.timeFilterPresetRepository = timeFilterPresetRepository;

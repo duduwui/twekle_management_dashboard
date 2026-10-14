@@ -28,7 +28,7 @@ public class RoleServiceTest {
 
     @BeforeEach
     public void setUp() {
-        roleService = new com.twekl.dashboard.service.administration.impl.RoleServiceImpl(roleRepository, mock(com.twekl.dashboard.repository.administration.AdminRepository.class));
+        roleService = new RoleService(roleRepository, mock(com.twekl.dashboard.repository.administration.AdminRepository.class));
         testRole = new Role("Support Specialist", false, true, false, false);
         testRole.setRoleId(1L);
     }

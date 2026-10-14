@@ -32,13 +32,14 @@ This guide records project conventions, architectural decisions, and update hist
   - `/admin/timelines` -> Timelines view
 
 ### 5. Frontend & Template Architecture
-- **Single Layout Fragment File**: The `fragments/` directory contains solely `adminLayout.html`. All sub-fragments (`head`, `sidebar`, `header`, `sharedModals`, `scripts`, `pager`) are consolidated directly inside `adminLayout.html`.
-- **Admin Views Structure (Strictly 3 Files)**: The `admin/` view directory contains exactly 3 files:
-  - `admins.html` (main decorated page)
-  - `adminList.html` (directory table view with self-contained table filter and UI toggle scripts)
-  - `adminForm.html` (create admin form)
-  - `adminModals.html` and `admin.js` are eliminated.
-- **Report View Consolidation (Single File)**: The `report/` view directory contains solely `reports.html`. All tab fragments (`reportMilestones`, `reportSatisfaction`, `reportProducts`, `reportFollowups`) are inlined directly into `reports.html`, eliminating 4 redundant fragment files and empty include shells.
+- **Single Layout Fragment File**: The `fragments/` directory contains solely `adminLayout.html`. All layout sub-fragments (`head`, `sidebar`, `header`, `sharedModals`, `scripts`, `pager`) are consolidated directly inside `adminLayout.html`.
+- **Single Self-Contained Template per Module**: Every administrative domain module has exactly ONE canonical, self-contained view template. No intermediate empty shell files or fragmented includes:
+  - `dashboard/` -> `dashboard.html` (KPIs, progress bars, attention table, and all dialog modals)
+  - `followup/` -> `followups.html` (customer directory, purchase order history, and feedback ledger)
+  - `report/` -> `reports.html` (milestones, satisfaction, products, and followup summaries)
+  - `role/` -> `roles.html` (staff member directory and CRUD permission matrix)
+  - `timefilter/` -> `timeFilters.html` (create preset form and configured rule table)
+  - `admin/` -> `admins.html` (administrator directory, creation form, and local filters)
 - **Core JS Consolidation**: Core layout coordination (`LayoutController`), toast notifications (`ToastService`), and sidebar navigation (`toggleCategoryNav`) are consolidated into a single `/js/core/layout.js` file.
 
 ### 6. Security & Authentication Isolation
@@ -62,6 +63,16 @@ This guide records project conventions, architectural decisions, and update hist
 ---
 
 ## Change History & Memory Log
+
+### 2026-10-14: Complete Elimination of Orchestrator Shells Across All Modules
+- **Universal Single-File Architecture**: Consolidated every module into a single self-contained template, completely eliminating all intermediate `th:replace` shells and fragment sub-files:
+  - `dashboard/`: Inlined `dashboardKpis`, `priorityTable`, `dashboardModals`, `dashboardDetailsModal`, `dashboardQuickActions` into `dashboard.html`. Deleted the 5 fragment files.
+  - `followup/`: Inlined `followupDirectory`, `orderDirectory`, `feedbackDirectory` into `followups.html`. Deleted the 3 fragments and removed dead code (`customerForm.html`, `checklist.html`).
+  - `role/`: Inlined `roleStaffDirectory` and `rolePermissions` into `roles.html`. Deleted the 2 fragment files.
+  - `timefilter/`: Inlined `timeFilterForm` and `timeFilterDirectory` into `timeFilters.html`. Deleted the 2 fragment files.
+  - `admin/`: Inlined `adminList` and `adminForm` into `admins.html`. Deleted the 2 fragment files.
+  - `report/`: Consolidated 4 sub-tabs directly into `reports.html`. Deleted the 4 fragment files.
+- **Verification**: All 31 tests passed cleanly (`mvn test`). All endpoints returning HTTP 200.
 
 ### 2026-10-14: Reports Consolidation into Single Self-Contained Template
 - **Orchestrator Elimination**: Consolidated all 4 report tab fragments (`reportMilestones.html`, `reportSatisfaction.html`, `reportProducts.html`, `reportFollowups.html`) directly into `reports.html`.

@@ -21,6 +21,15 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
+ * Functional interface mapping transactional actions that can throw exceptions.
+ * Enables clean 1-line execution blocks inside the controller endpoints.
+ */
+@FunctionalInterface
+interface AdminAction {
+    void execute() throws Exception;
+}
+
+/**
  * Interface contract for Staff Administrator Operations.
  * Defined at the top of the file for full visibility.
  */
@@ -140,33 +149,36 @@ public class AdminController implements AdminOperations {
             flash.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/admins";
         }
-        try {
-            adminService.createAdmin(request);
-            flash.addFlashAttribute("successMessage", "Administrator '" + request.getUsername() + "' created successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/admins";
+        return executeAdminAction(flash, "Administrator '" + request.getUsername() + "' created successfully.", 
+                () -> adminService.createAdmin(request));
     }
 
     @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/toggle-status")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
-        try {
-            Admin toggled = adminService.toggleStatus(adminId);
-            flash.addFlashAttribute("successMessage", "Administrator '" + toggled.getUsername() + "' status updated successfully.");
-        } catch (Exception ex) {
-            flash.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/admin/admins";
+        return executeAdminAction(flash, "Administrator status updated successfully.", 
+                () -> adminService.toggleStatus(adminId));
     }
 
     @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
+        return executeAdminAction(flash, "Administrator deleted successfully.", 
+                () -> adminService.deleteAdmin(adminId));
+    }
+
+    // =========================================================
+    // REUSABLE HELPER ENGINE
+    // =========================================================
+
+    /**
+     * Reusable logic block that manages try-catch boundaries and routing dynamically.
+     * Consolidates error feedback pipelines into one shared engine.
+     */
+    private String executeAdminAction(RedirectAttributes flash, String successMessage, AdminAction action) {
         try {
-            adminService.deleteAdmin(adminId);
-            flash.addFlashAttribute("successMessage", "Administrator deleted successfully.");
+            action.execute();
+            flash.addFlashAttribute("successMessage", successMessage);
         } catch (Exception ex) {
             flash.addFlashAttribute("errorMessage", ex.getMessage());
         }

@@ -961,7 +961,17 @@ HTML_PAGE = """<!DOCTYPE html>
             </tbody>
         </table>
         <div class="pagination-container" id="errorPaginationContainer" style="display: none;">
-            <div class="page-info" id="errorPageInfo">Showing 1 to 10 of 0 errors</div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="page-info" id="errorPageInfo">Showing 1 to 5 of 0 errors</div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 11px; color: #94a3b8;">Per page:</span>
+                    <select id="errorPageSizeSelect" onchange="changeErrorPageSize(this.value)" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px; font-size: 11px; outline: none; cursor: pointer;">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                    </select>
+                </div>
+            </div>
             <div class="page-buttons" id="errorPageButtons"></div>
         </div>
     </div>
@@ -1158,8 +1168,14 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         let currentErrorPage = 1;
-        const errorPageSize = 10;
+        let errorPageSize = 5;
         let cachedErrors = [];
+
+        window.changeErrorPageSize = function(size) {
+            errorPageSize = parseInt(size, 10);
+            currentErrorPage = 1;
+            renderErrorTable();
+        };
 
         window.changeErrorPage = function(page) {
             currentErrorPage = page;

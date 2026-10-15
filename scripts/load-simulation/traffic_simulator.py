@@ -156,15 +156,18 @@ class TrafficSimulator:
     async def init_session(self):
         timeout = aiohttp.ClientTimeout(total=5.0, connect=2.0)
         connector = aiohttp.TCPConnector(limit=1000, limit_per_host=1000, keepalive_timeout=60.0)
-        self.session = aiohttp.ClientSession(connector=connector, timeout=timeout)
+        jar = aiohttp.CookieJar(unsafe=True)
+        self.session = aiohttp.ClientSession(connector=connector, timeout=timeout, cookie_jar=jar)
         await self.login_admin()
 
     async def login_admin(self):
         try:
-            login_url = f"{self.base_url}/login"
+            login_url = f"{self.base_url}/admin/auth/login"
             login_data = {"username": self.auth_user, "password": self.auth_pass}
-            async with self.session.post(login_url, data=login_data, allow_redirects=True) as resp:
-                pass
+            async with self.session.post(login_url, json=login_data, allow_redirects=True) as resp:
+                if resp.status != 200:
+                    # Form login fallback
+                    await self.session.post(f"{self.base_url}/login", data=login_data, allow_redirects=True)
         except Exception:
             pass
 
@@ -194,54 +197,44 @@ class TrafficSimulator:
         time_filter = random.choice(STATIC_TIME_FILTERS)
         cust_id = random.choice(self.customer_id_pool)
 
-        if roll < 0.35:
-            # Check customer directory with static filter
-            await self.execute_request("followup", "GET", f"/admin/followup/api/customers?filter={time_filter}")
-        elif roll < 0.60:
-            # Check overdue reminders
-            await self.execute_request("followup", "GET", "/admin/followup/api/due-reminders")
-        elif roll < 0.80:
-            # Add follow-up log entry
-            log_data = {
-                "notes": f"Simulated call note for {random.choice(SAMPLE_PRODUCTS)}",
-                "status": random.choice(["CONTACTED", "FOLLOW_UP_REQUIRED", "COMPLETED"])
-            }
-            await self.execute_request("followup", "POST", f"/admin/followup/api/customers/{cust_id}/followup-log", log_data)
-        elif roll < 0.92:
-            # Mark overdue follow-up completed
-            await self.execute_request("followup", "POST", f"/admin/followup/api/customers/{cust_id}/complete")
+        if roll < 0.25:
+            # Query customer directory with static 6-type time filter
+            await self.execute_request("followup", "GET", f"/admin/customers?filter={time_filter}")
+        elif roll < 0.45:
+            # Query customer follow-up metrics with static filter
+            await self.execute_request("followup", "GET", f"/admin/customers/stats?filter={time_filter}")
+        elif roll < 0.65:
+            # Check overdue / active follow-up list with static filter
+            await self.execute_request("followup", "GET", f"/admin/customers/followups?filter={time_filter}")
+        elif roll < 0.85:
+            # View customer order checks & feedback history
+            await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/orders")
+        elif roll < 0.95:
+            await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/feedbacks")
         else:
-            # Create a realistic customer entry
-            cust_name = random.choice(SAMPLE_NAMES) + f" {random.randint(100, 999)}"
-            new_cust_data = {
-                "name": cust_name,
-                "phoneNumber": f"+9665{random.randint(10000000, 99999999)}",
-                "email": f"client{random.randint(1000, 99999)}@example.com",
-                "productInterest": random.choice(SAMPLE_PRODUCTS)
-            }
-            await self.execute_request("followup", "POST", "/admin/followup/api/customers", new_cust_data)
+            # SSR Follow-up workspace page
+            await self.execute_request("followup", "GET", "/admin/followup")
 
     async def action_dashboard(self):
         await self.execute_request("dashboard", "GET", "/admin/dashboard")
 
     async def action_reports(self):
-        tabs = [
-            "/admin/reports/milestones-data",
-            "/admin/reports/products-data",
-            "/admin/reports/satisfaction-data",
-            "/admin/reports/followups-data"
-        ]
-        target = random.choice(tabs)
+        roll = random.random()
         time_filter = random.choice(STATIC_TIME_FILTERS)
-        await self.execute_request("reports", "GET", f"{target}?filter={time_filter}")
+        if roll < 0.40:
+            await self.execute_request("reports", "GET", f"/admin/reports/data?filter={time_filter}")
+        elif roll < 0.75:
+            await self.execute_request("reports", "GET", f"/admin/reports/satisfaction?filter={time_filter}")
+        else:
+            await self.execute_request("reports", "GET", "/admin/reports")
 
     async def action_timefilter(self):
-        # Query static timeline presets
+        # Query static timeline presets SSR page
         await self.execute_request("timefilter", "GET", "/admin/timelines")
 
     async def action_admin(self):
         roll = random.random()
-        if roll < 0.70:
+        if roll < 0.60:
             await self.execute_request("admin", "GET", "/admin/admins")
         else:
             await self.execute_request("admin", "GET", "/admin/roles")
@@ -475,8 +468,8 @@ def main():
     parser.add_argument("--host", default="http://localhost:8080", help="Base URL of Twekl Dashboard application")
     parser.add_argument("--rate", type=int, default=2000, help="Target Requests Per Second (RPS)")
     parser.add_argument("--port", type=int, default=9090, help="Port for live status web dashboard")
-    parser.add_argument("--user", default="admin", help="Admin username")
-    parser.add_argument("--password", default="admin123", help="Admin password")
+    parser.add_argument("--user", default="twekl_super_admin", help="Admin username")
+    parser.add_argument("--password", default="Super@2026", help="Admin password")
     args = parser.parse_args()
 
     loop = asyncio.new_event_loop()

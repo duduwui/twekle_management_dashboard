@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Twekl Dashboard - 24/7 Endurance Load Simulator & Live VPS Performance Suite
+Twekl Dashboard - 30-Day Endurance Load Simulator & Live VPS Performance Suite
 Features:
-- Role-based staff activity dispatch across 5 distinct staff admins (Sara, Ahmed, Omar, Kawa, SuperAdmin)
-- Automated eCommerce / external API customer and order intake (independent of staff admins)
-- Live interactive charts (Throughput & Latency, CPU & Memory Breakdown, Role Distribution)
+- 50 Distinct Staff Users across 4 organizational tiers (Super Admins, Branch Managers, Supervisors, Customer Support)
+- Realistic real-life human pacing (~16-18 RPS continuous total across all 50 staff and API)
+- Traffic focused on the 3 critical areas: Follow-up Queue & Check Logs (55%), Reports & Dashboards (25%), Pipeline & Orders (15%), Automated API Intake (5%)
+- Automated eCommerce / external API customer and order intake
+- Live interactive charts (Throughput & Latency, CPU & Memory Breakdown, 5-Tier Role Distribution)
 - Direct Linux kernel telemetry via psutil (Isolated Twekl Java CPU vs Total Host CPU)
 - 24/7 endurance runner with automatic re-authentication and zero memory leaks
+- Full pagination & search filters on both Staff Roster and Error Log
 """
 
 import asyncio
@@ -35,44 +38,126 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CHART_JS_PATH = os.path.join(SCRIPT_DIR, "chart.js")
 
 # =========================================================
-# STAFF ADMIN ACCOUNTS & ROLE DEFINITIONS
+# 50 STAFF ADMIN ACCOUNTS & ROLE DEFINITIONS ACROSS 4 TIERS
 # =========================================================
 STAFF_ACCOUNTS = [
+    # 1. SUPER ADMINISTRATORS (3 users)
     {
         "username": "twekl_super_admin",
         "name": "Super Administrator",
         "role": "Super Admin",
-        "role_badge": "#ef4444",
-        "tasks": ["dashboard", "admin_mgmt", "role_audit"]
+        "tier": "Super Admins",
+        "role_badge": "#ef4444"
     },
     {
-        "username": "admin_sara",
-        "name": "Sara Al-Hashimi",
-        "role": "Customer Success Lead",
-        "role_badge": "#ec4899",
-        "tasks": ["followups_queue", "feedback_review", "submit_notes_ratings"]
+        "username": "admin_super_zayd",
+        "name": "Zayd Al-Tikriti",
+        "role": "Super Admin",
+        "tier": "Super Admins",
+        "role_badge": "#ef4444"
     },
     {
-        "username": "admin_ahmed",
-        "name": "Ahmed Al-Bayati",
-        "role": "Sales Representative",
-        "role_badge": "#3b82f6",
-        "tasks": ["customer_pipeline", "sales_stats", "customer_orders_view"]
+        "username": "admin_super_maryam",
+        "name": "Maryam Al-Rawi",
+        "role": "Super Admin",
+        "tier": "Super Admins",
+        "role_badge": "#ef4444"
+    },
+
+    # 2. OPERATIONS & BRANCH MANAGERS (7 users)
+    {
+        "username": "mgr_baghdad_ali",
+        "name": "Ali Al-Jumaily",
+        "role": "Operations Manager",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
     },
     {
-        "username": "admin_omar",
-        "name": "Omar Farooq",
-        "role": "Product Specialist",
-        "role_badge": "#10b981",
-        "tasks": ["order_inspection", "feedback_analysis", "product_metrics"]
-    },
-    {
-        "username": "admin_kawa",
+        "username": "mgr_erbil_kawa",
         "name": "Kawa Rostam",
-        "role": "Systems / Data Analyst",
-        "role_badge": "#8b5cf6",
-        "tasks": ["analytics_reports", "timeline_filters", "directory_stats"]
-    }
+        "role": "Branch Director",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
+    },
+    {
+        "username": "mgr_basra_hassan",
+        "name": "Hassan Al-Maliki",
+        "role": "Branch Manager",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
+    },
+    {
+        "username": "mgr_sulay_dilan",
+        "name": "Dilan Barzan",
+        "role": "Branch Director",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
+    },
+    {
+        "username": "mgr_najaf_abbas",
+        "name": "Abbas Al-Ghurabi",
+        "role": "Operations Lead",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
+    },
+    {
+        "username": "mgr_kirkuk_tariq",
+        "name": "Tariq Al-Saleh",
+        "role": "Branch Manager",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
+    },
+    {
+        "username": "mgr_ops_layla",
+        "name": "Layla Al-Khafaji",
+        "role": "Operations Director",
+        "tier": "Managers",
+        "role_badge": "#8b5cf6"
+    },
+
+    # 3. BRANCH SUPERVISORS (15 users)
+    {"username": "sup_nour", "name": "Nour Al-Din", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_ahmed", "name": "Ahmed Al-Bayati", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_karim", "name": "Karim Al-Mansoor", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_rana", "name": "Rana Al-Kadhimi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_huda", "name": "Huda Al-Sabah", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_mustafa", "name": "Mustafa Al-Saadi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_firas", "name": "Firas Al-Obaidi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_sarah", "name": "Sarah Al-Janabi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_bilal", "name": "Bilal Al-Tamimi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_samir", "name": "Samir Al-Dulaymi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_youssef", "name": "Youssef Al-Husseini", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_reem", "name": "Reem Al-Nuaimi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_haidar", "name": "Haidar Al-Amiri", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_walid", "name": "Walid Al-Shammari", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+    {"username": "sup_dina", "name": "Dina Al-Karkhi", "role": "Branch Supervisor", "tier": "Supervisors", "role_badge": "#3b82f6"},
+
+    # 4. CUSTOMER SUPPORT SPECIALISTS (25 users)
+    {"username": "cs_amira", "name": "Amira Qasim", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_bashar", "name": "Bashar Farooq", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_choman", "name": "Choman Aziz", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_dalia", "name": "Dalia Al-Hassan", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_fadi", "name": "Fadi Elias", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_ghada", "name": "Ghada Majed", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_hamza", "name": "Hamza Tariq", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_israa", "name": "Israa Mohsen", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_jamal", "name": "Jamal Nasser", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_khaled", "name": "Khaled Rasheed", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_lina", "name": "Lina Barwari", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_mahmoud", "name": "Mahmoud Shakir", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_nada", "name": "Nada Al-Zaidi", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_osama", "name": "Osama Nihad", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_pari", "name": "Pari Jalal", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_qasim", "name": "Qasim Adnan", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_rasha", "name": "Rasha Kamil", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_saad", "name": "Saad Muthanna", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_tala", "name": "Tala Raad", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_usama", "name": "Usama Munir", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_vian", "name": "Vian Sherzad", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_wisam", "name": "Wisam Zuhair", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_yasmin", "name": "Yasmin Bassam", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_ziad", "name": "Ziad Falah", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
+    {"username": "cs_farah", "name": "Farah Al-Ward", "role": "Customer Support", "tier": "Support", "role_badge": "#10b981"},
 ]
 
 FOLLOWUP_NOTES = [
@@ -82,14 +167,17 @@ FOLLOWUP_NOTES = [
     "Customer reported smooth shift transitions today. Feedback noted as highly positive.",
     "Follow-up call completed: Manager confirmed all 3 checkout stations operating without delay.",
     "Routine follow-up: Customer inquired about upcoming multi-branch reporting features.",
-    "Delivery verified. Customer completed onboarding questionnaire with excellent satisfaction."
+    "Delivery verified. Customer completed onboarding questionnaire with excellent satisfaction.",
+    "Staff trained on cash-drawer reconciliations. Zero issues reported on opening shift.",
+    "Follow-up visit logged. Hardware operational at full capacity."
 ]
 
 SAMPLE_COMPANIES = [
     "Al-Rafidain Hypermarket", "Baghdad Central Mart", "Tigris Tech Solutions",
     "Erbil Retail Hub", "Babylon Electronics", "Basra Commercial Supplies",
     "Nineveh Wholesale Market", "Sulaymaniyah POS Group", "Al-Mansoor Express",
-    "Karkh Digital Stores", "Dijlah Superstore", "Mesopotamia Traders"
+    "Karkh Digital Stores", "Dijlah Superstore", "Mesopotamia Traders",
+    "Babylon Supercenter", "Al-Firdaws Logistics", "Sumer Electronics"
 ]
 
 SAMPLE_CITIES = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Duhok", "Karbala", "Kirkuk"]
@@ -128,8 +216,10 @@ class MetricsRegistry:
         # Per-admin stats
         self.admin_stats = {
             acc["username"]: {
+                "username": acc["username"],
                 "name": acc["name"],
                 "role": acc["role"],
+                "tier": acc["tier"],
                 "role_badge": acc["role_badge"],
                 "requests": 0,
                 "last_action": "Ready",
@@ -300,19 +390,32 @@ class MetricsRegistry:
         uptime_str = f"{days}d {hours}h {mins}m {secs}s"
 
         error_rate = round((self.total_errors / self.total_requests * 100), 2) if self.total_requests > 0 else 0.0
-        health = "HEALTHY"
-        health_color = "#22c55e"
-        if error_rate > 5.0:
-            health = "CRITICAL / DEGRADED"
-            health_color = "#ef4444"
-        elif error_rate > 1.0 or p95_lat > 2500:
-            health = "WARNING / SLOW"
-            health_color = "#f59e0b"
 
         hw = self.get_hardware_telemetry()
 
+        # Health state calculation
+        if hw["host_cpu_percent"] > 92 or error_rate > 5.0:
+            health = "CRITICAL"
+            health_color = "#ef4444"
+        elif hw["host_cpu_percent"] > 75 or error_rate > 1.5:
+            health = "ELEVATED"
+            health_color = "#f59e0b"
+        else:
+            health = "HEALTHY"
+            health_color = "#22c55e"
+
+        # Tier breakdown counts for Doughnut Chart
+        tier_counts = [
+            sum(self.admin_stats[a["username"]]["requests"] for a in STAFF_ACCOUNTS if a["tier"] == "Support"),
+            sum(self.admin_stats[a["username"]]["requests"] for a in STAFF_ACCOUNTS if a["tier"] == "Supervisors"),
+            sum(self.admin_stats[a["username"]]["requests"] for a in STAFF_ACCOUNTS if a["tier"] == "Managers"),
+            sum(self.admin_stats[a["username"]]["requests"] for a in STAFF_ACCOUNTS if a["tier"] == "Super Admins"),
+            self.categories["api_intake"]
+        ]
+
         return {
             "uptime": uptime_str,
+            "uptime_seconds": uptime_secs,
             "total_requests": f"{self.total_requests:,}",
             "total_success": f"{self.total_success:,}",
             "total_errors": f"{self.total_errors:,}",
@@ -338,45 +441,33 @@ class MetricsRegistry:
                 "host_cpu": list(self.history_host_cpu),
                 "twekl_cpu": list(self.history_twekl_cpu),
                 "ram": list(self.history_ram),
-                "role_labels": [a["name"].split()[0] for a in STAFF_ACCOUNTS],
-                "role_counts": [self.admin_stats[a["username"]]["requests"] for a in STAFF_ACCOUNTS]
+                "tier_labels": ["Customer Support (25)", "Supervisors (15)", "Branch Managers (7)", "Super Admins (3)", "API Intake"],
+                "tier_counts": tier_counts
             }
         }
 
 metrics = MetricsRegistry()
 
 # =========================================================
-# ASYNC TRAFFIC & ROLE-BASED ENGINE
+# TRAFFIC SIMULATOR CORE ENGINE
 # =========================================================
 class TrafficEngine:
-    def __init__(self, base_url: str, target_rps: int):
-        self.base_url = base_url.rstrip("/")
+    def __init__(self, base_url: str, target_rps: int = 16):
+        self.base_url = base_url.rstrip('/')
         self.target_rps = target_rps
         self.running = True
         self.admin_sessions = {}
-        self.customer_id_pool = list(range(1, 20))
-        self.active_check_ids = deque(maxlen=300)
-
-    async def wait_for_backend(self):
-        print("Waiting for Twekl backend to be fully online...")
-        for _ in range(60):
-            try:
-                timeout = aiohttp.ClientTimeout(total=3.0)
-                async with aiohttp.ClientSession(timeout=timeout) as s:
-                    async with s.get(f"{self.base_url}/login") as r:
-                        if r.status == 200:
-                            print("Twekl backend is online and ready!")
-                            return True
-            except Exception:
-                pass
-            await asyncio.sleep(1.0)
-        print("Twekl backend timeout, proceeding anyway...")
-        return False
+        self.customer_id_pool = deque(maxlen=2000)
+        self.active_check_ids = deque(maxlen=2000)
+        
+        # Categorized staff accounts for fast dispatch
+        self.support_accounts = [a for a in STAFF_ACCOUNTS if a["tier"] == "Support"]
+        self.supervisor_accounts = [a for a in STAFF_ACCOUNTS if a["tier"] == "Supervisors"]
+        self.manager_accounts = [a for a in STAFF_ACCOUNTS if a["tier"] == "Managers"]
+        self.super_admin_accounts = [a for a in STAFF_ACCOUNTS if a["tier"] == "Super Admins"]
 
     async def init_sessions(self):
-        await self.wait_for_backend()
-
-        timeout = aiohttp.ClientTimeout(total=8.0, connect=3.0)
+        timeout = aiohttp.ClientTimeout(total=15, connect=5)
         connector = aiohttp.TCPConnector(limit=1000, limit_per_host=1000, keepalive_timeout=75.0)
 
         for acc in STAFF_ACCOUNTS:
@@ -389,7 +480,7 @@ class TrafficEngine:
                 "account": acc
             }
 
-        # Preload existing check IDs from DB
+        # Preload existing check IDs and customers from DB
         def _load_checks():
             if pymysql:
                 try:
@@ -398,10 +489,10 @@ class TrafficEngine:
                         database='twekl_db', connect_timeout=3
                     )
                     with conn.cursor() as cur:
-                        cur.execute("SELECT ID FROM ORDER_FOLLOWUP_CHECKS ORDER BY ID DESC LIMIT 200")
+                        cur.execute("SELECT ID FROM ORDER_FOLLOWUP_CHECKS ORDER BY ID DESC LIMIT 500")
                         for r in cur.fetchall():
                             self.active_check_ids.append(r[0])
-                        cur.execute("SELECT CUSTOMER_ID FROM CUSTOMERS ORDER BY CUSTOMER_ID DESC LIMIT 100")
+                        cur.execute("SELECT CUSTOMER_ID FROM CUSTOMERS ORDER BY CUSTOMER_ID DESC LIMIT 300")
                         for r in cur.fetchall():
                             self.customer_id_pool.append(r[0])
                     conn.close()
@@ -525,11 +616,14 @@ class TrafficEngine:
         await loop.run_in_executor(None, _db_op)
 
     # ---------------------------------------------------------
-    # 2. ROLE SPECIFIC STAFF ACTIVITIES
+    # 2. REAL-LIFE ROLE WORKFLOWS ACROSS 4 TIERS
+    # Focus: Follow-up audits, specific customer logs, reports & dashboards
     # ---------------------------------------------------------
-    async def run_sara_task(self):
-        """Sara (Customer Success Lead): Milestone follow-ups, feedbacks, notes & ratings"""
-        meta = self.admin_sessions.get("admin_sara")
+    async def run_support_task(self):
+        """Customer Support Rep (25 users): Follow-up queue, check logs, submit reviews & notes"""
+        acc = random.choice(self.support_accounts)
+        username = acc["username"]
+        meta = self.admin_sessions.get(username)
         if not meta:
             return
         sess, csrf = meta["session"], meta.get("csrf_token")
@@ -538,7 +632,8 @@ class TrafficEngine:
 
         t0 = time.time()
         try:
-            if roll < 0.35 and self.active_check_ids:
+            if roll < 0.25 and self.active_check_ids:
+                # Submit review note & rating on a follow-up check
                 chk_id = random.choice(self.active_check_ids)
                 body = {
                     "notes": random.choice(FOLLOWUP_NOTES),
@@ -551,103 +646,38 @@ class TrafficEngine:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status in (401, 403):
-                        await self.reauth_if_needed("admin_sara")
-                        metrics.record_admin_activity("admin_sara", "followup", f"Auth Refresh ({resp.status})", resp.status, lat, f"CSRF/Session Expired ({resp.status})")
+                        await self.reauth_if_needed(username)
+                        metrics.record_admin_activity(username, "followup", f"Auth Refresh ({resp.status})", resp.status, lat, f"CSRF/Session Expired ({resp.status})")
                     else:
                         metrics.staff_followups_completed += 1
-                        metrics.record_admin_activity("admin_sara", "followup", f"Logged review on Check #{chk_id}", resp.status, lat)
-            elif roll < 0.70:
+                        metrics.record_admin_activity(username, "followup", f"Logged check review on #{chk_id}", resp.status, lat)
+            elif roll < 0.80:
+                # Audit follow-up queue with time filter
                 async with sess.get(f"{self.base_url}/admin/customers/followups?filter={time_filt}&limit=50") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("admin_sara")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("admin_sara", "followup", f"Audited follow-ups ({time_filt})", resp.status, lat)
+                        metrics.record_admin_activity(username, "followup", f"Checked follow-ups ({time_filt})", resp.status, lat)
             else:
+                # Inspect specific customer check log & feedback history
                 cid = random.choice(self.customer_id_pool) if self.customer_id_pool else 1
                 async with sess.get(f"{self.base_url}/admin/customers/{cid}/feedbacks") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("admin_sara")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("admin_sara", "followup", f"Reviewed feedbacks for Cust #{cid}", resp.status, lat)
+                        metrics.record_admin_activity(username, "followup", f"Inspected follow-up log (Cust #{cid})", resp.status, lat)
         except Exception as ex:
-            metrics.record_admin_activity("admin_sara", "followup", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
+            metrics.record_admin_activity(username, "followup", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
 
-    async def run_ahmed_task(self):
-        """Ahmed (Sales Rep): Customer pipeline directory, sales stats, order history"""
-        meta = self.admin_sessions.get("admin_ahmed")
-        if not meta:
-            return
-        sess = meta["session"]
-        roll = random.random()
-        time_filt = random.choice(TIME_FILTERS)
-
-        t0 = time.time()
-        try:
-            if roll < 0.35:
-                async with sess.get(f"{self.base_url}/admin/customers?filter={time_filt}&limit=50") as resp:
-                    lat = (time.time() - t0) * 1000
-                    await resp.read()
-                    if resp.status == 401:
-                        await self.reauth_if_needed("admin_ahmed")
-                    else:
-                        metrics.record_admin_activity("admin_ahmed", "pipeline", f"Checked customer directory ({time_filt})", resp.status, lat)
-            elif roll < 0.65:
-                async with sess.get(f"{self.base_url}/admin/customers/stats") as resp:
-                    lat = (time.time() - t0) * 1000
-                    await resp.read()
-                    if resp.status == 401:
-                        await self.reauth_if_needed("admin_ahmed")
-                    else:
-                        metrics.record_admin_activity("admin_ahmed", "pipeline", f"Analyzed pipeline stats ({time_filt})", resp.status, lat)
-            else:
-                cid = random.choice(self.customer_id_pool) if self.customer_id_pool else 1
-                async with sess.get(f"{self.base_url}/admin/customers/{cid}/orders") as resp:
-                    lat = (time.time() - t0) * 1000
-                    await resp.read()
-                    if resp.status == 401:
-                        await self.reauth_if_needed("admin_ahmed")
-                    else:
-                        metrics.record_admin_activity("admin_ahmed", "orders", f"Inspected order history (Cust #{cid})", resp.status, lat)
-        except Exception as ex:
-            metrics.record_admin_activity("admin_ahmed", "pipeline", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
-
-    async def run_omar_task(self):
-        """Omar (Product Specialist): Order item inspections, feedback analysis, product metrics"""
-        meta = self.admin_sessions.get("admin_omar")
-        if not meta:
-            return
-        sess = meta["session"]
-        roll = random.random()
-
-        t0 = time.time()
-        try:
-            cid = random.choice(self.customer_id_pool) if self.customer_id_pool else 1
-            if roll < 0.60:
-                async with sess.get(f"{self.base_url}/admin/customers/{cid}/orders") as resp:
-                    lat = (time.time() - t0) * 1000
-                    await resp.read()
-                    if resp.status == 401:
-                        await self.reauth_if_needed("admin_omar")
-                    else:
-                        metrics.record_admin_activity("admin_omar", "orders", f"Inspected product package (Cust #{cid})", resp.status, lat)
-            else:
-                async with sess.get(f"{self.base_url}/admin/customers/{cid}/feedbacks") as resp:
-                    lat = (time.time() - t0) * 1000
-                    await resp.read()
-                    if resp.status == 401:
-                        await self.reauth_if_needed("admin_omar")
-                    else:
-                        metrics.record_admin_activity("admin_omar", "orders", f"Evaluated satisfaction marks (Cust #{cid})", resp.status, lat)
-        except Exception as ex:
-            metrics.record_admin_activity("admin_omar", "orders", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
-
-    async def run_kawa_task(self):
-        """Kawa (Systems / Analyst): Analytical reports, satisfaction metrics, timelines"""
-        meta = self.admin_sessions.get("admin_kawa")
+    async def run_supervisor_task(self):
+        """Branch Supervisor (15 users): Follow-up audits, directory & order history, timelines"""
+        acc = random.choice(self.supervisor_accounts)
+        username = acc["username"]
+        meta = self.admin_sessions.get(username)
         if not meta:
             return
         sess = meta["session"]
@@ -657,35 +687,84 @@ class TrafficEngine:
         t0 = time.time()
         try:
             if roll < 0.40:
-                async with sess.get(f"{self.base_url}/admin/reports/data?filter={time_filt}") as resp:
+                # Follow-up checks audit
+                async with sess.get(f"{self.base_url}/admin/customers/followups?filter={time_filt}&limit=50") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("admin_kawa")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("admin_kawa", "reports", f"Generated financial report ({time_filt})", resp.status, lat)
+                        metrics.record_admin_activity(username, "followup", f"Supervisor follow-up audit ({time_filt})", resp.status, lat)
             elif roll < 0.70:
-                async with sess.get(f"{self.base_url}/admin/reports/satisfaction?filter={time_filt}") as resp:
+                # Customer directory & order check
+                cid = random.choice(self.customer_id_pool) if self.customer_id_pool else 1
+                async with sess.get(f"{self.base_url}/admin/customers/{cid}/orders") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("admin_kawa")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("admin_kawa", "reports", f"Exported satisfaction analytics ({time_filt})", resp.status, lat)
+                        metrics.record_admin_activity(username, "orders", f"Verified order items (Cust #{cid})", resp.status, lat)
             else:
+                # Operational timeline check
                 async with sess.get(f"{self.base_url}/admin/timelines") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("admin_kawa")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("admin_kawa", "reports", "Rendered operational timelines", resp.status, lat)
+                        metrics.record_admin_activity(username, "reports", "Rendered operational timelines", resp.status, lat)
         except Exception as ex:
-            metrics.record_admin_activity("admin_kawa", "reports", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
+            metrics.record_admin_activity(username, "pipeline", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
+
+    async def run_manager_task(self):
+        """Operations & Branch Manager (7 users): Financial analytics, satisfaction metrics, pipeline stats"""
+        acc = random.choice(self.manager_accounts)
+        username = acc["username"]
+        meta = self.admin_sessions.get(username)
+        if not meta:
+            return
+        sess = meta["session"]
+        roll = random.random()
+        time_filt = random.choice(TIME_FILTERS)
+
+        t0 = time.time()
+        try:
+            if roll < 0.45:
+                # Financial & business report with filter
+                async with sess.get(f"{self.base_url}/admin/reports/data?filter={time_filt}") as resp:
+                    lat = (time.time() - t0) * 1000
+                    await resp.read()
+                    if resp.status == 401:
+                        await self.reauth_if_needed(username)
+                    else:
+                        metrics.record_admin_activity(username, "reports", f"Generated financial report ({time_filt})", resp.status, lat)
+            elif roll < 0.75:
+                # Satisfaction metrics report
+                async with sess.get(f"{self.base_url}/admin/reports/satisfaction?filter={time_filt}") as resp:
+                    lat = (time.time() - t0) * 1000
+                    await resp.read()
+                    if resp.status == 401:
+                        await self.reauth_if_needed(username)
+                    else:
+                        metrics.record_admin_activity(username, "reports", f"Satisfaction analytics ({time_filt})", resp.status, lat)
+            else:
+                # Pipeline stats overview
+                async with sess.get(f"{self.base_url}/admin/customers/stats") as resp:
+                    lat = (time.time() - t0) * 1000
+                    await resp.read()
+                    if resp.status == 401:
+                        await self.reauth_if_needed(username)
+                    else:
+                        metrics.record_admin_activity(username, "pipeline", "Checked customer pipeline stats", resp.status, lat)
+        except Exception as ex:
+            metrics.record_admin_activity(username, "reports", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
 
     async def run_super_admin_task(self):
-        """Super Admin: Executive dashboard, admin user audits, role configurations"""
-        meta = self.admin_sessions.get("twekl_super_admin")
+        """Super Admin (3 users): Executive overview, staff directory audit, permissions"""
+        acc = random.choice(self.super_admin_accounts)
+        username = acc["username"]
+        meta = self.admin_sessions.get(username)
         if not meta:
             return
         sess = meta["session"]
@@ -693,60 +772,62 @@ class TrafficEngine:
 
         t0 = time.time()
         try:
-            if roll < 0.35:
+            if roll < 0.45:
+                # Executive overview dashboard
                 async with sess.get(f"{self.base_url}/admin/dashboard") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("twekl_super_admin")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("twekl_super_admin", "admin", "Refreshed Executive Dashboard", resp.status, lat)
-            elif roll < 0.70:
+                        metrics.record_admin_activity(username, "admin", "Refreshed Executive Dashboard", resp.status, lat)
+            elif roll < 0.75:
+                # Staff directory audit
                 async with sess.get(f"{self.base_url}/admin/admins") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("twekl_super_admin")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("twekl_super_admin", "admin", "Audited Staff Admin Directory", resp.status, lat)
+                        metrics.record_admin_activity(username, "admin", "Audited Staff Admin Directory", resp.status, lat)
             else:
+                # Role & security permissions
                 async with sess.get(f"{self.base_url}/admin/roles") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
-                        await self.reauth_if_needed("twekl_super_admin")
+                        await self.reauth_if_needed(username)
                     else:
-                        metrics.record_admin_activity("twekl_super_admin", "admin", "Verified Security Permissions & Roles", resp.status, lat)
+                        metrics.record_admin_activity(username, "admin", "Audited Role Security Permissions", resp.status, lat)
         except Exception as ex:
-            metrics.record_admin_activity("twekl_super_admin", "admin", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
+            metrics.record_admin_activity(username, "admin", "Network exception", 0, (time.time() - t0) * 1000, str(ex)[:80])
 
     # ---------------------------------------------------------
-    # WORKER LOOPS & SCHEDULER
+    # WORKER LOOPS & SCHEDULER (REAL-LIFE PACING)
     # ---------------------------------------------------------
     async def worker_loop(self, queue: asyncio.Queue):
         while self.running:
             try:
                 task_name = await queue.get()
-                if task_name == "api_intake":
-                    await self.automated_api_customer_intake()
-                elif task_name == "sara":
-                    await self.run_sara_task()
-                elif task_name == "ahmed":
-                    await self.run_ahmed_task()
-                elif task_name == "omar":
-                    await self.run_omar_task()
-                elif task_name == "kawa":
-                    await self.run_kawa_task()
+                if task_name == "support":
+                    await self.run_support_task()
+                elif task_name == "supervisor":
+                    await self.run_supervisor_task()
+                elif task_name == "manager":
+                    await self.run_manager_task()
                 elif task_name == "super_admin":
                     await self.run_super_admin_task()
+                elif task_name == "api_intake":
+                    await self.automated_api_customer_intake()
             except Exception:
                 pass
             finally:
                 queue.task_done()
 
     async def scheduler_loop(self, queue: asyncio.Queue):
-        task_types = ["sara", "ahmed", "omar", "kawa", "super_admin", "api_intake"]
-        weights = [0.35, 0.25, 0.15, 0.10, 0.10, 0.05]
+        # 55% Support follow-ups & check logs, 20% Supervisors, 12% Managers, 8% Super Admins, 5% Automated API Intake
+        task_types = ["support", "supervisor", "manager", "super_admin", "api_intake"]
+        weights = [0.55, 0.20, 0.12, 0.08, 0.05]
 
         tokens = 0.0
         last_time = time.time()
@@ -771,7 +852,7 @@ class TrafficEngine:
         await self.init_sessions()
         queue = asyncio.Queue(maxsize=20000)
 
-        num_workers = min(80, max(25, self.target_rps))
+        num_workers = min(60, max(20, self.target_rps * 2))
         for _ in range(num_workers):
             asyncio.create_task(self.worker_loop(queue))
 
@@ -782,20 +863,20 @@ class TrafficEngine:
             await asyncio.sleep(1.0)
             metrics.tick_second()
             counter += 1
-            if counter % 300 == 0:
-                for username in self.admin_sessions:
-                    await self.reauth_if_needed(username)
+            if counter % 180 == 0:
+                # Periodic session refresh to prevent stale credentials
+                for user in ["twekl_super_admin", "admin_super_zayd", "mgr_baghdad_ali"]:
+                    await self.reauth_if_needed(user)
 
 # =========================================================
-# WEB DASHBOARD (HTML, CHART.JS & REAL-TIME WEBSOCKET/POLL)
+# LIVE WEB TELEMETRY DASHBOARD (PORT 9090)
 # =========================================================
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twekl Dashboard - Endurance Suite & VPS Telemetry</title>
-    <!-- Local Chart.js for instant zero-latency rendering -->
+    <title>Twekl 30-Day Endurance Simulator & VPS Performance Suite</title>
     <script src="/static/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -812,7 +893,7 @@ HTML_PAGE = """<!DOCTYPE html>
         .card-val { font-size: 28px; font-weight: 800; color: #ffffff; }
         .card-sub { font-size: 12px; color: #64748b; margin-top: 4px; }
         .panel { background: #131d31; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .panel-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; display: flex; justify-content: space-between; }
+        .panel-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #1e293b; }
         th { color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; }
@@ -829,13 +910,15 @@ HTML_PAGE = """<!DOCTYPE html>
         .page-btn:hover:not(:disabled) { background: #1e293b; border-color: #38bdf8; }
         .page-btn.active { background: #38bdf8; color: #0b1120; font-weight: 700; border-color: #38bdf8; }
         .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .filter-select { background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 12px; outline: none; }
+        .search-input { background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 4px 10px; font-size: 12px; outline: none; }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
             <h1><span class="live-dot"></span> Twekl 30-Day Endurance Simulator & VPS Monitor</h1>
-            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Role-Specific Staff Workflows • Automated eCommerce Intake • Real-time Hardware Telemetry</p>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">50 Staff Accounts Across 4 Tiers • Automated eCommerce Intake • Real-Life Realistic Workflows</p>
         </div>
         <div id="healthBadge" class="badge" style="background: #22c55e;">HEALTHY</div>
     </div>
@@ -888,7 +971,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 <div style="color: #64748b; font-size: 11px; margin-top: 6px;" id="ramDetail">0 GB / 0 GB</div>
             </div>
             <div style="background: #0b1120; padding: 14px; border-radius: 8px;">
-                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">Tomcat 10.1 Engine (1.5GB Heap)</div>
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">Tomcat 10.1 Engine (2.0GB Heap)</div>
                 <div style="font-size: 22px; font-weight: 700; margin-top: 4px; color: #22c55e;" id="tomcatMem">Active</div>
                 <div style="color: #64748b; font-size: 11px; margin-top: 6px;">Resident Memory (RSS)</div>
             </div>
@@ -914,7 +997,22 @@ HTML_PAGE = """<!DOCTYPE html>
     <!-- ROW 4: STAFF ADMIN ROSTER & ACTIVITIES -->
     <div class="grid-3" style="margin-top: 20px;">
         <div class="panel" style="margin-bottom: 0;">
-            <div class="panel-title">5 Distinct Staff Admins (Role-Specific Workflows)</div>
+            <div class="panel-title">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>50 Staff Admins (Role-Specific Workflows)</span>
+                    <span id="staffTotalBadge" style="font-size: 11px; color: #38bdf8; background: #0369a133; border: 1px solid #0284c755; padding: 2px 8px; border-radius: 4px;">50 Staff</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <select class="filter-select" id="staffTierSelect" onchange="filterStaffTier(this.value)">
+                        <option value="ALL">All Tiers (50)</option>
+                        <option value="Super Admins">Super Admins (3)</option>
+                        <option value="Managers">Branch Managers (7)</option>
+                        <option value="Supervisors">Supervisors (15)</option>
+                        <option value="Support">Customer Support (25)</option>
+                    </select>
+                    <input type="text" class="search-input" id="staffSearchInput" placeholder="Search staff..." oninput="searchStaff(this.value)" style="width: 140px;">
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -926,13 +1024,27 @@ HTML_PAGE = """<!DOCTYPE html>
                     </tr>
                 </thead>
                 <tbody id="staffTableBody">
-                    <tr><td colspan="5" style="color: #64748b; text-align: center;">Loading staff sessions...</td></tr>
+                    <tr><td colspan="5" style="color: #64748b; text-align: center;">Loading 50 staff sessions...</td></tr>
                 </tbody>
             </table>
+            <div class="pagination-container" id="staffPaginationContainer">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="page-info" id="staffPageInfo">Showing 1 to 10 of 50 staff</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 11px; color: #94a3b8;">Per page:</span>
+                        <select id="staffPageSizeSelect" onchange="changeStaffPageSize(this.value)" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px; font-size: 11px; outline: none; cursor: pointer;">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="page-buttons" id="staffPageButtons"></div>
+            </div>
         </div>
         <div class="panel" style="margin-bottom: 0;">
             <div class="panel-title">Role Activity Distribution</div>
-            <div class="chart-box" style="height: 180px;">
+            <div class="chart-box" style="height: 240px;">
                 <canvas id="roleChart"></canvas>
             </div>
         </div>
@@ -1071,10 +1183,10 @@ HTML_PAGE = """<!DOCTYPE html>
             roleChart = new Chart(roleCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['SuperAdmin', 'Sara', 'Ahmed', 'Omar', 'Kawa'],
+                    labels: ['Customer Support (25)', 'Supervisors (15)', 'Branch Managers (7)', 'Super Admins (3)', 'API Intake'],
                     datasets: [{
                         data: [1, 1, 1, 1, 1],
-                        backgroundColor: ['#ef4444', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6'],
+                        backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b'],
                         borderWidth: 0
                     }]
                 },
@@ -1083,10 +1195,102 @@ HTML_PAGE = """<!DOCTYPE html>
                     maintainAspectRatio: false,
                     animation: false,
                     plugins: {
-                        legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 11 } } }
+                        legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } } }
                     }
                 }
             });
+        }
+
+        let currentStaffPage = 1;
+        let staffPageSize = 10;
+        let cachedStaff = [];
+        let selectedTierFilter = 'ALL';
+        let staffSearchQuery = '';
+
+        window.filterStaffTier = function(tier) {
+            selectedTierFilter = tier;
+            currentStaffPage = 1;
+            renderStaffTable();
+        };
+
+        window.searchStaff = function(query) {
+            staffSearchQuery = (query || '').toLowerCase().trim();
+            currentStaffPage = 1;
+            renderStaffTable();
+        };
+
+        window.changeStaffPageSize = function(size) {
+            staffPageSize = parseInt(size, 10);
+            currentStaffPage = 1;
+            renderStaffTable();
+        };
+
+        window.changeStaffPage = function(page) {
+            currentStaffPage = page;
+            renderStaffTable();
+        };
+
+        function renderStaffTable() {
+            const tbody = document.getElementById('staffTableBody');
+            const pageInfo = document.getElementById('staffPageInfo');
+            const pageButtons = document.getElementById('staffPageButtons');
+            const totalBadge = document.getElementById('staffTotalBadge');
+
+            let filtered = cachedStaff;
+            if (selectedTierFilter !== 'ALL') {
+                filtered = filtered.filter(s => s.tier === selectedTierFilter);
+            }
+            if (staffSearchQuery) {
+                filtered = filtered.filter(s => 
+                    s.name.toLowerCase().includes(staffSearchQuery) || 
+                    s.username.toLowerCase().includes(staffSearchQuery) ||
+                    s.role.toLowerCase().includes(staffSearchQuery)
+                );
+            }
+
+            if (totalBadge) totalBadge.textContent = `${filtered.length} of ${cachedStaff.length} Staff`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="color: #94a3b8; text-align: center;">No matching staff members found.</td></tr>';
+                if (pageInfo) pageInfo.textContent = 'Showing 0 to 0 of 0';
+                if (pageButtons) pageButtons.innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(filtered.length / staffPageSize);
+            if (currentStaffPage > totalPages) currentStaffPage = totalPages;
+            if (currentStaffPage < 1) currentStaffPage = 1;
+
+            const startIdx = (currentStaffPage - 1) * staffPageSize;
+            const endIdx = Math.min(startIdx + staffPageSize, filtered.length);
+            const pageItems = filtered.slice(startIdx, endIdx);
+
+            tbody.innerHTML = pageItems.map(adm => `
+                <tr>
+                    <td style="font-weight: 600;">
+                        <div>${adm.name}</div>
+                        <div style="font-size: 11px; color: #64748b;">@${adm.username}</div>
+                    </td>
+                    <td>
+                        <span class="status-pill" style="background: ${adm.role_badge}22; color: ${adm.role_badge}; border: 1px solid ${adm.role_badge}55;">${adm.role}</span>
+                    </td>
+                    <td style="font-weight: 700; color: #38bdf8;">${adm.requests.toLocaleString()}</td>
+                    <td style="color: #cbd5e1; font-size: 12px;">${adm.last_action}</td>
+                    <td style="color: #64748b; font-size: 11px;">${adm.last_timestamp}</td>
+                </tr>
+            `).join('');
+
+            if (pageInfo) pageInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${filtered.length} staff`;
+
+            if (pageButtons) {
+                let btns = '';
+                btns += `<button class="page-btn" onclick="changeStaffPage(${currentStaffPage - 1})" ${currentStaffPage === 1 ? 'disabled' : ''}>‹ Prev</button>`;
+                for (let p = 1; p <= totalPages; p++) {
+                    btns += `<button class="page-btn ${p === currentStaffPage ? 'active' : ''}" onclick="changeStaffPage(${p})">${p}</button>`;
+                }
+                btns += `<button class="page-btn" onclick="changeStaffPage(${currentStaffPage + 1})" ${currentStaffPage === totalPages ? 'disabled' : ''}>Next ›</button>`;
+                pageButtons.innerHTML = btns;
+            }
         }
 
         async function fetchMetrics() {
@@ -1123,16 +1327,8 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 // Staff roster table
                 if (d.admin_stats && d.admin_stats.length > 0) {
-                    const staffHtml = d.admin_stats.map(adm => `
-                        <tr>
-                            <td style="font-weight: 600;">${adm.name}</td>
-                            <td><span class="status-pill" style="background: ${adm.role_badge}22; color: ${adm.role_badge}; border: 1px solid ${adm.role_badge}55;">${adm.role}</span></td>
-                            <td style="font-weight: 700;">${adm.requests.toLocaleString()}</td>
-                            <td style="color: #cbd5e1;">${adm.last_action}</td>
-                            <td style="color: #64748b; font-size: 11px;">${adm.last_timestamp}</td>
-                        </tr>
-                    `).join('');
-                    document.getElementById('staffTableBody').innerHTML = staffHtml;
+                    cachedStaff = d.admin_stats;
+                    renderStaffTable();
                 }
 
                 // Update charts dynamically
@@ -1151,8 +1347,8 @@ HTML_PAGE = """<!DOCTYPE html>
                         hardwareChart.update();
                     }
                     if (roleChart) {
-                        roleChart.data.labels = d.charts.role_labels;
-                        roleChart.data.datasets[0].data = d.charts.role_counts;
+                        roleChart.data.labels = d.charts.tier_labels;
+                        roleChart.data.datasets[0].data = d.charts.tier_counts;
                         roleChart.update();
                     }
                 }
@@ -1203,37 +1399,29 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const startIdx = (currentErrorPage - 1) * errorPageSize;
             const endIdx = Math.min(startIdx + errorPageSize, total);
-            if (pageInfo) pageInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} errors`;
+            const pageItems = cachedErrors.slice(startIdx, endIdx);
 
-            const pageSlice = cachedErrors.slice(startIdx, endIdx);
-            errorTbody.innerHTML = pageSlice.map(e => `
+            errorTbody.innerHTML = pageItems.map(err => `
                 <tr>
-                    <td style="white-space: nowrap; color: #94a3b8;">${e.timestamp}</td>
-                    <td style="font-weight: 600;">${e.user}</td>
-                    <td>${e.action}</td>
-                    <td><span class="status-pill" style="background: #991b1b; color: #fff;">${e.status}</span></td>
-                    <td style="color: #f87171; word-break: break-all;">${e.message}</td>
+                    <td style="color: #94a3b8; font-size: 12px;">${err.timestamp}</td>
+                    <td style="font-weight: 600; color: #f87171;">${err.user}</td>
+                    <td>${err.action}</td>
+                    <td><span class="status-pill" style="background: ${err.status >= 500 ? '#ef444422' : '#f59e0b22'}; color: ${err.status >= 500 ? '#ef4444' : '#f59e0b'}; border: 1px solid ${err.status >= 500 ? '#ef444455' : '#f59e0b55'};">${err.status || 'TIMEOUT'}</span></td>
+                    <td style="color: #e2e8f0; font-size: 12px;">${err.message}</td>
                 </tr>
             `).join('');
 
-            let btnHtml = '';
-            btnHtml += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage - 1})" ${currentErrorPage === 1 ? 'disabled' : ''}>‹ Prev</button>`;
-            
-            let startPage = Math.max(1, currentErrorPage - 2);
-            let endPage = Math.min(totalPages, currentErrorPage + 2);
-            if (startPage > 1) {
-                btnHtml += `<button class="page-btn" onclick="changeErrorPage(1)">1</button>`;
-                if (startPage > 2) btnHtml += `<span style="color:#64748b; padding: 4px 6px;">...</span>`;
+            if (pageInfo) pageInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} errors`;
+
+            if (pageButtons) {
+                let btns = '';
+                btns += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage - 1})" ${currentErrorPage === 1 ? 'disabled' : ''}>‹ Prev</button>`;
+                for (let p = 1; p <= totalPages; p++) {
+                    btns += `<button class="page-btn ${p === currentErrorPage ? 'active' : ''}" onclick="changeErrorPage(${p})">${p}</button>`;
+                }
+                btns += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage + 1})" ${currentErrorPage === totalPages ? 'disabled' : ''}>Next ›</button>`;
+                pageButtons.innerHTML = btns;
             }
-            for (let p = startPage; p <= endPage; p++) {
-                btnHtml += `<button class="page-btn ${p === currentErrorPage ? 'active' : ''}" onclick="changeErrorPage(${p})">${p}</button>`;
-            }
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) btnHtml += `<span style="color:#64748b; padding: 4px 6px;">...</span>`;
-                btnHtml += `<button class="page-btn" onclick="changeErrorPage(${totalPages})">${totalPages}</button>`;
-            }
-            btnHtml += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage + 1})" ${currentErrorPage === totalPages ? 'disabled' : ''}>Next ›</button>`;
-            if (pageButtons) pageButtons.innerHTML = btnHtml;
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -1245,8 +1433,6 @@ HTML_PAGE = """<!DOCTYPE html>
 </body>
 </html>
 """
-
-simulator_engine = None
 
 async def handle_dashboard_page(request):
     return web.Response(text=HTML_PAGE, content_type="text/html")
@@ -1274,7 +1460,7 @@ def main():
     global simulator_engine
     parser = argparse.ArgumentParser(description="Twekl Dashboard 24/7 Traffic Simulator & Telemetry")
     parser.add_argument("--host", default="http://localhost:8080", help="Base URL of Twekl Dashboard application")
-    parser.add_argument("--rate", type=int, default=30, help="Target Requests Per Second (RPS)")
+    parser.add_argument("--rate", type=int, default=16, help="Target Requests Per Second (RPS)")
     parser.add_argument("--port", type=int, default=9090, help="Port for live status web dashboard")
     parser.add_argument("--user", default=None, help="Legacy username argument (kept for compatibility)")
     parser.add_argument("--password", default=None, help="Legacy password argument (kept for compatibility)")

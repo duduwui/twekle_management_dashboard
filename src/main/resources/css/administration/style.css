@@ -818,6 +818,17 @@ button.comic-btn:active {
   pointer-events: none;
 }
 
+.page-btn.page-ellipsis,
+.pagination-btn.page-ellipsis {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  cursor: default !important;
+  pointer-events: none !important;
+  color: var(--text-muted) !important;
+  opacity: 0.8 !important;
+}
+
 /* =========================================================
    FORMS & INPUTS (LifeCare Pill/Soft Style)
    ========================================================= */

@@ -52,7 +52,7 @@ public class DashboardController {
         model.addAttribute("activeTab", "dashboard");
         model.addAttribute("stats", customerService.getStats());
         model.addAttribute("urgentCustomers", urgent);
-        model.addAttribute("allCustomers", summaries);
+        model.addAttribute("allCustomers", summaries.size() > 50 ? summaries.subList(0, 50) : summaries);
         model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL").stream()
                 .filter(item -> item.getRating() <= 2 || "UNSATISFIED".equalsIgnoreCase(item.getSatisfaction()))
                 .toList());

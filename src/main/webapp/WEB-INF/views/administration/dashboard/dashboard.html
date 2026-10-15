@@ -68,7 +68,7 @@
 
                     <!-- When There Are Customers Needing Follow-up -->
                     <div class="table-responsive" th:unless="${#lists.isEmpty(urgentCustomers)}">
-                        <table class="comic-table table-centered">
+                        <table class="comic-table table-centered" id="priorityAttentionTable">
                             <thead>
                                 <tr>
                                     <th>Customer Name</th>
@@ -119,6 +119,14 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Priority Table Pagination Footer -->
+                    <div class="datatable-footer" id="priorityPaginationFooter" th:unless="${#lists.isEmpty(urgentCustomers)}">
+                        <div class="datatable-info" id="priorityPaginationInfo">
+                            Showing 1 to 10 of <span th:text="${#lists.size(urgentCustomers)}">0</span> priority follow-ups
+                        </div>
+                        <div class="datatable-pagination" id="priorityPaginationControls"></div>
                     </div>
 
                     <!-- Empty State (When All Caught Up) -->

@@ -162,9 +162,98 @@
         });
     }
 
+    /**
+     * Client-side pagination with sliding window for Priority Attention Table
+     */
+    function initPriorityPagination() {
+        const table = document.getElementById('priorityAttentionTable');
+        const footer = document.getElementById('priorityPaginationFooter');
+        const info = document.getElementById('priorityPaginationInfo');
+        const controls = document.getElementById('priorityPaginationControls');
+        if (!table || !footer || !controls) return;
+
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const totalRows = rows.length;
+        const pageSize = 10;
+        const totalPages = Math.ceil(totalRows / pageSize) || 1;
+        let currentPage = 1;
+
+        if (totalRows <= pageSize) {
+            footer.style.display = totalRows > 0 ? '' : 'none';
+            if (info) info.textContent = `Showing 1 to ${totalRows} of ${totalRows} priority follow-ups`;
+            controls.innerHTML = '';
+            return;
+        }
+
+        function renderPage(page) {
+            currentPage = Math.max(1, Math.min(page, totalPages));
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+
+            rows.forEach((row, idx) => {
+                row.style.display = (idx >= start && idx < end) ? '' : 'none';
+            });
+
+            if (info) {
+                info.textContent = `Showing ${start + 1} to ${Math.min(end, totalRows)} of ${totalRows} priority follow-ups`;
+            }
+
+            let pages = [];
+            if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                let s = Math.max(2, currentPage - 2);
+                let e = Math.min(totalPages - 1, currentPage + 2);
+                if (currentPage <= 4) {
+                    s = 2;
+                    e = Math.min(totalPages - 1, 5);
+                } else if (currentPage >= totalPages - 3) {
+                    s = Math.max(2, totalPages - 4);
+                    e = totalPages - 1;
+                }
+                if (s > 2) pages.push('...');
+                for (let i = s; i <= e; i++) pages.push(i);
+                if (e < totalPages - 1) pages.push('...');
+                if (totalPages > 1) pages.push(totalPages);
+            }
+
+            let html = `
+                <button type="button" class="page-btn" ${currentPage === 1 ? 'disabled' : ''} data-p="1" title="First Page">«</button>
+                <button type="button" class="page-btn" ${currentPage === 1 ? 'disabled' : ''} data-p="${currentPage - 1}">‹ Prev</button>
+            `;
+
+            pages.forEach(p => {
+                if (p === '...') {
+                    html += `<span class="page-btn page-ellipsis">...</span>`;
+                } else {
+                    html += `<button type="button" class="page-btn ${p === currentPage ? 'active' : ''}" data-p="${p}">${p}</button>`;
+                }
+            });
+
+            html += `
+                <button type="button" class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-p="${currentPage + 1}">Next ›</button>
+                <button type="button" class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-p="${totalPages}" title="Last Page">»</button>
+            `;
+
+            controls.innerHTML = html;
+        }
+
+        controls.addEventListener('click', function(e) {
+            const btn = e.target.closest('button[data-p]');
+            if (btn && !btn.disabled) {
+                const p = parseInt(btn.dataset.p, 10);
+                if (!isNaN(p)) renderPage(p);
+            }
+        });
+
+        renderPage(1);
+    }
+
     function init() {
         setupInteractionListeners();
         tickCountdowns();
+        initPriorityPagination();
 
         // Tick countdowns every 60 seconds
         setInterval(function () {

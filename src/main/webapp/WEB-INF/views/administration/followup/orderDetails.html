@@ -197,9 +197,11 @@
                             Showing {{ (orderDt.currentPage - 1) * orderDt.pageSize + 1 }} to {{ orderDt.currentPage * orderDt.pageSize > getFilteredCustomerOrders().length ? getFilteredCustomerOrders().length : orderDt.currentPage * orderDt.pageSize }} of {{ getFilteredCustomerOrders().length }} orders
                         </div>
                         <div class="datatable-pagination">
-                            <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === 1" ng-click="setOrderPage(orderDt.currentPage - 1)">« Prev</button>
-                            <button type="button" class="page-btn" ng-repeat="p in getOrderPageNumbers(getFilteredCustomerOrders().length)" ng-class="{'active': orderDt.currentPage === p}" ng-click="setOrderPage(p)" ng-bind="p"></button>
-                            <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === getTotalOrderPages(getFilteredCustomerOrders().length)" ng-click="setOrderPage(orderDt.currentPage + 1)">Next »</button>
+                            <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === 1" ng-click="setOrderPage(1)" title="First Page">«</button>
+                            <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === 1" ng-click="setOrderPage(orderDt.currentPage - 1)">‹ Prev</button>
+                            <button type="button" class="page-btn" ng-repeat="p in getOrderPageNumbers(getFilteredCustomerOrders().length) track by $index" ng-class="{'active': orderDt.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setOrderPage(p)" ng-bind="p"></button>
+                            <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === getTotalOrderPages(getFilteredCustomerOrders().length)" ng-click="setOrderPage(orderDt.currentPage + 1)">Next ›</button>
+                            <button type="button" class="page-btn" ng-disabled="orderDt.currentPage === getTotalOrderPages(getFilteredCustomerOrders().length)" ng-click="setOrderPage(getTotalOrderPages(getFilteredCustomerOrders().length))" title="Last Page">»</button>
                         </div>
                     </div>
                 </div>

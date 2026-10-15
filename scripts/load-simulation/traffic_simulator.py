@@ -227,26 +227,43 @@ class MetricsRegistry:
         self.sec_requests = 0
         self.sec_errors = 0
 
-        # Collect genuine hardware telemetry
+        # Collect genuine hardware telemetry once per second
         host_cpu = 0.0
         twekl_cpu = 0.0
         ram_pct = 0.0
+        ram_used_gb = 0.0
+        ram_total_gb = 0.0
+        tomcat_rss = "Active"
+
         if psutil:
             try:
                 host_cpu = round(psutil.cpu_percent(interval=None), 1)
                 mem = psutil.virtual_memory()
                 ram_pct = round(mem.percent, 1)
+                ram_used_gb = round(mem.used / (1024**3), 2)
+                ram_total_gb = round(mem.total / (1024**3), 2)
 
                 if self.tomcat_proc:
                     try:
                         raw_proc_cpu = self.tomcat_proc.cpu_percent(interval=None)
                         twekl_cpu = round(raw_proc_cpu / psutil.cpu_count(), 1)
+                        rss_mb = self.tomcat_proc.memory_info().rss // (1024 * 1024)
+                        tomcat_rss = f"{rss_mb} MB"
                     except Exception:
                         self._find_tomcat_proc()
                 else:
                     self._find_tomcat_proc()
             except Exception:
                 pass
+
+        self.latest_hardware = {
+            "host_cpu_percent": host_cpu,
+            "twekl_cpu_percent": twekl_cpu,
+            "ram_percent": ram_pct,
+            "ram_used_gb": ram_used_gb,
+            "ram_total_gb": ram_total_gb,
+            "tomcat_rss": tomcat_rss
+        }
 
         latencies = list(self.recent_latencies)
         avg_lat = round(sum(latencies) / len(latencies), 1) if latencies else 0.0
@@ -260,49 +277,16 @@ class MetricsRegistry:
         self.history_ram.append(ram_pct)
 
     def get_hardware_telemetry(self):
-        if not psutil:
-            return {
-                "host_cpu_percent": 0.0,
-                "twekl_cpu_percent": 0.0,
-                "ram_percent": 0.0,
-                "ram_used_gb": 0.0,
-                "ram_total_gb": 0.0,
-                "tomcat_rss": "N/A"
-            }
-        try:
-            host_cpu = round(psutil.cpu_percent(interval=None), 1)
-            mem = psutil.virtual_memory()
-            tomcat_rss = "Active"
-            twekl_cpu = 0.0
-
-            if self.tomcat_proc:
-                try:
-                    raw_cpu = self.tomcat_proc.cpu_percent(interval=None)
-                    twekl_cpu = round(raw_cpu / psutil.cpu_count(), 1)
-                    rss_mb = self.tomcat_proc.memory_info().rss // (1024 * 1024)
-                    tomcat_rss = f"{rss_mb} MB"
-                except Exception:
-                    self._find_tomcat_proc()
-            else:
-                self._find_tomcat_proc()
-
-            return {
-                "host_cpu_percent": host_cpu,
-                "twekl_cpu_percent": twekl_cpu,
-                "ram_percent": round(mem.percent, 1),
-                "ram_used_gb": round(mem.used / (1024**3), 2),
-                "ram_total_gb": round(mem.total / (1024**3), 2),
-                "tomcat_rss": tomcat_rss
-            }
-        except Exception:
-            return {
-                "host_cpu_percent": 0.0,
-                "twekl_cpu_percent": 0.0,
-                "ram_percent": 0.0,
-                "ram_used_gb": 0.0,
-                "ram_total_gb": 0.0,
-                "tomcat_rss": "N/A"
-            }
+        if hasattr(self, 'latest_hardware'):
+            return dict(self.latest_hardware)
+        return {
+            "host_cpu_percent": 0.0,
+            "twekl_cpu_percent": 0.0,
+            "ram_percent": 0.0,
+            "ram_used_gb": 0.0,
+            "ram_total_gb": 0.0,
+            "tomcat_rss": "N/A"
+        }
 
     def get_summary(self, pool_size: int):
         latencies = list(self.recent_latencies)

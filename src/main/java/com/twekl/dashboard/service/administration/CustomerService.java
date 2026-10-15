@@ -88,12 +88,10 @@ public class CustomerService {
         return customerRepository.count();
     }
 
-    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     public Customer createCustomer(Customer customer) {
         return customerRepository.save(customer);
     }
 
-    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     public Customer updateCustomer(Long customerId, Customer updated) {
         Customer existing = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));
@@ -108,7 +106,6 @@ public class CustomerService {
         return customerRepository.save(existing);
     }
 
-    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     public void deleteCustomer(Long customerId) {
         Customer existing = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));

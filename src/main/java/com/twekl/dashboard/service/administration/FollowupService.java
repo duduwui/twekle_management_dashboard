@@ -232,7 +232,6 @@ public class FollowupService {
         return result;
     }
 
-    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck toggleFollowupStatus(Long checkId) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
@@ -250,7 +249,6 @@ public class FollowupService {
         return followupCheckRepository.save(check);
     }
 
-    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
@@ -280,7 +278,6 @@ public class FollowupService {
         return updateFollowupDetails(checkId, notes, photoUrl, null);
     }
 
-    @CacheEvict(value = {"followupSummaries", "dashboardSummary", "customerStats", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck completeCheck(Long checkId, FollowupCheckRequest req) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)

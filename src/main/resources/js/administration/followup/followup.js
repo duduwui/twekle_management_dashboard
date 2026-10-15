@@ -280,13 +280,39 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
 
     $scope.getPageNumbers = function(totalItems) {
         var total = $scope.getTotalPages(totalItems);
+        var current = $scope.dt.currentPage;
+        if (total <= 7) {
+            var pages = [];
+            for (var i = 1; i <= total; i++) pages.push(i);
+            return pages;
+        }
+
         var pages = [];
-        for (var i = 1; i <= total; i++) pages.push(i);
+        pages.push(1);
+
+        var start = Math.max(2, current - 2);
+        var end = Math.min(total - 1, current + 2);
+
+        if (current <= 4) {
+            start = 2;
+            end = Math.min(total - 1, 5);
+        } else if (current >= total - 3) {
+            start = Math.max(2, total - 4);
+            end = total - 1;
+        }
+
+        if (start > 2) pages.push('...');
+        for (var i = start; i <= end; i++) pages.push(i);
+        if (end < total - 1) pages.push('...');
+        if (total > 1) pages.push(total);
+
         return pages;
     };
 
     $scope.setPage = function(page) {
-        if (page >= 1 && page <= $scope.getTotalPages($scope.getFilteredCustomers().length)) {
+        if (page === '...') return;
+        var total = $scope.getTotalPages($scope.getFilteredCustomers().length);
+        if (page >= 1 && page <= total) {
             $scope.dt.currentPage = page;
         }
     };
@@ -384,13 +410,39 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
 
     $scope.getOrderPageNumbers = function(totalItems) {
         var total = $scope.getTotalOrderPages(totalItems);
+        var current = $scope.orderDt.currentPage;
+        if (total <= 7) {
+            var pages = [];
+            for (var i = 1; i <= total; i++) pages.push(i);
+            return pages;
+        }
+
         var pages = [];
-        for (var i = 1; i <= total; i++) pages.push(i);
+        pages.push(1);
+
+        var start = Math.max(2, current - 2);
+        var end = Math.min(total - 1, current + 2);
+
+        if (current <= 4) {
+            start = 2;
+            end = Math.min(total - 1, 5);
+        } else if (current >= total - 3) {
+            start = Math.max(2, total - 4);
+            end = total - 1;
+        }
+
+        if (start > 2) pages.push('...');
+        for (var i = start; i <= end; i++) pages.push(i);
+        if (end < total - 1) pages.push('...');
+        if (total > 1) pages.push(total);
+
         return pages;
     };
 
     $scope.setOrderPage = function(page) {
-        if (page >= 1 && page <= $scope.getTotalOrderPages($scope.getFilteredCustomerOrders().length)) {
+        if (page === '...') return;
+        var total = $scope.getTotalOrderPages($scope.getFilteredCustomerOrders().length);
+        if (page >= 1 && page <= total) {
             $scope.orderDt.currentPage = page;
         }
     };

@@ -145,9 +145,11 @@
                         Showing {{ (dt.currentPage - 1) * dt.pageSize + 1 }} to {{ dt.currentPage * dt.pageSize > getFilteredCustomers().length ? getFilteredCustomers().length : dt.currentPage * dt.pageSize }} of {{ getFilteredCustomers().length }} customers
                     </div>
                     <div class="datatable-pagination">
-                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">« Prev</button>
-                        <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredCustomers().length)" ng-class="{'active': dt.currentPage === p}" ng-click="setPage(p)" ng-bind="p"></button>
-                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(dt.currentPage + 1)">Next »</button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(1)" title="First Page">«</button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">‹ Prev</button>
+                        <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredCustomers().length) track by $index" ng-class="{'active': dt.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setPage(p)" ng-bind="p"></button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(dt.currentPage + 1)">Next ›</button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(getTotalPages(getFilteredCustomers().length))" title="Last Page">»</button>
                     </div>
                 </div>
             </div>

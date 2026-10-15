@@ -123,7 +123,7 @@ class MetricsRegistry:
         self.sec_errors = 0
 
         self.recent_latencies = deque(maxlen=200)
-        self.recent_errors = deque(maxlen=500)
+        self.recent_errors = deque(maxlen=1000)
 
         # Per-admin stats
         self.admin_stats = {
@@ -193,14 +193,13 @@ class MetricsRegistry:
         else:
             self.total_errors += 1
             self.sec_errors += 1
-            if error or status >= 400:
-                self.recent_errors.append({
-                    "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
-                    "user": username,
-                    "action": action_desc,
-                    "status": status,
-                    "message": error or f"HTTP {status}"
-                })
+            self.recent_errors.append({
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+                "user": username,
+                "action": action_desc,
+                "status": status,
+                "message": error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
+            })
 
     def record_api_intake(self, status: int, latency_ms: float, error: str = None):
         self.total_requests += 1
@@ -213,14 +212,13 @@ class MetricsRegistry:
         else:
             self.total_errors += 1
             self.sec_errors += 1
-            if error or status >= 400:
-                self.recent_errors.append({
-                    "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
-                    "user": "AUTOMATED_API",
-                    "action": "New Customer & Order Intake",
-                    "status": status,
-                    "message": error or f"HTTP {status}"
-                })
+            self.recent_errors.append({
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+                "user": "AUTOMATED_API",
+                "action": "New Customer & Order Intake",
+                "status": status,
+                "message": error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
+            })
 
     def tick_second(self):
         self.current_rps = self.sec_requests

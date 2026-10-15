@@ -310,6 +310,11 @@ class MetricsRegistry:
                 "message": error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             })
 
+    def clear_errors(self):
+        self.recent_errors.clear()
+        self.total_errors = 0
+        self.sec_errors = 0
+
     def tick_second(self):
         self.current_rps = self.sec_requests
         self.sec_requests = 0
@@ -1053,8 +1058,11 @@ HTML_PAGE = """<!DOCTYPE html>
     <!-- ROW 5: RECENT RESPONSES / ERRORS -->
     <div class="panel" style="margin-top: 20px;">
         <div class="panel-title">
-            <span>Recent Server Responses & Dropouts (Errors Log)</span>
-            <span id="errorTotalBadge" style="font-size: 12px; color: #f87171; font-weight: 600;">0 Recorded</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>Recent Server Responses & Dropouts (Errors Log)</span>
+                <span id="errorTotalBadge" style="font-size: 12px; color: #f87171; font-weight: 600;">0 Recorded</span>
+            </div>
+            <button onclick="clearErrorLog()" class="page-btn" style="color: #94a3b8; font-size: 11px;">Clear Log</button>
         </div>
         <table>
             <thead>
@@ -1376,6 +1384,17 @@ HTML_PAGE = """<!DOCTYPE html>
             renderErrorTable();
         };
 
+        window.clearErrorLog = async function() {
+            try {
+                await fetch('/api/errors/clear', { method: 'POST' });
+            } catch (e) {}
+            cachedErrors = [];
+            currentErrorPage = 1;
+            renderErrorTable();
+            const badge = document.getElementById('errorTotalBadge');
+            if (badge) badge.textContent = '0 Recorded';
+        };
+
         function renderErrorTable() {
             const errorTbody = document.getElementById('errorLogBody');
             const paginationContainer = document.getElementById('errorPaginationContainer');
@@ -1435,11 +1454,15 @@ HTML_PAGE = """<!DOCTYPE html>
 """
 
 async def handle_dashboard_page(request):
-    return web.Response(text=HTML_PAGE, content_type="text/html")
+    return web.Response(text=HTML_PAGE, content_type="text/html", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 async def handle_metrics_api(request):
     pool_size = len(simulator_engine.customer_id_pool) if simulator_engine else 0
-    return web.json_response(metrics.get_summary(pool_size))
+    return web.json_response(metrics.get_summary(pool_size), headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+async def handle_clear_errors(request):
+    metrics.clear_errors()
+    return web.json_response({"success": True, "message": "Error log cleared"}, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 async def handle_chart_js(request):
     if os.path.exists(CHART_JS_PATH):
@@ -1450,6 +1473,8 @@ async def run_web_dashboard(port: int):
     app = web.Application()
     app.router.add_get("/", handle_dashboard_page)
     app.router.add_get("/api/metrics", handle_metrics_api)
+    app.router.add_post("/api/errors/clear", handle_clear_errors)
+    app.router.add_get("/api/errors/clear", handle_clear_errors)
     app.router.add_get("/static/chart.js", handle_chart_js)
     runner = web.AppRunner(app)
     await runner.setup()

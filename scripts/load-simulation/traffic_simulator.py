@@ -151,7 +151,7 @@ class TrafficSimulator:
         self.auth_pass = auth_pass
         self.session: aiohttp.ClientSession = None
         self.running = True
-        self.customer_id_pool = list(range(1, 200))
+        self.customer_id_pool = list(range(11, 18))
 
     async def init_session(self):
         timeout = aiohttp.ClientTimeout(total=5.0, connect=2.0)
@@ -179,12 +179,14 @@ class TrafficSimulator:
                 async with self.session.get(url, allow_redirects=True) as resp:
                     latency = (time.time() - t0) * 1000
                     await resp.read()
-                    metrics.record_result(category, resp.status, latency)
+                    err = None if 200 <= resp.status < 400 else f"HTTP {resp.status} on {path}"
+                    metrics.record_result(category, resp.status, latency, err)
             elif method == "POST":
                 async with self.session.post(url, data=data, allow_redirects=True) as resp:
                     latency = (time.time() - t0) * 1000
                     await resp.read()
-                    metrics.record_result(category, resp.status, latency)
+                    err = None if 200 <= resp.status < 400 else f"HTTP {resp.status} on {path}"
+                    metrics.record_result(category, resp.status, latency, err)
         except Exception as ex:
             latency = (time.time() - t0) * 1000
             metrics.record_result(category, 0, latency, str(ex)[:80])
@@ -213,7 +215,7 @@ class TrafficSimulator:
             await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/feedbacks")
         else:
             # SSR Follow-up workspace page
-            await self.execute_request("followup", "GET", "/admin/followup")
+            await self.execute_request("followup", "GET", "/admin/followups")
 
     async def action_dashboard(self):
         await self.execute_request("dashboard", "GET", "/admin/dashboard")

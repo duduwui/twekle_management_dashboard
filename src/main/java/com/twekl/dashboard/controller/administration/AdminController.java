@@ -11,27 +11,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-
-/**
- * Functional interface mapping transactional actions that can throw exceptions.
- * Enables clean 1-line execution blocks inside the controller endpoints.
- */
-@FunctionalInterface
-interface AdminAction {
-    void execute() throws Exception;
-}
-
-/**
- * Interface contract for Staff Administrator Operations.
- * Defined at the top of the file for full visibility.
- */
-interface AdminOperations {
-    String showAdmins(Model model);
-    String createAdminSsr(CreateAdminRequest request, BindingResult bindingResult, RedirectAttributes flash);
-    String toggleAdminStatusSsr(Long adminId, RedirectAttributes flash);
-    String deleteAdminSsr(Long adminId, RedirectAttributes flash);
-}
-
 /**
  * Primary Administrative Controller.
  * Consolidates SSR view rendering and administrative actions.
@@ -102,7 +81,7 @@ public class AdminController implements AdminOperations {
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeAdminAction(RedirectAttributes flash, String successMessage, AdminAction action) {
+    private String executeAdminAction(RedirectAttributes flash, String successMessage, ControllerAction action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

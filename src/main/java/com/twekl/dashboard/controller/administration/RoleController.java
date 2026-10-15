@@ -15,28 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-/**
- * Functional interface mapping transactional actions that can throw exceptions.
- * Enables clean 1-line execution blocks inside the controller endpoints.
- */
-@FunctionalInterface
-interface RoleAction {
-    void execute() throws Exception;
-}
-
-/**
- * Interface contract for Role and Permission Operations.
- * Defined at the top of the file for full visibility.
- */
-interface RoleOperations {
-    String showRoles(Long selectedAdminId, Model model);
-    String createRoleSsr(RoleDto request, RedirectAttributes flash);
-    String updateRoleSsr(Long roleId, RoleDto request, RedirectAttributes flash);
-    String assignAdminRoleSsr(Long pathAdminId, Long paramAdminId, Set<Long> roleIds, Long roleId, UpdateAdminRequest request, RedirectAttributes flash);
-    String deleteRoleSsr(Long roleId, RedirectAttributes flash);
-}
-
 /**
  * Controller for Role & Permission templates management.
  * Consolidates SSR view rendering and administrative role actions.
@@ -153,7 +131,7 @@ public class RoleController implements RoleOperations {
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, RoleAction action) {
+    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, ControllerAction action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

@@ -12,22 +12,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-/**
- * Functional interface mapping transactional actions that can throw exceptions.
- * Enables clean 1-line execution blocks inside the controller endpoints.
- */
-@FunctionalInterface
-interface TimeFilterAction {
-    void execute() throws Exception;
-}
-
 /**
  * Controller for Dynamic Time Filter & Milestone Presets.
  * Pure SSR view rendering and administrative actions.
+ * Implements TimeFilterOperations interface contract.
  */
 @Controller
-public class TimeFilterController {
+public class TimeFilterController implements TimeFilterOperations {
 
     private final TimeFilterService timeFilterService;
     private final AdminService adminService;
@@ -42,6 +33,7 @@ public class TimeFilterController {
     // SSR VIEW ENDPOINTS (/admin/timelines)
     // =========================================================
 
+    @Override
     @GetMapping(value = "/admin/timelines", produces = MediaType.TEXT_HTML_VALUE)
     public String showTimelines(Model model) {
         model.addAttribute("activeTab", "timelines");
@@ -55,6 +47,7 @@ public class TimeFilterController {
         return "administration/timefilter/timeFilters";
     }
 
+    @Override
     @PostMapping("/admin/timelines/create")
     public String createPresetSsr(@ModelAttribute("newPreset") TimeFilterPreset preset, RedirectAttributes flash) {
         if (preset.getLabelEn() == null || preset.getLabelEn().trim().isEmpty()) {
@@ -65,12 +58,14 @@ public class TimeFilterController {
                 () -> timeFilterService.createPreset(preset));
     }
 
+    @Override
     @PostMapping("/admin/timelines/{presetId:\\d+}/toggle")
     public String togglePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         return executeTimeFilterAction(flash, "Preset status updated successfully.",
                 () -> timeFilterService.toggleStatus(presetId));
     }
 
+    @Override
     @PostMapping("/admin/timelines/{presetId:\\d+}/delete")
     public String deletePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         return executeTimeFilterAction(flash, "Time filter preset deleted successfully.",
@@ -85,7 +80,7 @@ public class TimeFilterController {
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, TimeFilterAction action) {
+    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, ControllerAction action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

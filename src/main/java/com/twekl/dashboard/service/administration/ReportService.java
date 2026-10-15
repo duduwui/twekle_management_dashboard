@@ -48,11 +48,14 @@ public class ReportService {
         this.presetRepository = presetRepository;
     }
 
-    @Cacheable(value = "reportData", key = "#period != null ? #period : 'ALL'")
+    @Cacheable(value = "reportData", key = "#period != null ? #period : 'ALL'", sync = true)
     public Map<String, Object> generateReport(String period) {
         Instant cutoff = getCutoffForPeriod(period);
 
         List<Customer> allCustomers = customerRepository.findAll();
+        if (allCustomers.size() > 200) {
+            allCustomers = allCustomers.subList(0, 200);
+        }
         List<CustomerOrder> allOrders = orderRepository.findAllWithCustomerAndChecks();
         List<CustomerFeedback> allFeedbacks = feedbackRepository.findAll();
         List<OrderFollowupCheck> allChecks = followupCheckRepository.findAllWithOrderCustomerAndPreset();
@@ -324,7 +327,7 @@ public class ReportService {
         return report;
     }
 
-    @Cacheable("satisfactionDetails")
+    @Cacheable(value = "satisfactionDetails", key = "#period != null ? #period : 'ALL'", sync = true)
     public List<SatisfactionReportDto> getSatisfactionDetails(String period) {
         Instant cutoff = getCutoffForPeriod(period);
         List<SatisfactionReportDto> result = new ArrayList<>();
@@ -360,7 +363,7 @@ public class ReportService {
             if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
         }
 
-        List<OrderFollowupCheck> checks = followupCheckRepository.findAllWithOrderCustomerAndPreset();
+        List<OrderFollowupCheck> checks = followupCheckRepository.findChecksWithSatisfaction();
         for (OrderFollowupCheck c : checks) {
             boolean isPresetActive = (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
                     || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));

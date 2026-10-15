@@ -19,6 +19,15 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
 
     long countByCompletedTrue();
 
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
+    long countSatisfied();
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('NEUTRAL', '3')")
+    long countNeutral();
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
+    long countUnsatisfied();
+
     @Query("SELECT c FROM OrderFollowupCheck c JOIN FETCH c.order o LEFT JOIN FETCH c.preset " +
            "WHERE o.customer.id IN :customerIds")
     List<OrderFollowupCheck> findByCustomerIds(@Param("customerIds") List<Long> customerIds);
@@ -41,6 +50,10 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     @Transactional
     @Query("DELETE FROM OrderFollowupCheck c WHERE LOWER(c.milestoneName) = LOWER(:presetName)")
     void deleteByPresetName(@Param("presetName") String presetName);
+
+    @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset " +
+           "WHERE c.satisfaction IS NOT NULL AND TRIM(c.satisfaction) != '' ORDER BY c.id DESC")
+    List<OrderFollowupCheck> findChecksWithSatisfaction();
 
     @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset ORDER BY c.id ASC")
     List<OrderFollowupCheck> findAllWithOrderCustomerAndPreset();

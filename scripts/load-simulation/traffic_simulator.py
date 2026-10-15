@@ -749,17 +749,22 @@ class TrafficEngine:
         task_types = ["sara", "ahmed", "omar", "kawa", "super_admin", "api_intake"]
         weights = [0.35, 0.25, 0.15, 0.10, 0.10, 0.05]
 
-        interval = 0.05
-        batch_size = max(2, int(self.target_rps * interval))
+        tokens = 0.0
+        last_time = time.time()
 
         while self.running:
             try:
-                t0 = time.time()
-                chosen = random.choices(task_types, weights=weights, k=batch_size)
-                for item in chosen:
-                    await queue.put(item)
-                elapsed = time.time() - t0
-                await asyncio.sleep(max(0.001, interval - elapsed))
+                now = time.time()
+                delta = now - last_time
+                last_time = now
+                tokens += delta * self.target_rps
+                batch = int(tokens)
+                if batch > 0:
+                    tokens -= batch
+                    chosen = random.choices(task_types, weights=weights, k=batch)
+                    for item in chosen:
+                        await queue.put(item)
+                await asyncio.sleep(0.02)
             except Exception:
                 await asyncio.sleep(0.05)
 

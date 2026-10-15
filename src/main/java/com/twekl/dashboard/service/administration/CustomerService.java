@@ -112,7 +112,7 @@ public class CustomerService {
         customerRepository.delete(existing);
     }
 
-    @Cacheable("customerStats")
+    @Cacheable(value = "customerStats", sync = true)
     @Transactional(readOnly = true)
     public Map<String, Object> getStats() {
         return getStats(followupService.findAllSummaries("ALL"));
@@ -123,36 +123,17 @@ public class CustomerService {
         long totalCustomers = customerRepository.count();
         long totalOrders = orderRepository.count();
         Instant now = Instant.now();
-        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
-        Set<Long> activePresetIds = new HashSet<>();
-        Set<String> activePresetNames = new HashSet<>();
-        for (TimeFilterPreset p : activePresets) {
-            if (p.getId() != null) activePresetIds.add(p.getId());
-            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
-            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
-            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
-        }
 
-        List<OrderFollowupCheck> allChecksList = followupCheckRepository.findAllWithOrderCustomerAndPreset().stream().filter(c -> {
-            return (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
-                    || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));
-        }).collect(Collectors.toList());
+        long totalFollowups = followupCheckRepository.count();
+        long completedFollowups = followupCheckRepository.countByCompletedTrue();
+        long pendingFollowups = totalFollowups > completedFollowups ? totalFollowups - completedFollowups : 0;
 
-        long totalFollowups = allChecksList.size();
-        long completedFollowups = allChecksList.stream().filter(OrderFollowupCheck::isCompleted).count();
-        long pendingFollowups = totalFollowups - completedFollowups;
+        long alertFollowups = summaries != null ? summaries.stream().filter(s -> "ALERT".equalsIgnoreCase(s.getFollowupStatus())).count() : 0;
+        long idleFollowups = summaries != null ? summaries.stream().filter(s -> "IDLE".equalsIgnoreCase(s.getFollowupStatus())).count() : 0;
+        long doneFollowups = summaries != null ? summaries.stream().filter(s -> "DONE".equalsIgnoreCase(s.getFollowupStatus())).count() : 0;
 
-        long overdueFollowups = allChecksList.stream().filter(c -> {
-            if (c.isCompleted() || c.getOrder() == null || c.getOrder().getOrderDate() == null) return false;
-            Instant dueTime = FollowupService.calculateDueTime(c.getOrder().getOrderDate(), c.getDurationUnit(), c.getDurationValue() != null ? c.getDurationValue() : 1);
-            return dueTime != null && now.isAfter(dueTime);
-        }).count();
-        long inQueueFollowups = pendingFollowups - overdueFollowups;
-        if (inQueueFollowups < 0) inQueueFollowups = 0;
-
-        long alertFollowups = summaries.stream().filter(s -> "ALERT".equalsIgnoreCase(s.getFollowupStatus())).count();
-        long idleFollowups = summaries.stream().filter(s -> "IDLE".equalsIgnoreCase(s.getFollowupStatus())).count();
-        long doneFollowups = summaries.stream().filter(s -> "DONE".equalsIgnoreCase(s.getFollowupStatus())).count();
+        long overdueFollowups = alertFollowups;
+        long inQueueFollowups = pendingFollowups > overdueFollowups ? pendingFollowups - overdueFollowups : 0;
 
         double totalRevenue = orderRepository.sumTotalRevenue();
 
@@ -162,15 +143,9 @@ public class CustomerService {
         double feedbackRatingSum = feedbackRepository.sumRatings();
         long totalFeedbackCount = satisfiedFeedbacks + neutralFeedbacks + unsatisfiedFeedbacks;
 
-        long satisfiedChecks = allChecksList.stream()
-                .filter(c -> c.getSatisfaction() != null && ("SATISFIED".equalsIgnoreCase(c.getSatisfaction()) || "4".equals(c.getSatisfaction()) || "5".equals(c.getSatisfaction())))
-                .count();
-        long neutralChecks = allChecksList.stream()
-                .filter(c -> c.getSatisfaction() != null && ("NEUTRAL".equalsIgnoreCase(c.getSatisfaction()) || "3".equals(c.getSatisfaction())))
-                .count();
-        long unsatisfiedChecks = allChecksList.stream()
-                .filter(c -> c.getSatisfaction() != null && ("UNSATISFIED".equalsIgnoreCase(c.getSatisfaction()) || "1".equals(c.getSatisfaction()) || "2".equals(c.getSatisfaction())))
-                .count();
+        long satisfiedChecks = followupCheckRepository.countSatisfied();
+        long neutralChecks = followupCheckRepository.countNeutral();
+        long unsatisfiedChecks = followupCheckRepository.countUnsatisfied();
 
         long totalRated = totalFeedbackCount + (satisfiedChecks + neutralChecks + unsatisfiedChecks);
         long totalSatisfied = satisfiedFeedbacks + satisfiedChecks;

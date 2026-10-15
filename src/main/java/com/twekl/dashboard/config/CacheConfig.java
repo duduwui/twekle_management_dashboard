@@ -50,6 +50,27 @@ public class CacheConfig {
         }
 
         @Override
+        public synchronized <T> T get(Object key, java.util.concurrent.Callable<T> valueLoader) {
+            Long ts = timestamps.get(key);
+            if (ts != null && (System.currentTimeMillis() - ts) > ttlMs) {
+                evict(key);
+            }
+            ValueWrapper val = get(key);
+            if (val != null) {
+                @SuppressWarnings("unchecked")
+                T result = (T) val.get();
+                return result;
+            }
+            try {
+                T value = valueLoader.call();
+                put(key, value);
+                return value;
+            } catch (Exception ex) {
+                throw new ValueRetrievalException(key, valueLoader, ex);
+            }
+        }
+
+        @Override
         public void put(Object key, Object value) {
             timestamps.put(key, System.currentTimeMillis());
             super.put(key, value);

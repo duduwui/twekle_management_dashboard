@@ -46,13 +46,16 @@ public class FollowupService {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
-    @Cacheable(value = "followupSummaries", key = "#timeFilter != null ? #timeFilter : 'ALL'")
+    @Cacheable(value = "followupSummaries", key = "#timeFilter != null ? #timeFilter : 'ALL'", sync = true)
     @Transactional(readOnly = true)
     public List<CustomerFollowupSummary> findAllSummaries(String timeFilter) {
         Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
         List<Customer> allCustomers = cutoff == null ? customerRepository.findAll()
                 : customerRepository.findByLastOrderDateAfter(cutoff);
         if (allCustomers.isEmpty()) return List.of();
+        if (cutoff == null && allCustomers.size() > 200) {
+            allCustomers = allCustomers.subList(0, 200);
+        }
         List<Long> customerIds = allCustomers.stream().map(Customer::getId).toList();
         List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
 

@@ -10,6 +10,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 public interface TimeFilterOperations {
 
+    @FunctionalInterface
+    interface Action {
+        void execute() throws Exception;
+    }
+
     String showTimelines(Model model);
 
     String createPresetSsr(TimeFilterPreset preset, RedirectAttributes flash);

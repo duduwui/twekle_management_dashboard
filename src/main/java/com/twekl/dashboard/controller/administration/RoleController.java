@@ -131,7 +131,7 @@ public class RoleController implements RoleOperations {
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, ControllerAction action) {
+    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, Action action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

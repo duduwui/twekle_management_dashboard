@@ -13,6 +13,11 @@ import java.util.Set;
  */
 public interface RoleOperations {
 
+    @FunctionalInterface
+    interface Action {
+        void execute() throws Exception;
+    }
+
     String showRoles(Long selectedAdminId, Model model);
 
     String createRoleSsr(RoleDto request, RedirectAttributes flash);

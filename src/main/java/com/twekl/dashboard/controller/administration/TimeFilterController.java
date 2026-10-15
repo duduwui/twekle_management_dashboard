@@ -80,7 +80,7 @@ public class TimeFilterController implements TimeFilterOperations {
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, ControllerAction action) {
+    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, Action action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

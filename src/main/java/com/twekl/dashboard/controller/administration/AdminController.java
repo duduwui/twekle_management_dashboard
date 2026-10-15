@@ -81,7 +81,7 @@ public class AdminController implements AdminOperations {
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeAdminAction(RedirectAttributes flash, String successMessage, ControllerAction action) {
+    private String executeAdminAction(RedirectAttributes flash, String successMessage, Action action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

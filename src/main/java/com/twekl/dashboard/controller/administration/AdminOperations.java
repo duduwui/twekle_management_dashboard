@@ -7,9 +7,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controller interface contract for Staff Administrator Operations.
- * Provides a clean high-level summary of administrator management actions.
+ * Summarizes all administrator management actions, types, and operational callbacks.
  */
 public interface AdminOperations {
+
+    @FunctionalInterface
+    interface Action {
+        void execute() throws Exception;
+    }
 
     String showAdmins(Model model);
 

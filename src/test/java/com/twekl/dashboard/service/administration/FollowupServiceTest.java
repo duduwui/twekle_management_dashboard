@@ -13,7 +13,7 @@ class FollowupServiceTest {
     private final CustomerOrderRepository orders = mock(CustomerOrderRepository.class);
     private final OrderFollowupCheckRepository checks = mock(OrderFollowupCheckRepository.class);
     private final TimeFilterPresetRepository presets = mock(TimeFilterPresetRepository.class);
-    private final FollowupService service = new FollowupServiceImpl(customers, orders, checks, presets);
+    private final FollowupService service = new FollowupService(customers, orders, checks, presets);
 
     @Test
     void emptyDirectoryDoesNotReadOrdersChecksOrPresets() {

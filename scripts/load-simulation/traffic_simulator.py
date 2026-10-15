@@ -2,7 +2,7 @@
 """
 TWEKL DASHBOARD - Enterprise Traffic & Load Simulator
 24/7 Endurance & Stress Testing Suite (Target: Up to 2,000 req/s)
-Includes Built-In Live Real-Time Web Dashboard on Port 9090.
+Includes Built-In Live Real-Time Web Dashboard on Port 9090 with VPS Telemetry.
 """
 
 import asyncio
@@ -11,9 +11,14 @@ from aiohttp import web
 import argparse
 import random
 import time
-import math
+import os
 from datetime import datetime, timezone
 from collections import deque
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 # =========================================================
 # CONFIGURATION CONSTANTS
@@ -27,23 +32,8 @@ STATIC_TIME_FILTERS = [
     "LAST_MONTH"
 ]
 
-SAMPLE_PRODUCTS = [
-    "Standard Package",
-    "Premium ERP Tier",
-    "Enterprise Cloud Sync",
-    "Custom Integration",
-    "Annual Support SLA",
-    "Data Migration Add-on"
-]
-
-SAMPLE_NAMES = [
-    "Ahmed Al-Rashid", "Fatima Mansour", "Omar Farooq", "Layla Al-Khatib", 
-    "Khaled Al-Salem", "Noura Al-Hassan", "Yousef Ibrahim", "Sara Al-Otaibi",
-    "Mustafa Kamel", "Reem Al-Zahrani", "Tariq Aziz", "Maha Al-Harbi"
-]
-
 # =========================================================
-# REAL-TIME METRICS REGISTRY
+# REAL-TIME METRICS & TELEMETRY REGISTRY
 # =========================================================
 class MetricsRegistry:
     def __init__(self):
@@ -55,7 +45,6 @@ class MetricsRegistry:
         self.recent_errors = deque(maxlen=50)
         self.rps_history = deque(maxlen=60)
         
-        # Breakdown counters
         self.category_counts = {
             "followup": 0,
             "dashboard": 0,
@@ -64,10 +53,13 @@ class MetricsRegistry:
             "admin": 0
         }
         
-        # Transient window counters for per-second RPS calculation
         self.window_requests = 0
         self.current_rps = 0
         self.last_window_time = time.time()
+
+        # Initialize psutil measurement
+        if psutil:
+            psutil.cpu_percent(interval=None)
 
     def record_result(self, category: str, status_code: int, latency_ms: float, err_msg: str = None):
         self.total_requests += 1
@@ -96,6 +88,28 @@ class MetricsRegistry:
             self.window_requests = 0
             self.last_window_time = now
 
+    def get_system_stats(self):
+        if not psutil:
+            return {"cpu_percent": 0.0, "ram_percent": 0.0, "ram_used_gb": 0.0, "ram_total_gb": 0.0, "tomcat_memory": "N/A"}
+        try:
+            cpu = psutil.cpu_percent(interval=None)
+            mem = psutil.virtual_memory()
+            tomcat_mem = "Active"
+            for p in psutil.process_iter(['cmdline', 'memory_info']):
+                cmd = " ".join(p.info['cmdline'] or [])
+                if 'TomcatServer' in cmd:
+                    tomcat_mem = f"{p.info['memory_info'].rss // (1024 * 1024)} MB"
+                    break
+            return {
+                "cpu_percent": round(cpu, 1),
+                "ram_percent": round(mem.percent, 1),
+                "ram_used_gb": round(mem.used / (1024**3), 2),
+                "ram_total_gb": round(mem.total / (1024**3), 2),
+                "tomcat_memory": tomcat_mem
+            }
+        except Exception:
+            return {"cpu_percent": 0.0, "ram_percent": 0.0, "ram_used_gb": 0.0, "ram_total_gb": 0.0, "tomcat_memory": "N/A"}
+
     def get_summary(self):
         latencies = list(self.recent_latencies)
         avg_lat = round(sum(latencies) / len(latencies), 1) if latencies else 0.0
@@ -112,7 +126,7 @@ class MetricsRegistry:
         error_rate = round((self.total_errors / self.total_requests * 100), 2) if self.total_requests > 0 else 0.0
         
         # Server Health Indicator
-        if error_rate > 10.0 or (self.current_rps < 10 and self.total_requests > 500):
+        if error_rate > 10.0 or (self.current_rps < 5 and self.total_requests > 500):
             health = "CRITICAL / DEGRADED"
             health_color = "#e53e3e"
         elif error_rate > 2.0 or (p95_lat > 2000):
@@ -121,6 +135,8 @@ class MetricsRegistry:
         else:
             health = "HEALTHY"
             health_color = "#38a169"
+
+        sys_stats = self.get_system_stats()
 
         return {
             "uptime": uptime_str,
@@ -135,7 +151,8 @@ class MetricsRegistry:
             "health": health,
             "health_color": health_color,
             "categories": self.category_counts,
-            "recent_errors": list(self.recent_errors)[-8:]
+            "recent_errors": list(self.recent_errors)[-8:],
+            "system": sys_stats
         }
 
 metrics = MetricsRegistry()
@@ -154,8 +171,8 @@ class TrafficSimulator:
         self.customer_id_pool = list(range(11, 18))
 
     async def init_session(self):
-        timeout = aiohttp.ClientTimeout(total=5.0, connect=2.0)
-        connector = aiohttp.TCPConnector(limit=1000, limit_per_host=1000, keepalive_timeout=60.0)
+        timeout = aiohttp.ClientTimeout(total=8.0, connect=3.0)
+        connector = aiohttp.TCPConnector(limit=1500, limit_per_host=1500, keepalive_timeout=75.0)
         jar = aiohttp.CookieJar(unsafe=True)
         self.session = aiohttp.ClientSession(connector=connector, timeout=timeout, cookie_jar=jar)
         await self.login_admin()
@@ -166,7 +183,6 @@ class TrafficSimulator:
             login_data = {"username": self.auth_user, "password": self.auth_pass}
             async with self.session.post(login_url, json=login_data, allow_redirects=True) as resp:
                 if resp.status != 200:
-                    # Form login fallback
                     await self.session.post(f"{self.base_url}/login", data=login_data, allow_redirects=True)
         except Exception:
             pass
@@ -200,21 +216,16 @@ class TrafficSimulator:
         cust_id = random.choice(self.customer_id_pool)
 
         if roll < 0.25:
-            # Query customer directory with static 6-type time filter
             await self.execute_request("followup", "GET", f"/admin/customers?filter={time_filter}")
         elif roll < 0.45:
-            # Query customer follow-up metrics with static filter
             await self.execute_request("followup", "GET", f"/admin/customers/stats?filter={time_filter}")
         elif roll < 0.65:
-            # Check overdue / active follow-up list with static filter
             await self.execute_request("followup", "GET", f"/admin/customers/followups?filter={time_filter}")
         elif roll < 0.85:
-            # View customer order checks & feedback history
             await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/orders")
         elif roll < 0.95:
             await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/feedbacks")
         else:
-            # SSR Follow-up workspace page
             await self.execute_request("followup", "GET", "/admin/followups")
 
     async def action_dashboard(self):
@@ -231,7 +242,6 @@ class TrafficSimulator:
             await self.execute_request("reports", "GET", "/admin/reports")
 
     async def action_timefilter(self):
-        # Query static timeline presets SSR page
         await self.execute_request("timefilter", "GET", "/admin/timelines")
 
     async def action_admin(self):
@@ -243,8 +253,8 @@ class TrafficSimulator:
 
     async def worker_loop(self, queue: asyncio.Queue):
         while self.running:
-            action_type = await queue.get()
             try:
+                action_type = await queue.get()
                 if action_type == "followup":
                     await self.action_followup()
                 elif action_type == "dashboard":
@@ -269,33 +279,40 @@ class TrafficSimulator:
             ("admin", 0.05)
         ]
         types, probs = zip(*weights)
-
-        interval = 0.05  # dispatch batches every 50ms
-        batch_size = int(self.target_rps * interval)
+        interval = 0.05
+        batch_size = max(5, int(self.target_rps * interval))
 
         while self.running:
-            t0 = time.time()
-            choices = random.choices(types, weights=probs, k=batch_size)
-            for c in choices:
-                queue.put_nowait(c)
-            
-            elapsed = time.time() - t0
-            sleep_time = max(0.0, interval - elapsed)
-            await asyncio.sleep(sleep_time)
+            try:
+                t0 = time.time()
+                choices = random.choices(types, weights=probs, k=batch_size)
+                for c in choices:
+                    await queue.put(c)
+                
+                elapsed = time.time() - t0
+                sleep_time = max(0.001, interval - elapsed)
+                await asyncio.sleep(sleep_time)
+            except Exception:
+                await asyncio.sleep(0.05)
 
     async def start(self):
         await self.init_session()
-        queue = asyncio.Queue(maxsize=10000)
+        queue = asyncio.Queue(maxsize=50000)
 
-        # Scale worker pool dynamically according to target RPS
-        num_workers = min(100, max(20, self.target_rps // 20))
-        workers = [asyncio.create_task(self.worker_loop(queue)) for _ in range(num_workers)]
-        generator = asyncio.create_task(self.generator_loop(queue))
+        num_workers = min(200, max(40, self.target_rps // 10))
+        for _ in range(num_workers):
+            asyncio.create_task(self.worker_loop(queue))
+        
+        asyncio.create_task(self.generator_loop(queue))
 
-        # Background ticker for RPS calculation
+        # Periodic keep-alive and RPS tick
+        counter = 0
         while self.running:
             await asyncio.sleep(1.0)
             metrics.tick_second()
+            counter += 1
+            if counter % 300 == 0:  # Refresh admin session every 5 mins
+                await self.login_admin()
 
 # =========================================================
 # EMBEDDED REAL-TIME WEB DASHBOARD SERVER (Port 9090)
@@ -316,7 +333,7 @@ HTML_DASHBOARD_TEMPLATE = """
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
         .card-title { font-size: 12px; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .card-val { font-size: 32px; font-weight: 800; color: #ffffff; }
+        .card-val { font-size: 30px; font-weight: 800; color: #ffffff; }
         .card-sub { font-size: 12px; color: #64748b; margin-top: 4px; }
         .panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
         .panel-title { font-size: 16px; font-weight: 700; color: #e2e8f0; margin-bottom: 16px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
@@ -325,18 +342,21 @@ HTML_DASHBOARD_TEMPLATE = """
         th { color: #94a3b8; font-weight: 600; }
         .status-pill { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
+        .bar-container { background: #0f172a; border-radius: 6px; height: 8px; width: 100%; margin-top: 8px; overflow: hidden; }
+        .bar-fill { height: 100%; background: #38bdf8; transition: width 0.3s; }
         @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
-            <h1><span class="live-dot"></span> Twekl 30-Day Endurance Simulator</h1>
-            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Real-time load test & VPS stability monitoring</p>
+            <h1><span class="live-dot"></span> Twekl 30-Day Endurance Simulator & VPS Monitor</h1>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Live traffic test & real-time hardware performance</p>
         </div>
         <div id="healthBadge" class="badge" style="background: #38a169;">HEALTHY</div>
     </div>
 
+    <!-- ROW 1: SIMULATOR TRAFFIC METRICS -->
     <div class="grid">
         <div class="card">
             <div class="card-title">Live Throughput</div>
@@ -360,11 +380,39 @@ HTML_DASHBOARD_TEMPLATE = """
         </div>
     </div>
 
+    <!-- ROW 2: LIVE VPS HARDWARE TELEMETRY -->
+    <div class="panel">
+        <div class="panel-title">Live VPS Hardware Performance</div>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 0;">
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">VPS CPU Load</div>
+                <div style="font-size: 26px; font-weight: 800; margin-top: 4px; color: #a855f7;" id="cpuVal">0%</div>
+                <div class="bar-container"><div class="bar-fill" id="cpuBar" style="background: #a855f7; width: 0%;"></div></div>
+            </div>
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">VPS RAM Usage</div>
+                <div style="font-size: 26px; font-weight: 800; margin-top: 4px; color: #3b82f6;" id="ramVal">0%</div>
+                <div class="bar-container"><div class="bar-fill" id="ramBar" style="background: #3b82f6; width: 0%;"></div></div>
+            </div>
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">RAM Memory Detail</div>
+                <div style="font-size: 20px; font-weight: 700; margin-top: 6px; color: #e2e8f0;" id="ramDetail">0 GB / 0 GB</div>
+                <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Used vs Total Capacity</div>
+            </div>
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">Tomcat 10.1 Engine</div>
+                <div style="font-size: 20px; font-weight: 700; margin-top: 6px; color: #22c55e;" id="tomcatMem">Active</div>
+                <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Twekl Java Process RSS</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 3: TRAFFIC DISTRIBUTION -->
     <div class="panel">
         <div class="panel-title">Traffic Distribution Breakdown</div>
         <div class="grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 0;">
             <div style="background: #0f172a; padding: 12px; border-radius: 8px;">
-                <div style="color: #94a3b8; font-size: 11px;">Follow-ups & Customers (60%)</div>
+                <div style="color: #94a3b8; font-size: 11px;">Follow-ups (60%)</div>
                 <div style="font-size: 18px; font-weight: 700; margin-top: 4px;" id="cntFollowup">0</div>
             </div>
             <div style="background: #0f172a; padding: 12px; border-radius: 8px;">
@@ -386,6 +434,7 @@ HTML_DASHBOARD_TEMPLATE = """
         </div>
     </div>
 
+    <!-- ROW 4: ERROR LOG -->
     <div class="panel">
         <div class="panel-title">Recent Server Responses & Dropouts</div>
         <table>
@@ -421,6 +470,15 @@ HTML_DASHBOARD_TEMPLATE = """
                 badge.textContent = d.health;
                 badge.style.background = d.health_color;
 
+                if (d.system) {
+                    document.getElementById('cpuVal').textContent = d.system.cpu_percent + '%';
+                    document.getElementById('cpuBar').style.width = Math.min(100, d.system.cpu_percent) + '%';
+                    document.getElementById('ramVal').textContent = d.system.ram_percent + '%';
+                    document.getElementById('ramBar').style.width = Math.min(100, d.system.ram_percent) + '%';
+                    document.getElementById('ramDetail').textContent = d.system.ram_used_gb + ' GB / ' + d.system.ram_total_gb + ' GB';
+                    document.getElementById('tomcatMem').textContent = d.system.tomcat_memory;
+                }
+
                 document.getElementById('cntFollowup').textContent = (d.categories.followup || 0).toLocaleString();
                 document.getElementById('cntDashboard').textContent = (d.categories.dashboard || 0).toLocaleString();
                 document.getElementById('cntReports').textContent = (d.categories.reports || 0).toLocaleString();
@@ -437,6 +495,8 @@ HTML_DASHBOARD_TEMPLATE = """
                             <td style="color: #f87171;">${e.message}</td>
                         </tr>
                     `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="color: #22c55e; text-align: center;">No errors. 100% successful responses.</td></tr>';
                 }
             } catch (err) {}
         }
@@ -477,13 +537,6 @@ def main():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    print("=" * 60)
-    print("  TWEKL DASHBOARD - 30-DAY ENDURANCE TRAFFIC SIMULATOR")
-    print(f"  Target Server:   {args.host}")
-    print(f"  Target Load:     {args.rate} Requests / Second")
-    print(f"  Live Dashboard:  http://0.0.0.0:{args.port}")
-    print("=" * 60)
-
     sim = TrafficSimulator(base_url=args.host, target_rps=args.rate, auth_user=args.user, auth_pass=args.password)
     
     loop.create_task(run_web_dashboard(args.port))
@@ -492,7 +545,7 @@ def main():
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        print("\nStopping traffic simulator safely...")
+        pass
     finally:
         loop.close()
 

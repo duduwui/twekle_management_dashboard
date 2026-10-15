@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- REPORT TAB 3: PRODUCT INSIGHTS & REVIEWS COMPONENT -->
+    <div th:fragment="productsTab" ng-show="reportSubTab === 'products'" style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="comic-filter-toolbar">
+            <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
+                <span class="filter-date-label">From:</span>
+                <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                <span class="filter-date-label">To:</span>
+                <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                    <span>Filters</span>
+                </button>
+
+                <!-- Active Filter Badges -->
+                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
+                    <span ng-bind="selectedReportPreset.name"></span> ✕
+                </span>
+                <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="clearSatisfactionFilter()" title="Click to clear scale">
+                    <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
+                </span>
+                <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.milestoneFilter && reportFilters.milestoneFilter !== 'all'" ng-click="reportFilters.milestoneFilter = 'all'" title="Click to clear milestone">
+                    <span ng-bind="'Milestone: ' + reportFilters.milestoneFilter"></span> ✕
+                </span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="filter-search-box" style="min-width: 210px;">
+                    <input type="search" class="comic-search-bar" placeholder="Search product name..." ng-model="reportFilters.searchProducts">
+                </div>
+                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportCsv()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="comic-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th class="nowrap" style="text-align: center;">Total Orders</th>
+                        <th class="nowrap" style="text-align: center;">Satisfied Reviews</th>
+                        <th class="nowrap" style="text-align: center;">Neutral Reviews</th>
+                        <th class="nowrap" style="text-align: center;">Unsatisfied Reviews</th>
+                        <th class="nowrap" style="text-align: right;">Total Notes Logged</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="p in getFilteredReportProducts() track by p.productName">
+                        <td>
+                            <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="p.productName"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <strong style="font-size: 0.92rem;" ng-bind="p.orderCount + ' Orders'"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <span class="sat-badge sat-badge-satisfied" ng-bind="p.satisfiedCount"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <span class="sat-badge sat-badge-neutral" ng-bind="p.neutralCount"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <span class="sat-badge sat-badge-unsatisfied" ng-bind="p.unsatisfiedCount"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <strong style="color: #0F172A;" ng-bind="p.notesCount"></strong>
+                        </td>
+                    </tr>
+                    <tr ng-if="getFilteredReportProducts().length === 0">
+                        <td colspan="6" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                            No products found for the selected period.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 package com.twekl.dashboard.controller.administration;
 
-import com.twekl.dashboard.config.administration.JpaConfig;
-import com.twekl.dashboard.config.administration.WebMvcConfig;
+import com.twekl.dashboard.config.JpaConfig;
+import com.twekl.dashboard.config.WebMvcConfig;
 import com.twekl.dashboard.model.administration.Customer;
 import com.twekl.dashboard.model.administration.CustomerOrder;
 import com.twekl.dashboard.repository.administration.CustomerOrderRepository;

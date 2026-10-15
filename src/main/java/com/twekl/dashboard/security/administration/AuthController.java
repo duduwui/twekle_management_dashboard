@@ -1,8 +1,8 @@
 package com.twekl.dashboard.security.administration;
 
 import com.twekl.dashboard.dto.administration.LoginRequest;
-import com.twekl.dashboard.response.administration.ApiResponse;
-import com.twekl.dashboard.response.administration.AuthResponse;
+import com.twekl.dashboard.response.ApiResponse;
+import com.twekl.dashboard.response.AuthResponse;
 import com.twekl.dashboard.service.administration.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

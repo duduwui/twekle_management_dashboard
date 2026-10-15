@@ -2,7 +2,7 @@ package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.SatisfactionReportDto;
 import com.twekl.dashboard.model.administration.Admin;
-import com.twekl.dashboard.response.administration.ApiResponse;
+import com.twekl.dashboard.response.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.ReportService;
 import com.twekl.dashboard.service.administration.TimeFilterService;

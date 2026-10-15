@@ -2,7 +2,7 @@ package com.twekl.dashboard.service.administration;
 
 import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
 import com.twekl.dashboard.dto.administration.FollowupCheckRequest;
-import com.twekl.dashboard.exception.administration.ResourceNotFoundException;
+import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.administration.Customer;
 import com.twekl.dashboard.model.administration.CustomerOrder;
 import com.twekl.dashboard.model.administration.OrderFollowupCheck;
@@ -11,7 +11,7 @@ import com.twekl.dashboard.repository.administration.CustomerOrderRepository;
 import com.twekl.dashboard.repository.administration.CustomerRepository;
 import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepository;
 import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
-import com.twekl.dashboard.util.administration.DateUtil;
+import com.twekl.dashboard.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;

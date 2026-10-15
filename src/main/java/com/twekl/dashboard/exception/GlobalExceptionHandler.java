@@ -1,6 +1,6 @@
-package com.twekl.dashboard.exception.administration;
+package com.twekl.dashboard.exception;
 
-import com.twekl.dashboard.response.administration.ErrorResponse;
+import com.twekl.dashboard.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

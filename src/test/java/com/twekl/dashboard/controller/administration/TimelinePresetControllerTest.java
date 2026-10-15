@@ -1,8 +1,8 @@
 package com.twekl.dashboard.controller.administration;
 
-import com.twekl.dashboard.config.administration.JpaConfig;
+import com.twekl.dashboard.config.JpaConfig;
 import com.twekl.dashboard.security.administration.SecurityConfig;
-import com.twekl.dashboard.config.administration.WebMvcConfig;
+import com.twekl.dashboard.config.WebMvcConfig;
 import com.twekl.dashboard.model.administration.TimeFilterPreset;
 import com.twekl.dashboard.service.administration.TimeFilterService;
 import org.junit.jupiter.api.BeforeEach;

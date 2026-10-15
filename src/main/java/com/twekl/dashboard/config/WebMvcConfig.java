@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config.administration;
+package com.twekl.dashboard.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @ComponentScan(basePackages = {
     "com.twekl.dashboard.controller.administration",
     "com.twekl.dashboard.security.administration",
-    "com.twekl.dashboard.exception.administration"
+    "com.twekl.dashboard.exception"
 })
 public class WebMvcConfig implements WebMvcConfigurer {
 

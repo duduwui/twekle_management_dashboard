@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config.administration;
+package com.twekl.dashboard.config;
 
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;

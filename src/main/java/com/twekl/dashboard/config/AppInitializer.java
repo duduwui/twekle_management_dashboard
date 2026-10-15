@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config.administration;
+package com.twekl.dashboard.config;
 
 import com.twekl.dashboard.security.administration.SecurityConfig;
 import jakarta.servlet.Filter;

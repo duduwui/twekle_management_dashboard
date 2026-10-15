@@ -1,4 +1,4 @@
-package com.twekl.dashboard.util.administration;
+package com.twekl.dashboard.util;
 
 import java.time.Instant;
 import java.time.ZoneOffset;

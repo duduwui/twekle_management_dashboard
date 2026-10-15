@@ -3,7 +3,7 @@ package com.twekl.dashboard.service.administration;
 import com.twekl.dashboard.dto.administration.LoginRequest;
 import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.repository.administration.AdminRepository;
-import com.twekl.dashboard.response.administration.AuthResponse;
+import com.twekl.dashboard.response.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;

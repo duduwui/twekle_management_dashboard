@@ -4,7 +4,7 @@ import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
 import com.twekl.dashboard.model.administration.Customer;
 import com.twekl.dashboard.model.administration.CustomerFeedback;
 import com.twekl.dashboard.model.administration.CustomerOrder;
-import com.twekl.dashboard.response.administration.ApiResponse;
+import com.twekl.dashboard.response.ApiResponse;
 import com.twekl.dashboard.service.administration.CustomerService;
 import com.twekl.dashboard.service.administration.FollowupService;
 import org.springframework.beans.factory.annotation.Autowired;

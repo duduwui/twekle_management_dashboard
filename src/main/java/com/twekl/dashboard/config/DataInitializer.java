@@ -1,4 +1,4 @@
-package com.twekl.dashboard.config.administration;
+package com.twekl.dashboard.config;
 
 import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.Customer;

@@ -1,7 +1,7 @@
 package com.twekl.dashboard.service.administration;
 
 import com.twekl.dashboard.dto.administration.CustomerFollowupSummary;
-import com.twekl.dashboard.exception.administration.ResourceNotFoundException;
+import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.administration.Customer;
 import com.twekl.dashboard.model.administration.CustomerFeedback;
 import com.twekl.dashboard.model.administration.CustomerOrder;

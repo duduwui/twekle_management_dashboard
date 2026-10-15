@@ -11,7 +11,7 @@ import com.twekl.dashboard.repository.administration.CustomerOrderRepository;
 import com.twekl.dashboard.repository.administration.CustomerRepository;
 import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepository;
 import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
-import com.twekl.dashboard.util.administration.DateUtil;
+import com.twekl.dashboard.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;

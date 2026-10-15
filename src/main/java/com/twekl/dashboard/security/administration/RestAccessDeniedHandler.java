@@ -1,7 +1,7 @@
 package com.twekl.dashboard.security.administration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.twekl.dashboard.response.administration.ErrorResponse;
+import com.twekl.dashboard.response.ErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

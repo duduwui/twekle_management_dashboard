@@ -1,4 +1,4 @@
-package com.twekl.dashboard.response.administration;
+package com.twekl.dashboard.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -3,7 +3,7 @@ package com.twekl.dashboard.service.administration;
 import com.twekl.dashboard.dto.administration.AdminPermissionDto;
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
 import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
-import com.twekl.dashboard.exception.administration.ResourceNotFoundException;
+import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.AdminPermission;
 import com.twekl.dashboard.model.administration.Role;

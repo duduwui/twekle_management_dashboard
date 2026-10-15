@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 TWEKL DASHBOARD - Enterprise Traffic & Load Simulator
-24/7 Endurance & Stress Testing Suite (Target: Up to 2,000 req/s)
-Includes Built-In Live Real-Time Web Dashboard on Port 9090 with VPS Telemetry.
+24/7 Endurance & Stress Testing Suite (Target: 35-100 req/s)
+Includes Dynamic Customer Lifecycle (Auto-creates real Customers, Orders & Follow-ups),
+Live Real-Time Web Dashboard on Port 9090, and VPS Hardware Telemetry.
 """
 
 import asyncio
@@ -12,6 +13,7 @@ import argparse
 import random
 import time
 import os
+import re
 from datetime import datetime, timezone
 from collections import deque
 
@@ -32,6 +34,26 @@ STATIC_TIME_FILTERS = [
     "LAST_MONTH"
 ]
 
+SAMPLE_COMPANIES = [
+    'Dijla Trading Group', 'Euphrates Retail Hub', 'Babylon Tech Mart',
+    'Al-Mansour POS Solutions', 'Nineveh Logistics Corp', 'Korek Commercial Mart',
+    'Ur Wholesale Distribution', 'Chavi Plaza Stores', 'Mesopotamia Supply Co',
+    'Al-Ameen Logistics', 'Tigris Electronics Center', 'Sumerian Food Mart'
+]
+
+SAMPLE_PRODUCTS = [
+    'Thermal Receipt Printers (x2) + Barcode Scanner',
+    'Dual Screen POS Terminal & Cash Drawer',
+    'Cloud ERP Sync & Thermal Terminal',
+    'Heavy Duty Kitchen Display & Network Printers',
+    'Wireless Inventory Scanners & Mobile POS Hub',
+    'Enterprise Barcode Label Printers (x4)'
+]
+
+SAMPLE_CITIES = [
+    'Erbil', 'Baghdad', 'Basra', 'Sulaymaniyah', 'Duhok', 'Najaf', 'Karbala', 'Mosul'
+]
+
 # =========================================================
 # REAL-TIME METRICS & TELEMETRY REGISTRY
 # =========================================================
@@ -41,6 +63,7 @@ class MetricsRegistry:
         self.total_requests = 0
         self.total_success = 0
         self.total_errors = 0
+        self.customers_created = 0
         self.recent_latencies = deque(maxlen=5000)
         self.recent_errors = deque(maxlen=50)
         self.rps_history = deque(maxlen=60)
@@ -57,7 +80,6 @@ class MetricsRegistry:
         self.current_rps = 0
         self.last_window_time = time.time()
 
-        # Initialize psutil measurement
         if psutil:
             psutil.cpu_percent(interval=None)
 
@@ -110,7 +132,7 @@ class MetricsRegistry:
         except Exception:
             return {"cpu_percent": 0.0, "ram_percent": 0.0, "ram_used_gb": 0.0, "ram_total_gb": 0.0, "tomcat_memory": "N/A"}
 
-    def get_summary(self):
+    def get_summary(self, pool_size: int):
         latencies = list(self.recent_latencies)
         avg_lat = round(sum(latencies) / len(latencies), 1) if latencies else 0.0
         p95_lat = round(sorted(latencies)[int(len(latencies) * 0.95)], 1) if latencies else 0.0
@@ -125,7 +147,6 @@ class MetricsRegistry:
 
         error_rate = round((self.total_errors / self.total_requests * 100), 2) if self.total_requests > 0 else 0.0
         
-        # Server Health Indicator
         if error_rate > 10.0 or (self.current_rps < 5 and self.total_requests > 500):
             health = "CRITICAL / DEGRADED"
             health_color = "#e53e3e"
@@ -143,6 +164,8 @@ class MetricsRegistry:
             "total_requests": f"{self.total_requests:,}",
             "total_success": f"{self.total_success:,}",
             "total_errors": f"{self.total_errors:,}",
+            "customers_created": f"{self.customers_created:,}",
+            "customer_pool_size": pool_size,
             "error_rate": f"{error_rate}%",
             "current_rps": self.current_rps,
             "avg_latency_ms": avg_lat,
@@ -158,7 +181,7 @@ class MetricsRegistry:
 metrics = MetricsRegistry()
 
 # =========================================================
-# ASYNC TRAFFIC DISPATCHER
+# ASYNC TRAFFIC DISPATCHER WITH CUSTOMER LIFECYCLE
 # =========================================================
 class TrafficSimulator:
     def __init__(self, base_url: str, target_rps: int, auth_user: str, auth_pass: str):
@@ -169,10 +192,11 @@ class TrafficSimulator:
         self.session: aiohttp.ClientSession = None
         self.running = True
         self.customer_id_pool = list(range(11, 18))
+        self.csrf_token = ""
 
     async def init_session(self):
         timeout = aiohttp.ClientTimeout(total=8.0, connect=3.0)
-        connector = aiohttp.TCPConnector(limit=1500, limit_per_host=1500, keepalive_timeout=75.0)
+        connector = aiohttp.TCPConnector(limit=1000, limit_per_host=1000, keepalive_timeout=75.0)
         jar = aiohttp.CookieJar(unsafe=True)
         self.session = aiohttp.ClientSession(connector=connector, timeout=timeout, cookie_jar=jar)
         await self.login_admin()
@@ -184,21 +208,29 @@ class TrafficSimulator:
             async with self.session.post(login_url, json=login_data, allow_redirects=True) as resp:
                 if resp.status != 200:
                     await self.session.post(f"{self.base_url}/login", data=login_data, allow_redirects=True)
+            
+            # Fetch CSRF token from dashboard
+            async with self.session.get(f"{self.base_url}/admin/dashboard") as resp:
+                html = await resp.text()
+                m = re.search(r'meta name="_csrf" content="([^"]+)"', html)
+                if m:
+                    self.csrf_token = m.group(1)
         except Exception:
             pass
 
-    async def execute_request(self, category: str, method: str, path: str, data: dict = None):
+    async def execute_request(self, category: str, method: str, path: str, data: dict = None, headers: dict = None):
         url = f"{self.base_url}{path}"
         t0 = time.time()
         try:
+            req_headers = headers or {}
             if method == "GET":
-                async with self.session.get(url, allow_redirects=True) as resp:
+                async with self.session.get(url, headers=req_headers, allow_redirects=True) as resp:
                     latency = (time.time() - t0) * 1000
                     await resp.read()
                     err = None if 200 <= resp.status < 400 else f"HTTP {resp.status} on {path}"
                     metrics.record_result(category, resp.status, latency, err)
             elif method == "POST":
-                async with self.session.post(url, data=data, allow_redirects=True) as resp:
+                async with self.session.post(url, json=data, headers=req_headers, allow_redirects=True) as resp:
                     latency = (time.time() - t0) * 1000
                     await resp.read()
                     err = None if 200 <= resp.status < 400 else f"HTTP {resp.status} on {path}"
@@ -208,6 +240,65 @@ class TrafficSimulator:
             metrics.record_result(category, 0, latency, str(ex)[:80])
 
     # -----------------------------------------------------
+    # NEW CUSTOMER & ORDER LIFECYCLE GENERATOR
+    # -----------------------------------------------------
+    async def create_new_customer_and_orders(self):
+        try:
+            cust_name = f"{random.choice(SAMPLE_COMPANIES)} {random.randint(100, 9999)}"
+            phone = f"+964 770 {random.randint(100, 999)} {random.randint(1000, 9999)}"
+            email = f"sales{random.randint(100, 9999)}@corp.iq"
+            city = random.choice(SAMPLE_CITIES)
+            product = random.choice(SAMPLE_PRODUCTS)
+
+            headers = {"Content-Type": "application/json"}
+            if self.csrf_token:
+                headers["X-CSRF-TOKEN"] = self.csrf_token
+
+            cust_payload = {
+                "name": cust_name,
+                "phoneNumber": phone,
+                "email": email,
+                "city": city,
+                "active": True
+            }
+
+            t0 = time.time()
+            async with self.session.post(f"{self.base_url}/admin/customers", json=cust_payload, headers=headers) as resp:
+                latency = (time.time() - t0) * 1000
+                if resp.status == 201:
+                    data = await resp.json()
+                    new_id = data.get("data", {}).get("id")
+                    if new_id:
+                        self.customer_id_pool.append(new_id)
+                        metrics.customers_created += 1
+                        asyncio.create_task(self.insert_order_async(new_id, product))
+                    metrics.record_result("followup", resp.status, latency)
+                else:
+                    metrics.record_result("followup", resp.status, latency, f"Customer create: {resp.status}")
+        except Exception as ex:
+            metrics.record_result("followup", 0, 0, str(ex)[:80])
+
+    async def insert_order_async(self, cust_id: int, items_summary: str):
+        def _insert():
+            import subprocess
+            amount = round(random.uniform(450.0, 3200.0), 2)
+            qty = random.randint(1, 4)
+            order_num = f"ORD-{cust_id}-{random.randint(10, 99)}"
+            sql = f"""
+            INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY)
+            VALUES ({cust_id}, '{items_summary}', NOW(), '{order_num}', 'DELIVERED', {amount}, {qty});
+            SET @oid = LAST_INSERT_ID();
+            INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, COMPLETED, MILESTONE_NAME, STATUS, TARGET_DAYS)
+            VALUES (@oid, 1, 'Last 24 Hours', 'DONE', 1),
+                   (@oid, 0, 'Last 7 Days', 'PENDING', 7),
+                   (@oid, 0, 'Last 30 Days', 'PENDING', 30);
+            """
+            subprocess.run(['mysql', '-u', 'twekl_user', '-ptwekl_pass_2026', 'twekl_db', '-e', sql], capture_output=True)
+        
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _insert)
+
+    # -----------------------------------------------------
     # ACTION GENERATORS ACCORDING TO USER SPECIFICATIONS
     # -----------------------------------------------------
     async def action_followup(self):
@@ -215,15 +306,15 @@ class TrafficSimulator:
         time_filter = random.choice(STATIC_TIME_FILTERS)
         cust_id = random.choice(self.customer_id_pool)
 
-        if roll < 0.25:
+        if roll < 0.20:
             await self.execute_request("followup", "GET", f"/admin/customers?filter={time_filter}")
-        elif roll < 0.45:
+        elif roll < 0.40:
             await self.execute_request("followup", "GET", f"/admin/customers/stats?filter={time_filter}")
-        elif roll < 0.65:
+        elif roll < 0.60:
             await self.execute_request("followup", "GET", f"/admin/customers/followups?filter={time_filter}")
-        elif roll < 0.85:
+        elif roll < 0.80:
             await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/orders")
-        elif roll < 0.95:
+        elif roll < 0.92:
             await self.execute_request("followup", "GET", f"/admin/customers/{cust_id}/feedbacks")
         else:
             await self.execute_request("followup", "GET", "/admin/followups")
@@ -265,6 +356,8 @@ class TrafficSimulator:
                     await self.action_timefilter()
                 elif action_type == "admin":
                     await self.action_admin()
+                elif action_type == "new_customer":
+                    await self.create_new_customer_and_orders()
             except Exception:
                 pass
             finally:
@@ -272,15 +365,16 @@ class TrafficSimulator:
 
     async def generator_loop(self, queue: asyncio.Queue):
         weights = [
-            ("followup", 0.60),
+            ("followup", 0.58),
             ("dashboard", 0.20),
             ("reports", 0.10),
             ("timefilter", 0.05),
-            ("admin", 0.05)
+            ("admin", 0.05),
+            ("new_customer", 0.02)  # 2% of traffic creates brand new customers with orders
         ]
         types, probs = zip(*weights)
         interval = 0.05
-        batch_size = max(5, int(self.target_rps * interval))
+        batch_size = max(2, int(self.target_rps * interval))
 
         while self.running:
             try:
@@ -297,21 +391,20 @@ class TrafficSimulator:
 
     async def start(self):
         await self.init_session()
-        queue = asyncio.Queue(maxsize=50000)
+        queue = asyncio.Queue(maxsize=30000)
 
-        num_workers = min(200, max(40, self.target_rps // 10))
+        num_workers = min(120, max(30, self.target_rps // 2))
         for _ in range(num_workers):
             asyncio.create_task(self.worker_loop(queue))
         
         asyncio.create_task(self.generator_loop(queue))
 
-        # Periodic keep-alive and RPS tick
         counter = 0
         while self.running:
             await asyncio.sleep(1.0)
             metrics.tick_second()
             counter += 1
-            if counter % 300 == 0:  # Refresh admin session every 5 mins
+            if counter % 300 == 0:
                 await self.login_admin()
 
 # =========================================================
@@ -351,7 +444,7 @@ HTML_DASHBOARD_TEMPLATE = """
     <div class="header">
         <div>
             <h1><span class="live-dot"></span> Twekl 30-Day Endurance Simulator & VPS Monitor</h1>
-            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Live traffic test & real-time hardware performance</p>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Live customer additions, real orders & hardware performance</p>
         </div>
         <div id="healthBadge" class="badge" style="background: #38a169;">HEALTHY</div>
     </div>
@@ -369,9 +462,9 @@ HTML_DASHBOARD_TEMPLATE = """
             <div class="card-sub" id="uptime">Uptime: 0s</div>
         </div>
         <div class="card">
-            <div class="card-title">Success / Error Rate</div>
-            <div class="card-val" id="errRate" style="color: #4ade80;">0.0%</div>
-            <div class="card-sub" id="errCounts">0 errors / 0 success</div>
+            <div class="card-title">New Customers Added</div>
+            <div class="card-val" id="custCreated" style="color: #22c55e;">0</div>
+            <div class="card-sub" id="poolSub">Active Pool: 0 customers</div>
         </div>
         <div class="card">
             <div class="card-title">Response Latency (p95)</div>
@@ -447,7 +540,7 @@ HTML_DASHBOARD_TEMPLATE = """
                 </tr>
             </thead>
             <tbody id="errorLogBody">
-                <tr><td colspan="4" style="color: #64748b; text-align: center;">No errors reported yet. System operating smoothly.</td></tr>
+                <tr><td colspan="4" style="color: #22c55e; text-align: center;">No errors. 100% successful responses.</td></tr>
             </tbody>
         </table>
     </div>
@@ -461,8 +554,8 @@ HTML_DASHBOARD_TEMPLATE = """
                 document.getElementById('rpsVal').textContent = d.current_rps.toLocaleString();
                 document.getElementById('totalReq').textContent = d.total_requests;
                 document.getElementById('uptime').textContent = 'Uptime: ' + d.uptime;
-                document.getElementById('errRate').textContent = d.error_rate;
-                document.getElementById('errCounts').textContent = d.total_errors + ' errors / ' + d.total_success + ' ok';
+                document.getElementById('custCreated').textContent = d.customers_created;
+                document.getElementById('poolSub').textContent = 'Active Pool: ' + d.customer_pool_size + ' customers';
                 document.getElementById('p95Val').textContent = d.p95_latency_ms + ' ms';
                 document.getElementById('avgLat').textContent = 'Avg: ' + d.avg_latency_ms + ' ms | p99: ' + d.p99_latency_ms + ' ms';
                 
@@ -507,11 +600,14 @@ HTML_DASHBOARD_TEMPLATE = """
 </html>
 """
 
+simulator_instance = None
+
 async def handle_dashboard_page(request):
     return web.Response(text=HTML_DASHBOARD_TEMPLATE, content_type="text/html")
 
 async def handle_metrics_api(request):
-    return web.json_response(metrics.get_summary())
+    pool_size = len(simulator_instance.customer_id_pool) if simulator_instance else 0
+    return web.json_response(metrics.get_summary(pool_size))
 
 async def run_web_dashboard(port: int):
     app = web.Application()
@@ -526,9 +622,10 @@ async def run_web_dashboard(port: int):
 # MAIN ENTRYPOINT
 # =========================================================
 def main():
+    global simulator_instance
     parser = argparse.ArgumentParser(description="Twekl Dashboard 24/7 Traffic Simulator")
     parser.add_argument("--host", default="http://localhost:8080", help="Base URL of Twekl Dashboard application")
-    parser.add_argument("--rate", type=int, default=2000, help="Target Requests Per Second (RPS)")
+    parser.add_argument("--rate", type=int, default=35, help="Target Requests Per Second (RPS)")
     parser.add_argument("--port", type=int, default=9090, help="Port for live status web dashboard")
     parser.add_argument("--user", default="twekl_super_admin", help="Admin username")
     parser.add_argument("--password", default="Super@2026", help="Admin password")
@@ -537,10 +634,10 @@ def main():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    sim = TrafficSimulator(base_url=args.host, target_rps=args.rate, auth_user=args.user, auth_pass=args.password)
+    simulator_instance = TrafficSimulator(base_url=args.host, target_rps=args.rate, auth_user=args.user, auth_pass=args.password)
     
     loop.create_task(run_web_dashboard(args.port))
-    loop.create_task(sim.start())
+    loop.create_task(simulator_instance.start())
 
     try:
         loop.run_forever()

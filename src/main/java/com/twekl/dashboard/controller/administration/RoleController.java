@@ -18,11 +18,10 @@ import java.util.Set;
 /**
  * Controller for Role & Permission templates management.
  * Consolidates SSR view rendering and administrative role actions.
- * Implements RoleOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/roles")
-public class RoleController implements RoleOperations {
+public class RoleController {
 
     private final RoleService roleService;
     private final AdminService adminService;
@@ -34,10 +33,9 @@ public class RoleController implements RoleOperations {
     }
 
     // =========================================================
-    // SSR VIEW ENDPOINTS (RoleOperations Contract)
+    // SSR VIEW ENDPOINTS
     // =========================================================
 
-    @Override
     @GetMapping
     public String showRoles(@RequestParam(value = "selectedAdminId", required = false) Long selectedAdminId,
                             Model model) {
@@ -62,33 +60,30 @@ public class RoleController implements RoleOperations {
         return "administration/role/roles";
     }
 
-    @Override
     @PostMapping("/create")
-    public String createRoleSsr(@ModelAttribute("newRole") RoleDto request, RedirectAttributes flash) {
-        if (request.getName() == null || request.getName().trim().isEmpty()) {
+    public String createRoleSsr(@ModelAttribute("newRole") RoleDto roleDto, RedirectAttributes flash) {
+        if (roleDto.getName() == null || roleDto.getName().trim().isEmpty()) {
             flash.addFlashAttribute("errorMessage", "Role template name is required.");
             return "redirect:/admin/roles";
         }
-        return executeRoleAction(flash, "Role template '" + request.getName().trim() + "' created successfully.",
-                "redirect:/admin/roles", () -> roleService.createRole(request));
+        return executeRoleAction(flash, "Role template '" + roleDto.getName().trim() + "' created successfully.",
+                "redirect:/admin/roles", () -> roleService.createRole(roleDto));
     }
 
-    @Override
     @PostMapping("/{roleId:\\d+}/update")
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
-                                @ModelAttribute RoleDto request,
+                                @ModelAttribute RoleDto roleDto,
                                 RedirectAttributes flash) {
         return executeRoleAction(flash, "Role template updated successfully.",
-                "redirect:/admin/roles", () -> roleService.updateRole(roleId, request));
+                "redirect:/admin/roles", () -> roleService.updateRole(roleId, roleDto));
     }
 
-    @Override
     @PostMapping("/assign_user_role")
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
                                      @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
                                      @RequestParam(value = "roleId", required = false) Long roleId,
-                                     @ModelAttribute UpdateAdminRequest request,
+                                     @ModelAttribute UpdateAdminRequest updateAdminRequest,
                                      RedirectAttributes flash) {
         Long targetAdminId = pathAdminId != null ? pathAdminId : paramAdminId;
         if (targetAdminId == null) {
@@ -103,20 +98,19 @@ public class RoleController implements RoleOperations {
                         targetRoleIds.addAll(roleIds);
                     } else if (roleId != null && roleId > 0) {
                         targetRoleIds.add(roleId);
-                    } else if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
-                        targetRoleIds.addAll(request.getRoleIds());
+                    } else if (updateAdminRequest.getRoleIds() != null && !updateAdminRequest.getRoleIds().isEmpty()) {
+                        targetRoleIds.addAll(updateAdminRequest.getRoleIds());
                     }
 
                     UpdateAdminRequest updateReq = new UpdateAdminRequest();
                     updateReq.setRoleIds(targetRoleIds);
-                    if (request.getPermissions() != null) {
-                        updateReq.setPermissions(request.getPermissions());
+                    if (updateAdminRequest.getPermissions() != null) {
+                        updateReq.setPermissions(updateAdminRequest.getPermissions());
                     }
                     adminService.updateAdmin(targetAdminId, updateReq);
                 });
     }
 
-    @Override
     @PostMapping("/{roleId:\\d+}/delete")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
         return executeRoleAction(flash, "Role template deleted successfully.",
@@ -127,11 +121,16 @@ public class RoleController implements RoleOperations {
     // REUSABLE HELPER ENGINE
     // =========================================================
 
+    @FunctionalInterface
+    private interface ActionCallback {
+        void execute() throws Exception;
+    }
+
     /**
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, Action action) {
+    private String executeRoleAction(RedirectAttributes flash, String successMessage, String redirectTarget, ActionCallback action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

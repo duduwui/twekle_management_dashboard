@@ -14,11 +14,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * Primary Administrative Controller.
  * Consolidates SSR view rendering and administrative actions.
- * Implements AdminOperations interface contract.
  * Uses constructor injection with final dependencies.
  */
 @Controller
-public class AdminController implements AdminOperations {
+public class AdminController {
 
     private final AdminService adminService;
     private final RoleService roleService;
@@ -31,10 +30,9 @@ public class AdminController implements AdminOperations {
     }
 
     // =========================================================
-    // STAFF ADMINISTRATORS ENDPOINTS (AdminOperations Contract)
+    // STAFF ADMINISTRATORS ENDPOINTS
     // =========================================================
 
-    @Override
     @GetMapping("/admin/admins")
     public String showAdmins(Model model) {
         model.addAttribute("activeTab", "admins");
@@ -46,7 +44,6 @@ public class AdminController implements AdminOperations {
         return "administration/admin/admins";
     }
 
-    @Override
     @PostMapping("/admin/admins/create-admin")
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
@@ -59,14 +56,12 @@ public class AdminController implements AdminOperations {
                 () -> adminService.createAdmin(request));
     }
 
-    @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/toggle-status")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         return executeAdminAction(flash, "Administrator status updated successfully.", 
                 () -> adminService.toggleStatus(adminId));
     }
 
-    @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         return executeAdminAction(flash, "Administrator deleted successfully.", 
@@ -77,11 +72,16 @@ public class AdminController implements AdminOperations {
     // REUSABLE HELPER ENGINE
     // =========================================================
 
+    @FunctionalInterface
+    private interface ActionCallback {
+        void execute() throws Exception;
+    }
+
     /**
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeAdminAction(RedirectAttributes flash, String successMessage, Action action) {
+    private String executeAdminAction(RedirectAttributes flash, String successMessage, ActionCallback action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

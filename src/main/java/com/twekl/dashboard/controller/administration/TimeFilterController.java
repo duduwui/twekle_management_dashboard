@@ -15,10 +15,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * Controller for Dynamic Time Filter & Milestone Presets.
  * Pure SSR view rendering and administrative actions.
- * Implements TimeFilterOperations interface contract.
  */
 @Controller
-public class TimeFilterController implements TimeFilterOperations {
+public class TimeFilterController {
 
     private final TimeFilterService timeFilterService;
     private final AdminService adminService;
@@ -33,7 +32,6 @@ public class TimeFilterController implements TimeFilterOperations {
     // SSR VIEW ENDPOINTS (/admin/timelines)
     // =========================================================
 
-    @Override
     @GetMapping(value = "/admin/timelines", produces = MediaType.TEXT_HTML_VALUE)
     public String showTimelines(Model model) {
         model.addAttribute("activeTab", "timelines");
@@ -47,7 +45,6 @@ public class TimeFilterController implements TimeFilterOperations {
         return "administration/timefilter/timeFilters";
     }
 
-    @Override
     @PostMapping("/admin/timelines/create")
     public String createPresetSsr(@ModelAttribute("newPreset") TimeFilterPreset preset, RedirectAttributes flash) {
         if (preset.getLabelEn() == null || preset.getLabelEn().trim().isEmpty()) {
@@ -58,14 +55,12 @@ public class TimeFilterController implements TimeFilterOperations {
                 () -> timeFilterService.createPreset(preset));
     }
 
-    @Override
     @PostMapping("/admin/timelines/{presetId:\\d+}/toggle")
     public String togglePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         return executeTimeFilterAction(flash, "Preset status updated successfully.",
                 () -> timeFilterService.toggleStatus(presetId));
     }
 
-    @Override
     @PostMapping("/admin/timelines/{presetId:\\d+}/delete")
     public String deletePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         return executeTimeFilterAction(flash, "Time filter preset deleted successfully.",
@@ -76,11 +71,16 @@ public class TimeFilterController implements TimeFilterOperations {
     // REUSABLE HELPER ENGINE
     // =========================================================
 
+    @FunctionalInterface
+    private interface ActionCallback {
+        void execute() throws Exception;
+    }
+
     /**
      * Reusable logic block that manages try-catch boundaries and routing dynamically.
      * Consolidates error feedback pipelines into one shared engine.
      */
-    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, Action action) {
+    private String executeTimeFilterAction(RedirectAttributes flash, String successMessage, ActionCallback action) {
         try {
             action.execute();
             flash.addFlashAttribute("successMessage", successMessage);

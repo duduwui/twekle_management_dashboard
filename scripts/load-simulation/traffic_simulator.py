@@ -123,7 +123,7 @@ class MetricsRegistry:
         self.sec_errors = 0
 
         self.recent_latencies = deque(maxlen=200)
-        self.recent_errors = deque(maxlen=20)
+        self.recent_errors = deque(maxlen=500)
 
         # Per-admin stats
         self.admin_stats = {
@@ -331,7 +331,7 @@ class MetricsRegistry:
             "health_color": health_color,
             "categories": self.categories,
             "admin_stats": list(self.admin_stats.values()),
-            "recent_errors": list(self.recent_errors)[-6:],
+            "recent_errors": list(self.recent_errors)[::-1],
             "system": hw,
             "charts": {
                 "timestamps": list(self.history_timestamps),
@@ -552,8 +552,9 @@ class TrafficEngine:
                 async with sess.post(f"{self.base_url}/admin/followups/{chk_id}", json=body, headers=headers) as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
-                    if resp.status == 401:
+                    if resp.status in (401, 403):
                         await self.reauth_if_needed("admin_sara")
+                        metrics.record_admin_activity("admin_sara", "followup", f"Auth Refresh ({resp.status})", resp.status, lat, f"CSRF/Session Expired ({resp.status})")
                     else:
                         metrics.staff_followups_completed += 1
                         metrics.record_admin_activity("admin_sara", "followup", f"Logged review on Check #{chk_id}", resp.status, lat)
@@ -823,6 +824,13 @@ HTML_PAGE = """<!DOCTYPE html>
         .bar-fill { height: 100%; background: #38bdf8; transition: width 0.3s; }
         @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
         .chart-box { height: 220px; position: relative; width: 100%; }
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 10px; border-top: 1px solid #1e293b; }
+        .page-info { color: #94a3b8; font-size: 12px; }
+        .page-buttons { display: flex; gap: 6px; }
+        .page-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .page-btn:hover:not(:disabled) { background: #1e293b; border-color: #38bdf8; }
+        .page-btn.active { background: #38bdf8; color: #0b1120; font-weight: 700; border-color: #38bdf8; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -934,14 +942,17 @@ HTML_PAGE = """<!DOCTYPE html>
 
     <!-- ROW 5: RECENT RESPONSES / ERRORS -->
     <div class="panel" style="margin-top: 20px;">
-        <div class="panel-title">Recent Server Responses & Dropouts</div>
+        <div class="panel-title">
+            <span>Recent Server Responses & Dropouts (Errors Log)</span>
+            <span id="errorTotalBadge" style="font-size: 12px; color: #f87171; font-weight: 600;">0 Recorded</span>
+        </div>
         <table>
             <thead>
                 <tr>
-                    <th>Time</th>
-                    <th>User / Stream</th>
+                    <th style="width: 110px;">Time</th>
+                    <th style="width: 160px;">User / Stream</th>
                     <th>Action</th>
-                    <th>Status</th>
+                    <th style="width: 90px;">Status</th>
                     <th>Details</th>
                 </tr>
             </thead>
@@ -949,6 +960,10 @@ HTML_PAGE = """<!DOCTYPE html>
                 <tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors. 100% successful responses.</td></tr>
             </tbody>
         </table>
+        <div class="pagination-container" id="errorPaginationContainer" style="display: none;">
+            <div class="page-info" id="errorPageInfo">Showing 1 to 10 of 0 errors</div>
+            <div class="page-buttons" id="errorPageButtons"></div>
+        </div>
     </div>
 
     <script>
@@ -1135,21 +1150,76 @@ HTML_PAGE = """<!DOCTYPE html>
                 }
 
                 // Responses & dropouts table
-                const errorTbody = document.getElementById('errorLogBody');
-                if (d.recent_errors && d.recent_errors.length > 0) {
-                    errorTbody.innerHTML = d.recent_errors.map(e => `
-                        <tr>
-                            <td>${e.timestamp}</td>
-                            <td style="font-weight: 600;">${e.user}</td>
-                            <td>${e.action}</td>
-                            <td><span class="status-pill" style="background: #991b1b;">${e.status}</span></td>
-                            <td style="color: #f87171;">${e.message}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    errorTbody.innerHTML = '<tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors. 100% successful responses.</td></tr>';
+                if (d.recent_errors) {
+                    cachedErrors = d.recent_errors;
+                    renderErrorTable();
                 }
             } catch (err) {}
+        }
+
+        let currentErrorPage = 1;
+        const errorPageSize = 10;
+        let cachedErrors = [];
+
+        window.changeErrorPage = function(page) {
+            currentErrorPage = page;
+            renderErrorTable();
+        };
+
+        function renderErrorTable() {
+            const errorTbody = document.getElementById('errorLogBody');
+            const paginationContainer = document.getElementById('errorPaginationContainer');
+            const pageInfo = document.getElementById('errorPageInfo');
+            const pageButtons = document.getElementById('errorPageButtons');
+            const totalBadge = document.getElementById('errorTotalBadge');
+
+            const total = cachedErrors.length;
+            if (totalBadge) totalBadge.textContent = `${total} Recorded`;
+
+            if (total === 0) {
+                errorTbody.innerHTML = '<tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors. 100% successful responses.</td></tr>';
+                if (paginationContainer) paginationContainer.style.display = 'none';
+                return;
+            }
+
+            if (paginationContainer) paginationContainer.style.display = 'flex';
+            const totalPages = Math.ceil(total / errorPageSize);
+            if (currentErrorPage > totalPages) currentErrorPage = totalPages;
+            if (currentErrorPage < 1) currentErrorPage = 1;
+
+            const startIdx = (currentErrorPage - 1) * errorPageSize;
+            const endIdx = Math.min(startIdx + errorPageSize, total);
+            if (pageInfo) pageInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} errors`;
+
+            const pageSlice = cachedErrors.slice(startIdx, endIdx);
+            errorTbody.innerHTML = pageSlice.map(e => `
+                <tr>
+                    <td style="white-space: nowrap; color: #94a3b8;">${e.timestamp}</td>
+                    <td style="font-weight: 600;">${e.user}</td>
+                    <td>${e.action}</td>
+                    <td><span class="status-pill" style="background: #991b1b; color: #fff;">${e.status}</span></td>
+                    <td style="color: #f87171; word-break: break-all;">${e.message}</td>
+                </tr>
+            `).join('');
+
+            let btnHtml = '';
+            btnHtml += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage - 1})" ${currentErrorPage === 1 ? 'disabled' : ''}>‹ Prev</button>`;
+            
+            let startPage = Math.max(1, currentErrorPage - 2);
+            let endPage = Math.min(totalPages, currentErrorPage + 2);
+            if (startPage > 1) {
+                btnHtml += `<button class="page-btn" onclick="changeErrorPage(1)">1</button>`;
+                if (startPage > 2) btnHtml += `<span style="color:#64748b; padding: 4px 6px;">...</span>`;
+            }
+            for (let p = startPage; p <= endPage; p++) {
+                btnHtml += `<button class="page-btn ${p === currentErrorPage ? 'active' : ''}" onclick="changeErrorPage(${p})">${p}</button>`;
+            }
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) btnHtml += `<span style="color:#64748b; padding: 4px 6px;">...</span>`;
+                btnHtml += `<button class="page-btn" onclick="changeErrorPage(${totalPages})">${totalPages}</button>`;
+            }
+            btnHtml += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage + 1})" ${currentErrorPage === totalPages ? 'disabled' : ''}>Next ›</button>`;
+            if (pageButtons) pageButtons.innerHTML = btnHtml;
         }
 
         window.addEventListener('DOMContentLoaded', () => {

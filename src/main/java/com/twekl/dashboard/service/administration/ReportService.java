@@ -48,6 +48,7 @@ public class ReportService {
         this.presetRepository = presetRepository;
     }
 
+    @Cacheable(value = "reportData", key = "#period != null ? #period : 'ALL'")
     public Map<String, Object> generateReport(String period) {
         Instant cutoff = getCutoffForPeriod(period);
 
@@ -267,11 +268,16 @@ public class ReportService {
         productList.sort(Comparator.comparing((Map<String, Object> p) -> (int) p.get("orderCount")).reversed());
 
         // 5. Customer Directory Summary
+        Map<Long, List<CustomerOrder>> ordersByCustomerId = new HashMap<>();
+        for (CustomerOrder o : filteredOrders) {
+            if (o.getCustomer() != null && o.getCustomer().getId() != null) {
+                ordersByCustomerId.computeIfAbsent(o.getCustomer().getId(), k -> new ArrayList<>()).add(o);
+            }
+        }
+
         Map<Long, Map<String, Object>> customerSummaryMap = new LinkedHashMap<>();
         for (Customer cust : allCustomers) {
-            List<CustomerOrder> custOrders = filteredOrders.stream()
-                    .filter(o -> o.getCustomer() != null && o.getCustomer().getId().equals(cust.getId()))
-                    .collect(Collectors.toList());
+            List<CustomerOrder> custOrders = ordersByCustomerId.getOrDefault(cust.getId(), Collections.emptyList());
 
             if (cutoff != null && custOrders.isEmpty()) continue;
 

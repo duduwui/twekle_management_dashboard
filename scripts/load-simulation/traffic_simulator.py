@@ -558,7 +558,7 @@ class TrafficEngine:
                         metrics.staff_followups_completed += 1
                         metrics.record_admin_activity("admin_sara", "followup", f"Logged review on Check #{chk_id}", resp.status, lat)
             elif roll < 0.70:
-                async with sess.get(f"{self.base_url}/admin/customers/followups?filter={time_filt}") as resp:
+                async with sess.get(f"{self.base_url}/admin/customers/followups?filter={time_filt}&limit=50") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
@@ -588,16 +588,16 @@ class TrafficEngine:
 
         t0 = time.time()
         try:
-            if roll < 0.45:
-                async with sess.get(f"{self.base_url}/admin/customers?filter={time_filt}") as resp:
+            if roll < 0.35:
+                async with sess.get(f"{self.base_url}/admin/customers?filter={time_filt}&limit=50") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
                         await self.reauth_if_needed("admin_ahmed")
                     else:
                         metrics.record_admin_activity("admin_ahmed", "pipeline", f"Checked customer directory ({time_filt})", resp.status, lat)
-            elif roll < 0.75:
-                async with sess.get(f"{self.base_url}/admin/customers/stats?filter={time_filt}") as resp:
+            elif roll < 0.65:
+                async with sess.get(f"{self.base_url}/admin/customers/stats") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
                     if resp.status == 401:
@@ -694,7 +694,7 @@ class TrafficEngine:
 
         t0 = time.time()
         try:
-            if roll < 0.50:
+            if roll < 0.35:
                 async with sess.get(f"{self.base_url}/admin/dashboard") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()
@@ -702,7 +702,7 @@ class TrafficEngine:
                         await self.reauth_if_needed("twekl_super_admin")
                     else:
                         metrics.record_admin_activity("twekl_super_admin", "admin", "Refreshed Executive Dashboard", resp.status, lat)
-            elif roll < 0.75:
+            elif roll < 0.70:
                 async with sess.get(f"{self.base_url}/admin/admins") as resp:
                     lat = (time.time() - t0) * 1000
                     await resp.read()

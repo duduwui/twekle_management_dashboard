@@ -36,8 +36,17 @@ public class CustomerController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllCustomers(
-            @RequestParam(required = false, defaultValue = "ALL") String timeFilter) {
-        List<Map<String, Object>> data = getCustomersData(timeFilter);
+            @RequestParam(value = "timeFilter", required = false) String timeFilter,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "limit", required = false) Integer limit) {
+        String effectiveFilter = (filter != null && !filter.trim().isEmpty()) ? filter : timeFilter;
+        if (effectiveFilter == null || effectiveFilter.trim().isEmpty()) {
+            effectiveFilter = "ALL";
+        }
+        List<Map<String, Object>> data = getCustomersData(effectiveFilter);
+        if (limit != null && limit > 0 && data.size() > limit) {
+            data = data.subList(0, limit);
+        }
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -49,8 +58,18 @@ public class CustomerController {
 
     @GetMapping(value = "/followups", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<CustomerFollowupSummary>>> getCustomerFollowups(
-            @RequestParam(required = false, defaultValue = "ALL") String timeFilter) {
-        return ResponseEntity.ok(ApiResponse.success(followupService.findAllSummaries(timeFilter)));
+            @RequestParam(value = "timeFilter", required = false) String timeFilter,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "limit", required = false) Integer limit) {
+        String effectiveFilter = (filter != null && !filter.trim().isEmpty()) ? filter : timeFilter;
+        if (effectiveFilter == null || effectiveFilter.trim().isEmpty()) {
+            effectiveFilter = "ALL";
+        }
+        List<CustomerFollowupSummary> summaries = followupService.findAllSummaries(effectiveFilter);
+        if (limit != null && limit > 0 && summaries.size() > limit) {
+            summaries = summaries.subList(0, limit);
+        }
+        return ResponseEntity.ok(ApiResponse.success(summaries));
     }
 
     @GetMapping(value = "/{customerId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)

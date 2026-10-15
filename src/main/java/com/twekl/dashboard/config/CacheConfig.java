@@ -21,10 +21,10 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("dashboardSummary", "timeFilterPresets", "customerStats", "satisfactionDetails", "followupSummaries") {
+        return new ConcurrentMapCacheManager("dashboardSummary", "timeFilterPresets", "customerStats", "satisfactionDetails", "followupSummaries", "reportData") {
             @Override
             protected Cache createConcurrentMapCache(String name) {
-                long ttlMs = "timeFilterPresets".equals(name) ? 60_000L : 5_000L;
+                long ttlMs = "timeFilterPresets".equals(name) ? 60_000L : 15_000L;
                 return new TtlConcurrentMapCache(name, ttlMs);
             }
         };

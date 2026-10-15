@@ -47,7 +47,8 @@ public class FollowupController {
     @GetMapping
     public String showFollowups(Model model) {
         model.addAttribute("activeTab", "followups");
-        model.addAttribute("followupSummaries", followupService.findAllSummaries("ALL"));
+        List<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> all = followupService.findAllSummaries("ALL");
+        model.addAttribute("followupSummaries", all.size() > 100 ? all.subList(0, 100) : all);
         model.addAttribute("presets", timeFilterService.findAll());
         return "administration/followup/followups";
     }

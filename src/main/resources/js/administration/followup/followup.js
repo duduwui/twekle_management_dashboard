@@ -18,43 +18,6 @@
  *      - Time range and milestone completion filter controls.
  * ============================================================================
  */
-angular.module('tweklApp')
-.factory('FollowupService', ['$http', function($http) {
-    var BASE = '/admin/followups';
-    var CUSTOMERS = '/admin/customers';
-    var ORDERS = '/admin/orders';
-
-    return {
-        // Customer directory & stats
-        getAll: function(timeFilter) {
-            return $http.get(CUSTOMERS, { params: timeFilter ? { timeFilter: timeFilter } : {} });
-        },
-        getById: function(id) {
-            return $http.get(CUSTOMERS + '/' + id);
-        },
-        getOrders: function(customerId) {
-            return $http.get(CUSTOMERS + '/' + customerId + '/orders');
-        },
-        getStats: function() {
-            return $http.get(CUSTOMERS + '/stats');
-        },
-
-        // Follow-up checklists & milestone updates
-        getFollowups: function(orderId) {
-            return $http.get(ORDERS + '/' + orderId + '/followups');
-        },
-        updateFollowup: function(id, data) {
-            return $http.put(BASE + '/' + id, data);
-        },
-        toggleStatus: function(id) {
-            return $http.patch(BASE + '/' + id + '/status', {});
-        }
-    };
-}])
-.factory('CustomerService', ['FollowupService', function(FollowupService) {
-    return FollowupService;
-}]);
-
 /* =========================================================
    FOLLOWUP CONTROLLER (MAIN FEATURE COORDINATOR)
    ========================================================= */
@@ -524,46 +487,20 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     $scope.handleFollowupImageUpload = function(element) {
         if (element.files && element.files[0]) {
             var file = element.files[0];
-            if (!file.type.match('image.*')) {
-                ToastService.error('Please select an image file');
-                return;
-            }
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var MAX_WIDTH = 1200;
-                    var MAX_HEIGHT = 1200;
-                    var width = img.width;
-                    var height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    var ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            FollowupImageHelper.processImageFile(
+                file,
+                function(dataUrl) {
                     $scope.$apply(function() {
                         $scope.editingFollowup.imageUrl = dataUrl;
                         if ($scope.$parent && $scope.$parent.editingFollowup) {
                             $scope.$parent.editingFollowup.imageUrl = dataUrl;
                         }
                     });
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                },
+                function(errMsg) {
+                    ToastService.error(errMsg);
+                }
+            );
         }
     };
 

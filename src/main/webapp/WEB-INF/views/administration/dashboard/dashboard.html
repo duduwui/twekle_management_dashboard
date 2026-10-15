@@ -10,13 +10,131 @@
         <section class="comic-card dashboard-card">
             <div class="dashboard-container">
                 <!-- 1. KPIS AND VISUAL PROGRESS -->
-                <th:block th:replace="~{administration/dashboard/dashboardKpis :: dashboardKpis}"></th:block>
+                <div class="kpi-row-5">
+                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="7">
+                        <span class="kpi-label">LAST 7 DAYS</span>
+                        <span class="kpi-value kpi-primary" th:text="${stats.customersThisWeek}">0</span>
+                        <span class="kpi-subtext">Customer registrations</span>
+                    </button>
+                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="30">
+                        <span class="kpi-label">LAST 30 DAYS</span>
+                        <span class="kpi-value kpi-primary" th:text="${stats.customersThisMonth}">0</span>
+                        <span class="kpi-subtext">Customer registrations</span>
+                    </button>
+                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="0">
+                        <span class="kpi-label">TOTAL CUSTOMERS</span>
+                        <span class="kpi-value kpi-primary" th:text="${stats.totalCustomers}">0</span>
+                        <span class="kpi-subtext">All-time total</span>
+                    </button>
+                    <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=IDLE)}">
+                        <span class="kpi-label">IN QUEUE</span>
+                        <span class="kpi-value kpi-primary" th:text="${stats.inQueueFollowups}">0</span>
+                        <span class="kpi-subtext">Pending checks not yet overdue</span>
+                    </a>
+                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="unsatisfiedFeedback">
+                        <span class="kpi-label">UNSATISFIED FEEDBACK</span>
+                        <span class="kpi-value" th:classappend="${stats.unsatisfiedCount > 0 ? 'kpi-danger' : 'kpi-primary'}" th:text="${stats.unsatisfiedCount}">0</span>
+                        <span class="kpi-subtext">View feedback and reasons</span>
+                    </button>
+                </div>
+                <div class="visual-progress-card">
+                    <div class="visual-progress-header">
+                        <span class="visual-progress-title">Follow-up Completion Progress</span>
+                        <button type="button" class="comic-btn btn-sm btn-ghost" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|">View progress</button>
+                    </div>
+                    <div class="visual-bar-track" aria-hidden="true">
+                        <div class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
+                        <div class="visual-bar-overdue" th:style="|width: ${stats.overduePercentage}%|"></div>
+                        <div class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
+                    </div>
+                    <div class="visual-legend-row" style="justify-content: center; text-align: center;">
+                        <div class="legend-item"><span class="legend-dot dot-completed"></span> Completed: <strong th:text="${stats.completedFollowups}">0</strong></div>
+                        <div class="legend-item"><span class="legend-dot dot-overdue"></span> Overdue: <strong th:text="${stats.overdueFollowups}">0</strong></div>
+                        <div class="legend-item"><span class="legend-dot dot-inqueue"></span> In queue: <strong th:text="${stats.inQueueFollowups}">0</strong></div>
+                        <div class="legend-item">Total checks: <strong th:text="${stats.totalFollowups}">0</strong></div>
+                    </div>
+                </div>
 
                 <!-- 2. PRIORITY ATTENTION TABLE -->
-                <th:block th:replace="~{administration/dashboard/priorityTable :: priorityTable}"></th:block>
+                <div class="priority-table-card">
+                    <div class="priority-header" style="justify-content: space-between;">
+                        <h3 class="priority-title" style="margin: 0;">
+                            <span>Priority Attention: Next Follow-ups (Most Overdue First)</span>
+                        </h3>
+                        <a class="comic-btn btn-sm btn-ghost" th:href="@{/admin/followups}" title="View all customers in Follow-ups tab">
+                            View All Customers
+                        </a>
+                    </div>
 
-            <!-- 3. DASHBOARD DIALOG MODALS -->
+                    <!-- When There Are Customers Needing Follow-up -->
+                    <div class="table-responsive" th:unless="${#lists.isEmpty(urgentCustomers)}">
+                        <table class="comic-table table-centered">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Phone Number</th>
+                                    <th>City</th>
+                                    <th>Milestone</th>
+                                    <th>Remaining Time</th>
+                                    <th>Status</th>
+                                    <th style="width: 120px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="summary : ${urgentCustomers}">
+                                    <td>
+                                        <strong style="color: var(--text-main);" th:text="${summary.customer.name}">Customer Name</strong>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted" th:text="${summary.customer.phoneNumber}">-</span>
+                                    </td>
+                                    <td>
+                                        <span class="comic-tag tag-gray" th:text="${summary.customer.city ?: '-'}">-</span>
+                                    </td>
+                                    <td>
+                                        <span class="font-bold" th:text="${summary.nextPendingFollowup ?: 'Pending Check'}">Milestone</span>
+                                    </td>
+                                    <td>
+                                        <span class="comic-tag live-countdown-tag"
+                                              th:classappend="${summary.overdue ? 'tag-danger' : 'tag-warning'}"
+                                              th:attr="data-minutes-left=${summary.nextPendingMinutesLeft}"
+                                              th:text="${summary.formattedRemainingTime}">
+                                            Scheduled
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="comic-tag"
+                                              th:classappend="${summary.overdue ? 'tag-danger' : 'tag-warning'}"
+                                              th:text="${summary.overdue ? 'Overdue' : 'In Queue'}">
+                                            In Queue
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a class="comic-btn btn-sm btn-primary"
+                                           th:href="@{/admin/followups/orders/{id}(id=${summary.customer.id})}"
+                                           title="Open customer follow-up orders">
+                                            Open
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State (When All Caught Up) -->
+                    <div class="priority-empty-state" th:if="${#lists.isEmpty(urgentCustomers)}" style="text-align: center;">
+                        <h4 class="priority-empty-title">All Caught Up</h4>
+                        <p class="priority-empty-desc">
+                            There are no pending or overdue follow-ups right now.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3. DASHBOARD DIALOG MODALS COMPONENT -->
             <th:block th:replace="~{administration/dashboard/dashboardModals :: dashboardModals}"></th:block>
+        </section>
     </div>
 </body>
 </html>

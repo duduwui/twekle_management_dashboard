@@ -459,32 +459,32 @@
     <!-- ========================================================= -->
     <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-        <script src="/js/core/app.js?v=15"></script>
-        <script src="/js/core/dateFilterHelper.js?v=15"></script>
-        <script src="/js/core/layout.js?v=15"></script>
-        <script src="/js/timefilter/timefilter.js?v=15"></script>
+        <script src="/js/core/app.js?v=18"></script>
+        <script src="/js/core/dateFilterHelper.js?v=18"></script>
+        <script src="/js/core/toast.js?v=18"></script>
+        <script src="/js/core/layout.js?v=18"></script>
+        <script src="/js/timefilter/timefilter.js?v=18"></script>
     </th:block>
 
     <!-- Consolidated Core Layout & Navigation for SSR Screens -->
-    <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=15"></script>
+    <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=18"></script>
 
-    <!-- Dashboard Feature (Service-Renderer-Main Architecture) -->
-    <th:block th:if="${activeTab == 'dashboard'}">
-        <script src="/js/dashboard/dashboard-service.js?v=17"></script>
-        <script src="/js/dashboard/dashboard-renderer.js?v=17"></script>
-        <script src="/js/dashboard/dashboard-main.js?v=17"></script>
+    <!-- Dashboard Feature (Responsibility-based Dashboard JS) -->
+    <script th:if="${activeTab == 'dashboard'}" src="/js/dashboard/dashboard.js?v=18"></script>
+
+    <!-- Admin Feature (Responsibility-based Admin JS) -->
+    <script th:if="${activeTab == 'admins'}" src="/js/admin/admin.js?v=18"></script>
+    <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=18"></script>
+
+    <!-- Follow-up Feature (Service, Image Helper, Controller) -->
+    <th:block th:if="${activeTab == 'followups'}">
+        <script src="/js/followup/followup-service.js?v=18"></script>
+        <script src="/js/followup/followup-image.js?v=18"></script>
+        <script src="/js/followup/followup.js?v=18"></script>
     </th:block>
 
-    <!-- Admin Feature (Service-Renderer-Main Architecture) -->
-    <th:block th:if="${activeTab == 'admins'}">
-        <script src="/js/admin/admin-service.js?v=17"></script>
-        <script src="/js/admin/admin-renderer.js?v=17"></script>
-        <script src="/js/admin/admin-main.js?v=17"></script>
-    </th:block>
-    <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=15"></script>
-    <script th:if="${activeTab == 'followups'}" src="/js/followup/followup.js?v=15"></script>
-    <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=15"></script>
-    <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=15"></script>
+    <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=18"></script>
+    <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=18"></script>
 
 </body>
 </html>

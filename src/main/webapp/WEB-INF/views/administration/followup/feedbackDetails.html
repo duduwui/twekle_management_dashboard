@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
             <!-- 3. CUSTOMER FEEDBACK & NOTES -->
-            <div th:fragment="feedbackHistoryModal" ng-if="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 20px;">
+            <div th:fragment="feedbackDetails" ng-if="customerView === 'feedback'" style="display: flex; flex-direction: column; gap: 20px;">
                 <div class="action-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 4px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <button type="button" class="back-btn" ng-click="setCustomerView('list')">

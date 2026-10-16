@@ -52,13 +52,27 @@ public class ReportService {
     public Map<String, Object> generateReport(String period) {
         Instant cutoff = getCutoffForPeriod(period);
 
+        // 1. High-level Summary Metrics using fast SQL aggregations
+        long newCustomers = cutoff == null ? customerRepository.count() : customerRepository.countByCreatedAtAfter(cutoff);
+        long totalOrdersInPeriod = cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff);
+        double revenueInPeriod = cutoff == null ? orderRepository.sumTotalRevenue() : orderRepository.sumRevenueByPeriod(cutoff);
+
         List<Customer> allCustomers = customerRepository.findAll();
         if (allCustomers.size() > 200) {
             allCustomers = allCustomers.subList(0, 200);
         }
-        List<CustomerOrder> allOrders = orderRepository.findAllWithCustomerAndChecks();
+        List<CustomerOrder> filteredOrders = orderRepository.findRecentOrdersWithCustomerAndChecks(org.springframework.data.domain.PageRequest.of(0, 300));
+        if (cutoff != null) {
+            filteredOrders = filteredOrders.stream()
+                    .filter(o -> o.getOrderDate() != null && o.getOrderDate().isAfter(cutoff))
+                    .collect(Collectors.toList());
+        }
+
         List<CustomerFeedback> allFeedbacks = feedbackRepository.findAll();
-        List<OrderFollowupCheck> allChecks = followupCheckRepository.findAllWithOrderCustomerAndPreset();
+        if (allFeedbacks.size() > 200) {
+            allFeedbacks = allFeedbacks.subList(0, 200);
+        }
+        List<OrderFollowupCheck> allChecks = followupCheckRepository.findRecentChecksWithOrderCustomerAndPreset(org.springframework.data.domain.PageRequest.of(0, 500));
         List<TimeFilterPreset> activePresets = presetRepository.findByActiveTrueOrderByDisplayOrderAsc();
         Set<Long> activePresetIds = new HashSet<>();
         Set<String> activePresetNames = new HashSet<>();
@@ -68,21 +82,6 @@ public class ReportService {
             if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
             if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
         }
-
-        // 1. High-level Summary Metrics
-        long newCustomers = allCustomers.stream()
-                .filter(c -> cutoff == null || (c.getCreatedAt() != null && c.getCreatedAt().isAfter(cutoff)))
-                .count();
-
-        List<CustomerOrder> filteredOrders = allOrders.stream()
-                .filter(o -> cutoff == null || (o.getOrderDate() != null && o.getOrderDate().isAfter(cutoff)))
-                .collect(Collectors.toList());
-
-        long totalOrdersInPeriod = filteredOrders.size();
-
-        double revenueInPeriod = filteredOrders.stream()
-                .mapToDouble(CustomerOrder::getTotalAmount)
-                .sum();
 
         List<OrderFollowupCheck> checksInPeriod = allChecks.stream()
                 .filter(c -> {
@@ -363,7 +362,7 @@ public class ReportService {
             if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
         }
 
-        List<OrderFollowupCheck> checks = followupCheckRepository.findChecksWithSatisfaction();
+        List<OrderFollowupCheck> checks = followupCheckRepository.findChecksWithSatisfaction(org.springframework.data.domain.PageRequest.of(0, 300));
         for (OrderFollowupCheck c : checks) {
             boolean isPresetActive = (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
                     || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));

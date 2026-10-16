@@ -53,7 +53,7 @@ public class FollowupService {
         List<Customer> allCustomers = cutoff == null ? customerRepository.findAll()
                 : customerRepository.findByLastOrderDateAfter(cutoff);
         if (allCustomers.isEmpty()) return List.of();
-        if (cutoff == null && allCustomers.size() > 200) {
+        if (allCustomers.size() > 200) {
             allCustomers = allCustomers.subList(0, 200);
         }
         List<Long> customerIds = allCustomers.stream().map(Customer::getId).toList();

@@ -599,16 +599,35 @@ class TrafficEngine:
                     amt = round(random.uniform(450.0, 3400.0), 2)
                     qty = random.randint(1, 4)
                     order_num = f"ORD-{cust_id}-{random.randint(10, 99)}"
-                    cur.execute(
-                        "INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) "
-                        "VALUES (%s, %s, NOW(), %s, 'DELIVERED', %s, %s)",
-                        (cust_id, items_summary, order_num, amt, qty)
-                    )
+                    roll = random.random()
+                    if roll < 0.40:
+                        # Fresh order placed 1 to 18 hours ago
+                        hrs_ago = random.randint(1, 18)
+                        order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {hrs_ago} HOUR), %s, 'DELIVERED', %s, %s)"
+                        c1_done, c1_stat = (1, 'DONE') if hrs_ago >= 12 else (0, 'PENDING')
+                        c2_done, c2_stat = (0, 'PENDING')
+                        c3_done, c3_stat = (0, 'PENDING')
+                    elif roll < 0.70:
+                        # 3 to 5 days ago (upcoming 7-day check)
+                        days_ago = random.randint(3, 5)
+                        order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
+                        c1_done, c1_stat = (1, 'DONE')
+                        c2_done, c2_stat = (0, 'PENDING')
+                        c3_done, c3_stat = (0, 'PENDING')
+                    else:
+                        # Overdue! 9 to 14 days ago (7-day milestone is OVERDUE!)
+                        days_ago = random.randint(9, 14)
+                        order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
+                        c1_done, c1_stat = (1, 'DONE')
+                        c2_done, c2_stat = (0, 'OVERDUE')
+                        c3_done, c3_stat = (0, 'PENDING')
+
+                    cur.execute(order_sql, (cust_id, items_summary, order_num, amt, qty))
                     oid = cur.lastrowid
                     cur.execute(
                         "INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, COMPLETED, MILESTONE_NAME, STATUS, TARGET_DAYS) "
-                        "VALUES (%s, 1, 'Last 24 Hours', 'DONE', 1), (%s, 0, 'Last 7 Days', 'PENDING', 7), (%s, 0, 'Last 30 Days', 'PENDING', 30)",
-                        (oid, oid, oid)
+                        "VALUES (%s, %s, 'Last 24 Hours', %s, 1), (%s, %s, 'Last 7 Days', %s, 7), (%s, %s, 'Last 30 Days', %s, 30)",
+                        (oid, c1_done, c1_stat, oid, c2_done, c2_stat, oid, c3_done, c3_stat)
                     )
                     first_chk = cur.lastrowid
                     self.active_check_ids.extend([first_chk, first_chk + 1, first_chk + 2])
@@ -640,9 +659,10 @@ class TrafficEngine:
             if roll < 0.25 and self.active_check_ids:
                 # Submit review note & rating on a follow-up check
                 chk_id = random.choice(self.active_check_ids)
+                satisfaction_val = random.choices(["SATISFIED", "NEUTRAL", "UNSATISFIED"], weights=[0.60, 0.25, 0.15])[0]
                 body = {
                     "notes": random.choice(FOLLOWUP_NOTES),
-                    "satisfaction": random.choice(["EXCELLENT", "GOOD", "NEUTRAL"])
+                    "satisfaction": satisfaction_val
                 }
                 headers = {"Content-Type": "application/json"}
                 if csrf:

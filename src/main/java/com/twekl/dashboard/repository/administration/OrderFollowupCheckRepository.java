@@ -55,6 +55,13 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "WHERE c.satisfaction IS NOT NULL AND TRIM(c.satisfaction) != '' ORDER BY c.id DESC")
     List<OrderFollowupCheck> findChecksWithSatisfaction();
 
+    @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset " +
+           "WHERE c.satisfaction IS NOT NULL AND TRIM(c.satisfaction) != '' ORDER BY c.id DESC")
+    List<OrderFollowupCheck> findChecksWithSatisfaction(org.springframework.data.domain.Pageable pageable);
+
     @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset ORDER BY c.id ASC")
     List<OrderFollowupCheck> findAllWithOrderCustomerAndPreset();
+
+    @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset ORDER BY c.id DESC")
+    List<OrderFollowupCheck> findRecentChecksWithOrderCustomerAndPreset(org.springframework.data.domain.Pageable pageable);
 }

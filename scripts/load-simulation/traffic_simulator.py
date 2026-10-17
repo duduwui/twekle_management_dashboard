@@ -23,7 +23,7 @@ import sys
 import argparse
 import json
 from collections import deque
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 try:
     import psutil
@@ -184,55 +184,64 @@ class ErrorJournal:
         try:
             with self._get_conn() as conn:
                 cur = conn.cursor()
-                if date_filter and date_filter != "ALL":
-                    cur.execute(
-                        "SELECT hour_str, count(*) FROM error_logs WHERE date_str = ? GROUP BY hour_str ORDER BY hour_str ASC",
-                        (date_filter,)
-                    )
-                else:
-                    cur.execute(
-                        "SELECT hour_str, count(*) FROM error_logs GROUP BY hour_str ORDER BY hour_str ASC"
-                    )
-                rows = cur.fetchall()
-                labels = [to_12h_hour(r[0], include_date=(date_filter == "ALL")) for r in rows]
-                counts = [r[1] for r in rows]
-                peak_hour = None
-                peak_count = 0
-                for r in rows:
-                    if r[1] > peak_count:
-                        peak_count = r[1]
-                        peak_hour = r[0]
+                cur.execute("SELECT hour_str, count(*) FROM error_logs GROUP BY hour_str")
+                err_map = {r[0]: r[1] for r in cur.fetchall()}
 
-                # Pre-calculate timeline by individual dates for instantaneous date-picker selection in UI
+                # Available dates from records
                 cur.execute("SELECT DISTINCT date_str FROM error_logs ORDER BY date_str DESC")
                 distinct_dates = [r[0] for r in cur.fetchall() if r[0]]
+                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                if today_str not in distinct_dates:
+                    distinct_dates.insert(0, today_str)
+
                 by_date = {}
                 for d in distinct_dates:
-                    cur.execute(
-                        "SELECT hour_str, count(*) FROM error_logs WHERE date_str = ? GROUP BY hour_str ORDER BY hour_str ASC",
-                        (d,)
-                    )
-                    d_rows = cur.fetchall()
+                    d_labels = []
+                    d_counts = []
                     d_peak_h = None
                     d_peak_c = 0
-                    for dr in d_rows:
-                        if dr[1] > d_peak_c:
-                            d_peak_c = dr[1]
-                            d_peak_h = dr[0]
+                    for h in range(24):
+                        h_key = f"{d} {h:02d}:00"
+                        cnt = err_map.get(h_key, 0)
+                        d_labels.append(to_12h_hour(h_key, include_date=False))
+                        d_counts.append(cnt)
+                        if cnt > d_peak_c:
+                            d_peak_c = cnt
+                            d_peak_h = h_key
                     by_date[d] = {
-                        "labels": [to_12h_hour(dr[0], include_date=False) for dr in d_rows],
-                        "counts": [dr[1] for dr in d_rows],
+                        "labels": d_labels,
+                        "counts": d_counts,
                         "peak_hour": to_12h_hour(d_peak_h, include_date=False) if d_peak_h else "None",
                         "peak_count": d_peak_c,
-                        "total": sum(dr[1] for dr in d_rows)
+                        "total": sum(d_counts)
                     }
 
+                # Build continuous timeline for "ALL" days from earliest recorded hour to current hour
+                now_utc = datetime.now(timezone.utc)
+                min_dt = datetime.strptime("2026-10-16 17:00", "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+                curr_dt = now_utc.replace(minute=0, second=0, microsecond=0)
+                all_labels = []
+                all_counts = []
+                all_peak_h = None
+                all_peak_c = 0
+
+                iter_dt = min_dt
+                while iter_dt <= curr_dt:
+                    h_key = iter_dt.strftime("%Y-%m-%d %H:00")
+                    cnt = err_map.get(h_key, 0)
+                    all_labels.append(to_12h_hour(h_key, include_date=True))
+                    all_counts.append(cnt)
+                    if cnt > all_peak_c:
+                        all_peak_c = cnt
+                        all_peak_h = h_key
+                    iter_dt += timedelta(hours=1)
+
                 return {
-                    "labels": labels,
-                    "counts": counts,
-                    "peak_hour": to_12h_hour(peak_hour, include_date=True) if peak_hour else "None",
-                    "peak_count": peak_count,
-                    "total": sum(counts),
+                    "labels": all_labels,
+                    "counts": all_counts,
+                    "peak_hour": to_12h_hour(all_peak_h, include_date=True) if all_peak_h else "None",
+                    "peak_count": all_peak_c,
+                    "total": sum(all_counts),
                     "by_date": by_date
                 }
         except Exception:
@@ -244,6 +253,9 @@ class ErrorJournal:
                 cur = conn.cursor()
                 cur.execute("SELECT DISTINCT date_str FROM error_logs ORDER BY date_str DESC")
                 dates = [r[0] for r in cur.fetchall() if r[0]]
+                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                if today_str not in dates:
+                    dates.insert(0, today_str)
                 return ["ALL"] + dates
         except Exception:
             return ["ALL"]
@@ -1388,6 +1400,10 @@ HTML_PAGE = """<!DOCTYPE html>
                 <span id="errorPeakBadge" style="font-size: 11px; color: #fbbf24; background: #78350f33; border: 1px solid #d9770655; padding: 2px 8px; border-radius: 4px;">Peak: Analyzing...</span>
             </div>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <div style="display: flex; gap: 4px; background: #0f172a; padding: 2px; border-radius: 6px; border: 1px solid #334155;">
+                    <button id="chartTypeAreaBtn" onclick="setErrorChartType('line')" class="page-btn active" style="padding: 2px 8px; font-size: 11px;">📈 Timeline Area</button>
+                    <button id="chartTypeBarBtn" onclick="setErrorChartType('bar')" class="page-btn" style="padding: 2px 8px; font-size: 11px;">📊 Bars</button>
+                </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="font-size: 11px; color: #94a3b8; font-weight: 500;">Filter Date:</span>
                     <input type="date" class="search-input" id="errorDatePicker" onchange="filterErrorDate(this.value)" style="width: 135px; padding: 3px 8px; font-size: 11px; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; cursor: pointer;">
@@ -1453,15 +1469,19 @@ HTML_PAGE = """<!DOCTYPE html>
             if (errCanvas) {
                 const errCtx = errCanvas.getContext('2d');
                 errorTimelineChart = new Chart(errCtx, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
                         labels: [],
                         datasets: [{
                             label: 'Errors Recorded',
-                            backgroundColor: 'rgba(239, 68, 68, 0.75)',
                             borderColor: '#ef4444',
-                            borderWidth: 1,
-                            borderRadius: 3,
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#ef4444',
                             data: []
                         }]
                     },
@@ -1774,6 +1794,86 @@ HTML_PAGE = """<!DOCTYPE html>
         let selectedErrorDate = 'ALL';
         let errorSearchQuery = '';
         let latestTimelineData = null;
+        let currentErrorChartType = 'line';
+
+        window.setErrorChartType = function(type) {
+            currentErrorChartType = type;
+            const areaBtn = document.getElementById('chartTypeAreaBtn');
+            const barBtn = document.getElementById('chartTypeBarBtn');
+            if (areaBtn && barBtn) {
+                if (type === 'line') {
+                    areaBtn.classList.add('active');
+                    barBtn.classList.remove('active');
+                } else {
+                    barBtn.classList.add('active');
+                    areaBtn.classList.remove('active');
+                }
+            }
+            if (!errorTimelineChart) return;
+            const currentLabels = errorTimelineChart.data.labels;
+            const currentData = errorTimelineChart.data.datasets[0].data;
+            errorTimelineChart.destroy();
+            const errCanvas = document.getElementById('errorTimelineChart');
+            const errCtx = errCanvas.getContext('2d');
+
+            const datasetConfig = type === 'line' ? {
+                label: 'Errors Recorded',
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: currentData.map(c => c > 0 ? '#ef4444' : '#22c55e'),
+                data: currentData
+            } : {
+                label: 'Errors Recorded',
+                backgroundColor: currentData.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(249, 115, 22, 0.75)'),
+                borderColor: '#ef4444',
+                borderWidth: 1,
+                borderRadius: 3,
+                data: currentData
+            };
+
+            errorTimelineChart = new Chart(errCtx, {
+                type: type,
+                data: {
+                    labels: currentLabels,
+                    datasets: [datasetConfig]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 45, minRotation: 0 }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8', precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleColor: '#38bdf8',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            callbacks: {
+                                title: (items) => `Hour: ${items[0].label} (12h)`,
+                                label: (item) => `Errors: ${item.raw.toLocaleString()}`
+                            }
+                        }
+                    }
+                }
+            });
+        };
 
         function updateErrorTimelineChart() {
             if (!errorTimelineChart || !latestTimelineData) return;
@@ -1805,7 +1905,11 @@ HTML_PAGE = """<!DOCTYPE html>
 
             errorTimelineChart.data.labels = labels;
             errorTimelineChart.data.datasets[0].data = counts;
-            errorTimelineChart.data.datasets[0].backgroundColor = counts.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(249, 115, 22, 0.75)');
+            if (currentErrorChartType === 'line') {
+                errorTimelineChart.data.datasets[0].pointBackgroundColor = counts.map(c => c > 0 ? '#ef4444' : '#22c55e');
+            } else {
+                errorTimelineChart.data.datasets[0].backgroundColor = counts.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(249, 115, 22, 0.75)');
+            }
             errorTimelineChart.update();
 
             const peakBadge = document.getElementById('errorPeakBadge');

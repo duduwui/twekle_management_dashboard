@@ -910,7 +910,23 @@ class TrafficEngine:
                     metrics.record_api_intake(resp.status, lat)
                 elif resp.status in (401, 403):
                     await self.reauth_if_needed("twekl_super_admin")
-                    metrics.record_api_intake(resp.status, lat, f"API Auth Refresh ({resp.status})")
+                    new_meta = self.admin_sessions.get("twekl_super_admin")
+                    new_csrf = new_meta.get("csrf_token", "") if new_meta else ""
+                    retry_headers = {"Content-Type": "application/json"}
+                    if new_csrf:
+                        retry_headers["X-CSRF-TOKEN"] = new_csrf
+                    async with session.post(f"{self.base_url}/admin/customers", json=payload, headers=retry_headers) as retry_resp:
+                        retry_lat = (time.time() - t0) * 1000
+                        if retry_resp.status == 201:
+                            retry_data = await retry_resp.json()
+                            new_id = retry_data.get("data", {}).get("id")
+                            if new_id:
+                                self.customer_id_pool.append(new_id)
+                                metrics.automated_customers_created += 1
+                                asyncio.create_task(self._insert_automated_order_db(new_id, product))
+                            metrics.record_api_intake(retry_resp.status, retry_lat)
+                        else:
+                            metrics.record_api_intake(retry_resp.status, retry_lat, f"API Intake HTTP {retry_resp.status}")
                 else:
                     metrics.record_api_intake(resp.status, lat, f"API Intake HTTP {resp.status}")
         except Exception as ex:
@@ -1003,7 +1019,19 @@ class TrafficEngine:
                     await resp.read()
                     if resp.status in (401, 403):
                         await self.reauth_if_needed(username)
-                        metrics.record_admin_activity(username, "followup", f"Auth Refresh ({resp.status})", resp.status, lat, f"CSRF/Session Expired ({resp.status})")
+                        new_meta = self.admin_sessions.get(username)
+                        new_csrf = new_meta.get("csrf_token", "") if new_meta else ""
+                        retry_headers = {"Content-Type": "application/json"}
+                        if new_csrf:
+                            retry_headers["X-CSRF-TOKEN"] = new_csrf
+                        async with sess.post(f"{self.base_url}/admin/followups/{chk_id}", json=body, headers=retry_headers) as retry_resp:
+                            retry_lat = (time.time() - t0) * 1000
+                            await retry_resp.read()
+                            if retry_resp.status == 200:
+                                metrics.staff_followups_completed += 1
+                                metrics.record_admin_activity(username, "followup", f"Logged check review on #{chk_id}", retry_resp.status, retry_lat)
+                            else:
+                                metrics.record_admin_activity(username, "followup", f"Followup retry HTTP {retry_resp.status}", retry_resp.status, retry_lat)
                     else:
                         metrics.staff_followups_completed += 1
                         metrics.record_admin_activity(username, "followup", f"Logged check review on #{chk_id}", resp.status, lat)

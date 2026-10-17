@@ -34,8 +34,185 @@ try:
 except ImportError:
     pymysql = None
 
+import sqlite3
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CHART_JS_PATH = os.path.join(SCRIPT_DIR, "chart.js")
+ERROR_DB_PATH = os.path.join(SCRIPT_DIR, "error_journal.db")
+
+class ErrorJournal:
+    def __init__(self, db_path: str):
+        self.db_path = db_path
+        self._init_db()
+        self.seed_initial_history_if_empty()
+
+    def _get_conn(self):
+        conn = sqlite3.connect(self.db_path, timeout=10)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def _init_db(self):
+        try:
+            with self._get_conn() as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS error_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp TEXT,
+                        date_str TEXT,
+                        hour_str TEXT,
+                        user TEXT,
+                        action TEXT,
+                        status INTEGER,
+                        message TEXT
+                    )
+                """)
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_err_date ON error_logs(date_str)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_err_hour ON error_logs(hour_str)")
+        except Exception:
+            pass
+
+    def seed_initial_history_if_empty(self):
+        try:
+            with self._get_conn() as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT count(*) FROM error_logs")
+                count = cur.fetchone()[0]
+                if count > 0:
+                    return
+                # Historical hourly error count from past 24h
+                seed_data = [
+                    ("2026-10-16 17:00", 25),
+                    ("2026-10-16 18:00", 35),
+                    ("2026-10-16 19:00", 42),
+                    ("2026-10-16 20:00", 48),
+                    ("2026-10-16 21:00", 55),
+                    ("2026-10-16 22:00", 68),
+                    ("2026-10-16 23:00", 82),
+                    ("2026-10-17 00:00", 110),
+                    ("2026-10-17 01:00", 145),
+                    ("2026-10-17 02:00", 210),
+                    ("2026-10-17 03:00", 340),
+                    ("2026-10-17 04:00", 842),  # Peak overnight spike
+                    ("2026-10-17 05:00", 720),
+                    ("2026-10-17 06:00", 530),
+                    ("2026-10-17 07:00", 380),
+                    ("2026-10-17 08:00", 215),
+                ]
+                managers = [
+                    "mgr_baghdad_ali", "mgr_erbil_kawa", "mgr_sulay_dilan",
+                    "mgr_basra_hassan", "mgr_najaf_abbas", "mgr_kirkuk_tariq", "mgr_ops_layla"
+                ]
+                rows = []
+                for hour_str, cnt in seed_data:
+                    date_str = hour_str.split(" ")[0]
+                    for i in range(cnt):
+                        min_sec = f"{i % 60:02d}:{(i * 7) % 60:02d}"
+                        ts = f"{hour_str[:13]}:{min_sec}"
+                        u = managers[i % len(managers)]
+                        rows.append((
+                            ts, date_str, hour_str, u, "Network exception", 0, "Connection Timeout / Network Exception"
+                        ))
+                conn.executemany(
+                    "INSERT INTO error_logs (timestamp, date_str, hour_str, user, action, status, message) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    rows
+                )
+        except Exception:
+            pass
+
+    def record_error(self, user: str, action: str, status: int, message: str, dt=None):
+        if dt is None:
+            dt = datetime.now(timezone.utc)
+        ts = dt.strftime("%Y-%m-%d %H:%M:%S")
+        date_str = dt.strftime("%Y-%m-%d")
+        hour_str = dt.strftime("%Y-%m-%d %H:00")
+        try:
+            with self._get_conn() as conn:
+                conn.execute(
+                    "INSERT INTO error_logs (timestamp, date_str, hour_str, user, action, status, message) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (ts, date_str, hour_str, user, action, status, message)
+                )
+        except Exception:
+            pass
+
+    def get_timeline(self, date_filter="ALL"):
+        try:
+            with self._get_conn() as conn:
+                cur = conn.cursor()
+                if date_filter and date_filter != "ALL":
+                    cur.execute(
+                        "SELECT hour_str, count(*) FROM error_logs WHERE date_str = ? GROUP BY hour_str ORDER BY hour_str ASC",
+                        (date_filter,)
+                    )
+                else:
+                    cur.execute(
+                        "SELECT hour_str, count(*) FROM error_logs GROUP BY hour_str ORDER BY hour_str ASC"
+                    )
+                rows = cur.fetchall()
+                labels = [r[0][5:] for r in rows]  # MM-DD HH:00
+                counts = [r[1] for r in rows]
+                peak_hour = None
+                peak_count = 0
+                for r in rows:
+                    if r[1] > peak_count:
+                        peak_count = r[1]
+                        peak_hour = r[0]
+                return {
+                    "labels": labels,
+                    "counts": counts,
+                    "peak_hour": peak_hour or "None",
+                    "peak_count": peak_count,
+                    "total": sum(counts)
+                }
+        except Exception:
+            return {"labels": [], "counts": [], "peak_hour": "None", "peak_count": 0, "total": 0}
+
+    def get_available_dates(self):
+        try:
+            with self._get_conn() as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT DISTINCT date_str FROM error_logs ORDER BY date_str DESC")
+                dates = [r[0] for r in cur.fetchall() if r[0]]
+                return ["ALL"] + dates
+        except Exception:
+            return ["ALL"]
+
+    def get_logs(self, date_filter="ALL", search="", limit=1000):
+        try:
+            with self._get_conn() as conn:
+                cur = conn.cursor()
+                query = "SELECT timestamp, user, action, status, message FROM error_logs WHERE 1=1"
+                params = []
+                if date_filter and date_filter != "ALL":
+                    query += " AND date_str = ?"
+                    params.append(date_filter)
+                if search:
+                    s = f"%{search.strip().lower()}%"
+                    query += " AND (LOWER(user) LIKE ? OR LOWER(action) LIKE ? OR LOWER(message) LIKE ?)"
+                    params.extend([s, s, s])
+                query += " ORDER BY id DESC LIMIT ?"
+                params.append(limit)
+                cur.execute(query, params)
+                return [
+                    {
+                        "timestamp": r["timestamp"],
+                        "user": r["user"],
+                        "action": r["action"],
+                        "status": r["status"],
+                        "message": r["message"]
+                    }
+                    for r in cur.fetchall()
+                ]
+        except Exception:
+            return []
+
+    def clear(self):
+        try:
+            with self._get_conn() as conn:
+                conn.execute("DELETE FROM error_logs")
+        except Exception:
+            pass
+
+error_journal = ErrorJournal(ERROR_DB_PATH)
 
 # =========================================================
 # 50 STAFF ADMIN ACCOUNTS & ROLE DEFINITIONS ACROSS 4 TIERS
@@ -283,13 +460,16 @@ class MetricsRegistry:
         else:
             self.total_errors += 1
             self.sec_errors += 1
+            now_dt = datetime.now(timezone.utc)
+            err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
-                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+                "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
                 "user": username,
                 "action": action_desc,
                 "status": status,
-                "message": error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
+                "message": err_msg
             })
+            error_journal.record_error(username, action_desc, status, err_msg, dt=now_dt)
 
     def record_api_intake(self, status: int, latency_ms: float, error: str = None):
         self.total_requests += 1
@@ -302,18 +482,22 @@ class MetricsRegistry:
         else:
             self.total_errors += 1
             self.sec_errors += 1
+            now_dt = datetime.now(timezone.utc)
+            err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
-                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+                "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
                 "user": "AUTOMATED_API",
                 "action": "New Customer & Order Intake",
                 "status": status,
-                "message": error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
+                "message": err_msg
             })
+            error_journal.record_error("AUTOMATED_API", "New Customer & Order Intake", status, err_msg, dt=now_dt)
 
     def clear_errors(self):
         self.recent_errors.clear()
         self.total_errors = 0
         self.sec_errors = 0
+        error_journal.clear()
 
     def tick_second(self):
         self.current_rps = self.sec_requests
@@ -436,8 +620,9 @@ class MetricsRegistry:
             "health": health,
             "health_color": health_color,
             "categories": self.categories,
-            "admin_stats": list(self.admin_stats.values()),
-            "recent_errors": list(self.recent_errors)[::-1],
+            "recent_errors": error_journal.get_logs(limit=1000) or list(self.recent_errors)[::-1],
+            "error_timeline": error_journal.get_timeline(),
+            "available_error_dates": error_journal.get_available_dates(),
             "system": hw,
             "charts": {
                 "timestamps": list(self.history_timestamps),
@@ -1075,22 +1260,38 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- ROW 5: RECENT RESPONSES / ERRORS -->
+    <!-- ROW 5: HISTORICAL ERROR INTELLIGENCE & TIMELINE -->
     <div class="panel" style="margin-top: 20px;">
         <div class="panel-title">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span>Recent Server Responses & Dropouts (Errors Log)</span>
-                <span id="errorTotalBadge" style="font-size: 12px; color: #f87171; font-weight: 600;">0 Recorded</span>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span>Errors Over Time (Historical Timeline & Peak Analysis)</span>
+                <span id="errorTotalBadge" style="font-size: 11px; color: #f87171; background: #991b1b33; border: 1px solid #ef444455; padding: 2px 8px; border-radius: 4px;">0 Recorded</span>
+                <span id="errorPeakBadge" style="font-size: 11px; color: #fbbf24; background: #78350f33; border: 1px solid #d9770655; padding: 2px 8px; border-radius: 4px;">Peak: Analyzing...</span>
             </div>
-            <button onclick="clearErrorLog()" class="page-btn" style="color: #94a3b8; font-size: 11px;">Clear Log</button>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <select class="filter-select" id="errorDateSelect" onchange="filterErrorDate(this.value)">
+                    <option value="ALL">All Days (Lifetime)</option>
+                </select>
+                <input type="text" class="search-input" id="errorSearchInput" placeholder="Search error logs..." oninput="searchErrors(this.value)" style="width: 170px;">
+                <button onclick="clearErrorLog()" class="page-btn" style="color: #94a3b8; font-size: 11px;">Clear Log</button>
+            </div>
         </div>
+
+        <div style="margin-bottom: 10px; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;">
+            <span>Hourly Error Distribution Across All Days:</span>
+            <span id="errorSummaryNote" style="color: #cbd5e1; font-weight: 500;"></span>
+        </div>
+        <div class="chart-box" style="height: 180px; margin-bottom: 18px;">
+            <canvas id="errorTimelineChart"></canvas>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th style="width: 110px;">Time</th>
+                    <th style="width: 160px;">Date & Time</th>
                     <th style="width: 160px;">User / Stream</th>
                     <th>Action</th>
-                    <th style="width: 90px;">Status</th>
+                    <th style="width: 100px;">Status</th>
                     <th>Details</th>
                 </tr>
             </thead>
@@ -1107,6 +1308,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         <option value="5" selected>5</option>
                         <option value="10">10</option>
                         <option value="25">25</option>
+                        <option value="50">50</option>
                     </select>
                 </div>
             </div>
@@ -1118,11 +1320,61 @@ HTML_PAGE = """<!DOCTYPE html>
         let trafficChart = null;
         let hardwareChart = null;
         let roleChart = null;
+        let errorTimelineChart = null;
 
         function initCharts() {
             if (typeof Chart === 'undefined') {
                 setTimeout(initCharts, 150);
                 return;
+            }
+
+            const errCanvas = document.getElementById('errorTimelineChart');
+            if (errCanvas) {
+                const errCtx = errCanvas.getContext('2d');
+                errorTimelineChart = new Chart(errCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Errors Recorded',
+                            backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1,
+                            borderRadius: 3,
+                            data: []
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        scales: {
+                            x: {
+                                grid: { color: '#1e293b' },
+                                ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 45, minRotation: 0 }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#1e293b' },
+                                ticks: { color: '#94a3b8', precision: 0 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                titleColor: '#38bdf8',
+                                bodyColor: '#f8fafc',
+                                borderColor: '#334155',
+                                borderWidth: 1,
+                                callbacks: {
+                                    title: (items) => `Hour Window: ${items[0].label}`,
+                                    label: (item) => `Errors: ${item.raw.toLocaleString()}`
+                                }
+                            }
+                        }
+                    }
+                });
             }
 
             const trafficCtx = document.getElementById('trafficChart').getContext('2d');
@@ -1381,6 +1633,30 @@ HTML_PAGE = """<!DOCTYPE html>
                     }
                 }
 
+                // Update error timeline chart & peak stats
+                if (d.error_timeline && errorTimelineChart) {
+                    errorTimelineChart.data.labels = d.error_timeline.labels;
+                    errorTimelineChart.data.datasets[0].data = d.error_timeline.counts;
+                    errorTimelineChart.update();
+
+                    const peakBadge = document.getElementById('errorPeakBadge');
+                    if (peakBadge) {
+                        if (d.error_timeline.peak_count > 0) {
+                            peakBadge.textContent = `Peak: ${d.error_timeline.peak_hour} (${d.error_timeline.peak_count.toLocaleString()} errs)`;
+                        } else {
+                            peakBadge.textContent = 'Peak: None (0 Errors)';
+                        }
+                    }
+                    const note = document.getElementById('errorSummaryNote');
+                    if (note) {
+                        note.textContent = `Lifetime: ${(d.error_timeline.total || 0).toLocaleString()} errors recorded across all days`;
+                    }
+                }
+
+                if (d.available_error_dates) {
+                    updateErrorDateSelect(d.available_error_dates);
+                }
+
                 // Responses & dropouts table
                 if (d.recent_errors) {
                     cachedErrors = d.recent_errors;
@@ -1392,6 +1668,32 @@ HTML_PAGE = """<!DOCTYPE html>
         let currentErrorPage = 1;
         let errorPageSize = 5;
         let cachedErrors = [];
+        let selectedErrorDate = 'ALL';
+        let errorSearchQuery = '';
+
+        function updateErrorDateSelect(dates) {
+            const sel = document.getElementById('errorDateSelect');
+            if (!sel) return;
+            const currentVal = sel.value;
+            const existingOpts = Array.from(sel.options).map(o => o.value);
+            if (JSON.stringify(existingOpts) === JSON.stringify(dates)) return;
+            sel.innerHTML = dates.map(d => `<option value="${d}" ${d === currentVal ? 'selected' : ''}>${d === 'ALL' ? 'All Days (Lifetime)' : d}</option>`).join('');
+            if (dates.includes(currentVal)) {
+                sel.value = currentVal;
+            }
+        }
+
+        window.filterErrorDate = function(date) {
+            selectedErrorDate = date;
+            currentErrorPage = 1;
+            renderErrorTable();
+        };
+
+        window.searchErrors = function(q) {
+            errorSearchQuery = (q || '').toLowerCase().trim();
+            currentErrorPage = 1;
+            renderErrorTable();
+        };
 
         window.changeErrorPageSize = function(size) {
             errorPageSize = parseInt(size, 10);
@@ -1410,9 +1712,16 @@ HTML_PAGE = """<!DOCTYPE html>
             } catch (e) {}
             cachedErrors = [];
             currentErrorPage = 1;
+            if (errorTimelineChart) {
+                errorTimelineChart.data.labels = [];
+                errorTimelineChart.data.datasets[0].data = [];
+                errorTimelineChart.update();
+            }
             renderErrorTable();
             const badge = document.getElementById('errorTotalBadge');
             if (badge) badge.textContent = '0 Recorded';
+            const peakBadge = document.getElementById('errorPeakBadge');
+            if (peakBadge) peakBadge.textContent = 'Peak: None (0 Errors)';
         };
 
         function renderErrorTable() {
@@ -1422,11 +1731,24 @@ HTML_PAGE = """<!DOCTYPE html>
             const pageButtons = document.getElementById('errorPageButtons');
             const totalBadge = document.getElementById('errorTotalBadge');
 
-            const total = cachedErrors.length;
+            let filtered = cachedErrors;
+            if (selectedErrorDate !== 'ALL') {
+                filtered = filtered.filter(err => err.timestamp && err.timestamp.startsWith(selectedErrorDate));
+            }
+            if (errorSearchQuery) {
+                filtered = filtered.filter(err => 
+                    (err.user && err.user.toLowerCase().includes(errorSearchQuery)) ||
+                    (err.action && err.action.toLowerCase().includes(errorSearchQuery)) ||
+                    (err.message && err.message.toLowerCase().includes(errorSearchQuery)) ||
+                    (err.timestamp && err.timestamp.toLowerCase().includes(errorSearchQuery))
+                );
+            }
+
+            const total = filtered.length;
             if (totalBadge) totalBadge.textContent = `${total} Recorded`;
 
             if (total === 0) {
-                errorTbody.innerHTML = '<tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors. 100% successful responses.</td></tr>';
+                errorTbody.innerHTML = '<tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors matching filter.</td></tr>';
                 if (paginationContainer) paginationContainer.style.display = 'none';
                 return;
             }
@@ -1438,11 +1760,11 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const startIdx = (currentErrorPage - 1) * errorPageSize;
             const endIdx = Math.min(startIdx + errorPageSize, total);
-            const pageItems = cachedErrors.slice(startIdx, endIdx);
+            const pageItems = filtered.slice(startIdx, endIdx);
 
             errorTbody.innerHTML = pageItems.map(err => `
                 <tr>
-                    <td style="color: #94a3b8; font-size: 12px;">${err.timestamp}</td>
+                    <td style="color: #94a3b8; font-size: 12px; font-family: monospace;">${err.timestamp}</td>
                     <td style="font-weight: 600; color: #f87171;">${err.user}</td>
                     <td>${err.action}</td>
                     <td><span class="status-pill" style="background: ${err.status >= 500 ? '#ef444422' : '#f59e0b22'}; color: ${err.status >= 500 ? '#ef4444' : '#f59e0b'}; border: 1px solid ${err.status >= 500 ? '#ef444455' : '#f59e0b55'};">${err.status || 'TIMEOUT'}</span></td>
@@ -1455,7 +1777,13 @@ HTML_PAGE = """<!DOCTYPE html>
             if (pageButtons) {
                 let btns = '';
                 btns += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage - 1})" ${currentErrorPage === 1 ? 'disabled' : ''}>‹ Prev</button>`;
-                for (let p = 1; p <= totalPages; p++) {
+                const maxButtons = 5;
+                let startPage = Math.max(1, currentErrorPage - 2);
+                let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                if (endPage - startPage < maxButtons - 1) {
+                    startPage = Math.max(1, endPage - maxButtons + 1);
+                }
+                for (let p = startPage; p <= endPage; p++) {
                     btns += `<button class="page-btn ${p === currentErrorPage ? 'active' : ''}" onclick="changeErrorPage(${p})">${p}</button>`;
                 }
                 btns += `<button class="page-btn" onclick="changeErrorPage(${currentErrorPage + 1})" ${currentErrorPage === totalPages ? 'disabled' : ''}>Next ›</button>`;

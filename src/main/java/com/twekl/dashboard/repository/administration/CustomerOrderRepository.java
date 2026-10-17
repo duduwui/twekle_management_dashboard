@@ -34,6 +34,9 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.checks ORDER BY o.orderDate DESC")
     List<CustomerOrder> findRecentOrdersWithCustomerAndChecks(org.springframework.data.domain.Pageable pageable);
 
+    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE (:cutoff IS NULL OR o.orderDate >= :cutoff) ORDER BY o.orderDate DESC, o.id DESC")
+    List<CustomerOrder> findRecentOrdersWithCustomer(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM CustomerOrder o")
     Double sumTotalRevenue();
 

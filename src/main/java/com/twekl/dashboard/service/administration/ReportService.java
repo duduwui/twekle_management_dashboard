@@ -57,21 +57,20 @@ public class ReportService {
         long totalOrdersInPeriod = cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff);
         double revenueInPeriod = cutoff == null ? orderRepository.sumTotalRevenue() : orderRepository.sumRevenueByPeriod(cutoff);
 
-        List<Customer> allCustomers = customerRepository.findAll();
-        if (allCustomers.size() > 200) {
-            allCustomers = allCustomers.subList(0, 200);
-        }
-        List<CustomerOrder> filteredOrders = orderRepository.findRecentOrdersWithCustomerAndChecks(org.springframework.data.domain.PageRequest.of(0, 300));
-        if (cutoff != null) {
-            filteredOrders = filteredOrders.stream()
-                    .filter(o -> o.getOrderDate() != null && o.getOrderDate().isAfter(cutoff))
-                    .collect(Collectors.toList());
-        }
+        List<Customer> allCustomers = cutoff == null
+                ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
+                : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")));
 
-        List<CustomerFeedback> allFeedbacks = feedbackRepository.findAll();
-        if (allFeedbacks.size() > 200) {
-            allFeedbacks = allFeedbacks.subList(0, 200);
-        }
+        List<CustomerOrder> filteredOrders = orderRepository.findRecentOrdersWithCustomer(cutoff, org.springframework.data.domain.PageRequest.of(0, 300));
+        List<Long> orderIds = filteredOrders.stream().map(CustomerOrder::getId).filter(Objects::nonNull).toList();
+        List<OrderFollowupCheck> orderChecks = orderIds.isEmpty() ? Collections.emptyList() : followupCheckRepository.findByOrderIds(orderIds);
+        Map<Long, List<OrderFollowupCheck>> checksByOrderId = orderChecks.stream()
+                .filter(c -> c.getOrder() != null && c.getOrder().getId() != null)
+                .collect(Collectors.groupingBy(c -> c.getOrder().getId()));
+
+        List<CustomerFeedback> allFeedbacks = feedbackRepository.findRecentFeedbacks(cutoff, org.springframework.data.domain.PageRequest.of(0, 200));
+        double avgRating = feedbackRepository.getAverageRating(cutoff);
+
         List<OrderFollowupCheck> allChecks = followupCheckRepository.findRecentChecksWithOrderCustomerAndPreset(org.springframework.data.domain.PageRequest.of(0, 500));
         List<TimeFilterPreset> activePresets = presetRepository.findByActiveTrueOrderByDisplayOrderAsc();
         Set<Long> activePresetIds = new HashSet<>();
@@ -104,12 +103,6 @@ public class ReportService {
 
         long totalChecks = checksInPeriod.size();
         double completionRate = totalChecks > 0 ? (double) completedChecks / totalChecks * 100.0 : 0.0;
-
-        double avgRating = allFeedbacks.stream()
-                .filter(f -> cutoff == null || (f.getFeedbackDate() != null && f.getFeedbackDate().isAfter(cutoff)))
-                .mapToInt(CustomerFeedback::getRating)
-                .average()
-                .orElse(0.0);
 
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("newCustomers", newCustomers);
@@ -246,22 +239,20 @@ public class ReportService {
                 pData.putIfAbsent("unsatisfiedCount", 0);
                 pData.putIfAbsent("notesCount", 0);
 
-                Collection<OrderFollowupCheck> orderChecks = ord.getChecks();
-                if (orderChecks != null) {
-                    for (OrderFollowupCheck chk : orderChecks) {
-                        if (chk.getSatisfaction() != null) {
-                            String sat = chk.getSatisfaction().toUpperCase();
-                            if ("SATISFIED".equals(sat) || "5".equals(sat) || "4".equals(sat)) {
-                                pData.put("satisfiedCount", (int) pData.get("satisfiedCount") + 1);
-                            } else if ("NEUTRAL".equals(sat) || "3".equals(sat)) {
-                                pData.put("neutralCount", (int) pData.get("neutralCount") + 1);
-                            } else if ("UNSATISFIED".equals(sat) || "1".equals(sat) || "2".equals(sat)) {
-                                pData.put("unsatisfiedCount", (int) pData.get("unsatisfiedCount") + 1);
-                            }
+                List<OrderFollowupCheck> checksForOrder = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
+                for (OrderFollowupCheck chk : checksForOrder) {
+                    if (chk.getSatisfaction() != null) {
+                        String sat = chk.getSatisfaction().toUpperCase();
+                        if ("SATISFIED".equals(sat) || "5".equals(sat) || "4".equals(sat)) {
+                            pData.put("satisfiedCount", (int) pData.get("satisfiedCount") + 1);
+                        } else if ("NEUTRAL".equals(sat) || "3".equals(sat)) {
+                            pData.put("neutralCount", (int) pData.get("neutralCount") + 1);
+                        } else if ("UNSATISFIED".equals(sat) || "1".equals(sat) || "2".equals(sat)) {
+                            pData.put("unsatisfiedCount", (int) pData.get("unsatisfiedCount") + 1);
                         }
-                        if (chk.getNotes() != null && !chk.getNotes().trim().isEmpty()) {
-                            pData.put("notesCount", (int) pData.get("notesCount") + 1);
-                        }
+                    }
+                    if (chk.getNotes() != null && !chk.getNotes().trim().isEmpty()) {
+                        pData.put("notesCount", (int) pData.get("notesCount") + 1);
                     }
                 }
             }
@@ -294,13 +285,12 @@ public class ReportService {
 
             int pendingFollowups = 0;
             for (CustomerOrder o : custOrders) {
-                if (o.getChecks() != null) {
-                    for (OrderFollowupCheck chk : o.getChecks()) {
-                        boolean isPresetActive = (chk.getPreset() != null && activePresetIds.contains(chk.getPreset().getId()))
-                                || (chk.getMilestoneName() != null && activePresetNames.contains(chk.getMilestoneName().trim().toLowerCase()));
-                        if (isPresetActive && !chk.isCompleted()) {
-                            pendingFollowups++;
-                        }
+                List<OrderFollowupCheck> oChecks = checksByOrderId.getOrDefault(o.getId(), Collections.emptyList());
+                for (OrderFollowupCheck chk : oChecks) {
+                    boolean isPresetActive = (chk.getPreset() != null && activePresetIds.contains(chk.getPreset().getId()))
+                            || (chk.getMilestoneName() != null && activePresetNames.contains(chk.getMilestoneName().trim().toLowerCase()));
+                    if (isPresetActive && !chk.isCompleted()) {
+                        pendingFollowups++;
                     }
                 }
             }

@@ -32,5 +32,11 @@ public interface CustomerFeedbackRepository extends JpaRepository<CustomerFeedba
 
     @Query("SELECT COALESCE(SUM(f.rating), 0) FROM CustomerFeedback f")
     long sumRatings();
+
+    @Query("SELECT f FROM CustomerFeedback f WHERE (:cutoff IS NULL OR f.feedbackDate >= :cutoff) ORDER BY f.feedbackDate DESC")
+    List<CustomerFeedback> findRecentFeedbacks(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT COALESCE(AVG(f.rating), 0.0) FROM CustomerFeedback f WHERE (:cutoff IS NULL OR f.feedbackDate >= :cutoff)")
+    Double getAverageRating(@Param("cutoff") java.time.Instant cutoff);
 }
 

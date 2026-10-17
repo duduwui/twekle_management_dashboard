@@ -50,9 +50,25 @@ public class FollowupService {
     @Transactional(readOnly = true)
     public List<CustomerFollowupSummary> findAllSummaries(String timeFilter) {
         Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
-        List<Customer> allCustomers = cutoff == null ? customerRepository.findAll()
-                : customerRepository.findByLastOrderDateAfter(cutoff);
-        if (allCustomers.isEmpty()) return List.of();
+        List<Customer> allCustomers;
+        if (cutoff == null) {
+            org.springframework.data.domain.Page<Customer> page = customerRepository.findAll(
+                    org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
+            if (page != null && page.getContent() != null) {
+                allCustomers = page.getContent();
+            } else {
+                allCustomers = customerRepository.findAll();
+            }
+        } else {
+            List<Customer> paged = customerRepository.findByLastOrderDateAfter(cutoff,
+                    org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")));
+            if (paged != null && !paged.isEmpty()) {
+                allCustomers = paged;
+            } else {
+                allCustomers = customerRepository.findByLastOrderDateAfter(cutoff);
+            }
+        }
+        if (allCustomers == null || allCustomers.isEmpty()) return List.of();
         if (allCustomers.size() > 200) {
             allCustomers = allCustomers.subList(0, 200);
         }

@@ -32,6 +32,10 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "WHERE o.customer.id IN :customerIds")
     List<OrderFollowupCheck> findByCustomerIds(@Param("customerIds") List<Long> customerIds);
 
+    @Query("SELECT c FROM OrderFollowupCheck c JOIN FETCH c.order o LEFT JOIN FETCH c.preset " +
+           "WHERE o.id IN :orderIds")
+    List<OrderFollowupCheck> findByOrderIds(@Param("orderIds") List<Long> orderIds);
+
     @Query("SELECT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.preset WHERE c.order.id = :orderId " +
            "ORDER BY CASE c.durationUnit " +
            "  WHEN 'HOURS' THEN c.durationValue " +

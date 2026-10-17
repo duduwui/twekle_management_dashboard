@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
     
     List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff);
+    List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
     long countByCreatedAtAfter(java.time.Instant cutoff);
 
     Optional<Customer> findByPhoneNumber(String phoneNumber);

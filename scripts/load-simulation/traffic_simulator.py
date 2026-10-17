@@ -42,49 +42,64 @@ CHART_JS_PATH = os.path.join(SCRIPT_DIR, "chart.js")
 ERROR_DB_PATH = os.path.join(SCRIPT_DIR, "error_journal.db")
 STATE_FILE_PATH = os.path.join(SCRIPT_DIR, "simulator_state.json")
 
-def to_12h_ts(ts_str: str) -> str:
-    """Format timestamp to 12-hour format YYYY-MM-DD hh:mm:ss AM/PM"""
+def to_24h_ts(ts_str: str) -> str:
+    """Format timestamp to 24-hour format YYYY-MM-DD HH:mm:ss"""
     if not ts_str:
         return ts_str
     try:
-        if "AM" in ts_str or "PM" in ts_str:
-            return ts_str
         parts = ts_str.strip().split(" ")
-        if len(parts) == 2:
-            d_part, t_part = parts[0], parts[1]
+        if len(parts) >= 3 and parts[2].upper() in ("AM", "PM"):
+            d_part, t_part, ampm = parts[0], parts[1], parts[2].upper()
             hms = t_part.split(":")
             h = int(hms[0])
-            suffix = "AM" if h < 12 else "PM"
-            h12 = h % 12
-            if h12 == 0:
-                h12 = 12
+            if ampm == "PM" and h < 12:
+                h += 12
+            elif ampm == "AM" and h == 12:
+                h = 0
             if len(hms) == 3:
-                return f"{d_part} {h12:02d}:{hms[1]}:{hms[2]} {suffix}"
+                return f"{d_part} {h:02d}:{hms[1]}:{hms[2]}"
             elif len(hms) == 2:
-                return f"{d_part} {h12:02d}:{hms[1]} {suffix}"
+                return f"{d_part} {h:02d}:{hms[1]}:00"
+        elif len(parts) == 2:
+            return ts_str
         return ts_str
     except Exception:
         return ts_str
 
-def to_12h_hour(hour_str: str, include_date=True) -> str:
-    """Format hour bucket (YYYY-MM-DD HH:00) into 12-hour format (e.g. 10-17 4:00 AM or 4:00 AM)"""
+def to_12h_ts(ts_str: str) -> str:
+    return to_24h_ts(ts_str)
+
+def to_24h_hour(hour_str: str, include_date=True) -> str:
+    """Format hour bucket into 24-hour format (e.g. '10-17 11:00' or '11:00', '10-16 23:00' or '23:00')"""
     if not hour_str or hour_str == "None":
         return hour_str
     try:
         parts = hour_str.strip().split(" ")
-        d_part, t_part = parts[0], parts[1]
-        h, m = [int(x) for x in t_part.split(":")]
-        suffix = "AM" if h < 12 else "PM"
-        h12 = h % 12
-        if h12 == 0:
-            h12 = 12
-        time_12 = f"{h12}:{m:02d} {suffix}"
-        if include_date:
-            month_day = d_part[5:]  # "10-17"
-            return f"{month_day} {time_12}"
-        return time_12
+        if len(parts) >= 2:
+            d_part, t_part = parts[0], parts[1]
+            ampm = parts[2].upper() if len(parts) > 2 else None
+            hms = t_part.split(":")
+            h = int(hms[0])
+            m = int(hms[1]) if len(hms) > 1 else 0
+            if ampm == "PM" and h < 12:
+                h += 12
+            elif ampm == "AM" and h == 12:
+                h = 0
+            time_24 = f"{h:02d}:{m:02d}"
+            if include_date:
+                month_day = d_part[5:] if len(d_part) >= 10 else d_part
+                return f"{month_day} {time_24}"
+            return time_24
+        elif len(parts) == 1:
+            hms = parts[0].split(":")
+            if len(hms) >= 2:
+                return f"{int(hms[0]):02d}:{int(hms[1]):02d}"
+        return hour_str
     except Exception:
         return hour_str
+
+def to_12h_hour(hour_str: str, include_date=True) -> str:
+    return to_24h_hour(hour_str, include_date=include_date)
 
 class ErrorJournal:
     def __init__(self, db_path: str):
@@ -203,7 +218,7 @@ class ErrorJournal:
                     for h in range(24):
                         h_key = f"{d} {h:02d}:00"
                         cnt = err_map.get(h_key, 0)
-                        d_labels.append(to_12h_hour(h_key, include_date=False))
+                        d_labels.append(to_24h_hour(h_key, include_date=False))
                         d_counts.append(cnt)
                         if cnt > d_peak_c:
                             d_peak_c = cnt
@@ -211,7 +226,7 @@ class ErrorJournal:
                     by_date[d] = {
                         "labels": d_labels,
                         "counts": d_counts,
-                        "peak_hour": to_12h_hour(d_peak_h, include_date=False) if d_peak_h else "None",
+                        "peak_hour": to_24h_hour(d_peak_h, include_date=False) if d_peak_h else "None",
                         "peak_count": d_peak_c,
                         "total": sum(d_counts)
                     }
@@ -229,7 +244,7 @@ class ErrorJournal:
                 while iter_dt <= curr_dt:
                     h_key = iter_dt.strftime("%Y-%m-%d %H:00")
                     cnt = err_map.get(h_key, 0)
-                    all_labels.append(to_12h_hour(h_key, include_date=True))
+                    all_labels.append(to_24h_hour(h_key, include_date=True))
                     all_counts.append(cnt)
                     if cnt > all_peak_c:
                         all_peak_c = cnt
@@ -239,7 +254,7 @@ class ErrorJournal:
                 return {
                     "labels": all_labels,
                     "counts": all_counts,
-                    "peak_hour": to_12h_hour(all_peak_h, include_date=True) if all_peak_h else "None",
+                    "peak_hour": to_24h_hour(all_peak_h, include_date=True) if all_peak_h else "None",
                     "peak_count": all_peak_c,
                     "total": sum(all_counts),
                     "by_date": by_date
@@ -279,7 +294,7 @@ class ErrorJournal:
                 return [
                     {
                         "id": r["id"],
-                        "timestamp": to_12h_ts(r["timestamp"]),
+                        "timestamp": to_24h_ts(r["timestamp"]),
                         "date_str": r["date_str"],
                         "user": r["user"],
                         "action": r["action"],
@@ -586,7 +601,7 @@ class MetricsRegistry:
             now_dt = datetime.now(timezone.utc)
             err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
-                "timestamp": to_12h_ts(now_dt.strftime("%Y-%m-%d %H:%M:%S")),
+                "timestamp": to_24h_ts(now_dt.strftime("%Y-%m-%d %H:%M:%S")),
                 "date_str": now_dt.strftime("%Y-%m-%d"),
                 "user": username,
                 "action": action_desc,
@@ -609,7 +624,7 @@ class MetricsRegistry:
             now_dt = datetime.now(timezone.utc)
             err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
-                "timestamp": to_12h_ts(now_dt.strftime("%Y-%m-%d %H:%M:%S")),
+                "timestamp": to_24h_ts(now_dt.strftime("%Y-%m-%d %H:%M:%S")),
                 "date_str": now_dt.strftime("%Y-%m-%d"),
                 "user": "AUTOMATED_API",
                 "action": "New Customer & Order Intake",
@@ -1415,7 +1430,7 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
 
         <div style="margin-bottom: 10px; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <span>Hourly Error Distribution Across All Days (12-Hour AM/PM Format):</span>
+            <span>Hourly Error Distribution Across All Days (24-Hour Format):</span>
             <span id="errorSummaryNote" style="color: #cbd5e1; font-weight: 500;"></span>
         </div>
         <div class="chart-box" style="height: 180px; margin-bottom: 18px;">
@@ -1425,7 +1440,7 @@ HTML_PAGE = """<!DOCTYPE html>
         <table>
             <thead>
                 <tr>
-                    <th style="width: 190px;">Date & Time (12h)</th>
+                    <th style="width: 190px;">Date & Time (24h)</th>
                     <th style="width: 160px;">User / Stream</th>
                     <th>Action</th>
                     <th style="width: 100px;">Status</th>
@@ -1509,7 +1524,7 @@ HTML_PAGE = """<!DOCTYPE html>
                                 borderColor: '#334155',
                                 borderWidth: 1,
                                 callbacks: {
-                                    title: (items) => `Hour: ${items[0].label} (12h)`,
+                                    title: (items) => `Hour: ${items[0].label} (24h)`,
                                     label: (item) => `Errors: ${item.raw.toLocaleString()}`
                                 }
                             }
@@ -1866,7 +1881,7 @@ HTML_PAGE = """<!DOCTYPE html>
                             borderColor: '#334155',
                             borderWidth: 1,
                             callbacks: {
-                                title: (items) => `Hour: ${items[0].label} (12h)`,
+                                title: (items) => `Hour: ${items[0].label} (24h)`,
                                 label: (item) => `Errors: ${item.raw.toLocaleString()}`
                             }
                         }
@@ -1896,7 +1911,7 @@ HTML_PAGE = """<!DOCTYPE html>
                     totalVal = dateObj.total || 0;
                     peakText = dateObj.peak_count > 0 ? `Peak (${selectedErrorDate}): ${dateObj.peak_hour} (${dateObj.peak_count.toLocaleString()} errs)` : `Peak (${selectedErrorDate}): None (0 Errors)`;
                 } else {
-                    labels = ['12:00 AM', '3:00 AM', '6:00 AM', '9:00 AM', '12:00 PM', '3:00 PM', '6:00 PM', '9:00 PM'];
+                    labels = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
                     counts = [0, 0, 0, 0, 0, 0, 0, 0];
                     totalVal = 0;
                     peakText = `Peak (${selectedErrorDate}): None (0 Errors)`;
@@ -1918,9 +1933,9 @@ HTML_PAGE = """<!DOCTYPE html>
             const note = document.getElementById('errorSummaryNote');
             if (note) {
                 if (selectedErrorDate === 'ALL') {
-                    note.textContent = `Lifetime: ${totalVal.toLocaleString()} errors recorded across all days (All in 12-Hour AM/PM)`;
+                    note.textContent = `Lifetime: ${totalVal.toLocaleString()} errors recorded across all days (24-Hour Format)`;
                 } else {
-                    note.textContent = `Date ${selectedErrorDate}: ${totalVal.toLocaleString()} errors recorded (All in 12-Hour AM/PM)`;
+                    note.textContent = `Date ${selectedErrorDate}: ${totalVal.toLocaleString()} errors recorded (24-Hour Format)`;
                 }
             }
         }

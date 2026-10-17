@@ -69,6 +69,36 @@ def to_24h_ts(ts_str: str) -> str:
 def to_12h_ts(ts_str: str) -> str:
     return to_24h_ts(ts_str)
 
+def to_12h_short(h: int) -> str:
+    """Returns '12 AM', '1 AM', ..., '12 PM', '1 PM', ..., '11 PM'"""
+    try:
+        suffix = "AM" if h < 12 else "PM"
+        h12 = h % 12
+        if h12 == 0:
+            h12 = 12
+        return f"{h12} {suffix}"
+    except Exception:
+        return f"{h}"
+
+def to_12h_ts_short(ts_str: str) -> str:
+    """Format timestamp into 12-hour helper e.g. 11:42:24 AM"""
+    if not ts_str:
+        return ""
+    try:
+        parts = ts_str.strip().split(" ")
+        t_part = parts[1] if len(parts) >= 2 else parts[0]
+        hms = t_part.split(":")
+        h = int(hms[0])
+        m = hms[1] if len(hms) > 1 else "00"
+        s = hms[2][:2] if len(hms) > 2 else "00"
+        suffix = "AM" if h < 12 else "PM"
+        h12 = h % 12
+        if h12 == 0:
+            h12 = 12
+        return f"{h12}:{m}:{s} {suffix}"
+    except Exception:
+        return ""
+
 def to_24h_hour(hour_str: str, include_date=True) -> str:
     """Format hour bucket into 24-hour format (e.g. '10-17 11:00' or '11:00', '10-16 23:00' or '23:00')"""
     if not hour_str or hour_str == "None":
@@ -218,15 +248,22 @@ class ErrorJournal:
                     for h in range(24):
                         h_key = f"{d} {h:02d}:00"
                         cnt = err_map.get(h_key, 0)
-                        d_labels.append(to_24h_hour(h_key, include_date=False))
+                        d_labels.append([f"{h:02d}:00", to_12h_short(h)])
                         d_counts.append(cnt)
                         if cnt > d_peak_c:
                             d_peak_c = cnt
                             d_peak_h = h_key
+                    peak_str = "None"
+                    if d_peak_h:
+                        try:
+                            pk_h = int(d_peak_h.split(" ")[1].split(":")[0])
+                            peak_str = f"{pk_h:02d}:00 ({to_12h_short(pk_h)})"
+                        except Exception:
+                            peak_str = str(d_peak_h)
                     by_date[d] = {
                         "labels": d_labels,
                         "counts": d_counts,
-                        "peak_hour": to_24h_hour(d_peak_h, include_date=False) if d_peak_h else "None",
+                        "peak_hour": peak_str,
                         "peak_count": d_peak_c,
                         "total": sum(d_counts)
                     }
@@ -244,17 +281,27 @@ class ErrorJournal:
                 while iter_dt <= curr_dt:
                     h_key = iter_dt.strftime("%Y-%m-%d %H:00")
                     cnt = err_map.get(h_key, 0)
-                    all_labels.append(to_24h_hour(h_key, include_date=True))
+                    all_labels.append([iter_dt.strftime("%m-%d %H:00"), to_12h_short(iter_dt.hour)])
                     all_counts.append(cnt)
                     if cnt > all_peak_c:
                         all_peak_c = cnt
                         all_peak_h = h_key
                     iter_dt += timedelta(hours=1)
 
+                all_peak_str = "None"
+                if all_peak_h:
+                    try:
+                        pk_parts = all_peak_h.split(" ")
+                        pk_d = pk_parts[0][5:]
+                        pk_h = int(pk_parts[1].split(":")[0])
+                        all_peak_str = f"{pk_d} {pk_h:02d}:00 ({to_12h_short(pk_h)})"
+                    except Exception:
+                        all_peak_str = str(all_peak_h)
+
                 return {
                     "labels": all_labels,
                     "counts": all_counts,
-                    "peak_hour": to_24h_hour(all_peak_h, include_date=True) if all_peak_h else "None",
+                    "peak_hour": all_peak_str,
                     "peak_count": all_peak_c,
                     "total": sum(all_counts),
                     "by_date": by_date
@@ -295,6 +342,7 @@ class ErrorJournal:
                     {
                         "id": r["id"],
                         "timestamp": to_24h_ts(r["timestamp"]),
+                        "timestamp_12h": to_12h_ts_short(r["timestamp"]),
                         "date_str": r["date_str"],
                         "user": r["user"],
                         "action": r["action"],
@@ -599,9 +647,11 @@ class MetricsRegistry:
             self.total_errors += 1
             self.sec_errors += 1
             now_dt = datetime.now(timezone.utc)
+            ts_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
             err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
-                "timestamp": to_24h_ts(now_dt.strftime("%Y-%m-%d %H:%M:%S")),
+                "timestamp": to_24h_ts(ts_str),
+                "timestamp_12h": to_12h_ts_short(ts_str),
                 "date_str": now_dt.strftime("%Y-%m-%d"),
                 "user": username,
                 "action": action_desc,
@@ -622,9 +672,11 @@ class MetricsRegistry:
             self.total_errors += 1
             self.sec_errors += 1
             now_dt = datetime.now(timezone.utc)
+            ts_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
             err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
-                "timestamp": to_24h_ts(now_dt.strftime("%Y-%m-%d %H:%M:%S")),
+                "timestamp": to_24h_ts(ts_str),
+                "timestamp_12h": to_12h_ts_short(ts_str),
                 "date_str": now_dt.strftime("%Y-%m-%d"),
                 "user": "AUTOMATED_API",
                 "action": "New Customer & Order Intake",
@@ -1448,17 +1500,19 @@ HTML_PAGE = """<!DOCTYPE html>
                     <button id="chartTypeBarBtn" onclick="setErrorChartType('bar')" class="page-btn" style="padding: 2px 8px; font-size: 11px;">📊 Bars</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 11px; color: #94a3b8; font-weight: 500;">Filter Date:</span>
+                    <span style="font-size: 11px; color: #94a3b8; font-weight: 500;">Date:</span>
                     <input type="date" class="search-input" id="errorDatePicker" onchange="filterErrorDate(this.value)" style="width: 135px; padding: 3px 8px; font-size: 11px; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; cursor: pointer;">
-                    <button id="allDaysBtn" onclick="resetErrorDateFilter()" class="page-btn active" style="font-size: 11px; padding: 3px 8px;">All Days</button>
+                    <button id="todayBtn" onclick="selectToday()" class="page-btn active" style="font-size: 11px; padding: 3px 8px;">Today</button>
+                    <button id="yesterdayBtn" onclick="selectYesterday()" class="page-btn" style="font-size: 11px; padding: 3px 8px;">Yesterday</button>
                 </div>
-                <input type="text" class="search-input" id="errorSearchInput" placeholder="Search error logs..." oninput="searchErrors(this.value)" style="width: 160px; padding: 3px 8px; font-size: 11px;">
+                <input type="text" class="search-input" id="errorSearchInput" placeholder="Search error logs..." oninput="searchErrors(this.value)" style="width: 150px; padding: 3px 8px; font-size: 11px;">
+                <button onclick="simulateTestError()" class="page-btn" style="color: #38bdf8; font-size: 11px; padding: 3px 8px; border: 1px solid #0284c755;" title="Click to inject a simulated test error and verify chart & table update in real time">🧪 Test Live Error</button>
                 <button onclick="clearErrorLog()" class="page-btn" style="color: #94a3b8; font-size: 11px; padding: 3px 8px;">Clear Log</button>
             </div>
         </div>
 
         <div style="margin-bottom: 10px; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <span>Hourly Error Distribution Across All Days (24-Hour Format):</span>
+            <span>Hourly Error Distribution for Selected Date (Hours 1 to 24 • 12H Helper Included):</span>
             <span id="errorSummaryNote" style="color: #cbd5e1; font-weight: 500;"></span>
         </div>
         <div class="chart-box" style="height: 180px; margin-bottom: 18px;">
@@ -1468,7 +1522,7 @@ HTML_PAGE = """<!DOCTYPE html>
         <table>
             <thead>
                 <tr>
-                    <th style="width: 190px;">Date & Time (24h)</th>
+                    <th style="width: 260px;">Date & Time (24h / 12h)</th>
                     <th style="width: 160px;">User / Stream</th>
                     <th>Action</th>
                     <th style="width: 100px;">Status</th>
@@ -1552,7 +1606,18 @@ HTML_PAGE = """<!DOCTYPE html>
                                 borderColor: '#334155',
                                 borderWidth: 1,
                                 callbacks: {
-                                    title: (items) => `Hour: ${items[0].label} (24h)`,
+                                    title: (items) => {
+                                        const it = items[0];
+                                        const raw = it.label;
+                                        const hourNum = it.dataIndex + 1;
+                                        if (Array.isArray(raw)) {
+                                            return `Hour ${hourNum} of 24: ${raw[0]} (${raw[1]})`;
+                                        } else if (typeof raw === 'string' && raw.includes(',')) {
+                                            const parts = raw.split(',');
+                                            return `Hour ${hourNum} of 24: ${parts[0]} (${parts[1]})`;
+                                        }
+                                        return `Hour ${hourNum} of 24: ${raw}`;
+                                    },
                                     label: (item) => `Errors: ${item.raw.toLocaleString()}`
                                 }
                             }
@@ -1820,6 +1885,15 @@ HTML_PAGE = """<!DOCTYPE html>
                 // Update error timeline chart & peak stats
                 if (d.error_timeline) {
                     latestTimelineData = d.error_timeline;
+                    const avail = latestTimelineData.by_date ? Object.keys(latestTimelineData.by_date) : [];
+                    if (!selectedErrorDate || (latestTimelineData.by_date && !latestTimelineData.by_date[selectedErrorDate])) {
+                        if (avail.length > 0) {
+                            selectedErrorDate = avail[0];
+                        }
+                    }
+                    const picker = document.getElementById('errorDatePicker');
+                    if (picker && picker.value !== selectedErrorDate) picker.value = selectedErrorDate;
+                    updateDateButtons();
                     updateErrorTimelineChart();
                 }
 
@@ -1834,10 +1908,48 @@ HTML_PAGE = """<!DOCTYPE html>
         let currentErrorPage = 1;
         let errorPageSize = 5;
         let cachedErrors = [];
-        let selectedErrorDate = 'ALL';
+        let selectedErrorDate = '';
         let errorSearchQuery = '';
         let latestTimelineData = null;
         let currentErrorChartType = 'line';
+
+        function updateDateButtons() {
+            const todayBtn = document.getElementById('todayBtn');
+            const yesterdayBtn = document.getElementById('yesterdayBtn');
+            const avail = latestTimelineData && latestTimelineData.by_date ? Object.keys(latestTimelineData.by_date) : [];
+            const todayStr = avail.length > 0 ? avail[0] : new Date().toISOString().slice(0, 10);
+            const yesterdayStr = avail.length > 1 ? avail[1] : '';
+            if (todayBtn) todayBtn.classList.toggle('active', selectedErrorDate === todayStr);
+            if (yesterdayBtn) yesterdayBtn.classList.toggle('active', selectedErrorDate === yesterdayStr);
+        }
+
+        window.selectToday = function() {
+            const avail = latestTimelineData && latestTimelineData.by_date ? Object.keys(latestTimelineData.by_date) : [];
+            const todayStr = avail.length > 0 ? avail[0] : new Date().toISOString().slice(0, 10);
+            filterErrorDate(todayStr);
+        };
+
+        window.selectYesterday = function() {
+            const avail = latestTimelineData && latestTimelineData.by_date ? Object.keys(latestTimelineData.by_date) : [];
+            if (avail.length > 1) {
+                filterErrorDate(avail[1]);
+            } else {
+                const y = new Date();
+                y.setDate(y.getDate() - 1);
+                filterErrorDate(y.toISOString().slice(0, 10));
+            }
+        };
+
+        window.filterErrorDate = function(dateStr) {
+            if (!dateStr) return;
+            selectedErrorDate = dateStr.trim();
+            currentErrorPage = 1;
+            const picker = document.getElementById('errorDatePicker');
+            if (picker && picker.value !== selectedErrorDate) picker.value = selectedErrorDate;
+            updateDateButtons();
+            updateErrorTimelineChart();
+            renderErrorTable();
+        };
 
         window.setErrorChartType = function(type) {
             currentErrorChartType = type;
@@ -1872,7 +1984,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 data: currentData
             } : {
                 label: 'Errors Recorded',
-                backgroundColor: currentData.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(249, 115, 22, 0.75)'),
+                backgroundColor: currentData.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : (c > 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(34, 197, 94, 0.2)')),
                 borderColor: '#ef4444',
                 borderWidth: 1,
                 borderRadius: 3,
@@ -1909,7 +2021,18 @@ HTML_PAGE = """<!DOCTYPE html>
                             borderColor: '#334155',
                             borderWidth: 1,
                             callbacks: {
-                                title: (items) => `Hour: ${items[0].label} (24h)`,
+                                title: (items) => {
+                                    const it = items[0];
+                                    const raw = it.label;
+                                    const hourNum = it.dataIndex + 1;
+                                    if (Array.isArray(raw)) {
+                                        return `Hour ${hourNum} of 24: ${raw[0]} (${raw[1]})`;
+                                    } else if (typeof raw === 'string' && raw.includes(',')) {
+                                        const parts = raw.split(',');
+                                        return `Hour ${hourNum} of 24: ${parts[0]} (${parts[1]})`;
+                                    }
+                                    return `Hour ${hourNum} of 24: ${raw}`;
+                                },
                                 label: (item) => `Errors: ${item.raw.toLocaleString()}`
                             }
                         }
@@ -1926,24 +2049,24 @@ HTML_PAGE = """<!DOCTYPE html>
             let peakText = '';
             let totalVal = 0;
 
-            if (selectedErrorDate === 'ALL') {
-                labels = latestTimelineData.labels || [];
-                counts = latestTimelineData.counts || [];
-                totalVal = latestTimelineData.total || 0;
-                peakText = latestTimelineData.peak_count > 0 ? `Peak: ${latestTimelineData.peak_hour} (${latestTimelineData.peak_count.toLocaleString()} errs)` : 'Peak: None (0 Errors)';
+            const dateObj = latestTimelineData.by_date && latestTimelineData.by_date[selectedErrorDate];
+            if (dateObj) {
+                labels = dateObj.labels || [];
+                counts = dateObj.counts || [];
+                totalVal = dateObj.total || 0;
+                peakText = dateObj.peak_count > 0 ? `Peak (${selectedErrorDate}): ${dateObj.peak_hour} (${dateObj.peak_count.toLocaleString()} errs)` : `Peak (${selectedErrorDate}): None (0 Errors)`;
             } else {
-                const dateObj = latestTimelineData.by_date && latestTimelineData.by_date[selectedErrorDate];
-                if (dateObj) {
-                    labels = dateObj.labels || [];
-                    counts = dateObj.counts || [];
-                    totalVal = dateObj.total || 0;
-                    peakText = dateObj.peak_count > 0 ? `Peak (${selectedErrorDate}): ${dateObj.peak_hour} (${dateObj.peak_count.toLocaleString()} errs)` : `Peak (${selectedErrorDate}): None (0 Errors)`;
-                } else {
-                    labels = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
-                    counts = [0, 0, 0, 0, 0, 0, 0, 0];
-                    totalVal = 0;
-                    peakText = `Peak (${selectedErrorDate}): None (0 Errors)`;
-                }
+                labels = [
+                    ['00:00', '12 AM'], ['01:00', '1 AM'], ['02:00', '2 AM'], ['03:00', '3 AM'],
+                    ['04:00', '4 AM'], ['05:00', '5 AM'], ['06:00', '6 AM'], ['07:00', '7 AM'],
+                    ['08:00', '8 AM'], ['09:00', '9 AM'], ['10:00', '10 AM'], ['11:00', '11 AM'],
+                    ['12:00', '12 PM'], ['13:00', '1 PM'], ['14:00', '2 PM'], ['15:00', '3 PM'],
+                    ['16:00', '4 PM'], ['17:00', '5 PM'], ['18:00', '6 PM'], ['19:00', '7 PM'],
+                    ['20:00', '8 PM'], ['21:00', '9 PM'], ['22:00', '10 PM'], ['23:00', '11 PM']
+                ];
+                counts = new Array(24).fill(0);
+                totalVal = 0;
+                peakText = `Peak (${selectedErrorDate}): None (0 Errors)`;
             }
 
             errorTimelineChart.data.labels = labels;
@@ -1951,7 +2074,7 @@ HTML_PAGE = """<!DOCTYPE html>
             if (currentErrorChartType === 'line') {
                 errorTimelineChart.data.datasets[0].pointBackgroundColor = counts.map(c => c > 0 ? '#ef4444' : '#22c55e');
             } else {
-                errorTimelineChart.data.datasets[0].backgroundColor = counts.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(249, 115, 22, 0.75)');
+                errorTimelineChart.data.datasets[0].backgroundColor = counts.map(c => c > 500 ? 'rgba(239, 68, 68, 0.9)' : (c > 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(34, 197, 94, 0.2)'));
             }
             errorTimelineChart.update();
 
@@ -1960,33 +2083,9 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const note = document.getElementById('errorSummaryNote');
             if (note) {
-                if (selectedErrorDate === 'ALL') {
-                    note.textContent = `Lifetime: ${totalVal.toLocaleString()} errors recorded across all days (24-Hour Format)`;
-                } else {
-                    note.textContent = `Date ${selectedErrorDate}: ${totalVal.toLocaleString()} errors recorded (24-Hour Format)`;
-                }
+                note.textContent = `Date ${selectedErrorDate}: ${totalVal.toLocaleString()} errors across all 24 hours (Hours 1 to 24 • 12H Helper Included)`;
             }
         }
-
-        window.filterErrorDate = function(dateStr) {
-            selectedErrorDate = dateStr ? dateStr.trim() : 'ALL';
-            currentErrorPage = 1;
-            const allBtn = document.getElementById('allDaysBtn');
-            const picker = document.getElementById('errorDatePicker');
-            if (selectedErrorDate === 'ALL') {
-                if (allBtn) allBtn.classList.add('active');
-                if (picker) picker.value = '';
-            } else {
-                if (allBtn) allBtn.classList.remove('active');
-                if (picker && picker.value !== selectedErrorDate) picker.value = selectedErrorDate;
-            }
-            updateErrorTimelineChart();
-            renderErrorTable();
-        };
-
-        window.resetErrorDateFilter = function() {
-            filterErrorDate('ALL');
-        };
 
         window.searchErrors = function(q) {
             errorSearchQuery = (q || '').toLowerCase().trim();
@@ -2004,6 +2103,41 @@ HTML_PAGE = """<!DOCTYPE html>
             currentErrorPage = page;
             renderErrorTable();
         };
+
+        window.simulateTestError = async function() {
+            try {
+                const res = await fetch('/api/errors/simulate-test', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.message || 'Test error triggered!');
+                await fetchMetrics();
+            } catch (err) {
+                showToast('Failed to trigger test error: ' + err);
+            }
+        };
+
+        function showToast(msg) {
+            let toast = document.getElementById('testToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'testToast';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.right = '20px';
+                toast.style.background = '#0284c7';
+                toast.style.color = '#ffffff';
+                toast.style.padding = '12px 20px';
+                toast.style.borderRadius = '8px';
+                toast.style.fontSize = '12px';
+                toast.style.fontWeight = '600';
+                toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+                toast.style.zIndex = '9999';
+                toast.style.transition = 'opacity 0.3s ease';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+        }
 
         window.clearErrorLog = async function() {
             try {
@@ -2031,7 +2165,7 @@ HTML_PAGE = """<!DOCTYPE html>
             const totalBadge = document.getElementById('errorTotalBadge');
 
             let filtered = cachedErrors;
-            if (selectedErrorDate !== 'ALL') {
+            if (selectedErrorDate) {
                 filtered = filtered.filter(err => (err.date_str === selectedErrorDate) || (err.timestamp && err.timestamp.startsWith(selectedErrorDate)));
             }
             if (errorSearchQuery) {
@@ -2045,11 +2179,11 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const total = filtered.length;
             if (totalBadge) {
-                totalBadge.textContent = selectedErrorDate === 'ALL' ? `${total.toLocaleString()} Recorded (Lifetime)` : `${total.toLocaleString()} on ${selectedErrorDate}`;
+                totalBadge.textContent = `${total.toLocaleString()} on ${selectedErrorDate || 'Selected Date'}`;
             }
 
             if (total === 0) {
-                errorTbody.innerHTML = '<tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors matching filter.</td></tr>';
+                errorTbody.innerHTML = '<tr><td colspan="5" style="color: #22c55e; text-align: center;">No errors recorded for this date.</td></tr>';
                 if (paginationContainer) paginationContainer.style.display = 'none';
                 return;
             }
@@ -2065,7 +2199,10 @@ HTML_PAGE = """<!DOCTYPE html>
 
             errorTbody.innerHTML = pageItems.map(err => `
                 <tr>
-                    <td style="color: #94a3b8; font-size: 12px; font-family: monospace;">${err.timestamp}</td>
+                    <td style="color: #cbd5e1; font-size: 12px; font-family: monospace;">
+                        ${err.timestamp}
+                        ${err.timestamp_12h ? `<span style="color: #38bdf8; font-size: 11px; margin-left: 6px;">(${err.timestamp_12h})</span>` : ''}
+                    </td>
                     <td style="font-weight: 600; color: #f87171;">${err.user}</td>
                     <td>${err.action}</td>
                     <td><span class="status-pill" style="background: ${err.status >= 500 ? '#ef444422' : '#f59e0b22'}; color: ${err.status >= 500 ? '#ef4444' : '#f59e0b'}; border: 1px solid ${err.status >= 500 ? '#ef444455' : '#f59e0b55'};">${err.status || 'TIMEOUT'}</span></td>
@@ -2113,6 +2250,24 @@ async def handle_clear_errors(request):
     metrics.clear_errors()
     return web.json_response({"success": True, "message": "Error log cleared"}, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
+async def handle_simulate_test_error(request):
+    now_dt = datetime.now(timezone.utc)
+    ts_24h = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+    h_int = now_dt.hour
+    helper_12h = to_12h_short(h_int)
+    metrics.record_admin_activity(
+        "inspector_test",
+        "telemetry_check",
+        "Live Telemetry Ping",
+        500,
+        15.5,
+        f"Simulated test error: Live real-time update verified at {ts_24h} ({helper_12h})"
+    )
+    return web.json_response({
+        "success": True,
+        "message": f"Test error recorded at {ts_24h} (Hour {h_int:02d}:00 • {helper_12h})! Chart & table updated live."
+    }, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
 async def handle_chart_js(request):
     if os.path.exists(CHART_JS_PATH):
         return web.FileResponse(CHART_JS_PATH)
@@ -2124,6 +2279,8 @@ async def run_web_dashboard(port: int):
     app.router.add_get("/api/metrics", handle_metrics_api)
     app.router.add_post("/api/errors/clear", handle_clear_errors)
     app.router.add_get("/api/errors/clear", handle_clear_errors)
+    app.router.add_post("/api/errors/simulate-test", handle_simulate_test_error)
+    app.router.add_get("/api/errors/simulate-test", handle_simulate_test_error)
     app.router.add_get("/static/chart.js", handle_chart_js)
     runner = web.AppRunner(app)
     await runner.setup()

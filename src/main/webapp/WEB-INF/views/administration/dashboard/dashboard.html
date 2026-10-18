@@ -44,7 +44,7 @@
                     </div>
                     <div class="visual-bar-track" aria-hidden="true">
                         <div id="visual-bar-completed" class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
-                        <div id="visual-bar-overdue" class="visual-bar-overdue" th:style="|width: ${stats.overduePercentage}%|"></div>
+                        <div id="visual-bar-overdue" class="visual-bar-overdue" th:style="${stats.overdueFollowups > 0 ? 'width: ' + (stats.overduePercentage < 2 ? 2 : stats.overduePercentage) + '%; min-width: 8px;' : 'width: 0%; display: none;'}"></div>
                         <div id="visual-bar-inqueue" class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
                     </div>
                     <div class="visual-legend-row" style="justify-content: center; text-align: center;">

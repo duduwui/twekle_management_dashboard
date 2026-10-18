@@ -164,9 +164,17 @@ public class CustomerService {
         long customersThisWeek = customerRepository.countByCreatedAtAfter(sevenDaysAgo);
         long customersThisMonth = customerRepository.countByCreatedAtAfter(thirtyDaysAgo);
 
-        long completedPercentage = totalFollowups > 0 ? Math.round(((double) completedFollowups / totalFollowups) * 100.0) : 0L;
-        long overduePercentage = totalFollowups > 0 ? Math.round(((double) overdueFollowups / totalFollowups) * 100.0) : 0L;
-        long inQueuePercentage = totalFollowups > 0 ? Math.max(0, 100L - completedPercentage - overduePercentage) : 0L;
+        double rawComp = totalFollowups > 0 ? ((double) completedFollowups / totalFollowups) * 100.0 : 0.0;
+        double rawOverdue = totalFollowups > 0 ? ((double) overdueFollowups / totalFollowups) * 100.0 : 0.0;
+
+        // Guarantee overdue items are visually distinguishable on the progress bar if overdueFollowups > 0
+        double overdueDisplayPct = overdueFollowups > 0 ? Math.max(1.5, Math.round(rawOverdue * 10.0) / 10.0) : 0.0;
+        double compDisplayPct = Math.round(rawComp * 10.0) / 10.0;
+        double inQueueDisplayPct = Math.max(0.0, 100.0 - compDisplayPct - overdueDisplayPct);
+
+        long completedPercentage = Math.round(compDisplayPct);
+        long overduePercentage = Math.round(overdueDisplayPct);
+        long inQueuePercentage = Math.round(inQueueDisplayPct);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalCustomers", totalCustomers);

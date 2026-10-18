@@ -294,7 +294,20 @@
                 if (barComp && data.completedPercentage != null) barComp.style.width = data.completedPercentage + '%';
 
                 const barOver = document.getElementById('visual-bar-overdue');
-                if (barOver && data.overduePercentage != null) barOver.style.width = data.overduePercentage + '%';
+                if (barOver) {
+                    var ovFollowups = Number(data.overdueFollowups || 0);
+                    if (ovFollowups > 0) {
+                        var ovPct = Number(data.overduePercentage || 0);
+                        if (ovPct < 2) ovPct = 2;
+                        barOver.style.width = ovPct + '%';
+                        barOver.style.minWidth = '8px';
+                        barOver.style.display = 'block';
+                    } else {
+                        barOver.style.width = '0%';
+                        barOver.style.minWidth = '0px';
+                        barOver.style.display = 'none';
+                    }
+                }
 
                 const barQueue = document.getElementById('visual-bar-inqueue');
                 if (barQueue && data.inQueuePercentage != null) barQueue.style.width = data.inQueuePercentage + '%';

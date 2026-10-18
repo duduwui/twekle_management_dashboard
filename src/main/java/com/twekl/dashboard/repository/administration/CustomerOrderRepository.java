@@ -57,10 +57,10 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
                                                                @Param("endDate") java.time.Instant endDate,
                                                                org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT o.ITEMS_SUMMARY, COUNT(o.ID) as ord_cnt, COALESCE(SUM(o.TOTAL_AMOUNT), 0) as tot_rev, COALESCE(AVG(o.TOTAL_AMOUNT), 0) as avg_rev " +
+    @Query(value = "SELECT o.ITEMS_SUMMARY, COUNT(o.ID) as ord_cnt " +
            "FROM CUSTOMER_ORDERS o " +
            "WHERE (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate)) " +
-           "GROUP BY o.ITEMS_SUMMARY ORDER BY tot_rev DESC", nativeQuery = true)
+           "GROUP BY o.ITEMS_SUMMARY ORDER BY ord_cnt DESC", nativeQuery = true)
     List<Object[]> getProductFinancialStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
 
     @Query(value = "SELECT COUNT(o.ID), COALESCE(SUM(o.TOTAL_AMOUNT), 0) " +

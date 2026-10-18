@@ -147,8 +147,16 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('NEUTRAL', '3') THEN 1 ELSE 0 END), " +
            "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('UNSATISFIED', '1', '2') THEN 1 ELSE 0 END), " +
            "COUNT(c.ID) " +
-           "FROM CUSTOMER_ORDERS o JOIN ORDER_FOLLOWUP_CHECKS c ON o.ID = c.ORDER_ID " +
+           "FROM CUSTOMER_ORDERS o JOIN ORDER_FOLLOWUP_CHECKS c USE INDEX (idx_checks_order_sat) ON o.ID = c.ORDER_ID " +
            "WHERE (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate)) " +
            "GROUP BY o.ITEMS_SUMMARY", nativeQuery = true)
     List<Object[]> getProductSatisfactionCountsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query(value = "SELECT " +
+           "COALESCE(SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('SATISFIED', '4', '5') THEN 1 ELSE 0 END), 0), " +
+           "COALESCE(SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('NEUTRAL', '3') THEN 1 ELSE 0 END), 0), " +
+           "COALESCE(SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('UNSATISFIED', '1', '2') THEN 1 ELSE 0 END), 0) " +
+           "FROM ORDER_FOLLOWUP_CHECKS c " +
+           "WHERE (:startDate IS NULL OR (c.CREATED_AT >= :startDate AND c.CREATED_AT <= :endDate))", nativeQuery = true)
+    List<Object[]> getSatisfactionCountsCombined(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
 }

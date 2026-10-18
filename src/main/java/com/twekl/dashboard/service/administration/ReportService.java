@@ -37,6 +37,26 @@ public class ReportService {
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final TimeFilterPresetRepository presetRepository;
 
+    private static class CachedLoyaltyTiers {
+        final Map<String, Object> loyaltyTiers;
+        final long timestamp;
+        CachedLoyaltyTiers(Map<String, Object> loyaltyTiers, long timestamp) {
+            this.loyaltyTiers = loyaltyTiers;
+            this.timestamp = timestamp;
+        }
+    }
+    private volatile CachedLoyaltyTiers cachedLoyaltyTiers = null;
+
+    private static class CachedProductReviews {
+        final Map<String, long[]> reviewMap;
+        final long timestamp;
+        CachedProductReviews(Map<String, long[]> reviewMap, long timestamp) {
+            this.reviewMap = reviewMap;
+            this.timestamp = timestamp;
+        }
+    }
+    private final java.util.concurrent.ConcurrentMap<String, CachedProductReviews> productReviewsCache = new java.util.concurrent.ConcurrentHashMap<>();
+
     @Autowired
     public ReportService(final CustomerRepository customerRepository,
                          final CustomerOrderRepository orderRepository,
@@ -86,10 +106,6 @@ public class ReportService {
                 ? orderRepository.countByOrderDateBetween(startDate, rangeEnd)
                 : (cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff));
 
-        double revenueInPeriod = hasDateRange
-                ? orderRepository.sumRevenueByDateRange(startDate, rangeEnd)
-                : (cutoff == null ? orderRepository.sumTotalRevenue() : orderRepository.sumRevenueByPeriod(cutoff));
-
         List<Customer> allCustomers = hasDateRange
                 ? customerRepository.findByLastOrderDateBetween(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")))
                 : (cutoff == null
@@ -115,6 +131,8 @@ public class ReportService {
                 : (cutoff == null ? followupCheckRepository.getMilestoneStatsAll() : followupCheckRepository.getMilestoneStatsByPeriod(cutoff));
 
         Map<String, long[]> dbMilestoneCounts = new LinkedHashMap<>();
+        long totalChecks = 0L;
+        long completedChecks = 0L;
         for (Object[] row : rawMilestoneStats) {
             String name = (String) row[0];
             if (name != null) {
@@ -122,6 +140,8 @@ public class ReportService {
                 long comp = row[2] != null ? ((Number) row[2]).longValue() : 0L;
                 long pend = row[3] != null ? ((Number) row[3]).longValue() : 0L;
                 dbMilestoneCounts.put(name.trim().toLowerCase(), new long[]{tot, comp, pend});
+                totalChecks += tot;
+                completedChecks += comp;
             }
         }
 
@@ -177,14 +197,6 @@ public class ReportService {
         }
 
         // Summary follow-up metrics across entire database
-        long completedChecks = hasDateRange
-                ? followupCheckRepository.countCompletedByDateRange(startDate, rangeEnd)
-                : (cutoff == null ? followupCheckRepository.countByCompletedTrue() : followupCheckRepository.countCompletedByPeriod(cutoff));
-
-        long totalChecks = hasDateRange
-                ? followupCheckRepository.countTotalByDateRange(startDate, rangeEnd)
-                : (cutoff == null ? followupCheckRepository.count() : followupCheckRepository.countTotalByPeriod(cutoff));
-
         double completionRate = totalChecks > 0 ? Math.round(((double) completedChecks / totalChecks * 1000.0)) / 10.0 : 0.0;
 
         Map<String, Object> summary = new LinkedHashMap<>();
@@ -195,41 +207,20 @@ public class ReportService {
         summary.put("averageRating", Math.round(avgRating * 10.0) / 10.0);
         summary.put("totalFeedbacks", allFeedbacks.size());
 
-        // 3. Customer Satisfaction & Notes Ledger
-        long satCount = hasDateRange
-                ? followupCheckRepository.countSatisfiedByDateRange(startDate, rangeEnd)
-                : (cutoff == null ? followupCheckRepository.countSatisfied() : followupCheckRepository.countSatisfiedByPeriod(cutoff));
-
-        long neuCount = hasDateRange
-                ? followupCheckRepository.countNeutralByDateRange(startDate, rangeEnd)
-                : (cutoff == null ? followupCheckRepository.countNeutral() : followupCheckRepository.countNeutralByPeriod(cutoff));
-
-        long unsatCount = hasDateRange
-                ? followupCheckRepository.countUnsatisfiedByDateRange(startDate, rangeEnd)
-                : (cutoff == null ? followupCheckRepository.countUnsatisfied() : followupCheckRepository.countUnsatisfiedByPeriod(cutoff));
+        // 3. Customer Satisfaction & Notes Ledger (Single Combined Query)
+        long satCount = 0L;
+        long neuCount = 0L;
+        long unsatCount = 0L;
+        List<Object[]> satCountsList = followupCheckRepository.getSatisfactionCountsCombined(hasDateRange ? startDate : cutoff, hasDateRange ? rangeEnd : null);
+        if (satCountsList != null && !satCountsList.isEmpty() && satCountsList.get(0) != null) {
+            Object[] scRow = satCountsList.get(0);
+            satCount = scRow[0] != null ? ((Number) scRow[0]).longValue() : 0L;
+            neuCount = scRow[1] != null ? ((Number) scRow[1]).longValue() : 0L;
+            unsatCount = scRow[2] != null ? ((Number) scRow[2]).longValue() : 0L;
+        }
 
         long totalRated = satCount + neuCount + unsatCount;
         double positiveRate = totalRated > 0 ? Math.round(((double) satCount / totalRated * 1000.0)) / 10.0 : 100.0;
-
-        // Pending follow-up checks for the Pending Contacts table
-        List<OrderFollowupCheck> pendingChecks = hasDateRange
-                ? followupCheckRepository.findPendingChecksByDateRange(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 200))
-                : followupCheckRepository.findPendingChecks(cutoff, org.springframework.data.domain.PageRequest.of(0, 200));
-
-        List<Map<String, Object>> pendingList = new ArrayList<>();
-        for (OrderFollowupCheck c : pendingChecks) {
-            CustomerOrder ord = c.getOrder();
-            Customer cust = ord != null ? ord.getCustomer() : null;
-            Map<String, Object> pItem = new LinkedHashMap<>();
-            pItem.put("id", c.getId());
-            pItem.put("orderId", ord != null ? ord.getId() : null);
-            pItem.put("orderNumber", ord != null ? ord.getOrderNumber() : "-");
-            pItem.put("customerName", cust != null ? cust.getName() : "Unknown");
-            pItem.put("customerPhone", cust != null ? cust.getPhoneNumber() : "-");
-            pItem.put("presetName", c.getMilestoneName() != null ? c.getMilestoneName() : "Follow-up");
-            pItem.put("status", c.getStatus() != null ? c.getStatus() : "PENDING");
-            pendingList.add(pItem);
-        }
 
         List<OrderFollowupCheck> checksWithSat = followupCheckRepository.findChecksWithSatisfaction(org.springframework.data.domain.PageRequest.of(0, 100));
         List<Map<String, Object>> notesLedger = new ArrayList<>();
@@ -285,111 +276,126 @@ public class ReportService {
         // ---------------------------------------------------------------------
         // 4. CUSTOMER RETENTION & ORDER LOYALTY TIERS (Frequency & Repetition)
         // ---------------------------------------------------------------------
-        List<Object[]> tierStats = customerRepository.getCustomerTierStats();
-        List<Map<String, Object>> loyaltyTierList = new ArrayList<>();
-        long repeatCustomerCount = 0L;
-        long oneTimeCustomerCount = 0L;
-        long totalCatalogCustomers = 0L;
+        long nowMs = System.currentTimeMillis();
+        Map<String, Object> loyaltyTiers;
+        CachedLoyaltyTiers clt = cachedLoyaltyTiers;
+        if (clt != null && (nowMs - clt.timestamp) < 60_000L) {
+            loyaltyTiers = clt.loyaltyTiers;
+        } else {
+            List<Object[]> tierStats = customerRepository.getCustomerTierStats();
+            List<Map<String, Object>> loyaltyTierList = new ArrayList<>();
+            long repeatCustomerCount = 0L;
+            long oneTimeCustomerCount = 0L;
+            long totalCatalogCustomers = 0L;
 
-        if (!tierStats.isEmpty() && tierStats.get(0) != null) {
-            Object[] tRow = tierStats.get(0);
-            long vipCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
-            long vipOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
-            long freqCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
-            long freqOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
-            long retCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
-            long retOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
-            long oneCnt = tRow[6] != null ? ((Number) tRow[6]).longValue() : 0L;
-            long oneOrders = tRow[7] != null ? ((Number) tRow[7]).longValue() : 0L;
+            if (!tierStats.isEmpty() && tierStats.get(0) != null) {
+                Object[] tRow = tierStats.get(0);
+                long vipCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
+                long vipOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
+                long freqCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
+                long freqOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
+                long retCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
+                long retOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
+                long oneCnt = tRow[6] != null ? ((Number) tRow[6]).longValue() : 0L;
+                long oneOrders = tRow[7] != null ? ((Number) tRow[7]).longValue() : 0L;
 
-            repeatCustomerCount = vipCnt + freqCnt + retCnt;
-            oneTimeCustomerCount = oneCnt;
-            totalCatalogCustomers = repeatCustomerCount + oneTimeCustomerCount;
-            if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
+                repeatCustomerCount = vipCnt + freqCnt + retCnt;
+                oneTimeCustomerCount = oneCnt;
+                totalCatalogCustomers = repeatCustomerCount + oneTimeCustomerCount;
+                if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
 
-            Map<String, Object> vipMap = new LinkedHashMap<>();
-            vipMap.put("tierName", "VIP Champions (5+ Orders)");
-            vipMap.put("tierKey", "VIP_CHAMPION");
-            vipMap.put("customerCount", vipCnt);
-            vipMap.put("totalOrders", vipOrders);
-            vipMap.put("customerShare", Math.round(((double) vipCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-            vipMap.put("avgOrdersPerCustomer", vipCnt > 0 ? Math.round(((double) vipOrders / vipCnt * 10.0)) / 10.0 : 0.0);
-            vipMap.put("retentionStatus", "Highly Loyal Advocates");
-            vipMap.put("badgeColor", "#6B21A8");
-            vipMap.put("badgeBg", "#F3E8FF");
-            loyaltyTierList.add(vipMap);
+                Map<String, Object> vipMap = new LinkedHashMap<>();
+                vipMap.put("tierName", "VIP Champions (5+ Orders)");
+                vipMap.put("tierKey", "VIP_CHAMPION");
+                vipMap.put("customerCount", vipCnt);
+                vipMap.put("totalOrders", vipOrders);
+                vipMap.put("customerShare", Math.round(((double) vipCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+                vipMap.put("avgOrdersPerCustomer", vipCnt > 0 ? Math.round(((double) vipOrders / vipCnt * 10.0)) / 10.0 : 0.0);
+                vipMap.put("retentionStatus", "Highly Loyal Advocates");
+                vipMap.put("badgeColor", "#6B21A8");
+                vipMap.put("badgeBg", "#F3E8FF");
+                loyaltyTierList.add(vipMap);
 
-            Map<String, Object> freqMap = new LinkedHashMap<>();
-            freqMap.put("tierName", "Frequent Buyers (3-4 Orders)");
-            freqMap.put("tierKey", "FREQUENT_BUYER");
-            freqMap.put("customerCount", freqCnt);
-            freqMap.put("totalOrders", freqOrders);
-            freqMap.put("customerShare", Math.round(((double) freqCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-            freqMap.put("avgOrdersPerCustomer", freqCnt > 0 ? Math.round(((double) freqOrders / freqCnt * 10.0)) / 10.0 : 0.0);
-            freqMap.put("retentionStatus", "Consistent Repeat Buyers");
-            freqMap.put("badgeColor", "#15803D");
-            freqMap.put("badgeBg", "#DCFCE7");
-            loyaltyTierList.add(freqMap);
+                Map<String, Object> freqMap = new LinkedHashMap<>();
+                freqMap.put("tierName", "Frequent Buyers (3-4 Orders)");
+                freqMap.put("tierKey", "FREQUENT_BUYER");
+                freqMap.put("customerCount", freqCnt);
+                freqMap.put("totalOrders", freqOrders);
+                freqMap.put("customerShare", Math.round(((double) freqCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+                freqMap.put("avgOrdersPerCustomer", freqCnt > 0 ? Math.round(((double) freqOrders / freqCnt * 10.0)) / 10.0 : 0.0);
+                freqMap.put("retentionStatus", "Consistent Repeat Buyers");
+                freqMap.put("badgeColor", "#15803D");
+                freqMap.put("badgeBg", "#DCFCE7");
+                loyaltyTierList.add(freqMap);
 
-            Map<String, Object> retMap = new LinkedHashMap<>();
-            retMap.put("tierName", "Returning Buyers (2 Orders)");
-            retMap.put("tierKey", "RETURNING_BUYER");
-            retMap.put("customerCount", retCnt);
-            retMap.put("totalOrders", retOrders);
-            retMap.put("customerShare", Math.round(((double) retCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-            retMap.put("avgOrdersPerCustomer", retCnt > 0 ? Math.round(((double) retOrders / retCnt * 10.0)) / 10.0 : 0.0);
-            retMap.put("retentionStatus", "Second-Time Converted");
-            retMap.put("badgeColor", "#0369A1");
-            retMap.put("badgeBg", "#E0F2FE");
-            loyaltyTierList.add(retMap);
+                Map<String, Object> retMap = new LinkedHashMap<>();
+                retMap.put("tierName", "Returning Buyers (2 Orders)");
+                retMap.put("tierKey", "RETURNING_BUYER");
+                retMap.put("customerCount", retCnt);
+                retMap.put("totalOrders", retOrders);
+                retMap.put("customerShare", Math.round(((double) retCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+                retMap.put("avgOrdersPerCustomer", retCnt > 0 ? Math.round(((double) retOrders / retCnt * 10.0)) / 10.0 : 0.0);
+                retMap.put("retentionStatus", "Second-Time Converted");
+                retMap.put("badgeColor", "#0369A1");
+                retMap.put("badgeBg", "#E0F2FE");
+                loyaltyTierList.add(retMap);
 
-            Map<String, Object> oneMap = new LinkedHashMap<>();
-            oneMap.put("tierName", "One-Time Buyers (1 Order)");
-            oneMap.put("tierKey", "ONE_TIME_BUYER");
-            oneMap.put("customerCount", oneCnt);
-            oneMap.put("totalOrders", oneOrders);
-            oneMap.put("customerShare", Math.round(((double) oneCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-            oneMap.put("avgOrdersPerCustomer", oneCnt > 0 ? Math.round(((double) oneOrders / oneCnt * 10.0)) / 10.0 : 0.0);
-            oneMap.put("retentionStatus", "At-Risk (Single Purchase)");
-            oneMap.put("badgeColor", "#B45309");
-            oneMap.put("badgeBg", "#FEF3C7");
-            loyaltyTierList.add(oneMap);
+                Map<String, Object> oneMap = new LinkedHashMap<>();
+                oneMap.put("tierName", "One-Time Buyers (1 Order)");
+                oneMap.put("tierKey", "ONE_TIME_BUYER");
+                oneMap.put("customerCount", oneCnt);
+                oneMap.put("totalOrders", oneOrders);
+                oneMap.put("customerShare", Math.round(((double) oneCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+                oneMap.put("avgOrdersPerCustomer", oneCnt > 0 ? Math.round(((double) oneOrders / oneCnt * 10.0)) / 10.0 : 0.0);
+                oneMap.put("retentionStatus", "At-Risk (Single Purchase)");
+                oneMap.put("badgeColor", "#B45309");
+                oneMap.put("badgeBg", "#FEF3C7");
+                loyaltyTierList.add(oneMap);
+            }
+
+            double repeatCustomerRate = totalCatalogCustomers > 0
+                    ? Math.round(((double) repeatCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
+            double oneTimeRate = totalCatalogCustomers > 0
+                    ? Math.round(((double) oneTimeCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
+
+            loyaltyTiers = new LinkedHashMap<>();
+            loyaltyTiers.put("tiers", loyaltyTierList);
+            loyaltyTiers.put("repeatCustomerCount", repeatCustomerCount);
+            loyaltyTiers.put("repeatCustomerRate", repeatCustomerRate);
+            loyaltyTiers.put("oneTimeCustomerCount", oneTimeCustomerCount);
+            loyaltyTiers.put("oneTimeRate", oneTimeRate);
+            loyaltyTiers.put("totalCustomers", totalCatalogCustomers);
+            cachedLoyaltyTiers = new CachedLoyaltyTiers(loyaltyTiers, nowMs);
         }
 
-        double repeatCustomerRate = totalCatalogCustomers > 0
-                ? Math.round(((double) repeatCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
-        double oneTimeRate = totalCatalogCustomers > 0
-                ? Math.round(((double) oneTimeCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
-
-        Map<String, Object> loyaltyTiers = new LinkedHashMap<>();
-        loyaltyTiers.put("tiers", loyaltyTierList);
-        loyaltyTiers.put("repeatCustomerCount", repeatCustomerCount);
-        loyaltyTiers.put("repeatCustomerRate", repeatCustomerRate);
-        loyaltyTiers.put("oneTimeCustomerCount", oneTimeCustomerCount);
-        loyaltyTiers.put("oneTimeRate", oneTimeRate);
-        loyaltyTiers.put("totalCustomers", totalCatalogCustomers);
-
-        summary.put("repeatCustomerCount", repeatCustomerCount);
-        summary.put("repeatCustomerRate", repeatCustomerRate);
-        summary.put("oneTimeCustomerCount", oneTimeCustomerCount);
-        summary.put("oneTimeRate", oneTimeRate);
+        summary.put("repeatCustomerCount", loyaltyTiers.get("repeatCustomerCount"));
+        summary.put("repeatCustomerRate", loyaltyTiers.get("repeatCustomerRate"));
+        summary.put("oneTimeCustomerCount", loyaltyTiers.get("oneTimeCustomerCount"));
+        summary.put("oneTimeRate", loyaltyTiers.get("oneTimeRate"));
 
         // ---------------------------------------------------------------------
         // 5. ACCURATE PRODUCT DISTRIBUTION & QUALITY HEALTH
         // ---------------------------------------------------------------------
         List<Object[]> rawProdFinancials = orderRepository.getProductFinancialStatsByDateRange(startDate, rangeEnd);
-        List<Object[]> rawProdReviews = followupCheckRepository.getProductSatisfactionCountsByDateRange(startDate, rangeEnd);
-
-        Map<String, long[]> prodReviewMap = new HashMap<>();
-        for (Object[] row : rawProdReviews) {
-            String pName = row[0] != null ? row[0].toString().trim() : "";
-            if (!pName.isEmpty()) {
-                long sCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
-                long nCnt = row[2] != null ? ((Number) row[2]).longValue() : 0L;
-                long uCnt = row[3] != null ? ((Number) row[3]).longValue() : 0L;
-                long totChk = row[4] != null ? ((Number) row[4]).longValue() : 0L;
-                prodReviewMap.put(pName, new long[]{sCnt, nCnt, uCnt, totChk});
+        String pCacheKey = (startDate != null ? startDate.toString() : "ALL") + "_" + (rangeEnd != null ? rangeEnd.toString() : "NOW");
+        CachedProductReviews cpr = productReviewsCache.get(pCacheKey);
+        Map<String, long[]> prodReviewMap;
+        if (cpr != null && (nowMs - cpr.timestamp) < 60_000L) {
+            prodReviewMap = cpr.reviewMap;
+        } else {
+            List<Object[]> rawProdReviews = followupCheckRepository.getProductSatisfactionCountsByDateRange(startDate, rangeEnd);
+            prodReviewMap = new HashMap<>();
+            for (Object[] row : rawProdReviews) {
+                String pName = row[0] != null ? row[0].toString().trim() : "";
+                if (!pName.isEmpty()) {
+                    long sCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+                    long nCnt = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                    long uCnt = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+                    long totChk = row[4] != null ? ((Number) row[4]).longValue() : 0L;
+                    prodReviewMap.put(pName, new long[]{sCnt, nCnt, uCnt, totChk});
+                }
             }
+            productReviewsCache.put(pCacheKey, new CachedProductReviews(prodReviewMap, nowMs));
         }
 
         List<Map<String, Object>> productList = new ArrayList<>();
@@ -489,7 +495,6 @@ public class ReportService {
         report.put("products", productList);
         report.put("customers", customerSummaryList);
         report.put("customerSummary", customerSummaryList);
-        report.put("pendingContacts", pendingList);
 
         return report;
     }

@@ -51,7 +51,6 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         dateTo: FilterHelperService.getTomorrow(),
         satisfactionFilter: 'all',
         milestoneFilter: 'all',
-        searchPending: '',
         searchNotes: '',
         searchProducts: '',
         searchCustomers: '',
@@ -152,7 +151,6 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             $scope.reportData.summary = data.summary || {};
             $scope.reportData.loyaltyTiers = data.loyaltyTiers || { tiers: [], repeatCustomerCount: 0, repeatCustomerRate: 0, oneTimeCustomerCount: 0, oneTimeRate: 0 };
             $scope.reportData.milestones = data.milestones || [];
-            $scope.reportData.pendingContacts = data.pendingContacts || [];
             $scope.reportData.satisfaction = data.satisfaction || { breakdown: [], recentNotes: [] };
             $scope.reportData.products = data.products || [];
             $scope.reportData.customers = data.customers || [];
@@ -257,29 +255,26 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     // =========================================================
     // FILTERED & PAGED SUB-TAB DATA HELPERS (40 rows per page)
     // =========================================================
-    $scope.getFilteredReportPending = function() {
-        var items = $scope.reportData.pendingContacts || [];
-        var search = $scope.reportFilters.searchPending;
-        if (!search) return items;
-        return items.filter(function(p) {
-            return FilterHelperService.searchMatch(JSON.stringify(p), search);
-        });
-    };
-
-    $scope.getPagedReportPending = function() {
-        var items = $scope.getFilteredReportPending();
-        $scope.dtMilestones.totalItems = items.length;
-        $scope.dtMilestones.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtMilestones.pageSize));
-        if ($scope.dtMilestones.currentPage > $scope.dtMilestones.totalPages) $scope.dtMilestones.currentPage = $scope.dtMilestones.totalPages;
-        var start = ($scope.dtMilestones.currentPage - 1) * $scope.dtMilestones.pageSize;
-        return items.slice(start, start + $scope.dtMilestones.pageSize);
-    };
-
     $scope.getFilteredReportNotes = function() {
         var notes = ($scope.reportData && $scope.reportData.satisfaction && $scope.reportData.satisfaction.recentNotes) ? $scope.reportData.satisfaction.recentNotes : [];
+        var search = ($scope.reportFilters.searchNotes || '').trim().toLowerCase();
+        var satFilter = $scope.reportFilters.satisfactionFilter;
         return notes.filter(function(n) {
-            if ($scope.reportFilters.searchNotes && !FilterHelperService.searchMatch(JSON.stringify(n), $scope.reportFilters.searchNotes)) return false;
-            if ($scope.reportFilters.satisfactionFilter && $scope.reportFilters.satisfactionFilter !== 'all' && n.satisfaction !== $scope.reportFilters.satisfactionFilter) return false;
+            if (satFilter && satFilter !== 'all' && n.satisfaction !== satFilter) return false;
+            if (search) {
+                var cName = (n.customerName || '').toLowerCase();
+                var cPhone = (n.customerPhone || '').toLowerCase();
+                var ordNum = (n.orderNumber || '').toLowerCase();
+                var noteText = (n.note || '').toLowerCase();
+                var pName = (n.presetName || '').toLowerCase();
+                if (cName.indexOf(search) === -1 &&
+                    cPhone.indexOf(search) === -1 &&
+                    ordNum.indexOf(search) === -1 &&
+                    noteText.indexOf(search) === -1 &&
+                    pName.indexOf(search) === -1) {
+                    return false;
+                }
+            }
             return true;
         });
     };
@@ -295,9 +290,10 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
 
     $scope.getFilteredReportProducts = function() {
         var prods = $scope.reportData.products || [];
+        var search = ($scope.reportFilters.searchProducts || '').trim().toLowerCase();
+        if (!search) return prods;
         return prods.filter(function(p) {
-            if ($scope.reportFilters.searchProducts && !FilterHelperService.searchMatch(p.productName, $scope.reportFilters.searchProducts)) return false;
-            return true;
+            return (p.productName || '').toLowerCase().indexOf(search) !== -1;
         });
     };
 
@@ -312,10 +308,17 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
 
     $scope.getFilteredReportCustomers = function() {
         var custs = $scope.reportData.followups || $scope.reportData.customers || [];
-        var search = $scope.reportFilters.searchFollowups || $scope.reportFilters.searchCustomers;
+        var search = ($scope.reportFilters.searchFollowups || $scope.reportFilters.searchCustomers || '').trim().toLowerCase();
+        if (!search) return custs;
         return custs.filter(function(c) {
-            if (search && !FilterHelperService.searchMatch(JSON.stringify(c), search)) return false;
-            return true;
+            var name = (c.name || '').toLowerCase();
+            var phone = (c.phoneNumber || '').toLowerCase();
+            var city = (c.city || '').toLowerCase();
+            var tier = (c.tier || '').toLowerCase();
+            return name.indexOf(search) !== -1 ||
+                   phone.indexOf(search) !== -1 ||
+                   city.indexOf(search) !== -1 ||
+                   tier.indexOf(search) !== -1;
         });
     };
     $scope.getFilteredReportFollowups = $scope.getFilteredReportCustomers;
@@ -383,7 +386,6 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         $scope.reportData.summary = srd.summary || {};
         $scope.reportData.loyaltyTiers = srd.loyaltyTiers || { tiers: [], repeatCustomerCount: 0, repeatCustomerRate: 0, oneTimeCustomerCount: 0, oneTimeRate: 0 };
         $scope.reportData.milestones = srd.milestones || [];
-        $scope.reportData.pendingContacts = srd.pendingContacts || [];
         $scope.reportData.satisfaction = srd.satisfaction || { breakdown: [], recentNotes: [] };
         $scope.reportData.products = srd.products || [];
         $scope.reportData.customers = srd.customers || [];

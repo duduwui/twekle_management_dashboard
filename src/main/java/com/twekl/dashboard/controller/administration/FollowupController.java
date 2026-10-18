@@ -80,7 +80,7 @@ public class FollowupController {
 
         String field = "id";
         if ("totalOrders".equalsIgnoreCase(sortField)) field = "totalOrders";
-        else if ("totalSpent".equalsIgnoreCase(sortField)) field = "totalSpent";
+        else if ("customerType".equalsIgnoreCase(sortField)) field = "name";
         else if ("name".equalsIgnoreCase(sortField)) field = "name";
         else if ("phoneNumber".equalsIgnoreCase(sortField)) field = "phoneNumber";
         else if ("createdAt".equalsIgnoreCase(sortField)) field = "createdAt";

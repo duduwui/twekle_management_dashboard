@@ -59,9 +59,6 @@
                                     <th class="comic-sortable-th" ng-click="sortOrdersBy('itemsSummary')">
                                         Item Name <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
                                     </th>
-                                    <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('totalAmount')">
-                                        Price <span class="sort-indicator" ng-bind="getOrderSortIndicator('totalAmount')"></span>
-                                    </th>
                                     <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('orderStatus')">
                                         Status <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderStatus')"></span>
                                     </th>
@@ -93,9 +90,6 @@
                                         <strong style="color: var(--text-main); font-size: 0.92rem;" ng-bind="order.itemsSummary || 'Standard Products'"></strong>
                                     </td>
                                     <td class="nowrap">
-                                        <strong style="color: var(--primary-dark); font-size: 0.95rem;" ng-bind="'$' + (order.totalAmount | number:2)"></strong>
-                                    </td>
-                                    <td class="nowrap">
                                         <span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span>
                                     </td>
                                     <td class="nowrap">
@@ -114,7 +108,7 @@
 
                                 <!-- Expandable Follow-up Checklist Tree for this Order Record -->
                                 <tr ng-show="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
-                                    <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
+                                    <td colspan="6" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
                                         <div class="order-followup-tree-box">
                                             <div class="followup-tree-header">
                                                 <div>
@@ -187,18 +181,18 @@
                                 </tr>
 
                                 <tr ng-if="loadingOrders">
-                                    <td colspan="7" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                    <td colspan="6" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
                                         Loading purchase orders...
                                     </td>
                                 </tr>
                                 <tr ng-if="!loadingOrders && customerOrders.length === 0">
-                                    <td colspan="7" style="text-align: center; padding: 32px 16px;">
+                                    <td colspan="6" style="text-align: center; padding: 32px 16px;">
                                         <div style="font-size: 1.05rem; font-weight: 800; color: #1E293B; margin-bottom: 4px;">No purchase orders found for this customer</div>
                                         <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">This customer account does not have any recorded purchase orders yet.</div>
                                     </td>
                                 </tr>
                                 <tr ng-if="!loadingOrders && customerOrders.length > 0 && getFilteredCustomerOrders().length === 0">
-                                    <td colspan="7" style="text-align: center; padding: 28px 16px;">
+                                    <td colspan="6" style="text-align: center; padding: 28px 16px;">
                                         <div style="font-size: 0.95rem; font-weight: 800; color: #1E293B; margin-bottom: 8px;">No orders match the selected filter criteria.</div>
                                         <button type="button" class="comic-btn-secondary-sm" ng-click="clearAllOrderFilters()">Clear Filters</button>
                                     </td>

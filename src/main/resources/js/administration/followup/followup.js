@@ -360,6 +360,14 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         return $scope.customers || [];
     };
 
+    $scope.getCustomerType = function(c) {
+        if (!c) return 'Individual';
+        if (c.customerType === 'ORGANIZATION' || c.customerType === 'MARKET') return 'Organization';
+        if (c.customerType === 'INDIVIDUAL' || c.customerType === 'PERSON') return 'Individual';
+        var isOrg = (c.name || '').toLowerCase().match(/mart|market|superstore|pos|company|corp|solutions|logistics/i);
+        return isOrg ? 'Organization' : 'Individual';
+    };
+
     $scope.getPagedCustomers = function() {
         return $scope.customers || [];
     };

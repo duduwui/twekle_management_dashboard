@@ -349,7 +349,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             $scope.customerSort.reverse = !$scope.customerSort.reverse;
         } else {
             $scope.customerSort.field = field;
-            $scope.customerSort.reverse = (field === 'totalOrders' || field === 'totalSpent' || field === 'pendingFollowups');
+            $scope.customerSort.reverse = (field === 'totalOrders' || field === 'pendingFollowups');
         }
     };
 

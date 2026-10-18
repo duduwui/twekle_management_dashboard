@@ -513,6 +513,14 @@ SAMPLE_COMPANIES = [
     "Babylon Supercenter", "Al-Firdaws Logistics", "Sumer Electronics"
 ]
 
+SAMPLE_PERSONS = [
+    "Ahmed Ali Al-Bayati", "Omar Mustafa Hassan", "Hussein Karrar Al-Khafaji",
+    "Zaid Tariq Al-Saadi", "Ali Abdul-Rahman Al-Maliki", "Noor Al-Huda Ibrahim",
+    "Fatima Zahra Al-Jubouri", "Youssef Ammar Al-Hamadani", "Haider Saif Al-Tamimi",
+    "Saifuddin Al-Janabi", "Maryam Bilal Al-Zubaidi", "Bilal Qasim Al-Obeidi",
+    "Mohammed Adel Al-Daraji", "Mustafa Raheem Al-Shammari", "Hassan Kareem Al-Lami"
+]
+
 SAMPLE_CITIES = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Duhok", "Karbala", "Kirkuk"]
 
 SAMPLE_PRODUCTS = [
@@ -944,14 +952,20 @@ class TrafficEngine:
             asyncio.create_task(self._insert_automated_order_db(repeat_cust_id, product, num_orders=1))
             return
 
-        company = f"{random.choice(SAMPLE_COMPANIES)} #{random.randint(100, 9999)}"
+        is_company = (random.random() < 0.50)
+        if is_company:
+            cust_name = f"{random.choice(SAMPLE_COMPANIES)} #{random.randint(100, 9999)}"
+            email = f"order{random.randint(1000, 99999)}@corp.iq"
+        else:
+            cust_name = random.choice(SAMPLE_PERSONS)
+            email = f"{cust_name.lower().replace(' ', '.')}{random.randint(10, 99)}@gmail.com"
+
         phone = f"+964 770 {random.randint(100, 999)} {random.randint(1000, 9999)}"
-        email = f"order{random.randint(1000, 99999)}@corp.iq"
         city = random.choice(SAMPLE_CITIES)
         product = random.choice(SAMPLE_PRODUCTS)
 
         payload = {
-            "name": company,
+            "name": cust_name,
             "phoneNumber": phone,
             "email": email,
             "city": city,
@@ -1028,13 +1042,20 @@ class TrafficEngine:
                         qty = random.randint(1, 4)
                         order_num = f"ORD-{cust_id}-{random.randint(100, 999)}"
                         roll = random.random()
-                        if roll < 0.40:
+                        if roll < 0.30:
+                            # 30% are fully completed follow-ups (All Done)
+                            days_ago = random.randint(32, 60)
+                            order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
+                            c1_done, c1_stat = (1, 'DONE')
+                            c2_done, c2_stat = (1, 'DONE')
+                            c3_done, c3_stat = (1, 'DONE')
+                        elif roll < 0.60:
                             hrs_ago = random.randint(1, 18)
                             order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {hrs_ago} HOUR), %s, 'DELIVERED', %s, %s)"
                             c1_done, c1_stat = (1, 'DONE') if hrs_ago >= 12 else (0, 'PENDING')
                             c2_done, c2_stat = (0, 'PENDING')
                             c3_done, c3_stat = (0, 'PENDING')
-                        elif roll < 0.70:
+                        elif roll < 0.85:
                             days_ago = random.randint(3, 5)
                             order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
                             c1_done, c1_stat = (1, 'DONE')
@@ -1056,7 +1077,7 @@ class TrafficEngine:
                         )
                         first_chk = cur.lastrowid
                         if first_chk:
-                            self.active_check_ids.extend([first_chk + i for i in range(len(chosen_presets))])
+                            self.active_check_ids.extend([first_chk, first_chk + 1, first_chk + 2])
                         metrics.automated_orders_created += 1
 
                     if count > 0:

@@ -15,25 +15,79 @@
                             <span>Filters</span>
                         </button>
 
-                        <!-- Active Filter Badges -->
-                        <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
-                            <span ng-bind="selectedReportPreset.name"></span> ✕
-                        </span>
-                        <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="clearSatisfactionFilter()" title="Click to clear scale">
-                            <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
-                        </span>
-                        <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.milestoneFilter && reportFilters.milestoneFilter !== 'all'" ng-click="reportFilters.milestoneFilter = 'all'" title="Click to clear milestone">
-                            <span ng-bind="'Milestone: ' + reportFilters.milestoneFilter"></span> ✕
-                        </span>
+                        <!-- Customer Filters Toolbar Dropdowns -->
+                        <select class="comic-input" style="padding: 4px 10px; height: 34px; font-weight: 800; font-size: 0.82rem; background: #fff; border: 2px solid #000; border-radius: 6px;" ng-model="reportFilters.customerTypeFilter" title="Customer Type">
+                            <option value="all">All Types (Markets &amp; Persons)</option>
+                            <option value="MARKET">🏢 Markets / Businesses</option>
+                            <option value="PERSON">👤 Persons / Regular</option>
+                        </select>
+
+                        <select class="comic-input" style="padding: 4px 10px; height: 34px; font-weight: 800; font-size: 0.82rem; background: #fff; border: 2px solid #000; border-radius: 6px;" ng-model="reportFilters.customerTierFilter" title="Customer Tier">
+                            <option value="all">All Loyalty Tiers</option>
+                            <option value="VIP">👑 VIP Champions (5+ Orders)</option>
+                            <option value="FREQUENT">🔥 Frequent Buyers (3-4 Orders)</option>
+                            <option value="RETURNING">🔄 Returning Buyers (2 Orders)</option>
+                            <option value="ONE_TIME">🌱 One-Time Buyers (1 Order)</option>
+                        </select>
+
+                        <select class="comic-input" style="padding: 4px 10px; height: 34px; font-weight: 800; font-size: 0.82rem; background: #fff; border: 2px solid #000; border-radius: 6px;" ng-model="reportFilters.customerStatusFilter" title="Follow-up Status">
+                            <option value="all">All Follow-up Statuses</option>
+                            <option value="DONE">✓ Completed (All Done)</option>
+                            <option value="ALERT">⚠ Needs Action / Overdue</option>
+                            <option value="IDLE">⏳ Scheduled / Pending</option>
+                        </select>
+
+                        <select class="comic-input" style="padding: 4px 10px; height: 34px; font-weight: 800; font-size: 0.82rem; background: #fff; border: 2px solid #000; border-radius: 6px;" ng-model="reportFilters.customerCityFilter" title="City Filter">
+                            <option value="all">All Cities</option>
+                            <option value="Baghdad">Baghdad</option>
+                            <option value="Erbil">Erbil</option>
+                            <option value="Basra">Basra</option>
+                            <option value="Sulaymaniyah">Sulaymaniyah</option>
+                            <option value="Najaf">Najaf</option>
+                            <option value="Karbala">Karbala</option>
+                            <option value="Kirkuk">Kirkuk</option>
+                            <option value="Duhok">Duhok</option>
+                            <option value="Mosul">Mosul</option>
+                        </select>
+
+                        <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; background: #FFF1F2; color: #E11D48; border-color: #E11D48; font-weight: 800;" ng-if="hasCustomerFiltersActive()" ng-click="clearCustomerFilters()" title="Reset all customer filters">
+                            Clear Filters ✕
+                        </button>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <div class="filter-search-box" style="min-width: 210px;">
-                            <input type="search" class="comic-search-bar" placeholder="Search follow-ups by name, phone, city..." ng-model="reportFilters.searchCustomers">
+                        <div class="filter-search-box" style="min-width: 230px;">
+                            <input type="search" class="comic-search-bar" placeholder="Search by name, phone, city, tier..." ng-model="reportFilters.searchCustomers">
                         </div>
                         <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportCsv()">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV
                         </button>
                     </div>
+                </div>
+
+                <!-- Active Filter Badges Bar -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;" ng-if="hasCustomerFiltersActive() || selectedReportPreset || (reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all')">
+                    <span style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase;">Active Filters:</span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
+                        <span ng-bind="selectedReportPreset.name"></span> ✕
+                    </span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="clearSatisfactionFilter()" title="Click to clear scale">
+                        <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
+                    </span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerTypeFilter && reportFilters.customerTypeFilter !== 'all'" ng-click="reportFilters.customerTypeFilter = 'all'">
+                        Type: {{ reportFilters.customerTypeFilter === 'MARKET' ? 'Markets' : 'Persons' }} ✕
+                    </span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerTierFilter && reportFilters.customerTierFilter !== 'all'" ng-click="reportFilters.customerTierFilter = 'all'">
+                        Tier: {{ reportFilters.customerTierFilter }} ✕
+                    </span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerStatusFilter && reportFilters.customerStatusFilter !== 'all'" ng-click="reportFilters.customerStatusFilter = 'all'">
+                        Status: {{ reportFilters.customerStatusFilter === 'DONE' ? 'Completed' : (reportFilters.customerStatusFilter === 'ALERT' ? 'Needs Action' : 'Scheduled') }} ✕
+                    </span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerCityFilter && reportFilters.customerCityFilter !== 'all'" ng-click="reportFilters.customerCityFilter = 'all'">
+                        City: {{ reportFilters.customerCityFilter }} ✕
+                    </span>
+                    <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.searchCustomers" ng-click="reportFilters.searchCustomers = ''">
+                        Search: "{{ reportFilters.searchCustomers }}" ✕
+                    </span>
                 </div>
 
                 <!-- Customer Loyalty & Repetition Executive KPI Cards -->
@@ -145,60 +199,104 @@
                     <table class="comic-table">
                         <thead>
                             <tr>
-                                <th class="nowrap" style="width: 80px;">ID</th>
-                                <th>Customer Name</th>
+                                <th class="nowrap" style="width: 70px; cursor: pointer;" ng-click="sortByCustomer('id')">
+                                    ID <span ng-bind="getCustomerSortIndicator('id')"></span>
+                                </th>
+                                <th style="cursor: pointer; min-width: 200px;" ng-click="sortByCustomer('name')">
+                                    Customer &amp; Type <span ng-bind="getCustomerSortIndicator('name')"></span>
+                                </th>
                                 <th class="nowrap col-phone">Phone Number</th>
-                                <th>City</th>
-                                <th class="nowrap" style="text-align: center;">Loyalty Tier</th>
-                                <th class="nowrap" style="text-align: center;">Orders Placed</th>
-                                <th class="nowrap" style="text-align: center;">Repeat Status</th>
-                                <th class="nowrap" style="text-align: center;">Pending Checks</th>
-                                <th class="nowrap" style="text-align: right;">Follow-up Status</th>
+                                <th style="cursor: pointer;" ng-click="sortByCustomer('city')">
+                                    City <span ng-bind="getCustomerSortIndicator('city')"></span>
+                                </th>
+                                <th class="nowrap" style="cursor: pointer; min-width: 190px;" ng-click="sortByCustomer('tier')">
+                                    Tier &amp; Order Period <span ng-bind="getCustomerSortIndicator('tier')"></span>
+                                </th>
+                                <th class="nowrap" style="text-align: center; cursor: pointer;" ng-click="sortByCustomer('totalOrders')">
+                                    Total Orders <span ng-bind="getCustomerSortIndicator('totalOrders')"></span>
+                                </th>
+                                <th class="nowrap" style="text-align: right; cursor: pointer;" ng-click="sortByCustomer('totalSpent')">
+                                    Total Spend <span ng-bind="getCustomerSortIndicator('totalSpent')"></span>
+                                </th>
+                                <th class="nowrap" style="text-align: center; cursor: pointer;" ng-click="sortByCustomer('pendingFollowups')">
+                                    Pending Checks <span ng-bind="getCustomerSortIndicator('pendingFollowups')"></span>
+                                </th>
+                                <th class="nowrap" style="text-align: center;">Follow-up Status</th>
+                                <th class="nowrap" style="text-align: center; width: 90px;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr ng-repeat="c in getPagedReportCustomers() track by c.id">
                                 <td class="nowrap"><strong style="color: #475569;" ng-bind="'#' + c.id"></strong></td>
-                                <td><strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="c.name"></strong></td>
-                                <td class="nowrap col-phone"><strong ng-bind="c.phoneNumber"></strong></td>
-                                <td><span ng-bind="c.city"></span></td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="c.name"></strong>
+                                        <span class="comic-tag" style="background: #EFF6FF; color: #1D4ED8; border-color: #3B82F6; font-size: 0.70rem; padding: 1px 6px; font-weight: 800;" ng-if="c.customerType === 'MARKET'">
+                                            🏢 Market
+                                        </span>
+                                        <span class="comic-tag" style="background: #F8FAFC; color: #475569; border-color: #94A3B8; font-size: 0.70rem; padding: 1px 6px; font-weight: 800;" ng-if="c.customerType === 'PERSON'">
+                                            👤 Person
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #64748B; font-weight: 600;" ng-if="c.email && c.email !== '-'" ng-bind="c.email"></div>
+                                </td>
+                                <td class="nowrap col-phone"><strong style="font-family: monospace; font-size: 0.88rem;" ng-bind="c.phoneNumber"></strong></td>
+                                <td><span style="font-weight: 700; color: #334155;" ng-bind="c.city"></span></td>
+                                <td>
+                                    <span class="comic-tag"
+                                          ng-style="{
+                                              'market-vip': {'background': '#F3E8FF', 'color': '#6B21A8', 'border-color': '#9333EA'},
+                                              'market-frequent': {'background': '#DCFCE7', 'color': '#15803D', 'border-color': '#22C55E'},
+                                              'market-returning': {'background': '#E0F2FE', 'color': '#0369A1', 'border-color': '#38BDF8'},
+                                              'market-one-time': {'background': '#FEF3C7', 'color': '#B45309', 'border-color': '#F59E0B'},
+                                              'person-vip': {'background': '#FDF4FF', 'color': '#A21CAF', 'border-color': '#C026D3'},
+                                              'person-frequent': {'background': '#F0FDF4', 'color': '#166534', 'border-color': '#4ADE80'},
+                                              'person-returning': {'background': '#F0F9FF', 'color': '#075985', 'border-color': '#60A5FA'},
+                                              'person-one-time': {'background': '#FFFBEB', 'color': '#92400E', 'border-color': '#FBBF24'}
+                                          }[c.tierClass] || {'background': '#F1F5F9', 'color': '#334155', 'border-color': '#94A3B8'}"
+                                          ng-bind="c.tier">
+                                    </span>
+                                    <div style="font-size: 0.74rem; color: #64748B; font-weight: 600; margin-top: 2px;" ng-bind="c.cadence"></div>
+                                </td>
+                                <td class="nowrap" style="text-align: center;">
+                                    <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="(c.totalOrders | number:0) + ' Orders'"></strong>
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: #16A34A;" ng-if="c.isRepeatCustomer">✓ Repeat</div>
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: #94A3B8;" ng-if="!c.isRepeatCustomer">One-Time</div>
+                                </td>
+                                <td class="nowrap" style="text-align: right;">
+                                    <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="'$' + (c.totalSpent | number:2)"></strong>
+                                </td>
                                 <td class="nowrap" style="text-align: center;">
                                     <span class="comic-tag"
                                           ng-style="{
-                                              'vip': {'background': '#F3E8FF', 'color': '#6B21A8', 'border-color': '#9333EA'},
-                                              'frequent': {'background': '#DCFCE7', 'color': '#15803D', 'border-color': '#22C55E'},
-                                              'returning': {'background': '#E0F2FE', 'color': '#0369A1', 'border-color': '#38BDF8'},
-                                              'one-time': {'background': '#FEF3C7', 'color': '#B45309', 'border-color': '#F59E0B'}
-                                          }[c.tierClass] || {'background': '#FEF3C7', 'color': '#B45309', 'border-color': '#F59E0B'}"
-                                          ng-bind="c.tier">
+                                              'background': c.pendingFollowups > 0 ? '#FEE2E2' : '#DCFCE7',
+                                              'color': c.pendingFollowups > 0 ? '#991B1B' : '#166534',
+                                              'border-color': c.pendingFollowups > 0 ? '#EF4444' : '#22C55E',
+                                              'font-weight': '800'
+                                          }"
+                                          ng-bind="c.pendingFollowups + ' Pending'">
                                     </span>
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
-                                    <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="c.totalOrders + ' Orders'"></strong>
+                                    <span ng-if="c.allFollowupsCompleted" class="comic-tag" style="background: #DCFCE7; color: #166534; border-color: #22C55E; font-weight: 800;">
+                                        ✓ All Done
+                                    </span>
+                                    <span ng-if="!c.allFollowupsCompleted && c.followupStatus === 'ALERT'" class="comic-tag" style="background: #FEE2E2; color: #991B1B; border-color: #EF4444; font-weight: 800;">
+                                        ⚠ Needs Action
+                                    </span>
+                                    <span ng-if="!c.allFollowupsCompleted && c.followupStatus !== 'ALERT'" class="comic-tag" style="background: #FEF3C7; color: #B45309; border-color: #F59E0B; font-weight: 800;">
+                                        ⏳ Scheduled
+                                    </span>
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
-                                    <span ng-if="c.isRepeatCustomer" style="color: #16A34A; font-weight: 800; font-size: 0.85rem;">
-                                        ✓ Repeat Buyer
-                                    </span>
-                                    <span ng-if="!c.isRepeatCustomer" style="color: #B45309; font-weight: 800; font-size: 0.85rem;">
-                                        One-Time
-                                    </span>
-                                </td>
-                                <td class="nowrap" style="text-align: center;">
-                                    <span style="font-weight: 800; color: c.pendingFollowups > 0 ? '#991B1B' : '#166534';" ng-bind="c.pendingFollowups"></span>
-                                </td>
-                                <td class="nowrap" style="text-align: right;">
-                                    <span ng-if="c.allFollowupsCompleted" style="color: #16A34A; font-weight: 800; font-size: 0.95rem;">
-                                        All Done
-                                    </span>
-                                    <span ng-if="!c.allFollowupsCompleted" style="color: #991B1B; font-weight: 800; font-size: 0.95rem;">
-                                        Pending
-                                    </span>
+                                    <a class="comic-btn" style="padding: 4px 8px; font-size: 0.76rem; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;" ng-href="/admin/followups?search={{c.phoneNumber || c.name}}" target="_blank" title="View Customer Follow-up Checks">
+                                        Checks →
+                                    </a>
                                 </td>
                             </tr>
                             <tr ng-if="dtCustomers.totalItems === 0">
-                                <td colspan="9" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
-                                    No follow-up records found for the selected period.
+                                <td colspan="10" style="text-align: center; padding: 28px; color: #64748B; font-weight: 700;">
+                                    No customer records match the selected filter criteria.
                                 </td>
                             </tr>
                         </tbody>

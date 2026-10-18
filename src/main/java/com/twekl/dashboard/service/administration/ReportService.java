@@ -107,14 +107,13 @@ public class ReportService {
                 : (cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff));
 
         List<Customer> allCustomers = hasDateRange
-                ? customerRepository.findByLastOrderDateBetween(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")))
+                ? customerRepository.findByLastOrderDateBetween(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 500, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")))
                 : (cutoff == null
-                    ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
-                    : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate"))));
+                    ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 500, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
+                    : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 500, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate"))));
 
-        List<CustomerOrder> filteredOrders = hasDateRange
-                ? orderRepository.findRecentOrdersWithCustomerByDateRange(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 300))
-                : orderRepository.findRecentOrdersWithCustomer(cutoff, org.springframework.data.domain.PageRequest.of(0, 300));
+        List<Long> customerIds = allCustomers.stream().map(Customer::getId).filter(Objects::nonNull).toList();
+        List<CustomerOrder> filteredOrders = customerIds.isEmpty() ? Collections.emptyList() : orderRepository.findByCustomerIds(customerIds);
 
         List<Long> orderIds = filteredOrders.stream().map(CustomerOrder::getId).filter(Objects::nonNull).toList();
         List<OrderFollowupCheck> orderChecks = orderIds.isEmpty() ? Collections.emptyList() : followupCheckRepository.findByOrderIds(orderIds);
@@ -438,8 +437,9 @@ public class ReportService {
             Map<String, Object> cData = new LinkedHashMap<>();
             cData.put("id", cust.getId());
             cData.put("name", cust.getName());
-            cData.put("phoneNumber", cust.getPhoneNumber());
+            cData.put("phoneNumber", cust.getPhoneNumber() != null ? cust.getPhoneNumber() : "-");
             cData.put("city", cust.getCity() != null ? cust.getCity() : "Erbil");
+            cData.put("email", cust.getEmail() != null ? cust.getEmail() : "-");
 
             int totalOrders = cust.getTotalOrders() > 0
                     ? cust.getTotalOrders()
@@ -447,25 +447,99 @@ public class ReportService {
             cData.put("totalOrders", totalOrders);
             cData.put("ordersInPeriod", custOrders.size());
 
-            // Order Repetition & Loyalty Tier
-            String tier = "One-Time Buyer (1)";
-            String tierClass = "one-time";
-            boolean isRepeat = totalOrders >= 2;
-            if (totalOrders >= 5) {
-                tier = "VIP Champion (5+)";
-                tierClass = "vip";
-            } else if (totalOrders >= 3) {
-                tier = "Frequent Buyer (3-4)";
-                tierClass = "frequent";
-            } else if (totalOrders == 2) {
-                tier = "Returning (2)";
-                tierClass = "returning";
+            double totalSpent = cust.getTotalSpent() > 0
+                    ? cust.getTotalSpent()
+                    : custOrders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
+            cData.put("totalSpent", Math.round(totalSpent * 100.0) / 100.0);
+
+            // Classify Customer: Market / Business vs Person / Regular Customer
+            String name = cust.getName() != null ? cust.getName().trim() : "";
+            String lowerName = name.toLowerCase();
+            boolean isMarket = lowerName.contains("mart") || lowerName.contains("market")
+                    || lowerName.contains("superstore") || lowerName.contains("hypermarket")
+                    || lowerName.contains("supercenter") || lowerName.contains("pos")
+                    || lowerName.contains("electronics") || lowerName.contains("stores")
+                    || lowerName.contains("traders") || lowerName.contains("solutions")
+                    || lowerName.contains("logistics") || lowerName.contains("hub")
+                    || lowerName.contains("supplies") || lowerName.contains("express")
+                    || lowerName.contains("commercial") || lowerName.contains("company")
+                    || lowerName.contains("corp") || name.contains("#");
+
+            String customerType = isMarket ? "MARKET" : "PERSON";
+            String customerTypeLabel = isMarket ? "Market / Business" : "Person / Regular Customer";
+            cData.put("customerType", customerType);
+            cData.put("customerTypeLabel", customerTypeLabel);
+
+            // Tier based on Periods/Frequency & Volume ($ spent)
+            String tier;
+            String tierKey;
+            String tierClass;
+            String cadence;
+            String retentionStatus;
+
+            if (isMarket) {
+                if (totalOrders >= 5 || totalSpent >= 8000.0) {
+                    tier = "Market: VIP Enterprise (5+)";
+                    tierKey = "MARKET_VIP";
+                    tierClass = "market-vip";
+                    cadence = "Weekly / High Frequency (5+ Orders)";
+                    retentionStatus = "Top Commercial Account";
+                } else if (totalOrders >= 3 || totalSpent >= 3500.0) {
+                    tier = "Market: Frequent Wholesale (3-4)";
+                    tierKey = "MARKET_FREQUENT";
+                    tierClass = "market-frequent";
+                    cadence = "Bi-Weekly / Regular (3-4 Orders)";
+                    retentionStatus = "Consistent Wholesale Buyer";
+                } else if (totalOrders == 2) {
+                    tier = "Market: Standard Commercial (2)";
+                    tierKey = "MARKET_RETURNING";
+                    tierClass = "market-returning";
+                    cadence = "Monthly / Returning (2 Orders)";
+                    retentionStatus = "Active Repeat Business";
+                } else {
+                    tier = "Market: New Merchant (1)";
+                    tierKey = "MARKET_ONE_TIME";
+                    tierClass = "market-one-time";
+                    cadence = "One-Time / Onboarding (1 Order)";
+                    retentionStatus = "New Commercial Account";
+                }
+            } else {
+                if (totalOrders >= 5 || totalSpent >= 3000.0) {
+                    tier = "Person: VIP Regular (5+)";
+                    tierKey = "PERSON_VIP";
+                    tierClass = "person-vip";
+                    cadence = "Frequent Repeat (5+ Orders)";
+                    retentionStatus = "Loyal Personal Customer";
+                } else if (totalOrders >= 3 || totalSpent >= 1500.0) {
+                    tier = "Person: Regular Buyer (3-4)";
+                    tierKey = "PERSON_FREQUENT";
+                    tierClass = "person-frequent";
+                    cadence = "Regular / Monthly (3-4 Orders)";
+                    retentionStatus = "Established Individual Buyer";
+                } else if (totalOrders == 2) {
+                    tier = "Person: Returning Shopper (2)";
+                    tierKey = "PERSON_RETURNING";
+                    tierClass = "person-returning";
+                    cadence = "Returning (2 Orders)";
+                    retentionStatus = "Repeat Retail Customer";
+                } else {
+                    tier = "Person: One-Time Buyer (1)";
+                    tierKey = "PERSON_ONE_TIME";
+                    tierClass = "person-one-time";
+                    cadence = "One-Time (1 Order)";
+                    retentionStatus = "New Retail Shopper";
+                }
             }
+
             cData.put("tier", tier);
+            cData.put("tierKey", tierKey);
             cData.put("tierClass", tierClass);
-            cData.put("isRepeatCustomer", isRepeat);
+            cData.put("cadence", cadence);
+            cData.put("retentionStatus", retentionStatus);
+            cData.put("isRepeatCustomer", totalOrders >= 2);
 
             int pendingFollowups = 0;
+            boolean hasOverdue = false;
             for (CustomerOrder o : custOrders) {
                 List<OrderFollowupCheck> oChecks = checksByOrderId.getOrDefault(o.getId(), Collections.emptyList());
                 for (OrderFollowupCheck chk : oChecks) {
@@ -473,11 +547,16 @@ public class ReportService {
                             || (chk.getMilestoneName() != null && activePresetNames.contains(chk.getMilestoneName().trim().toLowerCase()));
                     if (isPresetActive && !chk.isCompleted()) {
                         pendingFollowups++;
+                        if ("OVERDUE".equalsIgnoreCase(chk.getStatus())) {
+                            hasOverdue = true;
+                        }
                     }
                 }
             }
             cData.put("pendingFollowups", pendingFollowups);
             cData.put("allFollowupsCompleted", pendingFollowups == 0);
+            cData.put("followupStatus", pendingFollowups == 0 ? "DONE" : (hasOverdue ? "ALERT" : "IDLE"));
+
             customerSummaryMap.put(cust.getId(), cData);
         }
         List<Map<String, Object>> customerSummaryList = new ArrayList<>(customerSummaryMap.values());

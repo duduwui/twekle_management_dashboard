@@ -77,8 +77,6 @@ public class FollowupService {
             customerPage = (cutoff == null)
                     ? customerRepository.searchCustomers(cleanSearch, pageable)
                     : customerRepository.searchCustomersWithCutoff(cleanSearch, cutoff, pageable);
-        } else if (dateFrom != null && dateTo != null) {
-            customerPage = customerRepository.findByCreatedAtBetween(dateFrom, dateTo, pageable);
         } else if (isAlert) {
             customerPage = (cutoff == null)
                     ? customerRepository.findOverdueCustomers(pageable)
@@ -91,6 +89,8 @@ public class FollowupService {
             customerPage = (cutoff == null)
                     ? customerRepository.findCompletedCustomers(pageable)
                     : customerRepository.findCompletedCustomersWithCutoff(cutoff, pageable);
+        } else if (dateFrom != null && dateTo != null) {
+            customerPage = customerRepository.findByCreatedAtBetween(dateFrom, dateTo, pageable);
         } else {
             customerPage = (cutoff == null)
                     ? customerRepository.findAll(pageable)

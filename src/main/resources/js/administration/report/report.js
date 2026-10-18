@@ -51,6 +51,10 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         dateTo: FilterHelperService.getTomorrow(),
         satisfactionFilter: 'all',
         milestoneFilter: 'all',
+        customerTypeFilter: 'all',
+        customerTierFilter: 'all',
+        customerStatusFilter: 'all',
+        customerCityFilter: 'all',
         searchNotes: '',
         searchProducts: '',
         searchCustomers: '',
@@ -306,20 +310,112 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         return items.slice(start, start + $scope.dtProducts.pageSize);
     };
 
+    $scope.customerSort = {
+        field: 'totalOrders',
+        reverse: true
+    };
+
+    $scope.sortByCustomer = function(field) {
+        if ($scope.customerSort.field === field) {
+            $scope.customerSort.reverse = !$scope.customerSort.reverse;
+        } else {
+            $scope.customerSort.field = field;
+            $scope.customerSort.reverse = (field === 'totalOrders' || field === 'totalSpent' || field === 'pendingFollowups');
+        }
+    };
+
+    $scope.getCustomerSortIndicator = function(field) {
+        if ($scope.customerSort.field !== field) return '';
+        return $scope.customerSort.reverse ? '▼' : '▲';
+    };
+
+    $scope.clearCustomerFilters = function() {
+        $scope.reportFilters.customerTypeFilter = 'all';
+        $scope.reportFilters.customerTierFilter = 'all';
+        $scope.reportFilters.customerStatusFilter = 'all';
+        $scope.reportFilters.customerCityFilter = 'all';
+        $scope.reportFilters.searchCustomers = '';
+        $scope.dtCustomers.currentPage = 1;
+    };
+
+    $scope.hasCustomerFiltersActive = function() {
+        return ($scope.reportFilters.customerTypeFilter && $scope.reportFilters.customerTypeFilter !== 'all') ||
+               ($scope.reportFilters.customerTierFilter && $scope.reportFilters.customerTierFilter !== 'all') ||
+               ($scope.reportFilters.customerStatusFilter && $scope.reportFilters.customerStatusFilter !== 'all') ||
+               ($scope.reportFilters.customerCityFilter && $scope.reportFilters.customerCityFilter !== 'all') ||
+               !!$scope.reportFilters.searchCustomers;
+    };
+
     $scope.getFilteredReportCustomers = function() {
         var custs = $scope.reportData.followups || $scope.reportData.customers || [];
-        var search = ($scope.reportFilters.searchFollowups || $scope.reportFilters.searchCustomers || '').trim().toLowerCase();
-        if (!search) return custs;
-        return custs.filter(function(c) {
-            var name = (c.name || '').toLowerCase();
-            var phone = (c.phoneNumber || '').toLowerCase();
-            var city = (c.city || '').toLowerCase();
-            var tier = (c.tier || '').toLowerCase();
-            return name.indexOf(search) !== -1 ||
-                   phone.indexOf(search) !== -1 ||
-                   city.indexOf(search) !== -1 ||
-                   tier.indexOf(search) !== -1;
+        var search = ($scope.reportFilters.searchCustomers || $scope.reportFilters.searchFollowups || '').trim().toLowerCase();
+        var typeFilter = $scope.reportFilters.customerTypeFilter || 'all';
+        var tierFilter = $scope.reportFilters.customerTierFilter || 'all';
+        var statusFilter = $scope.reportFilters.customerStatusFilter || 'all';
+        var cityFilter = $scope.reportFilters.customerCityFilter || 'all';
+
+        var filtered = custs.filter(function(c) {
+            // 1. Customer Type filter (Market vs Person)
+            if (typeFilter !== 'all' && c.customerType !== typeFilter) return false;
+
+            // 2. Customer Tier filter
+            if (tierFilter !== 'all') {
+                var tk = c.tierKey || '';
+                var to = c.totalOrders || 0;
+                if (tierFilter === 'VIP' && (to < 5 && tk.indexOf('VIP') === -1)) return false;
+                if (tierFilter === 'FREQUENT' && ((to < 3 || to >= 5) && tk.indexOf('FREQUENT') === -1)) return false;
+                if (tierFilter === 'RETURNING' && (to !== 2 && tk.indexOf('RETURNING') === -1)) return false;
+                if (tierFilter === 'ONE_TIME' && (to !== 1 && tk.indexOf('ONE_TIME') === -1)) return false;
+            }
+
+            // 3. Follow-up queue status filter
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'DONE' && !c.allFollowupsCompleted && c.followupStatus !== 'DONE') return false;
+                if (statusFilter === 'ALERT' && c.followupStatus !== 'ALERT') return false;
+                if (statusFilter === 'IDLE' && (c.followupStatus === 'ALERT' || c.allFollowupsCompleted)) return false;
+            }
+
+            // 4. City filter
+            if (cityFilter !== 'all' && (c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
+
+            // 5. Search text filter
+            if (search) {
+                var name = (c.name || '').toLowerCase();
+                var phone = (c.phoneNumber || '').toLowerCase();
+                var city = (c.city || '').toLowerCase();
+                var tier = (c.tier || '').toLowerCase();
+                var typeLbl = (c.customerTypeLabel || '').toLowerCase();
+                var email = (c.email || '').toLowerCase();
+                if (name.indexOf(search) === -1 &&
+                    phone.indexOf(search) === -1 &&
+                    city.indexOf(search) === -1 &&
+                    tier.indexOf(search) === -1 &&
+                    typeLbl.indexOf(search) === -1 &&
+                    email.indexOf(search) === -1) {
+                    return false;
+                }
+            }
+            return true;
         });
+
+        // Apply sorting
+        if ($scope.customerSort && $scope.customerSort.field) {
+            var field = $scope.customerSort.field;
+            var rev = $scope.customerSort.reverse;
+            filtered.sort(function(a, b) {
+                var valA = a[field];
+                var valB = b[field];
+                if (valA == null) return 1;
+                if (valB == null) return -1;
+                if (typeof valA === 'string') {
+                    var cmp = valA.localeCompare(valB);
+                    return rev ? -cmp : cmp;
+                }
+                return rev ? (valB - valA) : (valA - valB);
+            });
+        }
+
+        return filtered;
     };
     $scope.getFilteredReportFollowups = $scope.getFilteredReportCustomers;
 

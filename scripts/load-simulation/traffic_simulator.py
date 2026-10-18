@@ -930,6 +930,13 @@ class TrafficEngine:
         session = admin_meta["session"]
         csrf = admin_meta.get("csrf_token", "")
 
+        # Realistic behavior: ~30% of incoming intake events are repeat orders from existing customers!
+        if self.customer_id_pool and random.random() < 0.30:
+            repeat_cust_id = random.choice(self.customer_id_pool)
+            product = random.choice(SAMPLE_PRODUCTS)
+            asyncio.create_task(self._insert_automated_order_db(repeat_cust_id, product, num_orders=1))
+            return
+
         company = f"{random.choice(SAMPLE_COMPANIES)} #{random.randint(100, 9999)}"
         phone = f"+964 770 {random.randint(100, 999)} {random.randint(1000, 9999)}"
         email = f"order{random.randint(1000, 99999)}@corp.iq"
@@ -985,7 +992,7 @@ class TrafficEngine:
             lat = (time.time() - t0) * 1000
             metrics.record_api_intake(0, lat, str(ex)[:80])
 
-    async def _insert_automated_order_db(self, cust_id: int, items_summary: str):
+    async def _insert_automated_order_db(self, cust_id: int, items_summary: str, num_orders: int = None):
         def _db_op():
             if not pymysql:
                 return
@@ -995,42 +1002,63 @@ class TrafficEngine:
                     database='twekl_db', autocommit=True, connect_timeout=3
                 )
                 with conn.cursor() as cur:
-                    amt = round(random.uniform(450.0, 3400.0), 2)
-                    qty = random.randint(1, 4)
-                    order_num = f"ORD-{cust_id}-{random.randint(10, 99)}"
-                    roll = random.random()
-                    if roll < 0.40:
-                        # Fresh order placed 1 to 18 hours ago
-                        hrs_ago = random.randint(1, 18)
-                        order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {hrs_ago} HOUR), %s, 'DELIVERED', %s, %s)"
-                        c1_done, c1_stat = (1, 'DONE') if hrs_ago >= 12 else (0, 'PENDING')
-                        c2_done, c2_stat = (0, 'PENDING')
-                        c3_done, c3_stat = (0, 'PENDING')
-                    elif roll < 0.70:
-                        # 3 to 5 days ago (upcoming 7-day check)
-                        days_ago = random.randint(3, 5)
-                        order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
-                        c1_done, c1_stat = (1, 'DONE')
-                        c2_done, c2_stat = (0, 'PENDING')
-                        c3_done, c3_stat = (0, 'PENDING')
+                    if num_orders is None:
+                        # Realistic distribution:
+                        # 25% 0 orders (lead/prospect), 50% 1 order, 18% 2 orders, 7% 3-4 orders
+                        r = random.random()
+                        if r < 0.25:
+                            count = 0
+                        elif r < 0.75:
+                            count = 1
+                        elif r < 0.93:
+                            count = 2
+                        else:
+                            count = random.randint(3, 4)
                     else:
-                        # Overdue! 9 to 14 days ago (7-day milestone is OVERDUE!)
-                        days_ago = random.randint(9, 14)
-                        order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
-                        c1_done, c1_stat = (1, 'DONE')
-                        c2_done, c2_stat = (0, 'OVERDUE')
-                        c3_done, c3_stat = (0, 'PENDING')
+                        count = num_orders
 
-                    cur.execute(order_sql, (cust_id, items_summary, order_num, amt, qty))
-                    oid = cur.lastrowid
-                    cur.execute(
-                        "INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, COMPLETED, MILESTONE_NAME, STATUS, TARGET_DAYS) "
-                        "VALUES (%s, %s, 'Last 24 Hours', %s, 1), (%s, %s, 'Last 7 Days', %s, 7), (%s, %s, 'Last 30 Days', %s, 30)",
-                        (oid, c1_done, c1_stat, oid, c2_done, c2_stat, oid, c3_done, c3_stat)
-                    )
-                    first_chk = cur.lastrowid
-                    self.active_check_ids.extend([first_chk, first_chk + 1, first_chk + 2])
-                    metrics.automated_orders_created += 1
+                    total_spent = 0.0
+                    for _ in range(count):
+                        amt = round(random.uniform(450.0, 3400.0), 2)
+                        total_spent += amt
+                        qty = random.randint(1, 4)
+                        order_num = f"ORD-{cust_id}-{random.randint(100, 999)}"
+                        roll = random.random()
+                        if roll < 0.40:
+                            hrs_ago = random.randint(1, 18)
+                            order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {hrs_ago} HOUR), %s, 'DELIVERED', %s, %s)"
+                            c1_done, c1_stat = (1, 'DONE') if hrs_ago >= 12 else (0, 'PENDING')
+                            c2_done, c2_stat = (0, 'PENDING')
+                            c3_done, c3_stat = (0, 'PENDING')
+                        elif roll < 0.70:
+                            days_ago = random.randint(3, 5)
+                            order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
+                            c1_done, c1_stat = (1, 'DONE')
+                            c2_done, c2_stat = (0, 'PENDING')
+                            c3_done, c3_stat = (0, 'PENDING')
+                        else:
+                            days_ago = random.randint(9, 14)
+                            order_sql = f"INSERT INTO CUSTOMER_ORDERS (CUSTOMER_ID, ITEMS_SUMMARY, ORDER_DATE, ORDER_NUMBER, ORDER_STATUS, TOTAL_AMOUNT, QUANTITY) VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL {days_ago} DAY), %s, 'DELIVERED', %s, %s)"
+                            c1_done, c1_stat = (1, 'DONE')
+                            c2_done, c2_stat = (0, 'OVERDUE')
+                            c3_done, c3_stat = (0, 'PENDING')
+
+                        cur.execute(order_sql, (cust_id, items_summary, order_num, amt, qty))
+                        oid = cur.lastrowid
+                        cur.execute(
+                            "INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, COMPLETED, MILESTONE_NAME, STATUS, TARGET_DAYS) "
+                            "VALUES (%s, %s, 'Last 24 Hours', %s, 1), (%s, %s, 'Last 7 Days', %s, 7), (%s, %s, 'Last 30 Days', %s, 30)",
+                            (oid, c1_done, c1_stat, oid, c2_done, c2_stat, oid, c3_done, c3_stat)
+                        )
+                        first_chk = cur.lastrowid
+                        self.active_check_ids.extend([first_chk, first_chk + 1, first_chk + 2])
+                        metrics.automated_orders_created += 1
+
+                    if count > 0:
+                        cur.execute(
+                            "UPDATE CUSTOMERS SET TOTAL_ORDERS = TOTAL_ORDERS + %s, TOTAL_SPENT = TOTAL_SPENT + %s, LAST_ORDER_DATE = NOW() WHERE ID = %s",
+                            (count, total_spent, cust_id)
+                        )
                 conn.close()
             except Exception:
                 pass

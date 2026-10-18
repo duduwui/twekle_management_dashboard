@@ -42,20 +42,18 @@ public class DashboardController {
 
     @GetMapping("/admin/dashboard")
     public String showDashboard(Model model) {
-        List<CustomerFollowupSummary> summaries = followupService.findAllSummaries("ALL");
-        List<CustomerFollowupSummary> urgent = summaries.stream()
-                .filter(s -> !s.isAllFollowupsCompleted() && ("ALERT".equalsIgnoreCase(s.getFollowupStatus()) || "IDLE".equalsIgnoreCase(s.getFollowupStatus())))
-                .sorted(Comparator.comparing(CustomerFollowupSummary::getNextPendingMinutesLeft,
-                        Comparator.nullsLast(Comparator.naturalOrder())))
-                .toList();
+        org.springframework.data.domain.Page<CustomerFollowupSummary> recentPage = followupService.findPagedSummaries("ALL", "ALL", null,
+                org.springframework.data.domain.PageRequest.of(0, 40, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
+        org.springframework.data.domain.Page<CustomerFollowupSummary> urgentPage = followupService.findPagedSummaries("ALL", "ALERT", null,
+                org.springframework.data.domain.PageRequest.of(0, 40, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
 
         model.addAttribute("activeTab", "dashboard");
         model.addAttribute("stats", customerService.getStats());
-        model.addAttribute("urgentCustomers", urgent.size() > 50 ? urgent.subList(0, 50) : urgent);
-        model.addAttribute("allCustomers", summaries.size() > 50 ? summaries.subList(0, 50) : summaries);
+        model.addAttribute("urgentCustomers", urgentPage.getContent());
+        model.addAttribute("allCustomers", recentPage.getContent());
         model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL").stream()
                 .filter(item -> item.getRating() <= 2 || "UNSATISFIED".equalsIgnoreCase(item.getSatisfaction()))
-                .limit(50)
+                .limit(40)
                 .toList());
         return "administration/dashboard/dashboard";
     }

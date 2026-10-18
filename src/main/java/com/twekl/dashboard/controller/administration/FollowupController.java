@@ -47,10 +47,56 @@ public class FollowupController {
     @GetMapping
     public String showFollowups(Model model) {
         model.addAttribute("activeTab", "followups");
-        List<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> all = followupService.findAllSummaries("ALL");
-        model.addAttribute("followupSummaries", all.size() > 100 ? all.subList(0, 100) : all);
+        org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> initialPage =
+                followupService.findPagedSummaries("ALL", "ALL", null,
+                        org.springframework.data.domain.PageRequest.of(0, 40, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
+        model.addAttribute("followupSummaries", initialPage.getContent());
+        model.addAttribute("totalCustomers", initialPage.getTotalElements());
+        model.addAttribute("totalPages", initialPage.getTotalPages());
+        model.addAttribute("currentPage", 1);
+        model.addAttribute("pageSize", 40);
         model.addAttribute("presets", timeFilterService.findAll());
         return "administration/followup/followups";
+    }
+
+    @GetMapping(value = "/paged", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPagedFollowups(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "40") int size,
+            @RequestParam(value = "timeFilter", required = false) String timeFilter,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "sortField", defaultValue = "id") String sortField,
+            @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+
+        int pageZeroIndex = Math.max(0, page - 1);
+        int pageSize = Math.min(100, Math.max(10, size));
+        org.springframework.data.domain.Sort.Direction direction = "asc".equalsIgnoreCase(sortDir)
+                ? org.springframework.data.domain.Sort.Direction.ASC
+                : org.springframework.data.domain.Sort.Direction.DESC;
+
+        String field = "id";
+        if ("totalOrders".equalsIgnoreCase(sortField)) field = "totalOrders";
+        else if ("totalSpent".equalsIgnoreCase(sortField)) field = "totalSpent";
+        else if ("name".equalsIgnoreCase(sortField)) field = "name";
+        else if ("phoneNumber".equalsIgnoreCase(sortField)) field = "phoneNumber";
+        else if ("createdAt".equalsIgnoreCase(sortField)) field = "createdAt";
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageZeroIndex, pageSize, org.springframework.data.domain.Sort.by(direction, field));
+        org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> pagedResult =
+                followupService.findPagedSummaries(timeFilter, status, search, pageable);
+
+        Map<String, Object> responseData = new java.util.LinkedHashMap<>();
+        responseData.put("content", pagedResult.getContent());
+        responseData.put("currentPage", page);
+        responseData.put("pageSize", pageSize);
+        responseData.put("totalElements", pagedResult.getTotalElements());
+        responseData.put("totalPages", pagedResult.getTotalPages());
+        responseData.put("first", pagedResult.isFirst());
+        responseData.put("last", pagedResult.isLast());
+
+        return ResponseEntity.ok(ApiResponse.success(responseData));
     }
 
     @PatchMapping("/{checkId:\\d+}/status")

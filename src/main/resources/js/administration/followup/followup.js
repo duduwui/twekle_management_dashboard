@@ -36,13 +36,14 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
 
     var pendingTargetCustomerId = null;
 
-    // Table pagination & sorting (Customer List)
+    // Table pagination & sorting (Customer List) - Default 40 rows per page
     $scope.dt = {
         currentPage: 1,
-        pageSize: 10,
+        pageSize: 40,
         sortField: 'id',
         sortReverse: false,
-        totalItems: 0
+        totalItems: window.SERVER_TOTAL_CUSTOMERS || 0,
+        totalPages: window.SERVER_TOTAL_PAGES || 1
     };
 
     // Filter criteria (Customer List) - Default Today/Tomorrow displayed, dateFilterApplied: false on initial load
@@ -134,25 +135,59 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
 
     $scope.loadingCustomers = false;
 
+    var searchTimer = null;
+    $scope.onSearchChange = function() {
+        if (searchTimer) $timeout.cancel(searchTimer);
+        searchTimer = $timeout(function() {
+            $scope.dt.currentPage = 1;
+            $scope.loadCustomers(1);
+        }, 300);
+    };
+
     /**
-     * Loads customer directory from backend.
-     * Stamps each customer with _loadedAt so the live countdown can drift correctly.
+     * Loads customer directory page (40 items) from backend.
+     * Replaces current page in memory so memory consumption is always tiny and bounded.
      */
-    $scope.loadCustomers = function() {
+    $scope.loadCustomers = function(targetPage) {
+        if (targetPage !== undefined) {
+            $scope.dt.currentPage = targetPage;
+        }
         $scope.loadingCustomers = true;
         var preset = $scope.selectedTimePreset ? ($scope.selectedTimePreset.presetKey || $scope.selectedTimePreset.name) : null;
-        FollowupService.getAll(preset).then(function(res) {
+        var params = {
+            page: $scope.dt.currentPage || 1,
+            size: $scope.dt.pageSize || 40,
+            timeFilter: preset || 'ALL',
+            status: $scope.customerFilters.followupStatus || 'ALL',
+            search: $scope.customerFilters.search || '',
+            sortField: $scope.dt.sortField || 'id',
+            sortDir: $scope.dt.sortReverse ? 'asc' : 'desc'
+        };
+
+        FollowupService.getPaged(params).then(function(res) {
             $scope.loadingCustomers = false;
-            var raw = res.data;
-            if (typeof raw === 'string') {
-                return;
-            }
-            var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+            var responseData = res.data && res.data.data ? res.data.data : res.data;
+            if (!responseData) return;
+
+            var list = responseData.content || [];
+            $scope.dt.totalItems = responseData.totalElements != null ? responseData.totalElements : list.length;
+            $scope.dt.totalPages = responseData.totalPages || Math.ceil($scope.dt.totalItems / $scope.dt.pageSize) || 1;
+            $scope.dt.currentPage = responseData.currentPage || $scope.dt.currentPage || 1;
+
             var now = Date.now();
-            $scope.customers = list.map(function(c) {
-                c._loadedAt = now;
-                return c;
+            $scope.customers = list.map(function(summary) {
+                var c = summary.customer || summary;
+                return angular.extend({}, c, {
+                    followupStatus: summary.followupStatus,
+                    nextPendingFollowup: summary.nextPendingFollowup,
+                    nextPendingOrderId: summary.nextPendingOrderId,
+                    allFollowupsCompleted: summary.allFollowupsCompleted,
+                    remainingFollowupsCount: summary.remainingFollowupsCount,
+                    nextPendingMinutesLeft: summary.nextPendingMinutesLeft,
+                    _loadedAt: now
+                });
             });
+
             if (pendingTargetCustomerId && ($scope.customerView === 'orders' || $scope.customerView === 'feedback')) {
                 var cust = $scope.customers.find(function(c) { return c.id === pendingTargetCustomerId; });
                 if (cust) {
@@ -247,11 +282,11 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     // CUSTOMER TABLE HELPERS & PAGINATION
     // =========================================================
     $scope.getFilteredCustomers = function() {
-        return FilterHelperService.filterTable($scope.customers, $scope.customerFilters, null);
+        return $scope.customers || [];
     };
 
     $scope.getPagedCustomers = function() {
-        return FilterHelperService.filterTable($scope.customers, $scope.customerFilters, $scope.dt);
+        return $scope.customers || [];
     };
 
     $scope.sortBy = function(field) {
@@ -261,6 +296,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             $scope.dt.sortField = field;
             $scope.dt.sortReverse = false;
         }
+        $scope.loadCustomers(1);
     };
 
     $scope.getSortIndicator = function(field) {
@@ -274,13 +310,13 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         return '';
     };
 
-    $scope.getTotalPages = function(totalItems) {
-        return Math.ceil((totalItems || 1) / $scope.dt.pageSize) || 1;
+    $scope.getTotalPages = function() {
+        return $scope.dt.totalPages || 1;
     };
 
-    $scope.getPageNumbers = function(totalItems) {
-        var total = $scope.getTotalPages(totalItems);
-        var current = $scope.dt.currentPage;
+    $scope.getPageNumbers = function() {
+        var total = $scope.dt.totalPages || 1;
+        var current = $scope.dt.currentPage || 1;
         if (total <= 7) {
             var pages = [];
             for (var i = 1; i <= total; i++) pages.push(i);
@@ -310,10 +346,9 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     };
 
     $scope.setPage = function(page) {
-        if (page === '...') return;
-        var total = $scope.getTotalPages($scope.getFilteredCustomers().length);
-        if (page >= 1 && page <= total) {
-            $scope.dt.currentPage = page;
+        if (page === '...' || page === $scope.dt.currentPage) return;
+        if (page >= 1 && page <= $scope.dt.totalPages) {
+            $scope.loadCustomers(page);
         }
     };
 
@@ -612,12 +647,14 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     $scope.$on('filter:followupStatusChanged', function(event, status) {
         $scope.customerFilters.followupStatus = status || 'ALL';
         $scope.dt.currentPage = 1;
+        $scope.loadCustomers(1);
     });
 
     $scope.clearFollowupStatusFilter = function() {
         $scope.customerFilters.followupStatus = 'ALL';
         $scope.dt.currentPage = 1;
         $scope.$emit('filter:clearFollowupStatus');
+        $scope.loadCustomers(1);
     };
 
     // Listen for sub-view navigation from sidebar

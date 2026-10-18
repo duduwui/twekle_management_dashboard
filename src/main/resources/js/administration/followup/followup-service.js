@@ -21,7 +21,10 @@ if (typeof angular !== 'undefined') {
         var ORDERS = '/admin/orders';
 
         return {
-            // Customer directory & stats
+            // Customer directory & stats (Server-Side Paged & Instant)
+            getPaged: function(params) {
+                return $http.get(BASE + '/paged', { params: params });
+            },
             getAll: function(timeFilter) {
                 return $http.get(CUSTOMERS, { params: timeFilter ? { timeFilter: timeFilter } : {} });
             },

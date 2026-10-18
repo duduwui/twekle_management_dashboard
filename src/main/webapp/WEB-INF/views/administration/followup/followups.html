@@ -37,8 +37,8 @@
                     <!-- Live Search Bar -->
                     <div class="filter-search-box">
                         <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="search" name="search_customer_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search follow-ups by customer name, phone, city..." ng-model="customerFilters.search">
-                        <button type="button" class="search-clear-btn" ng-show="customerFilters.search" ng-click="customerFilters.search = ''; dt.currentPage = 1;" title="Clear search">✕</button>
+                        <input type="search" name="search_customer_unique" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="comic-search-bar" placeholder="Search follow-ups by customer name, phone, city..." ng-model="customerFilters.search" ng-change="onSearchChange()">
+                        <button type="button" class="search-clear-btn" ng-show="customerFilters.search" ng-click="customerFilters.search = ''; onSearchChange();" title="Clear search">✕</button>
                     </div>
                 </div>
 
@@ -139,17 +139,28 @@
                     </table>
                 </div>
 
-                <!-- DataTable Pagination Footer -->
-                <div class="datatable-footer" ng-if="getFilteredCustomers().length > 0">
-                    <div class="datatable-info">
-                        Showing {{ (dt.currentPage - 1) * dt.pageSize + 1 }} to {{ dt.currentPage * dt.pageSize > getFilteredCustomers().length ? getFilteredCustomers().length : dt.currentPage * dt.pageSize }} of {{ getFilteredCustomers().length }} customers
+                <!-- DataTable Pagination Footer (Server-Side 40 Rows) -->
+                <div class="datatable-footer" ng-if="dt.totalItems > 0">
+                    <div class="datatable-info" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span>
+                            Showing <strong>{{ (dt.currentPage - 1) * dt.pageSize + 1 }}</strong> to <strong>{{ dt.currentPage * dt.pageSize > dt.totalItems ? dt.totalItems : dt.currentPage * dt.pageSize }}</strong> of <strong>{{ dt.totalItems.toLocaleString() }}</strong> customers (Page {{ dt.currentPage }} of {{ dt.totalPages.toLocaleString() }})
+                        </span>
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Rows:</span>
+                            <select class="comic-input" style="width: auto; padding: 2px 8px; height: 28px; font-size: 0.82rem; font-weight: 800;" ng-model="dt.pageSize" ng-change="loadCustomers(1)">
+                                <option ng-value="20">20</option>
+                                <option ng-value="40">40</option>
+                                <option ng-value="80">80</option>
+                                <option ng-value="100">100</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="datatable-pagination">
                         <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(1)" title="First Page">«</button>
-                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)">‹ Prev</button>
-                        <button type="button" class="page-btn" ng-repeat="p in getPageNumbers(getFilteredCustomers().length) track by $index" ng-class="{'active': dt.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setPage(p)" ng-bind="p"></button>
-                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(dt.currentPage + 1)">Next ›</button>
-                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === getTotalPages(getFilteredCustomers().length)" ng-click="setPage(getTotalPages(getFilteredCustomers().length))" title="Last Page">»</button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === 1" ng-click="setPage(dt.currentPage - 1)" title="Previous Page">‹ Prev</button>
+                        <button type="button" class="page-btn" ng-repeat="p in getPageNumbers() track by $index" ng-class="{'active': dt.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setPage(p)" ng-bind="p"></button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === dt.totalPages" ng-click="setPage(dt.currentPage + 1)" title="Next Page">Next ›</button>
+                        <button type="button" class="page-btn" ng-disabled="dt.currentPage === dt.totalPages" ng-click="setPage(dt.totalPages)" title="Last Page">»</button>
                     </div>
                 </div>
             </div>

@@ -20,6 +20,43 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     Optional<Customer> findByPhoneNumber(String phoneNumber);
     boolean existsByPhoneNumber(String phoneNumber);
 
+    org.springframework.data.domain.Page<Customer> findByCreatedAtAfter(java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT c FROM Customer c WHERE " +
+           "(:query IS NULL OR :query = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:cutoff IS NULL OR c.createdAt >= :cutoff)")
+    org.springframework.data.domain.Page<Customer> searchCustomers(
+            @Param("query") String query,
+            @Param("cutoff") java.time.Instant cutoff,
+            org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT c FROM Customer c WHERE " +
+           "(:query IS NULL OR :query = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:cutoff IS NULL OR c.createdAt >= :cutoff) AND " +
+           "EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false)")
+    org.springframework.data.domain.Page<Customer> searchOverdueCustomers(
+            @Param("query") String query,
+            @Param("cutoff") java.time.Instant cutoff,
+            org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT c FROM Customer c WHERE " +
+           "(:query IS NULL OR :query = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:cutoff IS NULL OR c.createdAt >= :cutoff) AND " +
+           "(c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)))")
+    org.springframework.data.domain.Page<Customer> searchInQueueCustomers(
+            @Param("query") String query,
+            @Param("cutoff") java.time.Instant cutoff,
+            org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT c FROM Customer c WHERE " +
+           "(:query IS NULL OR :query = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:cutoff IS NULL OR c.createdAt >= :cutoff) AND " +
+           "c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)")
+    org.springframework.data.domain.Page<Customer> searchCompletedCustomers(
+            @Param("query") String query,
+            @Param("cutoff") java.time.Instant cutoff,
+            org.springframework.data.domain.Pageable pageable);
+
     @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.orders o LEFT JOIN FETCH o.checks WHERE c.id = :id")
     Optional<Customer> findWithOrdersAndChecksById(@Param("id") Long id);
 

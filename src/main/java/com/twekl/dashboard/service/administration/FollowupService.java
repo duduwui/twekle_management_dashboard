@@ -46,6 +46,78 @@ public class FollowupService {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CustomerFollowupSummary> findPagedSummaries(
+            String timeFilter,
+            String statusFilter,
+            String search,
+            org.springframework.data.domain.Pageable pageable) {
+
+        Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        String status = (statusFilter != null) ? statusFilter.trim().toUpperCase() : "ALL";
+
+        org.springframework.data.domain.Page<Customer> customerPage;
+        if ("ALERT".equals(status)) {
+            customerPage = customerRepository.searchOverdueCustomers(cleanSearch, cutoff, pageable);
+        } else if ("IDLE".equals(status)) {
+            customerPage = customerRepository.searchInQueueCustomers(cleanSearch, cutoff, pageable);
+        } else if ("DONE".equals(status)) {
+            customerPage = customerRepository.searchCompletedCustomers(cleanSearch, cutoff, pageable);
+        } else {
+            customerPage = customerRepository.searchCustomers(cleanSearch, cutoff, pageable);
+        }
+
+        if (customerPage == null || customerPage.isEmpty()) {
+            return new org.springframework.data.domain.PageImpl<>(
+                    Collections.emptyList(), pageable, customerPage != null ? customerPage.getTotalElements() : 0);
+        }
+
+        List<Customer> customers = customerPage.getContent();
+        List<Long> customerIds = customers.stream().map(Customer::getId).toList();
+
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        Set<Long> activePresetIds = new HashSet<>();
+        Set<String> activePresetNames = new HashSet<>();
+        for (TimeFilterPreset p : activePresets) {
+            if (p.getId() != null) activePresetIds.add(p.getId());
+            if (p.getLabelEn() != null) activePresetNames.add(p.getLabelEn().trim().toLowerCase());
+            if (p.getName() != null) activePresetNames.add(p.getName().trim().toLowerCase());
+            if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
+        }
+
+        List<CustomerOrder> allOrders = orderRepository.findByCustomerIds(customerIds);
+        List<OrderFollowupCheck> allChecks = followupCheckRepository.findByCustomerIds(customerIds);
+
+        Map<Long, List<CustomerOrder>> ordersByCustId = new HashMap<>();
+        for (CustomerOrder o : allOrders) {
+            if (o.getCustomer() != null && o.getCustomer().getId() != null) {
+                ordersByCustId.computeIfAbsent(o.getCustomer().getId(), k -> new ArrayList<>()).add(o);
+            }
+        }
+
+        Map<Long, List<OrderFollowupCheck>> checksByOrderId = new HashMap<>();
+        for (OrderFollowupCheck ch : allChecks) {
+            if (ch.getOrder() != null && ch.getOrder().getId() != null) {
+                checksByOrderId.computeIfAbsent(ch.getOrder().getId(), k -> new ArrayList<>()).add(ch);
+            }
+        }
+
+        Instant now = Instant.now();
+        List<CustomerFollowupSummary> results = new ArrayList<>();
+        for (Customer c : customers) {
+            List<CustomerOrder> orders = ordersByCustId.getOrDefault(c.getId(), Collections.emptyList());
+            c.setTotalOrders(orders.size());
+            double totalSpent = orders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
+            c.setTotalSpent(totalSpent);
+
+            CustomerFollowupSummary summary = buildSummary(c, orders, checksByOrderId, activePresetIds, activePresetNames, now);
+            results.add(summary);
+        }
+
+        return new org.springframework.data.domain.PageImpl<>(results, pageable, customerPage.getTotalElements());
+    }
+
     @Cacheable(value = "followupSummaries", key = "#timeFilter != null ? #timeFilter : 'ALL'", sync = true)
     @Transactional(readOnly = true)
     public List<CustomerFollowupSummary> findAllSummaries(String timeFilter) {

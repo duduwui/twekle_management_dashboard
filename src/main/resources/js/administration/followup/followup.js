@@ -64,11 +64,11 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         totalItems: 0
     };
 
-    // Filter criteria (Customer Orders) - Default Today/Tomorrow displayed
+    // Filter criteria (Customer Orders) - Default to all orders without date restriction
     $scope.orderFilters = {
         search: '',
-        dateFrom: FilterHelperService.getToday(),
-        dateTo: FilterHelperService.getTomorrow(),
+        dateFrom: null,
+        dateTo: null,
         dateFilterApplied: false
     };
 
@@ -91,6 +91,13 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             if (targetId) {
                 $scope.customerView = 'orders';
                 pendingTargetCustomerId = targetId;
+                FollowupService.getById(targetId).then(function(res) {
+                    var c = res.data ? (res.data.data || res.data) : null;
+                    if (c) {
+                        $scope.selectedCustomer = c;
+                    }
+                });
+                $scope.loadCustomerOrders(targetId);
             }
         } else if (path.indexOf('/admin/followups/feedback/') === 0 || path.indexOf('/admin/customers/feedback/') === 0) {
             var parts = path.split('/');
@@ -98,6 +105,13 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             if (targetId) {
                 $scope.customerView = 'feedback';
                 pendingTargetCustomerId = targetId;
+                FollowupService.getById(targetId).then(function(res) {
+                    var c = res.data ? (res.data.data || res.data) : null;
+                    if (c) {
+                        $scope.selectedCustomer = c;
+                    }
+                });
+                $scope.loadCustomerOrders(targetId);
             }
         } else {
             $scope.customerView = 'list';
@@ -116,6 +130,10 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
      */
     $scope.setCustomerView = function(view, cust) {
         $scope.customerView = view;
+        if (view === 'orders' || view === 'feedback') {
+            $scope.clearOrderDateFilter();
+            $scope.orderFilters.search = '';
+        }
         if (cust) {
             $scope.selectedCustomer = cust;
             $scope.loadCustomerOrders(cust.id);
@@ -303,14 +321,23 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     /**
      * Loads orders for a specific customer
      */
+    $scope.loadingOrders = false;
     $scope.loadCustomerOrders = function(customerId) {
         if (!customerId) return;
+        $scope.loadingOrders = true;
         FollowupService.getOrders(customerId).then(function(res) {
+            $scope.loadingOrders = false;
             var raw = res.data;
             var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
             $scope.customerOrders = list;
-            if ($scope.expandedOrderId) $scope.loadOrderFollowups($scope.expandedOrderId);
+            if ($scope.expandedOrderId) {
+                $scope.loadOrderFollowups($scope.expandedOrderId);
+            } else if (list.length === 1) {
+                $scope.expandedOrderId = list[0].id;
+                $scope.loadOrderFollowups(list[0].id);
+            }
         }, function(err) {
+            $scope.loadingOrders = false;
             ToastService.error('Failed to load customer orders');
         });
     };
@@ -405,14 +432,32 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
      */
     $scope.openCustomerOrder = function(cust, orderId, milestone, $event) {
         if ($event) $event.stopPropagation();
+        $scope.clearOrderDateFilter();
+        $scope.orderFilters.search = '';
         $scope.selectedCustomer = cust;
         $scope.targetMilestoneHighlight = milestone || null;
         $scope.expandedOrderId = orderId || null;
         $scope.customerView = 'orders';
         $scope.loadCustomerOrders(cust.id);
+        if (orderId) {
+            $scope.loadOrderFollowups(orderId);
+        }
         if ($window.history && $window.history.pushState) {
             $window.history.pushState(null, '', '/admin/followups/orders/' + cust.id);
         }
+    };
+
+    $scope.clearOrderDateFilter = function() {
+        $scope.orderFilters.dateFilterApplied = false;
+        $scope.orderFilters.dateFrom = null;
+        $scope.orderFilters.dateTo = null;
+        $scope.selectedOrderTimePreset = null;
+        $scope.orderDt.currentPage = 1;
+    };
+
+    $scope.clearAllOrderFilters = function() {
+        $scope.orderFilters.search = '';
+        $scope.clearOrderDateFilter();
     };
 
     // =========================================================
@@ -728,9 +773,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             $scope.orderFilters.dateTo = range.dateTo;
             $scope.orderFilters.dateFilterApplied = true;
         } else {
-            $scope.orderFilters.dateFrom = FilterHelperService.getToday();
-            $scope.orderFilters.dateTo = FilterHelperService.getTomorrow();
-            $scope.orderFilters.dateFilterApplied = false;
+            $scope.clearOrderDateFilter();
         }
         $scope.orderDt.currentPage = 1;
     });

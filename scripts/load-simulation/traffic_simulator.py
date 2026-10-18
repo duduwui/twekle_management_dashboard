@@ -1010,19 +1010,16 @@ class TrafficEngine:
                 )
                 with conn.cursor() as cur:
                     if num_orders is None:
-                        # Realistic distribution:
-                        # 25% 0 orders (lead/prospect), 50% 1 order, 18% 2 orders, 7% 3-4 orders
+                        # Ensure every customer registered in the system has at least 1 order for follow-up tracking
                         r = random.random()
-                        if r < 0.25:
-                            count = 0
-                        elif r < 0.75:
+                        if r < 0.65:
                             count = 1
-                        elif r < 0.93:
+                        elif r < 0.88:
                             count = 2
                         else:
                             count = random.randint(3, 4)
                     else:
-                        count = num_orders
+                        count = max(1, num_orders)
 
                     total_spent = 0.0
                     for _ in range(count):
@@ -1053,8 +1050,8 @@ class TrafficEngine:
                         cur.execute(order_sql, (cust_id, items_summary, order_num, amt, qty))
                         oid = cur.lastrowid
                         cur.execute(
-                            "INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, COMPLETED, MILESTONE_NAME, STATUS, TARGET_DAYS) "
-                            "VALUES (%s, %s, 'Last 24 Hours', %s, 1), (%s, %s, 'Last 7 Days', %s, 7), (%s, %s, 'Last 30 Days', %s, 30)",
+                            "INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, PRESET_ID, COMPLETED, MILESTONE_NAME, STATUS, TARGET_DAYS, DURATION_VALUE, DURATION_UNIT) "
+                            "VALUES (%s, 22, %s, 'Last 24 Hours', %s, 1, 24, 'HOURS'), (%s, 23, %s, 'Last 7 Days', %s, 7, 7, 'DAYS'), (%s, 24, %s, 'Last 30 Days', %s, 30, 30, 'DAYS')",
                             (oid, c1_done, c1_stat, oid, c2_done, c2_stat, oid, c3_done, c3_stat)
                         )
                         first_chk = cur.lastrowid

@@ -26,7 +26,7 @@
                             <input type="date" lang="en-GB" class="comic-date-input" ng-model="orderFilters.dateTo" ng-change="orderFilters.dateFilterApplied = true; orderDt.currentPage = 1;" title="End Date">
                             
                             <!-- Big Filter Preset Selector Button -->
-                            <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset}" ng-click="openFilterModal('order')" title="Select Time Filter Preset">
+                            <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedOrderTimePreset || orderFilters.dateFilterApplied}" ng-click="openFilterModal('order')" title="Select Time Filter Preset">
                                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                                 </svg>
@@ -34,6 +34,10 @@
 
                             <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedOrderTimePreset" ng-click="selectOrderTimePreset(null)" title="Click to clear filter">
                                 <span ng-bind="selectedOrderTimePreset.name"></span> ✕
+                            </span>
+
+                            <span class="comic-tag tag-primary active-preset-pill" ng-if="orderFilters.dateFilterApplied" ng-click="clearOrderDateFilter()" title="Click to clear date filter">
+                                <span>Date Active</span> ✕
                             </span>
                         </div>
 
@@ -182,9 +186,21 @@
                                     </td>
                                 </tr>
 
-                                <tr ng-if="getFilteredCustomerOrders().length === 0">
-                                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-weight: 800;">
-                                        No orders match the selected filter criteria.
+                                <tr ng-if="loadingOrders">
+                                    <td colspan="7" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                        Loading purchase orders...
+                                    </td>
+                                </tr>
+                                <tr ng-if="!loadingOrders && customerOrders.length === 0">
+                                    <td colspan="7" style="text-align: center; padding: 32px 16px;">
+                                        <div style="font-size: 1.05rem; font-weight: 800; color: #1E293B; margin-bottom: 4px;">No purchase orders found for this customer</div>
+                                        <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">This customer account does not have any recorded purchase orders yet.</div>
+                                    </td>
+                                </tr>
+                                <tr ng-if="!loadingOrders && customerOrders.length > 0 && getFilteredCustomerOrders().length === 0">
+                                    <td colspan="7" style="text-align: center; padding: 28px 16px;">
+                                        <div style="font-size: 0.95rem; font-weight: 800; color: #1E293B; margin-bottom: 8px;">No orders match the selected filter criteria.</div>
+                                        <button type="button" class="comic-btn-secondary-sm" ng-click="clearAllOrderFilters()">Clear Filters</button>
                                     </td>
                                 </tr>
                             </tbody>

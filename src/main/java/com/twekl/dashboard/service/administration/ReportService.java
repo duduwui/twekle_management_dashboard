@@ -71,8 +71,25 @@ public class ReportService {
         List<CustomerFeedback> allFeedbacks = feedbackRepository.findRecentFeedbacks(cutoff, org.springframework.data.domain.PageRequest.of(0, 200));
         double avgRating = feedbackRepository.getAverageRating(cutoff);
 
-        List<OrderFollowupCheck> allChecks = followupCheckRepository.findRecentChecksWithOrderCustomerAndPreset(org.springframework.data.domain.PageRequest.of(0, 500));
+        // 2. Milestones Matrix using fast, 100% accurate SQL aggregations (covering index)
+        List<Object[]> rawMilestoneStats = (cutoff == null)
+                ? followupCheckRepository.getMilestoneStatsAll()
+                : followupCheckRepository.getMilestoneStatsByPeriod(cutoff);
+
+        Map<String, long[]> dbMilestoneCounts = new LinkedHashMap<>();
+        for (Object[] row : rawMilestoneStats) {
+            String name = (String) row[0];
+            if (name != null) {
+                long tot = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+                long comp = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                long pend = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+                dbMilestoneCounts.put(name.trim().toLowerCase(), new long[]{tot, comp, pend});
+            }
+        }
+
         List<TimeFilterPreset> activePresets = presetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        activePresets.sort(Comparator.comparingInt(TimeFilterPreset::getEquivalentDurationMinutes));
+
         Set<Long> activePresetIds = new HashSet<>();
         Set<String> activePresetNames = new HashSet<>();
         for (TimeFilterPreset p : activePresets) {
@@ -82,63 +99,21 @@ public class ReportService {
             if (p.getPresetKey() != null) activePresetNames.add(p.getPresetKey().trim().toLowerCase());
         }
 
-        List<OrderFollowupCheck> checksInPeriod = allChecks.stream()
-                .filter(c -> {
-                    boolean isPresetActive = (c.getPreset() != null && activePresetIds.contains(c.getPreset().getId()))
-                            || (c.getMilestoneName() != null && activePresetNames.contains(c.getMilestoneName().trim().toLowerCase()));
-                    if (!isPresetActive) return false;
-
-                    if (cutoff == null) return true;
-                    Instant checkDate = c.getCheckedAt() != null ? c.getCheckedAt() :
-                                        (c.getUpdatedAt() != null ? c.getUpdatedAt() :
-                                        (c.getCompletedDate() != null ? c.getCompletedDate() :
-                                        (c.getOrder() != null ? c.getOrder().getOrderDate() : null)));
-                    return checkDate != null && checkDate.isAfter(cutoff);
-                })
-                .collect(Collectors.toList());
-
-        long completedChecks = checksInPeriod.stream()
-                .filter(OrderFollowupCheck::isCompleted)
-                .count();
-
-        long totalChecks = checksInPeriod.size();
-        double completionRate = totalChecks > 0 ? (double) completedChecks / totalChecks * 100.0 : 0.0;
-
-        Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("newCustomers", newCustomers);
-        summary.put("totalOrders", totalOrdersInPeriod);
-        summary.put("revenue", Math.round(revenueInPeriod * 100.0) / 100.0);
-        summary.put("completedFollowups", completedChecks);
-        summary.put("completionRate", Math.round(completionRate * 10.0) / 10.0);
-        summary.put("averageRating", Math.round(avgRating * 10.0) / 10.0);
-        summary.put("totalFeedbacks", allFeedbacks.size());
-
-        // 2. Milestones Matrix (Health by Active Preset)
-        activePresets.sort(Comparator.comparingInt(TimeFilterPreset::getEquivalentDurationMinutes));
-        Map<String, int[]> presetCounts = new LinkedHashMap<>();
-        for (TimeFilterPreset p : activePresets) {
-            presetCounts.put(p.getName(), new int[]{0, 0});
-        }
-
-        for (OrderFollowupCheck c : checksInPeriod) {
-            String name = c.getMilestoneName();
-            if (name != null && !name.trim().isEmpty() && presetCounts.containsKey(name.trim())) {
-                presetCounts.get(name.trim())[0]++;
-                if (c.isCompleted()) {
-                    presetCounts.get(name.trim())[1]++;
-                }
-            }
-        }
-
         List<Map<String, Object>> milestoneList = new ArrayList<>();
-        for (Map.Entry<String, int[]> entry : presetCounts.entrySet()) {
-            int tot = entry.getValue()[0];
-            int comp = entry.getValue()[1];
-            int pend = tot - comp;
-            double pct = tot > 0 ? Math.round((comp * 1000.0) / tot) / 10.0 : 0.0;
+        Set<String> matchedPresets = new HashSet<>();
+
+        for (TimeFilterPreset p : activePresets) {
+            String key = p.getName() != null ? p.getName().trim().toLowerCase() : "";
+            long[] counts = dbMilestoneCounts.getOrDefault(key, new long[]{0L, 0L, 0L});
+            matchedPresets.add(key);
+
+            long tot = counts[0];
+            long comp = counts[1];
+            long pend = counts[2];
+            double pct = tot > 0 ? Math.round(((double) comp / tot * 1000.0)) / 10.0 : 0.0;
 
             Map<String, Object> m = new LinkedHashMap<>();
-            m.put("presetName", entry.getKey());
+            m.put("presetName", p.getName());
             m.put("total", tot);
             m.put("completed", comp);
             m.put("pending", pend);
@@ -146,64 +121,85 @@ public class ReportService {
             milestoneList.add(m);
         }
 
-        // 3. Customer Satisfaction & Notes Ledger
-        List<Map<String, Object>> notesLedger = new ArrayList<>();
-        for (OrderFollowupCheck c : checksInPeriod) {
-            boolean hasContent = (c.getNotes() != null && !c.getNotes().trim().isEmpty())
-                    || (c.getImageUrl() != null && !c.getImageUrl().trim().isEmpty())
-                    || (c.getSatisfaction() != null && !c.getSatisfaction().trim().isEmpty());
+        for (Map.Entry<String, long[]> entry : dbMilestoneCounts.entrySet()) {
+            if (!matchedPresets.contains(entry.getKey())) {
+                long tot = entry.getValue()[0];
+                long comp = entry.getValue()[1];
+                long pend = entry.getValue()[2];
+                double pct = tot > 0 ? Math.round(((double) comp / tot * 1000.0)) / 10.0 : 0.0;
 
-            if (hasContent) {
-                CustomerOrder ord = c.getOrder();
-                Customer cust = ord != null ? ord.getCustomer() : null;
-
-                Map<String, Object> nItem = new LinkedHashMap<>();
-                nItem.put("id", c.getId());
-                nItem.put("orderId", ord != null ? ord.getId() : null);
-                nItem.put("orderNumber", ord != null ? ord.getOrderNumber() : "-");
-                nItem.put("customerId", cust != null ? cust.getId() : null);
-                nItem.put("customerName", cust != null ? cust.getName() : "Unknown");
-                nItem.put("customerPhone", cust != null ? cust.getPhoneNumber() : "-");
-                nItem.put("customerCity", cust != null ? cust.getCity() : "Erbil");
-                nItem.put("presetName", c.getMilestoneName() != null ? c.getMilestoneName() : "Follow-up");
-                nItem.put("itemsSummary", ord != null && ord.getItemsSummary() != null ? ord.getItemsSummary() : "-");
-                String sat = c.getSatisfaction() != null && !c.getSatisfaction().trim().isEmpty()
-                        ? c.getSatisfaction().toUpperCase()
-                        : "NEUTRAL";
-                nItem.put("satisfaction", sat);
-                nItem.put("note", c.getNotes() != null ? c.getNotes() : "");
-                nItem.put("hasImage", c.getImageUrl() != null && !c.getImageUrl().trim().isEmpty());
-                nItem.put("imageUrl", c.getImageUrl());
-                nItem.put("checkedBy", c.getCheckedBy() != null ? c.getCheckedBy() : "Agent");
-                Instant itemDate = c.getCheckedAt() != null ? c.getCheckedAt() :
-                                   (c.getUpdatedAt() != null ? c.getUpdatedAt() :
-                                   (c.getCompletedDate() != null ? c.getCompletedDate() :
-                                   (ord != null && ord.getOrderDate() != null ? ord.getOrderDate() : Instant.now())));
-                nItem.put("date", itemDate);
-                notesLedger.add(nItem);
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("presetName", entry.getKey());
+                m.put("total", tot);
+                m.put("completed", comp);
+                m.put("pending", pend);
+                m.put("completionRate", pct);
+                milestoneList.add(m);
             }
         }
 
-        notesLedger.sort((a, b) -> {
-            Instant da = (Instant) a.get("date");
-            Instant db = (Instant) b.get("date");
-            if (da == null && db == null) return 0;
-            if (da == null) return 1;
-            if (db == null) return -1;
-            return db.compareTo(da);
-        });
+        // Summary follow-up metrics across entire database
+        long completedChecks = (cutoff == null)
+                ? followupCheckRepository.countByCompletedTrue()
+                : followupCheckRepository.countCompletedByPeriod(cutoff);
+        long totalChecks = (cutoff == null)
+                ? followupCheckRepository.count()
+                : followupCheckRepository.countTotalByPeriod(cutoff);
+        double completionRate = totalChecks > 0 ? Math.round(((double) completedChecks / totalChecks * 1000.0)) / 10.0 : 0.0;
 
-        long satCount = 0;
-        long neuCount = 0;
-        long unsatCount = 0;
-        for (Map<String, Object> item : notesLedger) {
-            String s = ((String) item.get("satisfaction")).toUpperCase();
-            if ("SATISFIED".equals(s) || "4".equals(s) || "5".equals(s)) satCount++;
-            else if ("UNSATISFIED".equals(s) || "1".equals(s) || "2".equals(s)) unsatCount++;
-            else neuCount++;
-        }
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("newCustomers", newCustomers);
+        summary.put("totalOrders", totalOrdersInPeriod);
+        summary.put("revenue", Math.round(revenueInPeriod * 100.0) / 100.0);
+        summary.put("completedFollowups", completedChecks);
+        summary.put("completionRate", completionRate);
+        summary.put("averageRating", Math.round(avgRating * 10.0) / 10.0);
+        summary.put("totalFeedbacks", allFeedbacks.size());
+
+        // 3. Customer Satisfaction & Notes Ledger
+        long satCount = (cutoff == null)
+                ? followupCheckRepository.countSatisfied()
+                : followupCheckRepository.countSatisfiedByPeriod(cutoff);
+        long neuCount = (cutoff == null)
+                ? followupCheckRepository.countNeutral()
+                : followupCheckRepository.countNeutralByPeriod(cutoff);
+        long unsatCount = (cutoff == null)
+                ? followupCheckRepository.countUnsatisfied()
+                : followupCheckRepository.countUnsatisfiedByPeriod(cutoff);
         long totalRated = satCount + neuCount + unsatCount;
-        double positiveRate = totalRated > 0 ? Math.round(((double) satCount / totalRated * 100.0) * 10.0) / 10.0 : 100.0;
+        double positiveRate = totalRated > 0 ? Math.round(((double) satCount / totalRated * 1000.0)) / 10.0 : 100.0;
+
+        List<OrderFollowupCheck> checksWithSat = followupCheckRepository.findChecksWithSatisfaction(org.springframework.data.domain.PageRequest.of(0, 100));
+        List<Map<String, Object>> notesLedger = new ArrayList<>();
+        for (OrderFollowupCheck c : checksWithSat) {
+            CustomerOrder ord = c.getOrder();
+            Customer cust = ord != null ? ord.getCustomer() : null;
+
+            Map<String, Object> nItem = new LinkedHashMap<>();
+            nItem.put("id", c.getId());
+            nItem.put("orderId", ord != null ? ord.getId() : null);
+            nItem.put("orderNumber", ord != null ? ord.getOrderNumber() : "-");
+            nItem.put("customerId", cust != null ? cust.getId() : null);
+            nItem.put("customerName", cust != null ? cust.getName() : "Unknown");
+            nItem.put("customerPhone", cust != null ? cust.getPhoneNumber() : "-");
+            nItem.put("customerCity", cust != null ? cust.getCity() : "Erbil");
+            nItem.put("presetName", c.getMilestoneName() != null ? c.getMilestoneName() : "Follow-up");
+            nItem.put("itemsSummary", ord != null && ord.getItemsSummary() != null ? ord.getItemsSummary() : "-");
+            String sat = c.getSatisfaction() != null && !c.getSatisfaction().trim().isEmpty()
+                    ? c.getSatisfaction().toUpperCase()
+                    : "NEUTRAL";
+            nItem.put("satisfaction", sat);
+            nItem.put("note", c.getNotes() != null ? c.getNotes() : "");
+            nItem.put("hasImage", c.getImageUrl() != null && !c.getImageUrl().trim().isEmpty());
+            nItem.put("imageUrl", c.getImageUrl());
+            nItem.put("checkedBy", c.getCheckedBy() != null ? c.getCheckedBy() : "Agent");
+            Instant itemDate = c.getCheckedAt() != null ? c.getCheckedAt() :
+                               (c.getUpdatedAt() != null ? c.getUpdatedAt() :
+                               (c.getCompletedDate() != null ? c.getCompletedDate() :
+                               (ord != null && ord.getOrderDate() != null ? ord.getOrderDate() : Instant.now())));
+            nItem.put("date", itemDate);
+            notesLedger.add(nItem);
+        }
 
         Map<String, Object> satisfactionMap = new LinkedHashMap<>();
         satisfactionMap.put("recentNotes", notesLedger);

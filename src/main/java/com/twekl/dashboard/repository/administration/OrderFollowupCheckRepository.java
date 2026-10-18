@@ -68,4 +68,35 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
 
     @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset ORDER BY c.id DESC")
     List<OrderFollowupCheck> findRecentChecksWithOrderCustomerAndPreset(org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT c.milestoneName, COUNT(c.id), " +
+           "SUM(CASE WHEN c.completed = true THEN 1L ELSE 0L END), " +
+           "SUM(CASE WHEN c.completed = false THEN 1L ELSE 0L END) " +
+           "FROM OrderFollowupCheck c " +
+           "WHERE c.milestoneName IS NOT NULL " +
+           "GROUP BY c.milestoneName")
+    List<Object[]> getMilestoneStatsAll();
+
+    @Query("SELECT c.milestoneName, COUNT(c.id), " +
+           "SUM(CASE WHEN c.completed = true THEN 1L ELSE 0L END), " +
+           "SUM(CASE WHEN c.completed = false THEN 1L ELSE 0L END) " +
+           "FROM OrderFollowupCheck c " +
+           "WHERE c.milestoneName IS NOT NULL AND c.createdAt >= :cutoff " +
+           "GROUP BY c.milestoneName")
+    List<Object[]> getMilestoneStatsByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND c.completed = true")
+    long countCompletedByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff")
+    long countTotalByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
+    long countSatisfiedByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('NEUTRAL', '3')")
+    long countNeutralByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
+    long countUnsatisfiedByPeriod(@Param("cutoff") java.time.Instant cutoff);
 }

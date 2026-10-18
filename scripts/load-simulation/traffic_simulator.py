@@ -1058,7 +1058,8 @@ class TrafficEngine:
                             (oid, c1_done, c1_stat, oid, c2_done, c2_stat, oid, c3_done, c3_stat)
                         )
                         first_chk = cur.lastrowid
-                        self.active_check_ids.extend([first_chk, first_chk + 1, first_chk + 2])
+                        if first_chk:
+                            self.active_check_ids.extend([first_chk + i for i in range(len(chosen_presets))])
                         metrics.automated_orders_created += 1
 
                     if count > 0:

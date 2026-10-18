@@ -250,6 +250,72 @@
         renderPage(1);
     }
 
+    /**
+     * Periodically syncs live counters and progress bars from /admin/stats/summary
+     */
+    function updateDashboardStats() {
+        fetch('/admin/stats/summary', { credentials: 'same-origin' })
+            .then(function(res) {
+                if (!res.ok) return null;
+                return res.json();
+            })
+            .then(function(data) {
+                if (!data) return;
+                const el7d = document.getElementById('kpi-customers-7d');
+                if (el7d && data.customersThisWeek != null) el7d.textContent = Number(data.customersThisWeek).toLocaleString();
+
+                const el30d = document.getElementById('kpi-customers-30d');
+                if (el30d && data.customersThisMonth != null) el30d.textContent = Number(data.customersThisMonth).toLocaleString();
+
+                const elTotal = document.getElementById('kpi-customers-total');
+                if (elTotal && data.totalCustomers != null) elTotal.textContent = Number(data.totalCustomers).toLocaleString();
+
+                const elQueue = document.getElementById('kpi-followups-queue');
+                if (elQueue && data.inQueueFollowups != null) elQueue.textContent = Number(data.inQueueFollowups).toLocaleString();
+
+                const elUnsat = document.getElementById('kpi-feedback-unsatisfied');
+                if (elUnsat && data.unsatisfiedCount != null) {
+                    elUnsat.textContent = Number(data.unsatisfiedCount).toLocaleString();
+                    if (data.unsatisfiedCount > 0) {
+                        elUnsat.classList.add('kpi-danger');
+                        elUnsat.classList.remove('kpi-primary');
+                    } else {
+                        elUnsat.classList.add('kpi-primary');
+                        elUnsat.classList.remove('kpi-danger');
+                    }
+                }
+
+                const btnProgress = document.getElementById('kpi-progress-btn');
+                if (btnProgress && data.completionPercentage != null) {
+                    btnProgress.textContent = data.completionPercentage + '% Completed';
+                }
+
+                const barComp = document.getElementById('visual-bar-completed');
+                if (barComp && data.completedPercentage != null) barComp.style.width = data.completedPercentage + '%';
+
+                const barOver = document.getElementById('visual-bar-overdue');
+                if (barOver && data.overduePercentage != null) barOver.style.width = data.overduePercentage + '%';
+
+                const barQueue = document.getElementById('visual-bar-inqueue');
+                if (barQueue && data.inQueuePercentage != null) barQueue.style.width = data.inQueuePercentage + '%';
+
+                const legComp = document.getElementById('kpi-legend-completed');
+                if (legComp && data.completedFollowups != null) legComp.textContent = Number(data.completedFollowups).toLocaleString();
+
+                const legOver = document.getElementById('kpi-legend-overdue');
+                if (legOver && data.overdueFollowups != null) legOver.textContent = Number(data.overdueFollowups).toLocaleString();
+
+                const legQueue = document.getElementById('kpi-legend-inqueue');
+                if (legQueue && data.inQueueFollowups != null) legQueue.textContent = Number(data.inQueueFollowups).toLocaleString();
+
+                const legTotal = document.getElementById('kpi-legend-total');
+                if (legTotal && data.totalFollowups != null) legTotal.textContent = Number(data.totalFollowups).toLocaleString();
+            })
+            .catch(function() {
+                // Ignore transient network errors
+            });
+    }
+
     function init() {
         setupInteractionListeners();
         tickCountdowns();
@@ -259,6 +325,11 @@
         setInterval(function () {
             tickCountdowns();
         }, 60000);
+
+        // Auto-refresh stats counters every 6 seconds
+        setInterval(function () {
+            updateDashboardStats();
+        }, 6000);
     }
 
     if (document.readyState === 'loading') {

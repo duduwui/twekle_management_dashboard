@@ -24,7 +24,7 @@ public class CacheConfig {
         return new ConcurrentMapCacheManager("dashboardSummary", "timeFilterPresets", "customerStats", "satisfactionDetails", "followupSummaries", "reportData") {
             @Override
             protected Cache createConcurrentMapCache(String name) {
-                long ttlMs = "timeFilterPresets".equals(name) ? 120_000L : 60_000L;
+                long ttlMs = "timeFilterPresets".equals(name) ? 120_000L : 5_000L;
                 return new TtlConcurrentMapCache(name, ttlMs);
             }
         };

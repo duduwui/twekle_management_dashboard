@@ -148,12 +148,27 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
      * Loads customer directory page (40 items) from backend.
      * Replaces current page in memory so memory consumption is always tiny and bounded.
      */
-    $scope.loadCustomers = function(targetPage) {
+    $scope.loadCustomers = function(targetPage, silent) {
         if (targetPage !== undefined) {
             $scope.dt.currentPage = targetPage;
         }
-        $scope.loadingCustomers = true;
+        if (!silent) {
+            $scope.loadingCustomers = true;
+        }
         var preset = $scope.selectedTimePreset ? ($scope.selectedTimePreset.presetKey || $scope.selectedTimePreset.name) : null;
+        
+        var formatISODate = function(d) {
+            if (!d) return null;
+            if (typeof d === 'string') return d.substring(0, 10);
+            if (d instanceof Date && !isNaN(d.getTime())) {
+                var y = d.getFullYear();
+                var m = ('0' + (d.getMonth() + 1)).slice(-2);
+                var day = ('0' + d.getDate()).slice(-2);
+                return y + '-' + m + '-' + day;
+            }
+            return null;
+        };
+
         var params = {
             page: $scope.dt.currentPage || 1,
             size: $scope.dt.pageSize || 40,
@@ -163,6 +178,13 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             sortField: $scope.dt.sortField || 'id',
             sortDir: $scope.dt.sortReverse ? 'asc' : 'desc'
         };
+
+        if ($scope.customerFilters.dateFilterApplied) {
+            var sDate = formatISODate($scope.customerFilters.dateFrom);
+            var eDate = formatISODate($scope.customerFilters.dateTo);
+            if (sDate) params.startDate = sDate;
+            if (eDate) params.endDate = eDate;
+        }
 
         FollowupService.getPaged(params).then(function(res) {
             $scope.loadingCustomers = false;
@@ -198,8 +220,24 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             }
         }, function(err) {
             $scope.loadingCustomers = false;
-            ToastService.error('Failed to load customers');
+            if (!silent) {
+                ToastService.error('Failed to load customers');
+            }
         });
+    };
+
+    $scope.onDateFilterChange = function() {
+        $scope.customerFilters.dateFilterApplied = true;
+        $scope.dt.currentPage = 1;
+        $scope.loadCustomers(1);
+    };
+
+    $scope.clearDateFilter = function() {
+        $scope.customerFilters.dateFilterApplied = false;
+        $scope.customerFilters.dateFrom = null;
+        $scope.customerFilters.dateTo = null;
+        $scope.dt.currentPage = 1;
+        $scope.loadCustomers(1);
     };
 
     /**
@@ -235,8 +273,18 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         }
     }, 60000);
 
+    // Auto-sync polling every 5 seconds on Page 1 without active search or pending loading
+    var _autoSyncInterval = $interval(function() {
+        if ($scope.customerView === 'list' && $scope.dt.currentPage === 1 && !$scope.loadingCustomers && (!$scope.customerFilters.search || !$scope.customerFilters.search.trim())) {
+            $scope.loadCustomers(1, true);
+        }
+    }, 5000);
+
     // Clean up interval when controller is destroyed
-    $scope.$on('$destroy', function() { $interval.cancel(_countdownTick); });
+    $scope.$on('$destroy', function() {
+        $interval.cancel(_countdownTick);
+        $interval.cancel(_autoSyncInterval);
+    });
 
     // Reload customers and clear cached followups when auth or time presets change
     $scope.$on('auth:loggedIn', function() {
@@ -680,18 +728,22 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
 
     // The page model is authoritative, including an empty directory.
     initFollowupRoute();
-    var loadedAt = Date.now();
-    $scope.customers = (window.SERVER_FOLLOWUPS || []).map(function(summary) {
-        return angular.extend({}, summary.customer, {
-            followupStatus: summary.followupStatus,
-            nextPendingFollowup: summary.nextPendingFollowup,
-            nextPendingOrderId: summary.nextPendingOrderId,
-            allFollowupsCompleted: summary.allFollowupsCompleted,
-            remainingFollowupsCount: summary.remainingFollowupsCount,
-            nextPendingMinutesLeft: summary.nextPendingMinutesLeft,
-            _loadedAt: loadedAt
+    if ($scope.customerFilters.followupStatus && $scope.customerFilters.followupStatus !== 'ALL') {
+        $scope.loadCustomers(1);
+    } else {
+        var loadedAt = Date.now();
+        $scope.customers = (window.SERVER_FOLLOWUPS || []).map(function(summary) {
+            return angular.extend({}, summary.customer, {
+                followupStatus: summary.followupStatus,
+                nextPendingFollowup: summary.nextPendingFollowup,
+                nextPendingOrderId: summary.nextPendingOrderId,
+                allFollowupsCompleted: summary.allFollowupsCompleted,
+                remainingFollowupsCount: summary.remainingFollowupsCount,
+                nextPendingMinutesLeft: summary.nextPendingMinutesLeft,
+                _loadedAt: loadedAt
+            });
         });
-    });
+    }
     if (pendingTargetCustomerId) {
         $scope.selectedCustomer = $scope.customers.find(function(customer) {
             return customer.id === pendingTargetCustomerId;

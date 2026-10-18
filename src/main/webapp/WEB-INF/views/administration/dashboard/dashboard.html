@@ -13,45 +13,45 @@
                 <div class="kpi-row-5">
                     <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="7">
                         <span class="kpi-label">LAST 7 DAYS</span>
-                        <span class="kpi-value kpi-primary" th:text="${stats.customersThisWeek}">0</span>
+                        <span class="kpi-value kpi-primary" id="kpi-customers-7d" th:text="${stats.customersThisWeek}">0</span>
                         <span class="kpi-subtext">Customer registrations</span>
                     </button>
                     <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="30">
                         <span class="kpi-label">LAST 30 DAYS</span>
-                        <span class="kpi-value kpi-primary" th:text="${stats.customersThisMonth}">0</span>
+                        <span class="kpi-value kpi-primary" id="kpi-customers-30d" th:text="${stats.customersThisMonth}">0</span>
                         <span class="kpi-subtext">Customer registrations</span>
                     </button>
                     <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="0">
                         <span class="kpi-label">TOTAL CUSTOMERS</span>
-                        <span class="kpi-value kpi-primary" th:text="${stats.totalCustomers}">0</span>
+                        <span class="kpi-value kpi-primary" id="kpi-customers-total" th:text="${stats.totalCustomers}">0</span>
                         <span class="kpi-subtext">All-time total</span>
                     </button>
                     <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=IDLE)}">
                         <span class="kpi-label">IN QUEUE</span>
-                        <span class="kpi-value kpi-primary" th:text="${stats.inQueueFollowups}">0</span>
+                        <span class="kpi-value kpi-primary" id="kpi-followups-queue" th:text="${stats.inQueueFollowups}">0</span>
                         <span class="kpi-subtext">Pending checks not yet overdue</span>
                     </a>
                     <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="unsatisfiedFeedback">
                         <span class="kpi-label">UNSATISFIED FEEDBACK</span>
-                        <span class="kpi-value" th:classappend="${stats.unsatisfiedCount > 0 ? 'kpi-danger' : 'kpi-primary'}" th:text="${stats.unsatisfiedCount}">0</span>
+                        <span class="kpi-value" id="kpi-feedback-unsatisfied" th:classappend="${stats.unsatisfiedCount > 0 ? 'kpi-danger' : 'kpi-primary'}" th:text="${stats.unsatisfiedCount}">0</span>
                         <span class="kpi-subtext">View feedback and reasons</span>
                     </button>
                 </div>
                 <div class="visual-progress-card">
                     <div class="visual-progress-header">
                         <span class="visual-progress-title">Follow-up Completion Progress</span>
-                        <button type="button" class="comic-btn btn-sm btn-ghost" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|">View progress</button>
+                        <button type="button" id="kpi-progress-btn" class="comic-btn btn-sm btn-ghost" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|">View progress</button>
                     </div>
                     <div class="visual-bar-track" aria-hidden="true">
-                        <div class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
-                        <div class="visual-bar-overdue" th:style="|width: ${stats.overduePercentage}%|"></div>
-                        <div class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
+                        <div id="visual-bar-completed" class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
+                        <div id="visual-bar-overdue" class="visual-bar-overdue" th:style="|width: ${stats.overduePercentage}%|"></div>
+                        <div id="visual-bar-inqueue" class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
                     </div>
                     <div class="visual-legend-row" style="justify-content: center; text-align: center;">
-                        <div class="legend-item"><span class="legend-dot dot-completed"></span> Completed: <strong th:text="${stats.completedFollowups}">0</strong></div>
-                        <div class="legend-item"><span class="legend-dot dot-overdue"></span> Overdue: <strong th:text="${stats.overdueFollowups}">0</strong></div>
-                        <div class="legend-item"><span class="legend-dot dot-inqueue"></span> In queue: <strong th:text="${stats.inQueueFollowups}">0</strong></div>
-                        <div class="legend-item">Total checks: <strong th:text="${stats.totalFollowups}">0</strong></div>
+                        <div class="legend-item"><span class="legend-dot dot-completed"></span> Completed: <strong id="kpi-legend-completed" th:text="${stats.completedFollowups}">0</strong></div>
+                        <div class="legend-item"><span class="legend-dot dot-overdue"></span> Overdue: <strong id="kpi-legend-overdue" th:text="${stats.overdueFollowups}">0</strong></div>
+                        <div class="legend-item"><span class="legend-dot dot-inqueue"></span> In queue: <strong id="kpi-legend-inqueue" th:text="${stats.inQueueFollowups}">0</strong></div>
+                        <div class="legend-item">Total checks: <strong id="kpi-legend-total" th:text="${stats.totalFollowups}">0</strong></div>
                     </div>
                 </div>
 

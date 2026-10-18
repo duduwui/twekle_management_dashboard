@@ -14,9 +14,9 @@
                 <div class="comic-filter-toolbar">
                     <div class="filter-left-controls">
                         <span class="filter-date-label">From:</span>
-                        <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateFrom" ng-change="customerFilters.dateFilterApplied = true; dt.currentPage = 1;" title="Start Date">
+                        <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateFrom" ng-change="onDateFilterChange()" title="Start Date">
                         <span class="filter-date-label">To:</span>
-                        <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateTo" ng-change="customerFilters.dateFilterApplied = true; dt.currentPage = 1;" title="End Date">
+                        <input type="date" lang="en-GB" class="comic-date-input" ng-model="customerFilters.dateTo" ng-change="onDateFilterChange()" title="End Date">
                         
                         <!-- Big Filter Preset Selector Button -->
                         <button type="button" class="comic-icon-btn" ng-class="{'active-filter-btn': selectedTimePreset || (customerFilters.followupStatus && customerFilters.followupStatus !== 'ALL')}" ng-click="openFilterModal('customer')" title="Select Follow-up & Time Filters">
@@ -30,7 +30,11 @@
                         </span>
 
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="customerFilters.followupStatus && customerFilters.followupStatus !== 'ALL'" ng-click="clearFollowupStatusFilter()" title="Click to clear queue filter">
-                            <span>Queue: {{ customerFilters.followupStatus === 'ALERT' ? 'Time to Follow' : (customerFilters.followupStatus === 'IDLE' ? 'In Queue' : 'Completed') }}</span> ✕
+                            <span>Queue: {{ (customerFilters.followupStatus === 'ALERT' || customerFilters.followupStatus === 'OVERDUE') ? 'Needs Action' : ((customerFilters.followupStatus === 'IDLE' || customerFilters.followupStatus === 'UPCOMING' || customerFilters.followupStatus === 'PENDING') ? 'Scheduled' : 'Completed') }}</span> ✕
+                        </span>
+
+                        <span class="comic-tag tag-primary active-preset-pill" ng-if="customerFilters.dateFilterApplied" ng-click="clearDateFilter()" title="Click to clear date filter">
+                            <span>Date Active</span> ✕
                         </span>
                     </div>
 

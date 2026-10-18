@@ -52,20 +52,49 @@ public class FollowupService {
             String statusFilter,
             String search,
             org.springframework.data.domain.Pageable pageable) {
+        return findPagedSummaries(timeFilter, statusFilter, search, null, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CustomerFollowupSummary> findPagedSummaries(
+            String timeFilter,
+            String statusFilter,
+            String search,
+            Instant dateFrom,
+            Instant dateTo,
+            org.springframework.data.domain.Pageable pageable) {
 
         Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
         String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
         String status = (statusFilter != null) ? statusFilter.trim().toUpperCase() : "ALL";
 
+        boolean isAlert = "ALERT".equals(status) || "OVERDUE".equals(status) || "NEEDS_ACTION".equals(status) || "ACTION".equals(status);
+        boolean isPending = "IDLE".equals(status) || "PENDING".equals(status) || "UPCOMING".equals(status) || "IN_QUEUE".equals(status) || "SCHEDULED".equals(status);
+        boolean isCompleted = "DONE".equals(status) || "COMPLETED".equals(status) || "FINISHED".equals(status);
+
         org.springframework.data.domain.Page<Customer> customerPage;
-        if ("ALERT".equals(status)) {
-            customerPage = customerRepository.searchOverdueCustomers(cleanSearch, cutoff, pageable);
-        } else if ("IDLE".equals(status)) {
-            customerPage = customerRepository.searchInQueueCustomers(cleanSearch, cutoff, pageable);
-        } else if ("DONE".equals(status)) {
-            customerPage = customerRepository.searchCompletedCustomers(cleanSearch, cutoff, pageable);
+        if (cleanSearch != null) {
+            customerPage = (cutoff == null)
+                    ? customerRepository.searchCustomers(cleanSearch, pageable)
+                    : customerRepository.searchCustomersWithCutoff(cleanSearch, cutoff, pageable);
+        } else if (dateFrom != null && dateTo != null) {
+            customerPage = customerRepository.findByCreatedAtBetween(dateFrom, dateTo, pageable);
+        } else if (isAlert) {
+            customerPage = (cutoff == null)
+                    ? customerRepository.findOverdueCustomers(pageable)
+                    : customerRepository.findOverdueCustomersWithCutoff(cutoff, pageable);
+        } else if (isPending) {
+            customerPage = (cutoff == null)
+                    ? customerRepository.findInQueueCustomers(pageable)
+                    : customerRepository.findInQueueCustomersWithCutoff(cutoff, pageable);
+        } else if (isCompleted) {
+            customerPage = (cutoff == null)
+                    ? customerRepository.findCompletedCustomers(pageable)
+                    : customerRepository.findCompletedCustomersWithCutoff(cutoff, pageable);
         } else {
-            customerPage = customerRepository.searchCustomers(cleanSearch, cutoff, pageable);
+            customerPage = (cutoff == null)
+                    ? customerRepository.findAll(pageable)
+                    : customerRepository.findByCreatedAtAfter(cutoff, pageable);
         }
 
         if (customerPage == null || customerPage.isEmpty()) {

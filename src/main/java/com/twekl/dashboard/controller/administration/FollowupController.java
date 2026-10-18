@@ -67,6 +67,8 @@ public class FollowupController {
             @RequestParam(value = "timeFilter", required = false) String timeFilter,
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
             @RequestParam(value = "sortField", defaultValue = "id") String sortField,
             @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
 
@@ -83,9 +85,22 @@ public class FollowupController {
         else if ("phoneNumber".equalsIgnoreCase(sortField)) field = "phoneNumber";
         else if ("createdAt".equalsIgnoreCase(sortField)) field = "createdAt";
 
+        java.time.Instant dateFrom = null;
+        java.time.Instant dateTo = null;
+        if (startDate != null && !startDate.trim().isEmpty()) {
+            try {
+                dateFrom = java.time.LocalDate.parse(startDate.trim()).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+            } catch (Exception ignored) {}
+        }
+        if (endDate != null && !endDate.trim().isEmpty()) {
+            try {
+                dateTo = java.time.LocalDate.parse(endDate.trim()).plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+            } catch (Exception ignored) {}
+        }
+
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageZeroIndex, pageSize, org.springframework.data.domain.Sort.by(direction, field));
         org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> pagedResult =
-                followupService.findPagedSummaries(timeFilter, status, search, pageable);
+                followupService.findPagedSummaries(timeFilter, status, search, dateFrom, dateTo, pageable);
 
         Map<String, Object> responseData = new java.util.LinkedHashMap<>();
         responseData.put("content", pagedResult.getContent());

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
             <!-- REPORT TAB 2: CUSTOMER SATISFACTION & NOTES -->
-            <div th:fragment="satisfactionTab" ng-show="reportSubTab === 'satisfaction'" style="display: flex; flex-direction: column; gap: 16px;">
+            <div th:fragment="satisfactionTab" ng-show="reportSubTab === 'satisfaction'" th:style="${reportSubTab == 'satisfaction' ? 'display: flex; flex-direction: column; gap: 16px;' : 'display: none;'}" style="display: none;">
                 <div class="comic-filter-toolbar">
                     <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
                         <span class="filter-date-label">From:</span>

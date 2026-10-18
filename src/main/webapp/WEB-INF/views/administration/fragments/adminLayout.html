@@ -262,7 +262,63 @@
                         </div>
                     </div>
 
-                    <div>
+                    <!-- Customer Details Filters (Available for Customer Details tab) -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; border-top: 1.5px solid #E2E8F0; padding-top: 14px;">
+                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">Customer Segmentation &amp; Filters</div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">Customer Type</label>
+                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerType">
+                                    <option value="all">All Customer Types</option>
+                                    <option value="MARKET">Markets / Businesses</option>
+                                    <option value="PERSON">Persons / Regular</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">Customer Tier</label>
+                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerTier">
+                                    <option value="all">All Loyalty Tiers</option>
+                                    <option value="VIP">VIP Champions (5+ Orders)</option>
+                                    <option value="FREQUENT">Frequent Buyers (3-4 Orders)</option>
+                                    <option value="RETURNING">Returning Buyers (2 Orders)</option>
+                                    <option value="ONE_TIME">One-Time Buyers (1 Order)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">Follow-up Status</label>
+                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerStatus">
+                                    <option value="all">All Follow-up Statuses</option>
+                                    <option value="DONE">Completed (All Done)</option>
+                                    <option value="ALERT">Needs Action / Overdue</option>
+                                    <option value="IDLE">Scheduled / Pending</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">City</label>
+                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerCity">
+                                    <option value="all">All Cities</option>
+                                    <option value="Baghdad">Baghdad</option>
+                                    <option value="Erbil">Erbil</option>
+                                    <option value="Basra">Basra</option>
+                                    <option value="Sulaymaniyah">Sulaymaniyah</option>
+                                    <option value="Najaf">Najaf</option>
+                                    <option value="Karbala">Karbala</option>
+                                    <option value="Kirkuk">Kirkuk</option>
+                                    <option value="Duhok">Duhok</option>
+                                    <option value="Mosul">Mosul</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customer Satisfaction Filter -->
+                    <div style="border-top: 1.5px solid #E2E8F0; padding-top: 14px;">
                         <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer Satisfaction Filter</div>
                         <div class="filter-presets-grid-4">
                             <div class="filter-preset-card-simple"

@@ -293,10 +293,14 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
     $scope.reportFilters = { satisfaction: 'all' };
     $scope.pendingReportFilters = { satisfaction: 'all', preset: null };
 
-    $scope.openReportFilterModal = function() {
-        $scope.pendingReportFilters = {
+    $scope.openReportFilterModal = function(initialFilters) {
+        $scope.pendingReportFilters = initialFilters || {
             satisfaction: ($scope.reportFilters && $scope.reportFilters.satisfaction) || 'all',
-            preset: $scope.selectedReportPreset
+            preset: $scope.selectedReportPreset,
+            customerType: 'all',
+            customerTier: 'all',
+            customerStatus: 'all',
+            customerCity: 'all'
         };
         $scope.showReportFilterModal = true;
         if ($scope.modalState) $scope.modalState.reportFilter = true;
@@ -308,33 +312,51 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
     };
 
     $scope.selectPendingReportPreset = function(preset) {
+        if (!$scope.pendingReportFilters) $scope.pendingReportFilters = {};
         $scope.pendingReportFilters.preset = preset;
     };
 
     $scope.isPendingReportPresetSelected = function(preset) {
+        if (!$scope.pendingReportFilters) return !preset;
         if (!preset && !$scope.pendingReportFilters.preset) return true;
         if (!preset || !$scope.pendingReportFilters.preset) return false;
         return preset.id === $scope.pendingReportFilters.preset.id;
     };
 
     $scope.confirmApplyReportFilterModal = function() {
-        $scope.selectedReportPreset = $scope.pendingReportFilters.preset;
-        $scope.reportFilters.satisfaction = $scope.pendingReportFilters.satisfaction;
+        var pf = $scope.pendingReportFilters || {};
+        $scope.selectedReportPreset = pf.preset;
+        $scope.reportFilters.satisfaction = pf.satisfaction || 'all';
         $scope.closeReportFilterModal();
         $scope.$broadcast('filter:reportFiltersChanged', {
             preset: $scope.selectedReportPreset,
-            satisfaction: $scope.reportFilters.satisfaction
+            satisfaction: $scope.reportFilters.satisfaction,
+            customerType: pf.customerType || 'all',
+            customerTier: pf.customerTier || 'all',
+            customerStatus: pf.customerStatus || 'all',
+            customerCity: pf.customerCity || 'all'
         });
     };
 
     $scope.resetReportFilterModal = function() {
-        $scope.pendingReportFilters = { satisfaction: 'all', preset: null };
+        $scope.pendingReportFilters = {
+            satisfaction: 'all',
+            preset: null,
+            customerType: 'all',
+            customerTier: 'all',
+            customerStatus: 'all',
+            customerCity: 'all'
+        };
         $scope.selectedReportPreset = null;
         $scope.reportFilters.satisfaction = 'all';
         $scope.closeReportFilterModal();
         $scope.$broadcast('filter:reportFiltersChanged', {
             preset: null,
-            satisfaction: 'all'
+            satisfaction: 'all',
+            customerType: 'all',
+            customerTier: 'all',
+            customerStatus: 'all',
+            customerCity: 'all'
         });
     };
 

@@ -186,15 +186,22 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     // REPORT POPUP MODAL FILTERS
     // =========================================================
     $scope.openReportFilterModal = function() {
+        var pf = {
+            preset: $scope.selectedReportPreset,
+            satisfaction: $scope.reportFilters.satisfactionFilter || 'all',
+            customerType: $scope.reportFilters.customerTypeFilter || 'all',
+            customerTier: $scope.reportFilters.customerTierFilter || 'all',
+            customerStatus: $scope.reportFilters.customerStatusFilter || 'all',
+            customerCity: $scope.reportFilters.customerCityFilter || 'all'
+        };
+        $scope.pendingReportFilters = pf;
         if ($scope.modalState) {
             $scope.modalState.reportFilter = true;
         }
-        $scope.$emit('modal:openReportFilter', {
-            preset: $scope.selectedReportPreset,
-            satisfaction: $scope.reportFilters.satisfactionFilter || 'all'
-        });
+        $scope.showReportFilterModal = true;
+        $scope.$emit('modal:openReportFilter', pf);
         if ($scope.$parent && $scope.$parent.openReportFilterModal) {
-            $scope.$parent.openReportFilterModal();
+            $scope.$parent.openReportFilterModal(pf);
         }
     };
 
@@ -209,12 +216,25 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     $scope.resetReportFilterModal = function() {
-        $scope.pendingReportFilters = { satisfaction: 'all', preset: null };
+        $scope.pendingReportFilters = {
+            preset: null,
+            satisfaction: 'all',
+            customerType: 'all',
+            customerTier: 'all',
+            customerStatus: 'all',
+            customerCity: 'all'
+        };
         $scope.selectedReportPreset = null;
         $scope.reportFilters.satisfactionFilter = 'all';
         $scope.reportFilters.milestoneFilter = 'all';
+        $scope.reportFilters.customerTypeFilter = 'all';
+        $scope.reportFilters.customerTierFilter = 'all';
+        $scope.reportFilters.customerStatusFilter = 'all';
+        $scope.reportFilters.customerCityFilter = 'all';
+        $scope.reportFilters.searchCustomers = '';
         $scope.reportFilters.dateFrom = null;
         $scope.reportFilters.dateTo = null;
+        $scope.dtCustomers.currentPage = 1;
         $scope.closeReportFilterModal();
         $scope.loadReportData();
         if ($scope.$parent && $scope.$parent.resetReportFilterModal) {
@@ -223,6 +243,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     $scope.selectPendingReportPreset = function(preset) {
+        if (!$scope.pendingReportFilters) $scope.pendingReportFilters = {};
         $scope.pendingReportFilters.preset = preset;
         if ($scope.$parent && $scope.$parent.selectPendingReportPreset) {
             $scope.$parent.selectPendingReportPreset(preset);
@@ -230,14 +251,22 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     $scope.isPendingReportPresetSelected = function(preset) {
-        if (!preset && !$scope.pendingReportFilters.preset) return true;
-        if (!preset || !$scope.pendingReportFilters.preset) return false;
-        return preset.id === $scope.pendingReportFilters.preset.id;
+        var pf = $scope.pendingReportFilters || ($scope.$parent && $scope.$parent.pendingReportFilters);
+        if (!pf) return !preset;
+        if (!preset && !pf.preset) return true;
+        if (!preset || !pf.preset) return false;
+        return preset.id === pf.preset.id;
     };
 
     $scope.confirmApplyReportFilterModal = function() {
-        $scope.selectedReportPreset = $scope.pendingReportFilters.preset;
-        $scope.reportFilters.satisfactionFilter = $scope.pendingReportFilters.satisfaction;
+        var pf = $scope.pendingReportFilters || ($scope.$parent && $scope.$parent.pendingReportFilters) || {};
+        $scope.selectedReportPreset = pf.preset;
+        $scope.reportFilters.satisfactionFilter = pf.satisfaction || 'all';
+        $scope.reportFilters.customerTypeFilter = pf.customerType || 'all';
+        $scope.reportFilters.customerTierFilter = pf.customerTier || 'all';
+        $scope.reportFilters.customerStatusFilter = pf.customerStatus || 'all';
+        $scope.reportFilters.customerCityFilter = pf.customerCity || 'all';
+        $scope.dtCustomers.currentPage = 1;
         $scope.closeReportFilterModal();
         $scope.loadReportData();
         if ($scope.$parent && $scope.$parent.confirmApplyReportFilterModal) {

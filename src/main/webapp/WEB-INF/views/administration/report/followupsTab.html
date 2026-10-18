@@ -20,13 +20,10 @@
                             <span ng-bind="selectedReportPreset.name"></span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerTypeFilter && reportFilters.customerTypeFilter !== 'all'" ng-click="reportFilters.customerTypeFilter = 'all'">
-                            <span>Type: {{ reportFilters.customerTypeFilter === 'MARKET' ? 'Markets' : 'Persons' }}</span> ✕
+                            <span>Type: {{ (reportFilters.customerTypeFilter === 'ORGANIZATION' || reportFilters.customerTypeFilter === 'MARKET') ? 'Organization' : 'Individual' }}</span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerTierFilter && reportFilters.customerTierFilter !== 'all'" ng-click="reportFilters.customerTierFilter = 'all'">
                             <span>Tier: {{ reportFilters.customerTierFilter }}</span> ✕
-                        </span>
-                        <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerStatusFilter && reportFilters.customerStatusFilter !== 'all'" ng-click="reportFilters.customerStatusFilter = 'all'">
-                            <span>Status: {{ reportFilters.customerStatusFilter === 'DONE' ? 'Completed' : (reportFilters.customerStatusFilter === 'ALERT' ? 'Needs Action' : 'Scheduled') }}</span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerCityFilter && reportFilters.customerCityFilter !== 'all'" ng-click="reportFilters.customerCityFilter = 'all'">
                             <span>City: {{ reportFilters.customerCityFilter }}</span> ✕
@@ -42,49 +39,6 @@
                     </div>
                 </div>
 
-                <!-- Customer Loyalty & Repetition Executive KPI Cards -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
-                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
-                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active Accounts</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #0F172A; margin: 4px 0;" ng-bind="(reportData.customers || []).length">
-                            -
-                        </div>
-                        <div style="font-size: 0.8rem; font-weight: 700; color: #475569;">
-                            Customers with activity in period
-                        </div>
-                    </div>
-
-                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
-                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Repeat Buyer Rate</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #16A34A; margin: 4px 0;" ng-bind="(reportData.loyaltyTiers.repeatCustomerRate || 21.6) + '%'">
-                            -
-                        </div>
-                        <div style="font-size: 0.8rem; font-weight: 800; color: #166534;">
-                            Customers with 2+ repeat orders
-                        </div>
-                    </div>
-
-                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
-                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">One-Time Churn Risk</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #D97706; margin: 4px 0;" ng-bind="(reportData.loyaltyTiers.oneTimeRate || 78.4) + '%'">
-                            -
-                        </div>
-                        <div style="font-size: 0.8rem; font-weight: 800; color: #B45309;">
-                            Single-purchase buyers to re-engage
-                        </div>
-                    </div>
-
-                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
-                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">VIP Loyal Champions</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #7C3AED; margin: 4px 0;" ng-bind="(reportData.loyaltyTiers.tiers[0].customerCount || 152)">
-                            -
-                        </div>
-                        <div style="font-size: 0.8rem; font-weight: 800; color: #6B21A8;">
-                            Customers with 5+ repeat orders
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Customer Order Frequency & Loyalty Tiers Matrix -->
                 <div class="comic-card" style="padding: 18px; background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
@@ -94,14 +48,12 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="comic-table" style="margin-bottom: 0;">
+                        <table class="comic-table" style="margin-bottom: 0; width: 100%;">
                             <thead>
                                 <tr>
                                     <th>Loyalty Tier</th>
                                     <th class="nowrap" style="text-align: center;">Order Cadence</th>
                                     <th class="nowrap" style="text-align: center;">Customer Count</th>
-                                    <th class="nowrap" style="text-align: center;">Share of Base</th>
-                                    <th class="nowrap" style="text-align: center;">Avg Orders / Customer</th>
                                     <th class="nowrap" style="text-align: right;">Retention Status</th>
                                 </tr>
                             </thead>
@@ -112,20 +64,14 @@
                                     </td>
                                     <td class="nowrap" style="text-align: center;">
                                         <strong style="color: #0F172A; font-size: 0.92rem;">
-                                            <span ng-if="tier.tierKey === 'VIP_CHAMPION'">5+ Orders</span>
-                                            <span ng-if="tier.tierKey === 'FREQUENT_BUYER'">3 - 4 Orders</span>
-                                            <span ng-if="tier.tierKey === 'RETURNING_BUYER'">2 Orders</span>
-                                            <span ng-if="tier.tierKey === 'ONE_TIME_BUYER'">1 Order</span>
+                                            <span ng-if="tier.tierKey === 'HIGH_VOLUME' || tier.tierKey === 'VIP_CHAMPION'">5+ Orders</span>
+                                            <span ng-if="tier.tierKey === 'REGULAR' || tier.tierKey === 'FREQUENT_BUYER'">3 - 4 Orders</span>
+                                            <span ng-if="tier.tierKey === 'RETURNING' || tier.tierKey === 'RETURNING_BUYER'">2 Orders</span>
+                                            <span ng-if="tier.tierKey === 'FIRST_TIME' || tier.tierKey === 'ONE_TIME_BUYER'">1 Order</span>
                                         </strong>
                                     </td>
                                     <td class="nowrap" style="text-align: center;">
                                         <strong style="color: #0F172A;" ng-bind="(tier.customerCount | number:0)"></strong>
-                                    </td>
-                                    <td class="nowrap" style="text-align: center;">
-                                        <strong style="color: #475569;" ng-bind="tier.customerShare + '%'"></strong>
-                                    </td>
-                                    <td class="nowrap" style="text-align: center;">
-                                        <strong style="color: #0F172A;" ng-bind="tier.avgOrdersPerCustomer"></strong>
                                     </td>
                                     <td class="nowrap" style="text-align: right;">
                                         <span style="font-weight: 700; font-size: 0.88rem; color: #475569;" ng-bind="tier.retentionStatus"></span>
@@ -137,33 +83,32 @@
                 </div>
 
                 <!-- Customer Details Data Table -->
-                <div class="table-responsive">
-                    <table class="comic-table">
+                <div class="table-responsive" style="overflow-x: auto; width: 100%;">
+                    <table class="comic-table" style="width: 100%; table-layout: auto;">
                         <thead>
                             <tr>
-                                <th class="nowrap" style="width: 70px; cursor: pointer;" ng-click="sortByCustomer('id')">
+                                <th class="nowrap" style="width: 60px; cursor: pointer;" ng-click="sortByCustomer('id')">
                                     ID <span ng-bind="getCustomerSortIndicator('id')"></span>
                                 </th>
-                                <th style="cursor: pointer; min-width: 200px;" ng-click="sortByCustomer('name')">
-                                    Customer &amp; Type <span ng-bind="getCustomerSortIndicator('name')"></span>
+                                <th style="cursor: pointer;" ng-click="sortByCustomer('name')">
+                                    Customer Name <span ng-bind="getCustomerSortIndicator('name')"></span>
+                                </th>
+                                <th class="nowrap" style="cursor: pointer;" ng-click="sortByCustomer('customerType')">
+                                    Type <span ng-bind="getCustomerSortIndicator('customerType')"></span>
                                 </th>
                                 <th class="nowrap col-phone">Phone Number</th>
                                 <th style="cursor: pointer;" ng-click="sortByCustomer('city')">
                                     City <span ng-bind="getCustomerSortIndicator('city')"></span>
                                 </th>
-                                <th class="nowrap" style="cursor: pointer; min-width: 190px;" ng-click="sortByCustomer('tier')">
-                                    Tier &amp; Order Period <span ng-bind="getCustomerSortIndicator('tier')"></span>
+                                <th class="nowrap" style="cursor: pointer;" ng-click="sortByCustomer('tier')">
+                                    Tier <span ng-bind="getCustomerSortIndicator('tier')"></span>
                                 </th>
                                 <th class="nowrap" style="text-align: center; cursor: pointer;" ng-click="sortByCustomer('totalOrders')">
                                     Total Orders <span ng-bind="getCustomerSortIndicator('totalOrders')"></span>
                                 </th>
-                                <th class="nowrap" style="text-align: right; cursor: pointer;" ng-click="sortByCustomer('totalSpent')">
-                                    Total Spend <span ng-bind="getCustomerSortIndicator('totalSpent')"></span>
-                                </th>
                                 <th class="nowrap" style="text-align: center; cursor: pointer;" ng-click="sortByCustomer('pendingFollowups')">
                                     Pending Checks <span ng-bind="getCustomerSortIndicator('pendingFollowups')"></span>
                                 </th>
-                                <th class="nowrap" style="text-align: center;">Follow-up Status</th>
                                 <th class="nowrap" style="text-align: center; width: 90px;">Action</th>
                             </tr>
                         </thead>
@@ -173,12 +118,10 @@
                                     <span style="color: #64748B; font-weight: 700;" ng-bind="'#' + c.id"></span>
                                 </td>
                                 <td>
-                                    <div>
-                                        <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="c.name"></strong>
-                                        <span style="font-size: 0.78rem; font-weight: 700; color: #2563EB; margin-left: 6px;" ng-if="c.customerType === 'MARKET'">Market</span>
-                                        <span style="font-size: 0.78rem; font-weight: 700; color: #64748B; margin-left: 6px;" ng-if="c.customerType === 'PERSON'">Person</span>
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: #94A3B8;" ng-if="c.email && c.email !== '-'" ng-bind="c.email"></div>
+                                    <strong style="color: #0F172A; font-size: 0.92rem;" ng-bind="c.name"></strong>
+                                </td>
+                                <td class="nowrap">
+                                    <span style="font-weight: 600; color: #334155;" ng-bind="c.customerTypeLabel || (c.customerType === 'ORGANIZATION' ? 'Organization' : 'Individual')"></span>
                                 </td>
                                 <td class="nowrap col-phone">
                                     <span style="font-family: monospace; font-size: 0.88rem; font-weight: 700; color: #1E293B;" ng-bind="c.phoneNumber"></span>
@@ -186,25 +129,14 @@
                                 <td>
                                     <span style="font-weight: 600; color: #334155;" ng-bind="c.city"></span>
                                 </td>
-                                <td>
-                                    <div style="font-weight: 700; font-size: 0.88rem; color: #0F172A;" ng-bind="c.tier"></div>
-                                    <div style="font-size: 0.74rem; color: #64748B; margin-top: 1px;" ng-bind="c.cadence"></div>
+                                <td class="nowrap">
+                                    <span style="font-weight: 700; font-size: 0.88rem; color: #0F172A;" ng-bind="c.tier"></span>
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
-                                    <div style="font-size: 0.92rem; font-weight: 700; color: #0F172A;" ng-bind="(c.totalOrders | number:0) + ' Orders'"></div>
-                                    <div style="font-size: 0.72rem; font-weight: 600; color: #16A34A;" ng-if="c.isRepeatCustomer">Repeat Buyer</div>
-                                    <div style="font-size: 0.72rem; font-weight: 600; color: #94A3B8;" ng-if="!c.isRepeatCustomer">One-Time</div>
-                                </td>
-                                <td class="nowrap" style="text-align: right;">
-                                    <span style="font-size: 0.92rem; font-weight: 700; color: #0F172A;" ng-bind="'$' + (c.totalSpent | number:2)"></span>
+                                    <span style="font-size: 0.92rem; font-weight: 700; color: #0F172A;" ng-bind="c.totalOrders | number:0"></span>
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
                                     <span style="font-weight: 700; font-size: 0.88rem;" ng-style="{'color': c.pendingFollowups > 0 ? '#DC2626' : '#16A34A'}" ng-bind="c.pendingFollowups + ' Pending'"></span>
-                                </td>
-                                <td class="nowrap" style="text-align: center;">
-                                    <span ng-if="c.allFollowupsCompleted" style="color: #16A34A; font-weight: 700; font-size: 0.88rem;">All Done</span>
-                                    <span ng-if="!c.allFollowupsCompleted && c.followupStatus === 'ALERT'" style="color: #DC2626; font-weight: 700; font-size: 0.88rem;">Needs Action</span>
-                                    <span ng-if="!c.allFollowupsCompleted && c.followupStatus !== 'ALERT'" style="color: #D97706; font-weight: 700; font-size: 0.88rem;">Scheduled</span>
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
                                     <a class="comic-btn" style="padding: 4px 10px; font-size: 0.76rem; text-decoration: none;" ng-href="/admin/followups?search={{c.phoneNumber || c.name}}" target="_blank">
@@ -213,7 +145,7 @@
                                 </td>
                             </tr>
                             <tr ng-if="dtCustomers.totalItems === 0">
-                                <td colspan="10" style="text-align: center; padding: 28px; color: #64748B; font-weight: 700;">
+                                <td colspan="9" style="text-align: center; padding: 28px; color: #64748B; font-weight: 700;">
                                     No customer records match the selected filter criteria.
                                 </td>
                             </tr>

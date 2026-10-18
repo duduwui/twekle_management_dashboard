@@ -384,17 +384,23 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         var cityFilter = $scope.reportFilters.customerCityFilter || 'all';
 
         var filtered = custs.filter(function(c) {
-            // 1. Customer Type filter (Market vs Person)
-            if (typeFilter !== 'all' && c.customerType !== typeFilter) return false;
+            // 1. Customer Type filter (Organization vs Individual)
+            if (typeFilter !== 'all') {
+                if (typeFilter === 'ORGANIZATION' || typeFilter === 'MARKET') {
+                    if (c.customerType !== 'ORGANIZATION' && c.customerType !== 'MARKET') return false;
+                } else if (typeFilter === 'INDIVIDUAL' || typeFilter === 'PERSON') {
+                    if (c.customerType !== 'INDIVIDUAL' && c.customerType !== 'PERSON') return false;
+                }
+            }
 
             // 2. Customer Tier filter
             if (tierFilter !== 'all') {
                 var tk = c.tierKey || '';
                 var to = c.totalOrders || 0;
-                if (tierFilter === 'VIP' && (to < 5 && tk.indexOf('VIP') === -1)) return false;
-                if (tierFilter === 'FREQUENT' && ((to < 3 || to >= 5) && tk.indexOf('FREQUENT') === -1)) return false;
+                if ((tierFilter === 'HIGH_VOLUME' || tierFilter === 'VIP') && (to < 5 && tk.indexOf('HIGH_VOLUME') === -1 && tk.indexOf('VIP') === -1)) return false;
+                if ((tierFilter === 'REGULAR' || tierFilter === 'FREQUENT') && ((to < 3 || to >= 5) && tk.indexOf('REGULAR') === -1 && tk.indexOf('FREQUENT') === -1)) return false;
                 if (tierFilter === 'RETURNING' && (to !== 2 && tk.indexOf('RETURNING') === -1)) return false;
-                if (tierFilter === 'ONE_TIME' && (to !== 1 && tk.indexOf('ONE_TIME') === -1)) return false;
+                if ((tierFilter === 'FIRST_TIME' || tierFilter === 'ONE_TIME') && (to !== 1 && tk.indexOf('FIRST_TIME') === -1 && tk.indexOf('ONE_TIME') === -1)) return false;
             }
 
             // 3. Follow-up queue status filter
@@ -483,8 +489,120 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         return pages;
     };
 
+    function downloadCsv(filename, headers, rows) {
+        var csvContent = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+        var escapeField = function(val) {
+            if (val == null) return '""';
+            var str = String(val).replace(/"/g, '""');
+            return '"' + str + '"';
+        };
+
+        csvContent += headers.map(escapeField).join(',') + '\r\n';
+        rows.forEach(function(row) {
+            csvContent += row.map(escapeField).join(',') + '\r\n';
+        });
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        if (window.navigator && window.navigator.msSaveBlob) {
+            window.navigator.msSaveBlob(blob, filename);
+        } else {
+            var link = document.createElement('a');
+            var url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    }
+
     $scope.exportReportCsv = function() {
-        ToastService.info('Exporting CSV report...');
+        var subTab = $scope.reportSubTab || 'customers';
+        var nowStr = new Date().toISOString().slice(0, 10);
+
+        if (subTab === 'followups' || subTab === 'customers') {
+            var custs = $scope.getFilteredReportCustomers();
+            if (!custs || custs.length === 0) {
+                ToastService.warning('No customer data to export.');
+                return;
+            }
+            var headers = ['ID', 'Customer Name', 'Type', 'Phone Number', 'City', 'Tier', 'Total Orders', 'Pending Checks'];
+            var rows = custs.map(function(c) {
+                return [
+                    c.id,
+                    c.name || '',
+                    c.customerTypeLabel || (c.customerType === 'ORGANIZATION' ? 'Organization' : 'Individual'),
+                    c.phoneNumber || '',
+                    c.city || '',
+                    c.tier || '',
+                    c.totalOrders != null ? c.totalOrders : 0,
+                    c.pendingFollowups != null ? c.pendingFollowups : 0
+                ];
+            });
+            downloadCsv('customer_report_' + nowStr + '.csv', headers, rows);
+            ToastService.success('Exported ' + rows.length + ' customer records to CSV.');
+        } else if (subTab === 'milestones') {
+            var miles = ($scope.reportData && $scope.reportData.milestones) ? $scope.reportData.milestones : [];
+            if (miles.length === 0) {
+                ToastService.warning('No milestone data to export.');
+                return;
+            }
+            var headers = ['Milestone Name', 'Time Preset', 'Total Orders', 'Completed Checks', 'Completion Rate (%)', 'Avg Turnaround (Hrs)', 'Target (Days)'];
+            var rows = miles.map(function(m) {
+                return [
+                    m.milestoneName || '',
+                    m.presetName || '',
+                    m.totalOrders != null ? m.totalOrders : 0,
+                    m.completedChecks != null ? m.completedChecks : 0,
+                    m.completionRate != null ? m.completionRate : 0,
+                    m.avgTurnaroundHours != null ? m.avgTurnaroundHours : 0,
+                    m.targetDays != null ? m.targetDays : 0
+                ];
+            });
+            downloadCsv('milestones_report_' + nowStr + '.csv', headers, rows);
+            ToastService.success('Exported milestone report to CSV.');
+        } else if (subTab === 'satisfaction') {
+            var notes = $scope.getFilteredReportNotes();
+            if (!notes || notes.length === 0) {
+                ToastService.warning('No satisfaction records to export.');
+                return;
+            }
+            var headers = ['Customer Name', 'Phone Number', 'Order Number', 'Milestone', 'Rating', 'Sentiment', 'Feedback Note'];
+            var rows = notes.map(function(n) {
+                return [
+                    n.customerName || '',
+                    n.customerPhone || '',
+                    n.orderNumber || '',
+                    n.presetName || '',
+                    n.rating != null ? n.rating : '',
+                    n.satisfaction || '',
+                    n.note || ''
+                ];
+            });
+            downloadCsv('satisfaction_report_' + nowStr + '.csv', headers, rows);
+            ToastService.success('Exported ' + rows.length + ' feedback notes to CSV.');
+        } else if (subTab === 'products') {
+            var prods = $scope.getFilteredReportProducts();
+            if (!prods || prods.length === 0) {
+                ToastService.warning('No product records to export.');
+                return;
+            }
+            var headers = ['Product Name', 'Category', 'Total Units Sold', 'Avg Rating', 'Total Reviews', 'Low Rating Count'];
+            var rows = prods.map(function(p) {
+                return [
+                    p.productName || '',
+                    p.category || '',
+                    p.totalQuantity != null ? p.totalQuantity : 0,
+                    p.avgRating != null ? p.avgRating : 0,
+                    p.reviewCount != null ? p.reviewCount : 0,
+                    p.lowRatingCount != null ? p.lowRatingCount : 0
+                ];
+            });
+            downloadCsv('products_report_' + nowStr + '.csv', headers, rows);
+            ToastService.success('Exported ' + rows.length + ' product records to CSV.');
+        }
     };
 
     // Auto-reload when time filter presets change or login occurs
@@ -501,6 +619,9 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         if (data) {
             $scope.selectedReportPreset = data.preset;
             $scope.reportFilters.satisfactionFilter = data.satisfaction || 'all';
+            $scope.reportFilters.customerTypeFilter = data.customerType || 'all';
+            $scope.reportFilters.customerTierFilter = data.customerTier || 'all';
+            $scope.reportFilters.customerCityFilter = data.customerCity || 'all';
         }
         $scope.loadReportData();
     });

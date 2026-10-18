@@ -241,109 +241,116 @@
                     <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
                 </div>
 
-                <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
-                    <div>
-                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
-                        <div class="filter-presets-grid-3">
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': isPendingReportPresetSelected(null)}"
-                                 ng-click="selectPendingReportPreset(null)">
-                                <span class="filter-simple-name">All Time</span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div style="padding: 18px 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+                        <!-- Col 1: Time Range -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Time Range
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-repeat="preset in timeFilterPresets track by preset.id"
-                                 ng-if="preset.active !== false || preset.isActive"
-                                 ng-class="{'selected': isPendingReportPresetSelected(preset)}"
-                                 ng-click="selectPendingReportPreset(preset)">
-                                <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingReportPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Customer Details Filters (Available for Customer Details tab) -->
-                    <div style="display: flex; flex-direction: column; gap: 12px; border-top: 1.5px solid #E2E8F0; padding-top: 14px;">
-                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">Customer Segmentation &amp; Filters</div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div>
-                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">Customer Type</label>
-                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerType">
-                                    <option value="all">All Customer Types</option>
-                                    <option value="MARKET">Markets / Businesses</option>
-                                    <option value="PERSON">Persons / Regular</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">Customer Tier</label>
-                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerTier">
-                                    <option value="all">All Loyalty Tiers</option>
-                                    <option value="VIP">VIP Champions (5+ Orders)</option>
-                                    <option value="FREQUENT">Frequent Buyers (3-4 Orders)</option>
-                                    <option value="RETURNING">Returning Buyers (2 Orders)</option>
-                                    <option value="ONE_TIME">One-Time Buyers (1 Order)</option>
-                                </select>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(null)"
+                                           ng-click="selectPendingReportPreset(null)">
+                                    <span>All Time</span>
+                                </label>
+                                <label ng-repeat="preset in timeFilterPresets track by preset.id"
+                                       ng-if="preset.active !== false || preset.isActive"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(preset)"
+                                           ng-click="selectPendingReportPreset(preset)">
+                                    <span ng-bind="preset.name || preset.labelEn"></span>
+                                </label>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div>
-                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">Follow-up Status</label>
-                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerStatus">
-                                    <option value="all">All Follow-up Statuses</option>
-                                    <option value="DONE">Completed (All Done)</option>
-                                    <option value="ALERT">Needs Action / Overdue</option>
-                                    <option value="IDLE">Scheduled / Pending</option>
-                                </select>
+                        <!-- Col 2: Customer Type -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Customer Type
                             </div>
-
-                            <div>
-                                <label style="font-size: 0.78rem; font-weight: 800; color: #475569; display: block; margin-bottom: 5px;">City</label>
-                                <select class="comic-input" style="width: 100%; height: 36px; font-weight: 700; font-size: 0.85rem;" ng-model="pendingReportFilters.customerCity">
-                                    <option value="all">All Cities</option>
-                                    <option value="Baghdad">Baghdad</option>
-                                    <option value="Erbil">Erbil</option>
-                                    <option value="Basra">Basra</option>
-                                    <option value="Sulaymaniyah">Sulaymaniyah</option>
-                                    <option value="Najaf">Najaf</option>
-                                    <option value="Karbala">Karbala</option>
-                                    <option value="Kirkuk">Kirkuk</option>
-                                    <option value="Duhok">Duhok</option>
-                                    <option value="Mosul">Mosul</option>
-                                </select>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerType === 'all' || !pendingReportFilters.customerType"
+                                           ng-click="pendingReportFilters.customerType = 'all'">
+                                    <span>All Types</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerType === 'ORGANIZATION' || pendingReportFilters.customerType === 'MARKET'"
+                                           ng-click="pendingReportFilters.customerType = 'ORGANIZATION'">
+                                    <span>Organization</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerType === 'INDIVIDUAL' || pendingReportFilters.customerType === 'PERSON'"
+                                           ng-click="pendingReportFilters.customerType = 'INDIVIDUAL'">
+                                    <span>Individual</span>
+                                </label>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Customer Satisfaction Filter -->
-                    <div style="border-top: 1.5px solid #E2E8F0; padding-top: 14px;">
-                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer Satisfaction Filter</div>
-                        <div class="filter-presets-grid-4">
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction}"
-                                 ng-click="pendingReportFilters.satisfaction = 'all'">
-                                <span class="filter-simple-name">All Reviews</span>
-                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        <!-- Col 3: Customer Tier -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Customer Tier
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'satisfied'}"
-                                 ng-click="pendingReportFilters.satisfaction = 'satisfied'">
-                                <span class="filter-simple-name">Satisfied</span>
-                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'satisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerTier === 'all' || !pendingReportFilters.customerTier"
+                                           ng-click="pendingReportFilters.customerTier = 'all'">
+                                    <span>All Tiers</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerTier === 'HIGH_VOLUME' || pendingReportFilters.customerTier === 'VIP'"
+                                           ng-click="pendingReportFilters.customerTier = 'HIGH_VOLUME'">
+                                    <span>High Volume (5+)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerTier === 'REGULAR' || pendingReportFilters.customerTier === 'FREQUENT'"
+                                           ng-click="pendingReportFilters.customerTier = 'REGULAR'">
+                                    <span>Regular (3-4)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerTier === 'RETURNING'"
+                                           ng-click="pendingReportFilters.customerTier = 'RETURNING'">
+                                    <span>Returning (2)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerTier === 'FIRST_TIME' || pendingReportFilters.customerTier === 'ONE_TIME'"
+                                           ng-click="pendingReportFilters.customerTier = 'FIRST_TIME'">
+                                    <span>First-Time (1)</span>
+                                </label>
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'neutral'}"
-                                 ng-click="pendingReportFilters.satisfaction = 'neutral'">
-                                <span class="filter-simple-name">Neutral</span>
-                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'neutral'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+
+                        <!-- Col 4: City -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                City
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': pendingReportFilters.satisfaction === 'unsatisfied'}"
-                                 ng-click="pendingReportFilters.satisfaction = 'unsatisfied'">
-                                <span class="filter-simple-name">Unsatisfied</span>
-                                <div class="filter-simple-check"><svg ng-if="pendingReportFilters.satisfaction === 'unsatisfied'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerCity === 'all' || !pendingReportFilters.customerCity"
+                                           ng-click="pendingReportFilters.customerCity = 'all'">
+                                    <span>All Cities</span>
+                                </label>
+                                <label ng-repeat="city in ['Baghdad', 'Erbil', 'Basra', 'Sulaymaniyah', 'Najaf', 'Karbala', 'Kirkuk', 'Duhok', 'Mosul'] track by city"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.customerCity === city"
+                                           ng-click="pendingReportFilters.customerCity = city">
+                                    <span ng-bind="city"></span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -531,7 +538,7 @@
     <!-- 4. SCRIPTS LOADING                                         -->
     <!-- ========================================================= -->
     <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+        <script src="/js/core/angular.min.js"></script>
         <script src="/js/core/app.js?v=18"></script>
         <script src="/js/core/dateFilterHelper.js?v=18"></script>
         <script src="/js/core/toast.js?v=18"></script>

@@ -49,7 +49,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="p in getFilteredReportProducts() track by p.productName">
+                            <tr ng-repeat="p in getPagedReportProducts() track by p.productName">
                                 <td>
                                     <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="p.productName"></strong>
                                 </td>
@@ -69,13 +69,38 @@
                                     <strong style="color: #0F172A;" ng-bind="p.notesCount"></strong>
                                 </td>
                             </tr>
-                            <tr ng-if="getFilteredReportProducts().length === 0">
+                            <tr ng-if="dtProducts.totalItems === 0">
                                 <td colspan="6" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
                                     No products found for the selected period.
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- DataTable Pagination Footer (40 Rows per Page) -->
+                <div class="datatable-footer" ng-if="dtProducts.totalItems > 0">
+                    <div class="datatable-info" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span>
+                            Showing <strong>{{ (dtProducts.currentPage - 1) * dtProducts.pageSize + 1 }}</strong> to <strong>{{ dtProducts.currentPage * dtProducts.pageSize > dtProducts.totalItems ? dtProducts.totalItems : dtProducts.currentPage * dtProducts.pageSize }}</strong> of <strong>{{ dtProducts.totalItems.toLocaleString() }}</strong> entries (Page {{ dtProducts.currentPage }} of {{ dtProducts.totalPages.toLocaleString() }})
+                        </span>
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Rows:</span>
+                            <select class="comic-input" style="width: auto; padding: 2px 8px; height: 28px; font-size: 0.82rem; font-weight: 800;" ng-model="dtProducts.pageSize" ng-change="setReportPage(dtProducts, 1)">
+                                <option ng-value="20">20</option>
+                                <option ng-value="40">40</option>
+                                <option ng-value="80">80</option>
+                                <option ng-value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="datatable-pagination">
+                        <button type="button" class="page-btn" ng-disabled="dtProducts.currentPage === 1" ng-click="setReportPage(dtProducts, 1)" title="First Page">«</button>
+                        <button type="button" class="page-btn" ng-disabled="dtProducts.currentPage === 1" ng-click="setReportPage(dtProducts, dtProducts.currentPage - 1)" title="Previous Page">‹ Prev</button>
+                        <button type="button" class="page-btn" ng-repeat="p in getReportPageNumbers(dtProducts) track by $index" ng-class="{'active': dtProducts.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setReportPage(dtProducts, p)" ng-bind="p"></button>
+                        <button type="button" class="page-btn" ng-disabled="dtProducts.currentPage === dtProducts.totalPages" ng-click="setReportPage(dtProducts, dtProducts.currentPage + 1)" title="Next Page">Next ›</button>
+                        <button type="button" class="page-btn" ng-disabled="dtProducts.currentPage === dtProducts.totalPages" ng-click="setReportPage(dtProducts, dtProducts.totalPages)" title="Last Page">»</button>
+                    </div>
                 </div>
             </div>
 

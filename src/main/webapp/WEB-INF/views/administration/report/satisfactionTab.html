@@ -51,7 +51,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="n in getFilteredReportNotes() track by n.id">
+                            <tr ng-repeat="n in getPagedReportNotes() track by n.id">
                                 <td><strong style="color: #0F172A;" ng-bind="n.customerName"></strong></td>
                                 <td class="nowrap col-phone"><span ng-bind="n.customerPhone"></span></td>
                                 <td class="nowrap"><span style="font-weight: 700; color: #475569;" ng-bind="n.presetName"></span></td>
@@ -69,13 +69,38 @@
                                 </td>
                                 <td class="nowrap"><span style="font-size: 0.8rem; color: #64748B;" ng-bind="n.date ? (n.date | date:'yyyy-MM-dd') : '-'"></span></td>
                             </tr>
-                            <tr ng-if="getFilteredReportNotes().length === 0">
+                            <tr ng-if="dtSatisfaction.totalItems === 0">
                                 <td colspan="7" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
                                     No customer notes match the selected criteria.
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- DataTable Pagination Footer (40 Rows per Page) -->
+                <div class="datatable-footer" ng-if="dtSatisfaction.totalItems > 0">
+                    <div class="datatable-info" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span>
+                            Showing <strong>{{ (dtSatisfaction.currentPage - 1) * dtSatisfaction.pageSize + 1 }}</strong> to <strong>{{ dtSatisfaction.currentPage * dtSatisfaction.pageSize > dtSatisfaction.totalItems ? dtSatisfaction.totalItems : dtSatisfaction.currentPage * dtSatisfaction.pageSize }}</strong> of <strong>{{ dtSatisfaction.totalItems.toLocaleString() }}</strong> entries (Page {{ dtSatisfaction.currentPage }} of {{ dtSatisfaction.totalPages.toLocaleString() }})
+                        </span>
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Rows:</span>
+                            <select class="comic-input" style="width: auto; padding: 2px 8px; height: 28px; font-size: 0.82rem; font-weight: 800;" ng-model="dtSatisfaction.pageSize" ng-change="setReportPage(dtSatisfaction, 1)">
+                                <option ng-value="20">20</option>
+                                <option ng-value="40">40</option>
+                                <option ng-value="80">80</option>
+                                <option ng-value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="datatable-pagination">
+                        <button type="button" class="page-btn" ng-disabled="dtSatisfaction.currentPage === 1" ng-click="setReportPage(dtSatisfaction, 1)" title="First Page">«</button>
+                        <button type="button" class="page-btn" ng-disabled="dtSatisfaction.currentPage === 1" ng-click="setReportPage(dtSatisfaction, dtSatisfaction.currentPage - 1)" title="Previous Page">‹ Prev</button>
+                        <button type="button" class="page-btn" ng-repeat="p in getReportPageNumbers(dtSatisfaction) track by $index" ng-class="{'active': dtSatisfaction.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setReportPage(dtSatisfaction, p)" ng-bind="p"></button>
+                        <button type="button" class="page-btn" ng-disabled="dtSatisfaction.currentPage === dtSatisfaction.totalPages" ng-click="setReportPage(dtSatisfaction, dtSatisfaction.currentPage + 1)" title="Next Page">Next ›</button>
+                        <button type="button" class="page-btn" ng-disabled="dtSatisfaction.currentPage === dtSatisfaction.totalPages" ng-click="setReportPage(dtSatisfaction, dtSatisfaction.totalPages)" title="Last Page">»</button>
+                    </div>
                 </div>
             </div>
 

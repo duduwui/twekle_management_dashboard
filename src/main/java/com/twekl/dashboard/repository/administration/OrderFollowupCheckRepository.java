@@ -99,4 +99,39 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
 
     @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
     long countUnsatisfiedByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT c.milestoneName, COUNT(c.id), " +
+           "SUM(CASE WHEN c.completed = true THEN 1L ELSE 0L END), " +
+           "SUM(CASE WHEN c.completed = false THEN 1L ELSE 0L END) " +
+           "FROM OrderFollowupCheck c " +
+           "WHERE c.milestoneName IS NOT NULL AND c.createdAt >= :startDate AND c.createdAt <= :endDate " +
+           "GROUP BY c.milestoneName")
+    List<Object[]> getMilestoneStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND c.completed = true")
+    long countCompletedByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate")
+    long countTotalByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
+    long countSatisfiedByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND UPPER(c.satisfaction) IN ('NEUTRAL', '3')")
+    long countNeutralByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
+    long countUnsatisfiedByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer cust LEFT JOIN FETCH c.preset " +
+           "WHERE c.completed = false AND (:cutoff IS NULL OR c.createdAt >= :cutoff) " +
+           "ORDER BY c.id DESC")
+    List<OrderFollowupCheck> findPendingChecks(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer cust LEFT JOIN FETCH c.preset " +
+           "WHERE c.completed = false AND c.createdAt >= :startDate AND c.createdAt <= :endDate " +
+           "ORDER BY c.id DESC")
+    List<OrderFollowupCheck> findPendingChecksByDateRange(@Param("startDate") java.time.Instant startDate,
+                                                         @Param("endDate") java.time.Instant endDate,
+                                                         org.springframework.data.domain.Pageable pageable);
 }

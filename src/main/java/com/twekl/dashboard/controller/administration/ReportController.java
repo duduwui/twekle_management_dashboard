@@ -45,6 +45,8 @@ public class ReportController {
     @GetMapping
     public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
                               @RequestParam(value = "tab", defaultValue = "milestones") String tab,
+                              @RequestParam(value = "dateFrom", required = false) String dateFrom,
+                              @RequestParam(value = "dateTo", required = false) String dateTo,
                               Model model) {
         Admin admin = adminService.getCurrentAdmin().orElse(null);
         if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
@@ -54,7 +56,7 @@ public class ReportController {
         model.addAttribute("activeTab", "reports");
         model.addAttribute("reportSubTab", tab);
         model.addAttribute("period", period);
-        model.addAttribute("reportData", reportService.generateReport(period));
+        model.addAttribute("reportData", reportService.generateReport(period, dateFrom, dateTo));
         model.addAttribute("presets", timeFilterService.findAll());
         return "administration/report/reports";
     }
@@ -62,8 +64,10 @@ public class ReportController {
     @GetMapping(value = {"", "/data"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateAnalyticsReport(
-            @RequestParam(required = false, defaultValue = "ALL") String period) {
-        Map<String, Object> data = reportService.generateReport(period);
+            @RequestParam(required = false, defaultValue = "ALL") String period,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo) {
+        Map<String, Object> data = reportService.generateReport(period, dateFrom, dateTo);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 

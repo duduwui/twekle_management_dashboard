@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,33 +50,69 @@ public class ReportService {
         this.presetRepository = presetRepository;
     }
 
-    @Cacheable(value = "reportData", key = "#period != null ? #period : 'ALL'", sync = true)
     public Map<String, Object> generateReport(String period) {
-        Instant cutoff = getCutoffForPeriod(period);
+        return generateReport(period, null, null);
+    }
+
+    @Cacheable(value = "reportData", key = "(#period != null ? #period : 'ALL') + '_' + (#dateFrom != null ? #dateFrom : '') + '_' + (#dateTo != null ? #dateTo : '')", sync = true)
+    public Map<String, Object> generateReport(String period, String dateFrom, String dateTo) {
+        Instant startDate = null;
+        Instant endDate = null;
+        if (dateFrom != null && !dateFrom.trim().isEmpty()) {
+            try {
+                String dStr = dateFrom.trim().substring(0, 10);
+                LocalDate ld = LocalDate.parse(dStr);
+                startDate = ld.atStartOfDay(ZoneOffset.UTC).toInstant();
+            } catch (Exception ignored) {}
+        }
+        if (dateTo != null && !dateTo.trim().isEmpty()) {
+            try {
+                String dStr = dateTo.trim().substring(0, 10);
+                LocalDate ld = LocalDate.parse(dStr);
+                endDate = ld.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+            } catch (Exception ignored) {}
+        }
+
+        Instant cutoff = startDate == null ? getCutoffForPeriod(period) : null;
+        boolean hasDateRange = (startDate != null);
+        Instant rangeEnd = endDate != null ? endDate : Instant.now();
 
         // 1. High-level Summary Metrics using fast SQL aggregations
-        long newCustomers = cutoff == null ? customerRepository.count() : customerRepository.countByCreatedAtAfter(cutoff);
-        long totalOrdersInPeriod = cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff);
-        double revenueInPeriod = cutoff == null ? orderRepository.sumTotalRevenue() : orderRepository.sumRevenueByPeriod(cutoff);
+        long newCustomers = hasDateRange
+                ? customerRepository.countByCreatedAtBetween(startDate, rangeEnd)
+                : (cutoff == null ? customerRepository.count() : customerRepository.countByCreatedAtAfter(cutoff));
 
-        List<Customer> allCustomers = cutoff == null
-                ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
-                : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")));
+        long totalOrdersInPeriod = hasDateRange
+                ? orderRepository.countByOrderDateBetween(startDate, rangeEnd)
+                : (cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff));
 
-        List<CustomerOrder> filteredOrders = orderRepository.findRecentOrdersWithCustomer(cutoff, org.springframework.data.domain.PageRequest.of(0, 300));
+        double revenueInPeriod = hasDateRange
+                ? orderRepository.sumRevenueByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? orderRepository.sumTotalRevenue() : orderRepository.sumRevenueByPeriod(cutoff));
+
+        List<Customer> allCustomers = hasDateRange
+                ? customerRepository.findByLastOrderDateBetween(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")))
+                : (cutoff == null
+                    ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
+                    : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate"))));
+
+        List<CustomerOrder> filteredOrders = hasDateRange
+                ? orderRepository.findRecentOrdersWithCustomerByDateRange(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 300))
+                : orderRepository.findRecentOrdersWithCustomer(cutoff, org.springframework.data.domain.PageRequest.of(0, 300));
+
         List<Long> orderIds = filteredOrders.stream().map(CustomerOrder::getId).filter(Objects::nonNull).toList();
         List<OrderFollowupCheck> orderChecks = orderIds.isEmpty() ? Collections.emptyList() : followupCheckRepository.findByOrderIds(orderIds);
         Map<Long, List<OrderFollowupCheck>> checksByOrderId = orderChecks.stream()
                 .filter(c -> c.getOrder() != null && c.getOrder().getId() != null)
                 .collect(Collectors.groupingBy(c -> c.getOrder().getId()));
 
-        List<CustomerFeedback> allFeedbacks = feedbackRepository.findRecentFeedbacks(cutoff, org.springframework.data.domain.PageRequest.of(0, 200));
-        double avgRating = feedbackRepository.getAverageRating(cutoff);
+        List<CustomerFeedback> allFeedbacks = feedbackRepository.findRecentFeedbacks(cutoff != null ? cutoff : startDate, org.springframework.data.domain.PageRequest.of(0, 200));
+        double avgRating = feedbackRepository.getAverageRating(cutoff != null ? cutoff : startDate);
 
         // 2. Milestones Matrix using fast, 100% accurate SQL aggregations (covering index)
-        List<Object[]> rawMilestoneStats = (cutoff == null)
-                ? followupCheckRepository.getMilestoneStatsAll()
-                : followupCheckRepository.getMilestoneStatsByPeriod(cutoff);
+        List<Object[]> rawMilestoneStats = hasDateRange
+                ? followupCheckRepository.getMilestoneStatsByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? followupCheckRepository.getMilestoneStatsAll() : followupCheckRepository.getMilestoneStatsByPeriod(cutoff));
 
         Map<String, long[]> dbMilestoneCounts = new LinkedHashMap<>();
         for (Object[] row : rawMilestoneStats) {
@@ -139,12 +177,14 @@ public class ReportService {
         }
 
         // Summary follow-up metrics across entire database
-        long completedChecks = (cutoff == null)
-                ? followupCheckRepository.countByCompletedTrue()
-                : followupCheckRepository.countCompletedByPeriod(cutoff);
-        long totalChecks = (cutoff == null)
-                ? followupCheckRepository.count()
-                : followupCheckRepository.countTotalByPeriod(cutoff);
+        long completedChecks = hasDateRange
+                ? followupCheckRepository.countCompletedByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? followupCheckRepository.countByCompletedTrue() : followupCheckRepository.countCompletedByPeriod(cutoff));
+
+        long totalChecks = hasDateRange
+                ? followupCheckRepository.countTotalByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? followupCheckRepository.count() : followupCheckRepository.countTotalByPeriod(cutoff));
+
         double completionRate = totalChecks > 0 ? Math.round(((double) completedChecks / totalChecks * 1000.0)) / 10.0 : 0.0;
 
         Map<String, Object> summary = new LinkedHashMap<>();
@@ -157,17 +197,40 @@ public class ReportService {
         summary.put("totalFeedbacks", allFeedbacks.size());
 
         // 3. Customer Satisfaction & Notes Ledger
-        long satCount = (cutoff == null)
-                ? followupCheckRepository.countSatisfied()
-                : followupCheckRepository.countSatisfiedByPeriod(cutoff);
-        long neuCount = (cutoff == null)
-                ? followupCheckRepository.countNeutral()
-                : followupCheckRepository.countNeutralByPeriod(cutoff);
-        long unsatCount = (cutoff == null)
-                ? followupCheckRepository.countUnsatisfied()
-                : followupCheckRepository.countUnsatisfiedByPeriod(cutoff);
+        long satCount = hasDateRange
+                ? followupCheckRepository.countSatisfiedByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? followupCheckRepository.countSatisfied() : followupCheckRepository.countSatisfiedByPeriod(cutoff));
+
+        long neuCount = hasDateRange
+                ? followupCheckRepository.countNeutralByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? followupCheckRepository.countNeutral() : followupCheckRepository.countNeutralByPeriod(cutoff));
+
+        long unsatCount = hasDateRange
+                ? followupCheckRepository.countUnsatisfiedByDateRange(startDate, rangeEnd)
+                : (cutoff == null ? followupCheckRepository.countUnsatisfied() : followupCheckRepository.countUnsatisfiedByPeriod(cutoff));
+
         long totalRated = satCount + neuCount + unsatCount;
         double positiveRate = totalRated > 0 ? Math.round(((double) satCount / totalRated * 1000.0)) / 10.0 : 100.0;
+
+        // Pending follow-up checks for the Pending Contacts table
+        List<OrderFollowupCheck> pendingChecks = hasDateRange
+                ? followupCheckRepository.findPendingChecksByDateRange(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 200))
+                : followupCheckRepository.findPendingChecks(cutoff, org.springframework.data.domain.PageRequest.of(0, 200));
+
+        List<Map<String, Object>> pendingList = new ArrayList<>();
+        for (OrderFollowupCheck c : pendingChecks) {
+            CustomerOrder ord = c.getOrder();
+            Customer cust = ord != null ? ord.getCustomer() : null;
+            Map<String, Object> pItem = new LinkedHashMap<>();
+            pItem.put("id", c.getId());
+            pItem.put("orderId", ord != null ? ord.getId() : null);
+            pItem.put("orderNumber", ord != null ? ord.getOrderNumber() : "-");
+            pItem.put("customerName", cust != null ? cust.getName() : "Unknown");
+            pItem.put("customerPhone", cust != null ? cust.getPhoneNumber() : "-");
+            pItem.put("presetName", c.getMilestoneName() != null ? c.getMilestoneName() : "Follow-up");
+            pItem.put("status", c.getStatus() != null ? c.getStatus() : "PENDING");
+            pendingList.add(pItem);
+        }
 
         List<OrderFollowupCheck> checksWithSat = followupCheckRepository.findChecksWithSatisfaction(org.springframework.data.domain.PageRequest.of(0, 100));
         List<Map<String, Object>> notesLedger = new ArrayList<>();
@@ -308,6 +371,7 @@ public class ReportService {
         report.put("products", productList);
         report.put("customers", customerSummaryList);
         report.put("customerSummary", customerSummaryList);
+        report.put("pendingContacts", pendingList);
 
         return report;
     }

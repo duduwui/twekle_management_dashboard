@@ -70,6 +70,65 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pending Contacts Table -->
+                <div class="table-responsive" style="margin-top: 10px;">
+                    <div style="font-weight: 800; color: #0F172A; margin-bottom: 8px; font-size: 0.95rem;">
+                        Pending Follow-up Contacts
+                    </div>
+                    <table class="comic-table">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th class="nowrap col-phone">Phone Number</th>
+                                <th class="nowrap">Milestone</th>
+                                <th class="nowrap">Order ID</th>
+                                <th class="nowrap" style="text-align: right;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="p in getPagedReportPending() track by $index">
+                                <td><strong style="color: #0F172A;" ng-bind="p.customerName"></strong></td>
+                                <td class="nowrap col-phone"><span ng-bind="p.customerPhone"></span></td>
+                                <td class="nowrap"><span class="comic-tag tag-primary" ng-bind="p.presetName"></span></td>
+                                <td class="nowrap"><span style="color: #475569;" ng-bind="p.orderNumber"></span></td>
+                                <td class="nowrap" style="text-align: right;">
+                                    <span style="color: #DC2626; font-weight: 800;">Needs Contact</span>
+                                </td>
+                            </tr>
+                            <tr ng-if="dtMilestones.totalItems === 0">
+                                <td colspan="5" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                    No pending milestone contacts found.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- DataTable Pagination Footer (40 Rows per Page) -->
+                <div class="datatable-footer" ng-if="dtMilestones.totalItems > 0">
+                    <div class="datatable-info" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span>
+                            Showing <strong>{{ (dtMilestones.currentPage - 1) * dtMilestones.pageSize + 1 }}</strong> to <strong>{{ dtMilestones.currentPage * dtMilestones.pageSize > dtMilestones.totalItems ? dtMilestones.totalItems : dtMilestones.currentPage * dtMilestones.pageSize }}</strong> of <strong>{{ dtMilestones.totalItems.toLocaleString() }}</strong> entries (Page {{ dtMilestones.currentPage }} of {{ dtMilestones.totalPages.toLocaleString() }})
+                        </span>
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Rows:</span>
+                            <select class="comic-input" style="width: auto; padding: 2px 8px; height: 28px; font-size: 0.82rem; font-weight: 800;" ng-model="dtMilestones.pageSize" ng-change="setReportPage(dtMilestones, 1)">
+                                <option ng-value="20">20</option>
+                                <option ng-value="40">40</option>
+                                <option ng-value="80">80</option>
+                                <option ng-value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="datatable-pagination">
+                        <button type="button" class="page-btn" ng-disabled="dtMilestones.currentPage === 1" ng-click="setReportPage(dtMilestones, 1)" title="First Page">«</button>
+                        <button type="button" class="page-btn" ng-disabled="dtMilestones.currentPage === 1" ng-click="setReportPage(dtMilestones, dtMilestones.currentPage - 1)" title="Previous Page">‹ Prev</button>
+                        <button type="button" class="page-btn" ng-repeat="p in getReportPageNumbers(dtMilestones) track by $index" ng-class="{'active': dtMilestones.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setReportPage(dtMilestones, p)" ng-bind="p"></button>
+                        <button type="button" class="page-btn" ng-disabled="dtMilestones.currentPage === dtMilestones.totalPages" ng-click="setReportPage(dtMilestones, dtMilestones.currentPage + 1)" title="Next Page">Next ›</button>
+                        <button type="button" class="page-btn" ng-disabled="dtMilestones.currentPage === dtMilestones.totalPages" ng-click="setReportPage(dtMilestones, dtMilestones.totalPages)" title="Last Page">»</button>
+                    </div>
+                </div>
             </div>
 
 </body>

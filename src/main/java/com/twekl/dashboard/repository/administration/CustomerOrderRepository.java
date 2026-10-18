@@ -45,5 +45,16 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM CustomerOrder o WHERE o.orderDate >= :cutoff")
     Double sumRevenueByPeriod(@Param("cutoff") java.time.Instant cutoff);
+
+    @Query("SELECT COUNT(o) FROM CustomerOrder o WHERE o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    long countByOrderDateBetween(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM CustomerOrder o WHERE o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    Double sumRevenueByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE o.orderDate >= :startDate AND o.orderDate <= :endDate ORDER BY o.orderDate DESC, o.id DESC")
+    List<CustomerOrder> findRecentOrdersWithCustomerByDateRange(@Param("startDate") java.time.Instant startDate,
+                                                               @Param("endDate") java.time.Instant endDate,
+                                                               org.springframework.data.domain.Pageable pageable);
 }
 

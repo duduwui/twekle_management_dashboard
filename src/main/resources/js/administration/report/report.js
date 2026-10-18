@@ -87,21 +87,54 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         $scope.reportSubTab = (subTab === 'customers') ? 'followups' : subTab;
     });
 
+    // Pagination states for each report table (40 rows per page default)
+    $scope.dtMilestones = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
+    $scope.dtSatisfaction = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
+    $scope.dtProducts = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
+    $scope.dtCustomers = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
+
+    function toDateParam(d) {
+        if (!d) return null;
+        if (typeof d === 'string') return d.substring(0, 10);
+        if (d instanceof Date) {
+            var y = d.getFullYear();
+            var m = ('0' + (d.getMonth() + 1)).slice(-2);
+            var day = ('0' + d.getDate()).slice(-2);
+            return y + '-' + m + '-' + day;
+        }
+        return null;
+    }
+
     /**
      * Loads report data from backend
      */
     $scope.loadReportData = function() {
         $scope.loading = true;
         var period = $scope.selectedReportPreset ? ($scope.selectedReportPreset.presetKey || $scope.selectedReportPreset.name) : 'all';
-        ReportService.getReports(period).then(function(res) {
+        var params = {};
+        if ($scope.reportFilters.dateFrom) {
+            params.dateFrom = toDateParam($scope.reportFilters.dateFrom);
+        }
+        if ($scope.reportFilters.dateTo) {
+            params.dateTo = toDateParam($scope.reportFilters.dateTo);
+        }
+
+        ReportService.getReports(period, params).then(function(res) {
             $scope.loading = false;
             var raw = res.data;
             var data = (raw && raw.data) ? raw.data : (raw || {});
             $scope.reportData.milestones = data.milestones || [];
+            $scope.reportData.pendingContacts = data.pendingContacts || [];
             $scope.reportData.satisfaction = data.satisfaction || { breakdown: [], recentNotes: [] };
             $scope.reportData.products = data.products || [];
             $scope.reportData.customers = data.customers || [];
             $scope.reportData.followups = $scope.reportData.customers;
+
+            // Reset to page 1 on filter or data reload
+            $scope.dtMilestones.currentPage = 1;
+            $scope.dtSatisfaction.currentPage = 1;
+            $scope.dtProducts.currentPage = 1;
+            $scope.dtCustomers.currentPage = 1;
         }, function(err) {
             $scope.loading = false;
             ToastService.error('Failed to load report analytics');
@@ -109,7 +142,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     $scope.applyReportDateFilter = function() {
-        // Date filtering handled by client-side filters
+        $scope.loadReportData();
     };
 
     $scope.isReportFiltered = function() {
@@ -194,8 +227,26 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     // =========================================================
-    // FILTERED SUB-TAB DATA HELPERS
+    // FILTERED & PAGED SUB-TAB DATA HELPERS (40 rows per page)
     // =========================================================
+    $scope.getFilteredReportPending = function() {
+        var items = $scope.reportData.pendingContacts || [];
+        var search = $scope.reportFilters.searchPending;
+        if (!search) return items;
+        return items.filter(function(p) {
+            return FilterHelperService.searchMatch(JSON.stringify(p), search);
+        });
+    };
+
+    $scope.getPagedReportPending = function() {
+        var items = $scope.getFilteredReportPending();
+        $scope.dtMilestones.totalItems = items.length;
+        $scope.dtMilestones.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtMilestones.pageSize));
+        if ($scope.dtMilestones.currentPage > $scope.dtMilestones.totalPages) $scope.dtMilestones.currentPage = $scope.dtMilestones.totalPages;
+        var start = ($scope.dtMilestones.currentPage - 1) * $scope.dtMilestones.pageSize;
+        return items.slice(start, start + $scope.dtMilestones.pageSize);
+    };
+
     $scope.getFilteredReportNotes = function() {
         var notes = ($scope.reportData && $scope.reportData.satisfaction && $scope.reportData.satisfaction.recentNotes) ? $scope.reportData.satisfaction.recentNotes : [];
         return notes.filter(function(n) {
@@ -205,12 +256,30 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         });
     };
 
+    $scope.getPagedReportNotes = function() {
+        var items = $scope.getFilteredReportNotes();
+        $scope.dtSatisfaction.totalItems = items.length;
+        $scope.dtSatisfaction.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtSatisfaction.pageSize));
+        if ($scope.dtSatisfaction.currentPage > $scope.dtSatisfaction.totalPages) $scope.dtSatisfaction.currentPage = $scope.dtSatisfaction.totalPages;
+        var start = ($scope.dtSatisfaction.currentPage - 1) * $scope.dtSatisfaction.pageSize;
+        return items.slice(start, start + $scope.dtSatisfaction.pageSize);
+    };
+
     $scope.getFilteredReportProducts = function() {
         var prods = $scope.reportData.products || [];
         return prods.filter(function(p) {
             if ($scope.reportFilters.searchProducts && !FilterHelperService.searchMatch(p.productName, $scope.reportFilters.searchProducts)) return false;
             return true;
         });
+    };
+
+    $scope.getPagedReportProducts = function() {
+        var items = $scope.getFilteredReportProducts();
+        $scope.dtProducts.totalItems = items.length;
+        $scope.dtProducts.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtProducts.pageSize));
+        if ($scope.dtProducts.currentPage > $scope.dtProducts.totalPages) $scope.dtProducts.currentPage = $scope.dtProducts.totalPages;
+        var start = ($scope.dtProducts.currentPage - 1) * $scope.dtProducts.pageSize;
+        return items.slice(start, start + $scope.dtProducts.pageSize);
     };
 
     $scope.getFilteredReportCustomers = function() {
@@ -222,6 +291,41 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         });
     };
     $scope.getFilteredReportFollowups = $scope.getFilteredReportCustomers;
+
+    $scope.getPagedReportCustomers = function() {
+        var items = $scope.getFilteredReportCustomers();
+        $scope.dtCustomers.totalItems = items.length;
+        $scope.dtCustomers.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtCustomers.pageSize));
+        if ($scope.dtCustomers.currentPage > $scope.dtCustomers.totalPages) $scope.dtCustomers.currentPage = $scope.dtCustomers.totalPages;
+        var start = ($scope.dtCustomers.currentPage - 1) * $scope.dtCustomers.pageSize;
+        return items.slice(start, start + $scope.dtCustomers.pageSize);
+    };
+    $scope.getPagedReportFollowups = $scope.getPagedReportCustomers;
+
+    // Pagination navigation methods
+    $scope.setReportPage = function(dt, page) {
+        if (!dt || page < 1 || page > dt.totalPages) return;
+        dt.currentPage = page;
+    };
+
+    $scope.getReportPageNumbers = function(dt) {
+        if (!dt) return [];
+        var current = dt.currentPage || 1;
+        var total = dt.totalPages || 1;
+        var pages = [];
+        if (total <= 7) {
+            for (var i = 1; i <= total; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (current > 3) pages.push('...');
+            var start = Math.max(2, current - 1);
+            var end = Math.min(total - 1, current + 1);
+            for (var j = start; j <= end; j++) pages.push(j);
+            if (current < total - 2) pages.push('...');
+            pages.push(total);
+        }
+        return pages;
+    };
 
     $scope.exportReportCsv = function() {
         ToastService.info('Exporting CSV report...');

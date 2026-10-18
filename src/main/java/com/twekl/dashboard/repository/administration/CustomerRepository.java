@@ -16,6 +16,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff);
     List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
     long countByCreatedAtAfter(java.time.Instant cutoff);
+    long countByCreatedAtBetween(java.time.Instant from, java.time.Instant to);
+    List<Customer> findByLastOrderDateBetween(java.time.Instant from, java.time.Instant to, org.springframework.data.domain.Pageable pageable);
 
     Optional<Customer> findByPhoneNumber(String phoneNumber);
     boolean existsByPhoneNumber(String phoneNumber);

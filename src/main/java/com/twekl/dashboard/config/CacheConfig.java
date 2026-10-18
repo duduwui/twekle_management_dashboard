@@ -24,7 +24,10 @@ public class CacheConfig {
         return new ConcurrentMapCacheManager("dashboardSummary", "timeFilterPresets", "customerStats", "satisfactionDetails", "followupSummaries", "reportData") {
             @Override
             protected Cache createConcurrentMapCache(String name) {
-                long ttlMs = "timeFilterPresets".equals(name) ? 120_000L : 5_000L;
+                // 30s TTL for live aggregate caches: frontend polls every 5-6s so near-realtime UX is kept,
+                // but the DB runs 6x fewer heavy COUNT/JOIN queries under concurrent load vs the old 5s.
+                // timeFilterPresets barely change — keep at 2 minutes.
+                long ttlMs = "timeFilterPresets".equals(name) ? 120_000L : 30_000L;
                 return new TtlConcurrentMapCache(name, ttlMs);
             }
         };

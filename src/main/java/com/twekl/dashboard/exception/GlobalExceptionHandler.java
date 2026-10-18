@@ -12,8 +12,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +23,21 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * ClientAbortException / BrokenPipe — the browser closed the connection before
+     * the response was fully written (e.g. tab closed, navigation away from page).
+     * This is NOT an application error. We log at DEBUG and do nothing — there is
+     * no live socket to send a response to anyway.
+     */
+    @ExceptionHandler({
+        org.apache.catalina.connector.ClientAbortException.class,
+        AsyncRequestNotUsableException.class
+    })
+    public void handleClientAbort(Exception ex, HttpServletRequest request) {
+        log.debug("Client closed connection for [{}]: {}", request.getRequestURI(), ex.getMessage());
+        // No response possible — client is gone.
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -116,6 +133,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+        // Check if this is a broken-pipe / client-abort wrapped in another exception
+        Throwable cause = ex;
+        while (cause != null) {
+            if (cause instanceof IOException && cause.getMessage() != null
+                    && (cause.getMessage().contains("Broken pipe") || cause.getMessage().contains("Connection reset"))) {
+                log.warn("Client disconnected mid-response for [{}]", request.getRequestURI());
+                // Cannot write response — return nothing (socket is closed)
+                return null;
+            }
+            cause = cause.getCause();
+        }
         log.error("Unhandled exception processing request to {}", request.getRequestURI(), ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

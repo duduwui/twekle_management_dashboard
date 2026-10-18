@@ -48,8 +48,18 @@ public class JpaConfig {
         config.setPassword(environment.getRequiredProperty("database.password"));
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
         config.setMaximumPoolSize(environment.getProperty("database.pool.maximum", Integer.class, 5));
-        config.setMinimumIdle(environment.getProperty("database.pool.minimum", Integer.class, 1));
-        config.setConnectionTimeout(5000);
+        config.setMinimumIdle(environment.getProperty("database.pool.minimum", Integer.class, 5));
+        // How long a thread waits for a connection before throwing (30s gives slow queries room)
+        config.setConnectionTimeout(30_000);
+        // Kill idle connections after 10 minutes to free MySQL-side resources
+        config.setIdleTimeout(600_000);
+        // Recycle connections every 30 minutes to prevent MySQL server-side timeout drops
+        config.setMaxLifetime(1_800_000);
+        // Ping the DB every 60s so idle connections stay alive (prevents "Connection reset by peer")
+        config.setKeepaliveTime(60_000);
+        // Validate connection before handing it to a thread
+        config.setConnectionTestQuery("SELECT 1");
+        config.setPoolName("TweklHikariPool");
         return new HikariDataSource(config);
     }
 

@@ -152,11 +152,6 @@
                            th:classappend="${activeTab == 'reports' and reportSubTab == 'satisfaction'} ? 'active' : ''">
                             <span>Satisfaction &amp; Notes</span>
                         </a>
-                        <a th:href="@{/admin/reports(tab='financial')}" 
-                           class="nav-sub-item" 
-                           th:classappend="${activeTab == 'reports' and reportSubTab == 'financial'} ? 'active' : ''">
-                            <span>Financial &amp; Revenue</span>
-                        </a>
                         <a th:href="@{/admin/reports(tab='products')}" 
                            class="nav-sub-item" 
                            th:classappend="${activeTab == 'reports' and reportSubTab == 'products'} ? 'active' : ''">

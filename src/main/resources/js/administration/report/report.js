@@ -41,7 +41,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         satisfaction: { breakdown: [], totalRated: 0, positiveRate: 0, recentNotes: [] },
         products: [],
         customers: [],
-        followups: []
+        followups: [],
+        loyaltyTiers: { tiers: [], repeatCustomerCount: 0, repeatCustomerRate: 0, oneTimeCustomerCount: 0, oneTimeRate: 0 }
     };
 
     // Default Date From: Today, Date To: Tomorrow / Next Day
@@ -66,8 +67,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     $scope.reportSubTab = tabParam || window.SERVER_REPORT_SUBTAB || ($scope.$parent && $scope.$parent.reportSubTab) || 'milestones';
-    if ($scope.reportSubTab === 'customers') {
-        $scope.reportSubTab = 'followups';
+    if ($scope.reportSubTab === 'customers' || $scope.reportSubTab === 'financial') {
+        $scope.reportSubTab = ($scope.reportSubTab === 'customers') ? 'followups' : 'milestones';
     }
 
     $scope.setReportSubTab = function(subTab) {
@@ -90,7 +91,6 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     // Pagination states for each report table (40 rows per page default)
     $scope.dtMilestones = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
     $scope.dtSatisfaction = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
-    $scope.dtFinancialProducts = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
     $scope.dtProducts = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
     $scope.dtCustomers = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
 
@@ -150,7 +150,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             var raw = res.data;
             var data = (raw && raw.data) ? raw.data : (raw || {});
             $scope.reportData.summary = data.summary || {};
-            $scope.reportData.financial = data.financial || { tiers: [], feedbackImpact: [] };
+            $scope.reportData.loyaltyTiers = data.loyaltyTiers || { tiers: [], repeatCustomerCount: 0, repeatCustomerRate: 0, oneTimeCustomerCount: 0, oneTimeRate: 0 };
             $scope.reportData.milestones = data.milestones || [];
             $scope.reportData.pendingContacts = data.pendingContacts || [];
             $scope.reportData.satisfaction = data.satisfaction || { breakdown: [], recentNotes: [] };
@@ -161,7 +161,6 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             // Reset to page 1 on filter or data reload
             $scope.dtMilestones.currentPage = 1;
             $scope.dtSatisfaction.currentPage = 1;
-            $scope.dtFinancialProducts.currentPage = 1;
             $scope.dtProducts.currentPage = 1;
             $scope.dtCustomers.currentPage = 1;
         }, function(err) {
@@ -311,15 +310,6 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         return items.slice(start, start + $scope.dtProducts.pageSize);
     };
 
-    $scope.getPagedReportFinancialProducts = function() {
-        var items = $scope.getFilteredReportProducts();
-        $scope.dtFinancialProducts.totalItems = items.length;
-        $scope.dtFinancialProducts.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtFinancialProducts.pageSize));
-        if ($scope.dtFinancialProducts.currentPage > $scope.dtFinancialProducts.totalPages) $scope.dtFinancialProducts.currentPage = $scope.dtFinancialProducts.totalPages;
-        var start = ($scope.dtFinancialProducts.currentPage - 1) * $scope.dtFinancialProducts.pageSize;
-        return items.slice(start, start + $scope.dtFinancialProducts.pageSize);
-    };
-
     $scope.getFilteredReportCustomers = function() {
         var custs = $scope.reportData.followups || $scope.reportData.customers || [];
         var search = $scope.reportFilters.searchFollowups || $scope.reportFilters.searchCustomers;
@@ -391,7 +381,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     if (window.SERVER_REPORT_DATA) {
         var srd = window.SERVER_REPORT_DATA;
         $scope.reportData.summary = srd.summary || {};
-        $scope.reportData.financial = srd.financial || { tiers: [], feedbackImpact: [] };
+        $scope.reportData.loyaltyTiers = srd.loyaltyTiers || { tiers: [], repeatCustomerCount: 0, repeatCustomerRate: 0, oneTimeCustomerCount: 0, oneTimeRate: 0 };
         $scope.reportData.milestones = srd.milestones || [];
         $scope.reportData.pendingContacts = srd.pendingContacts || [];
         $scope.reportData.satisfaction = srd.satisfaction || { breakdown: [], recentNotes: [] };

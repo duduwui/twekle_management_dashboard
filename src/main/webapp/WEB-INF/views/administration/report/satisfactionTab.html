@@ -40,8 +40,10 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
                     <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
                         <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Net Sentiment Score (NSS)</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; margin: 4px 0;" ng-class="{'color: #166534': (reportData.summary.netSentimentScore || 0) >= 0, 'color: #DC2626': (reportData.summary.netSentimentScore || 0) < 0}">
-                            {{ (reportData.summary.netSentimentScore || 0) > 0 ? '+' : '' }}{{ (reportData.summary.netSentimentScore || 0) }}%
+                        <div style="font-size: 1.65rem; font-weight: 900; margin: 4px 0;"
+                             ng-style="{'color': (reportData.summary.netSentimentScore >= 0) ? '#166534' : '#DC2626'}"
+                             ng-bind="((reportData.summary.netSentimentScore > 0 ? '+' : '') + (reportData.summary.netSentimentScore || 0) + '%')">
+                            +0%
                         </div>
                         <div style="font-size: 0.8rem; font-weight: 700; color: #475569;">
                             % Satisfied minus % Unsatisfied
@@ -50,18 +52,21 @@
 
                     <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
                         <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Positive Rating Rate</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #166534; margin: 4px 0;">
-                            {{ (reportData.summary.satisfactionRate || reportData.satisfaction.positiveRate || 0) }}%
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #166534; margin: 4px 0;"
+                             ng-bind="((reportData.summary.satisfactionRate || reportData.satisfaction.positiveRate || 0) + '%')">
+                            0%
                         </div>
-                        <div style="font-size: 0.8rem; font-weight: 800; color: #16A34A;">
-                            {{ (reportData.summary.satisfiedCount || 0).toLocaleString() }} satisfied ratings
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #16A34A;"
+                             ng-bind="((reportData.summary.satisfiedCount || 0).toLocaleString() + ' satisfied ratings')">
+                            0 satisfied ratings
                         </div>
                     </div>
 
                     <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
                         <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Rated Feedback</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #0284C7; margin: 4px 0;">
-                            {{ (reportData.summary.totalRated || 0).toLocaleString() }}
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #0284C7; margin: 4px 0;"
+                             ng-bind="(reportData.summary.totalRated || 0).toLocaleString()">
+                            0
                         </div>
                         <div style="font-size: 0.8rem; font-weight: 700; color: #0369A1;">
                             Verified reviews with notes
@@ -70,8 +75,9 @@
 
                     <div class="comic-stat-card" style="background: #FEF2F2; border: 2.5px solid #991B1B; box-shadow: 4px 4px 0px #991B1B; border-radius: 8px; padding: 16px;">
                         <div style="font-size: 0.78rem; font-weight: 800; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">Escalations / Complaints</div>
-                        <div style="font-size: 1.65rem; font-weight: 900; color: #DC2626; margin: 4px 0;">
-                            {{ (reportData.summary.unsatisfiedCount || 0).toLocaleString() }}
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #DC2626; margin: 4px 0;"
+                             ng-bind="(reportData.summary.unsatisfiedCount || 0).toLocaleString()">
+                            0
                         </div>
                         <div style="font-size: 0.8rem; font-weight: 800; color: #991B1B;">
                             Needs support resolution

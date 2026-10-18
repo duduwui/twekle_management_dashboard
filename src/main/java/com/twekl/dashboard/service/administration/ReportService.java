@@ -190,7 +190,6 @@ public class ReportService {
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("newCustomers", newCustomers);
         summary.put("totalOrders", totalOrdersInPeriod);
-        summary.put("revenue", Math.round(revenueInPeriod * 100.0) / 100.0);
         summary.put("completedFollowups", completedChecks);
         summary.put("completionRate", completionRate);
         summary.put("averageRating", Math.round(avgRating * 10.0) / 10.0);
@@ -284,153 +283,99 @@ public class ReportService {
         summary.put("totalRated", totalRated);
 
         // ---------------------------------------------------------------------
-        // 4. FINANCIAL INTELLIGENCE & REVENUE METRICS
+        // 4. CUSTOMER RETENTION & ORDER LOYALTY TIERS (Frequency & Repetition)
         // ---------------------------------------------------------------------
-        List<Object[]> satFinStats = followupCheckRepository.getSatisfactionFinancialStatsByDateRange(startDate, rangeEnd);
-        double satisfiedRevenue = 0.0;
-        double neutralRevenue = 0.0;
-        double unsatisfiedRevenue = 0.0;
-        long satFinCount = 0;
-        long neuFinCount = 0;
-        long unsatFinCount = 0;
-
-        for (Object[] row : satFinStats) {
-            String s = row[0] != null ? row[0].toString().trim().toUpperCase() : "";
-            long cnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
-            double rev = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
-            if ("SATISFIED".equals(s) || "4".equals(s) || "5".equals(s)) {
-                satisfiedRevenue += rev;
-                satFinCount += cnt;
-            } else if ("NEUTRAL".equals(s) || "3".equals(s)) {
-                neutralRevenue += rev;
-                neuFinCount += cnt;
-            } else if ("UNSATISFIED".equals(s) || "1".equals(s) || "2".equals(s)) {
-                unsatisfiedRevenue += rev;
-                unsatFinCount += cnt;
-            }
-        }
-
-        List<Object[]> repeatStats = orderRepository.getRepeatOrderStatsByDateRange(startDate, rangeEnd);
-        long repeatOrders = 0L;
-        double repeatRevenue = 0.0;
-        if (!repeatStats.isEmpty() && repeatStats.get(0) != null) {
-            Object[] rRow = repeatStats.get(0);
-            repeatOrders = rRow[0] != null ? ((Number) rRow[0]).longValue() : 0L;
-            repeatRevenue = rRow[1] != null ? ((Number) rRow[1]).doubleValue() : 0.0;
-        }
-
-        double avgOrderValue = totalOrdersInPeriod > 0 ? Math.round((revenueInPeriod / totalOrdersInPeriod) * 100.0) / 100.0 : 0.0;
-        double arpu = newCustomers > 0 ? Math.round((revenueInPeriod / newCustomers) * 100.0) / 100.0 : 0.0;
-        double repeatRevenueShare = revenueInPeriod > 0 ? Math.round((repeatRevenue / revenueInPeriod * 1000.0)) / 10.0 : 0.0;
-
-        // Customer Tiers (VIP, Gold, Silver, Bronze)
         List<Object[]> tierStats = customerRepository.getCustomerTierStats();
-        List<Map<String, Object>> tierList = new ArrayList<>();
+        List<Map<String, Object>> loyaltyTierList = new ArrayList<>();
+        long repeatCustomerCount = 0L;
+        long oneTimeCustomerCount = 0L;
+        long totalCatalogCustomers = 0L;
+
         if (!tierStats.isEmpty() && tierStats.get(0) != null) {
             Object[] tRow = tierStats.get(0);
             long vipCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
-            double vipRev = tRow[1] != null ? ((Number) tRow[1]).doubleValue() : 0.0;
-            long goldCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
-            double goldRev = tRow[3] != null ? ((Number) tRow[3]).doubleValue() : 0.0;
-            long silvCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
-            double silvRev = tRow[5] != null ? ((Number) tRow[5]).doubleValue() : 0.0;
-            long bronzCnt = tRow[6] != null ? ((Number) tRow[6]).longValue() : 0L;
-            double bronzRev = tRow[7] != null ? ((Number) tRow[7]).doubleValue() : 0.0;
+            long vipOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
+            long freqCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
+            long freqOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
+            long retCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
+            long retOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
+            long oneCnt = tRow[6] != null ? ((Number) tRow[6]).longValue() : 0L;
+            long oneOrders = tRow[7] != null ? ((Number) tRow[7]).longValue() : 0L;
 
-            double totTierRev = vipRev + goldRev + silvRev + bronzRev;
-            if (totTierRev == 0.0) totTierRev = 1.0;
+            repeatCustomerCount = vipCnt + freqCnt + retCnt;
+            oneTimeCustomerCount = oneCnt;
+            totalCatalogCustomers = repeatCustomerCount + oneTimeCustomerCount;
+            if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
 
             Map<String, Object> vipMap = new LinkedHashMap<>();
-            vipMap.put("tierName", "VIP Platinum (> $5,000)");
+            vipMap.put("tierName", "VIP Champions (5+ Orders)");
+            vipMap.put("tierKey", "VIP_CHAMPION");
             vipMap.put("customerCount", vipCnt);
-            vipMap.put("totalRevenue", Math.round(vipRev * 100.0) / 100.0);
-            vipMap.put("revenueShare", Math.round((vipRev / totTierRev * 1000.0)) / 10.0);
-            vipMap.put("avgSpend", vipCnt > 0 ? Math.round((vipRev / vipCnt) * 100.0) / 100.0 : 0.0);
-            vipMap.put("status", "High Priority");
-            tierList.add(vipMap);
+            vipMap.put("totalOrders", vipOrders);
+            vipMap.put("customerShare", Math.round(((double) vipCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            vipMap.put("avgOrdersPerCustomer", vipCnt > 0 ? Math.round(((double) vipOrders / vipCnt * 10.0)) / 10.0 : 0.0);
+            vipMap.put("retentionStatus", "Highly Loyal Advocates");
+            vipMap.put("badgeColor", "#6B21A8");
+            vipMap.put("badgeBg", "#F3E8FF");
+            loyaltyTierList.add(vipMap);
 
-            Map<String, Object> goldMap = new LinkedHashMap<>();
-            goldMap.put("tierName", "Gold Tier ($1,000 - $5,000)");
-            goldMap.put("customerCount", goldCnt);
-            goldMap.put("totalRevenue", Math.round(goldRev * 100.0) / 100.0);
-            goldMap.put("revenueShare", Math.round((goldRev / totTierRev * 1000.0)) / 10.0);
-            goldMap.put("avgSpend", goldCnt > 0 ? Math.round((goldRev / goldCnt) * 100.0) / 100.0 : 0.0);
-            goldMap.put("status", "Core Business");
-            tierList.add(goldMap);
+            Map<String, Object> freqMap = new LinkedHashMap<>();
+            freqMap.put("tierName", "Frequent Buyers (3-4 Orders)");
+            freqMap.put("tierKey", "FREQUENT_BUYER");
+            freqMap.put("customerCount", freqCnt);
+            freqMap.put("totalOrders", freqOrders);
+            freqMap.put("customerShare", Math.round(((double) freqCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            freqMap.put("avgOrdersPerCustomer", freqCnt > 0 ? Math.round(((double) freqOrders / freqCnt * 10.0)) / 10.0 : 0.0);
+            freqMap.put("retentionStatus", "Consistent Repeat Buyers");
+            freqMap.put("badgeColor", "#15803D");
+            freqMap.put("badgeBg", "#DCFCE7");
+            loyaltyTierList.add(freqMap);
 
-            Map<String, Object> silvMap = new LinkedHashMap<>();
-            silvMap.put("tierName", "Silver Tier ($250 - $1,000)");
-            silvMap.put("customerCount", silvCnt);
-            silvMap.put("totalRevenue", Math.round(silvRev * 100.0) / 100.0);
-            silvMap.put("revenueShare", Math.round((silvRev / totTierRev * 1000.0)) / 10.0);
-            silvMap.put("avgSpend", silvCnt > 0 ? Math.round((silvRev / silvCnt) * 100.0) / 100.0 : 0.0);
-            silvMap.put("status", "Growth Opportunity");
-            tierList.add(silvMap);
+            Map<String, Object> retMap = new LinkedHashMap<>();
+            retMap.put("tierName", "Returning Buyers (2 Orders)");
+            retMap.put("tierKey", "RETURNING_BUYER");
+            retMap.put("customerCount", retCnt);
+            retMap.put("totalOrders", retOrders);
+            retMap.put("customerShare", Math.round(((double) retCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            retMap.put("avgOrdersPerCustomer", retCnt > 0 ? Math.round(((double) retOrders / retCnt * 10.0)) / 10.0 : 0.0);
+            retMap.put("retentionStatus", "Second-Time Converted");
+            retMap.put("badgeColor", "#0369A1");
+            retMap.put("badgeBg", "#E0F2FE");
+            loyaltyTierList.add(retMap);
 
-            Map<String, Object> bronzMap = new LinkedHashMap<>();
-            bronzMap.put("tierName", "Bronze Tier (< $250)");
-            bronzMap.put("customerCount", bronzCnt);
-            bronzMap.put("totalRevenue", Math.round(bronzRev * 100.0) / 100.0);
-            bronzMap.put("revenueShare", Math.round((bronzRev / totTierRev * 1000.0)) / 10.0);
-            bronzMap.put("avgSpend", bronzCnt > 0 ? Math.round((bronzRev / bronzCnt) * 100.0) / 100.0 : 0.0);
-            bronzMap.put("status", "New / Entry Level");
-            tierList.add(bronzMap);
+            Map<String, Object> oneMap = new LinkedHashMap<>();
+            oneMap.put("tierName", "One-Time Buyers (1 Order)");
+            oneMap.put("tierKey", "ONE_TIME_BUYER");
+            oneMap.put("customerCount", oneCnt);
+            oneMap.put("totalOrders", oneOrders);
+            oneMap.put("customerShare", Math.round(((double) oneCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            oneMap.put("avgOrdersPerCustomer", oneCnt > 0 ? Math.round(((double) oneOrders / oneCnt * 10.0)) / 10.0 : 0.0);
+            oneMap.put("retentionStatus", "At-Risk (Single Purchase)");
+            oneMap.put("badgeColor", "#B45309");
+            oneMap.put("badgeBg", "#FEF3C7");
+            loyaltyTierList.add(oneMap);
         }
 
-        // Financial Impact of Customer Feedback
-        List<Map<String, Object>> feedbackImpactList = new ArrayList<>();
-        double totalFeedbackRev = satisfiedRevenue + neutralRevenue + unsatisfiedRevenue;
-        if (totalFeedbackRev == 0.0) totalFeedbackRev = 1.0;
+        double repeatCustomerRate = totalCatalogCustomers > 0
+                ? Math.round(((double) repeatCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
+        double oneTimeRate = totalCatalogCustomers > 0
+                ? Math.round(((double) oneTimeCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
 
-        Map<String, Object> satImpact = new LinkedHashMap<>();
-        satImpact.put("feedbackType", "Satisfied Customers");
-        satImpact.put("checkCount", satFinCount);
-        satImpact.put("totalRevenue", Math.round(satisfiedRevenue * 100.0) / 100.0);
-        satImpact.put("revenueShare", Math.round((satisfiedRevenue / totalFeedbackRev * 1000.0)) / 10.0);
-        satImpact.put("avgOrderValue", satFinCount > 0 ? Math.round((satisfiedRevenue / satFinCount) * 100.0) / 100.0 : 0.0);
-        satImpact.put("impactStatus", "Retained & Active");
-        feedbackImpactList.add(satImpact);
+        Map<String, Object> loyaltyTiers = new LinkedHashMap<>();
+        loyaltyTiers.put("tiers", loyaltyTierList);
+        loyaltyTiers.put("repeatCustomerCount", repeatCustomerCount);
+        loyaltyTiers.put("repeatCustomerRate", repeatCustomerRate);
+        loyaltyTiers.put("oneTimeCustomerCount", oneTimeCustomerCount);
+        loyaltyTiers.put("oneTimeRate", oneTimeRate);
+        loyaltyTiers.put("totalCustomers", totalCatalogCustomers);
 
-        Map<String, Object> neuImpact = new LinkedHashMap<>();
-        neuImpact.put("feedbackType", "Neutral Customers");
-        neuImpact.put("checkCount", neuFinCount);
-        neuImpact.put("totalRevenue", Math.round(neutralRevenue * 100.0) / 100.0);
-        neuImpact.put("revenueShare", Math.round((neutralRevenue / totalFeedbackRev * 1000.0)) / 10.0);
-        neuImpact.put("avgOrderValue", neuFinCount > 0 ? Math.round((neutralRevenue / neuFinCount) * 100.0) / 100.0 : 0.0);
-        neuImpact.put("impactStatus", "Upsell Potential");
-        feedbackImpactList.add(neuImpact);
-
-        Map<String, Object> unsatImpact = new LinkedHashMap<>();
-        unsatImpact.put("feedbackType", "Unsatisfied / Complaints");
-        unsatImpact.put("checkCount", unsatFinCount);
-        unsatImpact.put("totalRevenue", Math.round(unsatisfiedRevenue * 100.0) / 100.0);
-        unsatImpact.put("revenueShare", Math.round((unsatisfiedRevenue / totalFeedbackRev * 1000.0)) / 10.0);
-        unsatImpact.put("avgOrderValue", unsatFinCount > 0 ? Math.round((unsatisfiedRevenue / unsatFinCount) * 100.0) / 100.0 : 0.0);
-        unsatImpact.put("impactStatus", "Revenue at Churn Risk");
-        feedbackImpactList.add(unsatImpact);
-
-        Map<String, Object> financial = new LinkedHashMap<>();
-        financial.put("totalRevenue", Math.round(revenueInPeriod * 100.0) / 100.0);
-        financial.put("totalOrders", totalOrdersInPeriod);
-        financial.put("avgOrderValue", avgOrderValue);
-        financial.put("arpu", arpu);
-        financial.put("repeatRevenue", Math.round(repeatRevenue * 100.0) / 100.0);
-        financial.put("repeatOrders", repeatOrders);
-        financial.put("repeatRevenueShare", repeatRevenueShare);
-        financial.put("revenueAtRisk", Math.round(unsatisfiedRevenue * 100.0) / 100.0);
-        financial.put("satisfiedRevenue", Math.round(satisfiedRevenue * 100.0) / 100.0);
-        financial.put("neutralRevenue", Math.round(neutralRevenue * 100.0) / 100.0);
-        financial.put("tiers", tierList);
-        financial.put("feedbackImpact", feedbackImpactList);
-
-        summary.put("avgOrderValue", avgOrderValue);
-        summary.put("arpu", arpu);
-        summary.put("repeatRevenue", Math.round(repeatRevenue * 100.0) / 100.0);
-        summary.put("repeatRevenueShare", repeatRevenueShare);
-        summary.put("revenueAtRisk", Math.round(unsatisfiedRevenue * 100.0) / 100.0);
+        summary.put("repeatCustomerCount", repeatCustomerCount);
+        summary.put("repeatCustomerRate", repeatCustomerRate);
+        summary.put("oneTimeCustomerCount", oneTimeCustomerCount);
+        summary.put("oneTimeRate", oneTimeRate);
 
         // ---------------------------------------------------------------------
-        // 5. ACCURATE PRODUCT DISTRIBUTION & REVENUE
+        // 5. ACCURATE PRODUCT DISTRIBUTION & QUALITY HEALTH
         // ---------------------------------------------------------------------
         List<Object[]> rawProdFinancials = orderRepository.getProductFinancialStatsByDateRange(startDate, rangeEnd);
         List<Object[]> rawProdReviews = followupCheckRepository.getProductSatisfactionCountsByDateRange(startDate, rangeEnd);
@@ -451,8 +396,6 @@ public class ReportService {
         for (Object[] row : rawProdFinancials) {
             String pName = row[0] != null ? row[0].toString().trim() : "Standard Item";
             long ordCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
-            double totRev = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
-            double avgTicket = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
 
             long[] rStats = prodReviewMap.getOrDefault(pName, new long[]{0L, 0L, 0L, 0L});
             long sCnt = rStats[0];
@@ -460,14 +403,10 @@ public class ReportService {
             long uCnt = rStats[2];
             long totRevCnt = sCnt + nCnt + uCnt;
             double defectRate = totRevCnt > 0 ? Math.round(((double) uCnt / totRevCnt * 1000.0)) / 10.0 : 0.0;
-            double revShare = revenueInPeriod > 0 ? Math.round((totRev / revenueInPeriod * 1000.0)) / 10.0 : 0.0;
 
             Map<String, Object> pItem = new LinkedHashMap<>();
             pItem.put("productName", pName);
             pItem.put("orderCount", ordCnt);
-            pItem.put("totalRevenue", Math.round(totRev * 100.0) / 100.0);
-            pItem.put("avgTicket", Math.round(avgTicket * 100.0) / 100.0);
-            pItem.put("revenueShare", revShare);
             pItem.put("satisfiedCount", sCnt);
             pItem.put("neutralCount", nCnt);
             pItem.put("unsatisfiedCount", uCnt);
@@ -495,16 +434,30 @@ public class ReportService {
             cData.put("name", cust.getName());
             cData.put("phoneNumber", cust.getPhoneNumber());
             cData.put("city", cust.getCity() != null ? cust.getCity() : "Erbil");
-            cData.put("totalOrders", custOrders.size());
-            double totalSpent = custOrders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
-            cData.put("totalSpent", Math.round(totalSpent * 100.0) / 100.0);
 
-            // Tier assignment
-            String tier = "Bronze";
-            if (totalSpent >= 5000) tier = "VIP Platinum";
-            else if (totalSpent >= 1000) tier = "Gold";
-            else if (totalSpent >= 250) tier = "Silver";
+            int totalOrders = cust.getTotalOrders() > 0
+                    ? cust.getTotalOrders()
+                    : custOrders.size();
+            cData.put("totalOrders", totalOrders);
+            cData.put("ordersInPeriod", custOrders.size());
+
+            // Order Repetition & Loyalty Tier
+            String tier = "One-Time Buyer (1)";
+            String tierClass = "one-time";
+            boolean isRepeat = totalOrders >= 2;
+            if (totalOrders >= 5) {
+                tier = "VIP Champion (5+)";
+                tierClass = "vip";
+            } else if (totalOrders >= 3) {
+                tier = "Frequent Buyer (3-4)";
+                tierClass = "frequent";
+            } else if (totalOrders == 2) {
+                tier = "Returning (2)";
+                tierClass = "returning";
+            }
             cData.put("tier", tier);
+            cData.put("tierClass", tierClass);
+            cData.put("isRepeatCustomer", isRepeat);
 
             int pendingFollowups = 0;
             for (CustomerOrder o : custOrders) {
@@ -522,14 +475,14 @@ public class ReportService {
             customerSummaryMap.put(cust.getId(), cData);
         }
         List<Map<String, Object>> customerSummaryList = new ArrayList<>(customerSummaryMap.values());
-        customerSummaryList.sort(Comparator.comparing((Map<String, Object> c) -> (double) c.get("totalSpent")).reversed());
+        customerSummaryList.sort(Comparator.comparing((Map<String, Object> c) -> (Integer) c.get("totalOrders")).reversed());
 
         // Assembly
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("period", period);
         report.put("generatedAt", Instant.now());
         report.put("summary", summary);
-        report.put("financial", financial);
+        report.put("loyaltyTiers", loyaltyTiers);
         report.put("milestones", milestoneList);
         report.put("satisfaction", satisfactionMap);
         report.put("satisfactionNotes", notesLedger);

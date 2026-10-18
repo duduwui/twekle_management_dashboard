@@ -42,6 +42,13 @@ CHART_JS_PATH = os.path.join(SCRIPT_DIR, "chart.js")
 ERROR_DB_PATH = os.path.join(SCRIPT_DIR, "error_journal.db")
 STATE_FILE_PATH = os.path.join(SCRIPT_DIR, "simulator_state.json")
 
+# Standard Twekl Operational Timezone (Baghdad / Iraq, UTC+3)
+APP_TZ = timezone(timedelta(hours=3))
+
+def get_app_now() -> datetime:
+    """Returns the current timestamp in Twekl operational timezone (UTC+3)"""
+    return datetime.now(APP_TZ)
+
 def to_24h_ts(ts_str: str) -> str:
     """Format timestamp to 24-hour format YYYY-MM-DD HH:mm:ss"""
     if not ts_str:
@@ -81,7 +88,7 @@ def to_12h_short(h: int) -> str:
         return f"{h}"
 
 def to_12h_ts_short(ts_str: str) -> str:
-    """Format timestamp into 12-hour helper e.g. 11:42:24 AM"""
+    """Format timestamp into 12-hour helper e.g. 09:20:07 AM"""
     if not ts_str:
         return ""
     try:
@@ -95,7 +102,7 @@ def to_12h_ts_short(ts_str: str) -> str:
         h12 = h % 12
         if h12 == 0:
             h12 = 12
-        return f"{h12}:{m}:{s} {suffix}"
+        return f"{h12:02d}:{m}:{s} {suffix}"
     except Exception:
         return ""
 
@@ -212,7 +219,7 @@ class ErrorJournal:
 
     def record_error(self, user: str, action: str, status: int, message: str, dt=None):
         if dt is None:
-            dt = datetime.now(timezone.utc)
+            dt = get_app_now()
         ts = dt.strftime("%Y-%m-%d %H:%M:%S")
         date_str = dt.strftime("%Y-%m-%d")
         hour_str = dt.strftime("%Y-%m-%d %H:00")
@@ -235,7 +242,7 @@ class ErrorJournal:
                 # Available dates from records
                 cur.execute("SELECT DISTINCT date_str FROM error_logs ORDER BY date_str DESC")
                 distinct_dates = [r[0] for r in cur.fetchall() if r[0]]
-                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                today_str = get_app_now().strftime("%Y-%m-%d")
                 if today_str not in distinct_dates:
                     distinct_dates.insert(0, today_str)
 
@@ -269,9 +276,9 @@ class ErrorJournal:
                     }
 
                 # Build continuous timeline for "ALL" days from earliest recorded hour to current hour
-                now_utc = datetime.now(timezone.utc)
-                min_dt = datetime.strptime("2026-10-16 17:00", "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-                curr_dt = now_utc.replace(minute=0, second=0, microsecond=0)
+                now_tz = get_app_now()
+                min_dt = datetime.strptime("2026-10-16 17:00", "%Y-%m-%d %H:%M").replace(tzinfo=APP_TZ)
+                curr_dt = now_tz.replace(minute=0, second=0, microsecond=0)
                 all_labels = []
                 all_counts = []
                 all_peak_h = None
@@ -315,7 +322,7 @@ class ErrorJournal:
                 cur = conn.cursor()
                 cur.execute("SELECT DISTINCT date_str FROM error_logs ORDER BY date_str DESC")
                 dates = [r[0] for r in cur.fetchall() if r[0]]
-                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                today_str = get_app_now().strftime("%Y-%m-%d")
                 if today_str not in dates:
                     dates.insert(0, today_str)
                 return ["ALL"] + dates
@@ -639,14 +646,14 @@ class MetricsRegistry:
             adm = self.admin_stats[username]
             adm["requests"] += 1
             adm["last_action"] = action_desc
-            adm["last_timestamp"] = datetime.now(timezone.utc).strftime("%I:%M:%S %p")
+            adm["last_timestamp"] = get_app_now().strftime("%I:%M:%S %p")
 
         if 200 <= status < 400:
             self.total_success += 1
         else:
             self.total_errors += 1
             self.sec_errors += 1
-            now_dt = datetime.now(timezone.utc)
+            now_dt = get_app_now()
             ts_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
             err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
@@ -671,7 +678,7 @@ class MetricsRegistry:
         else:
             self.total_errors += 1
             self.sec_errors += 1
-            now_dt = datetime.now(timezone.utc)
+            now_dt = get_app_now()
             ts_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
             err_msg = error or (f"HTTP {status}" if status > 0 else "Connection Timeout / Network Exception")
             self.recent_errors.append({
@@ -743,7 +750,7 @@ class MetricsRegistry:
         latencies = list(self.recent_latencies)
         avg_lat = round(sum(latencies) / len(latencies), 1) if latencies else 0.0
 
-        ts_str = datetime.now(timezone.utc).strftime("%I:%M:%S %p")
+        ts_str = get_app_now().strftime("%I:%M:%S %p")
         self.history_timestamps.append(ts_str)
         self.history_rps.append(self.current_rps)
         self.history_latency.append(avg_lat)
@@ -1941,11 +1948,18 @@ HTML_PAGE = """<!DOCTYPE html>
         let latestTimelineData = null;
         let currentErrorChartType = 'line';
 
+        function getLocalDateStr(d = new Date()) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
         function updateDateButtons() {
             const todayBtn = document.getElementById('todayBtn');
             const yesterdayBtn = document.getElementById('yesterdayBtn');
             const avail = latestTimelineData && latestTimelineData.by_date ? Object.keys(latestTimelineData.by_date) : [];
-            const todayStr = avail.length > 0 ? avail[0] : new Date().toISOString().slice(0, 10);
+            const todayStr = avail.length > 0 ? avail[0] : getLocalDateStr();
             const yesterdayStr = avail.length > 1 ? avail[1] : '';
             if (todayBtn) todayBtn.classList.toggle('active', selectedErrorDate === todayStr);
             if (yesterdayBtn) yesterdayBtn.classList.toggle('active', selectedErrorDate === yesterdayStr);
@@ -1953,7 +1967,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         window.selectToday = function() {
             const avail = latestTimelineData && latestTimelineData.by_date ? Object.keys(latestTimelineData.by_date) : [];
-            const todayStr = avail.length > 0 ? avail[0] : new Date().toISOString().slice(0, 10);
+            const todayStr = avail.length > 0 ? avail[0] : getLocalDateStr();
             filterErrorDate(todayStr);
         };
 
@@ -1964,7 +1978,7 @@ HTML_PAGE = """<!DOCTYPE html>
             } else {
                 const y = new Date();
                 y.setDate(y.getDate() - 1);
-                filterErrorDate(y.toISOString().slice(0, 10));
+                filterErrorDate(getLocalDateStr(y));
             }
         };
 
@@ -2227,9 +2241,9 @@ HTML_PAGE = """<!DOCTYPE html>
 
             errorTbody.innerHTML = pageItems.map(err => `
                 <tr>
-                    <td style="color: #cbd5e1; font-size: 12px; font-family: monospace;">
-                        ${err.timestamp}
-                        ${err.timestamp_12h ? `<span style="color: #38bdf8; font-size: 11px; margin-left: 6px;">(${err.timestamp_12h})</span>` : ''}
+                    <td style="color: #cbd5e1; font-size: 12px; font-family: monospace; white-space: nowrap;">
+                        <span style="font-weight: 600; color: #f8fafc;">${err.timestamp}</span>
+                        ${err.timestamp_12h ? `<span style="color: #38bdf8; font-size: 11px; margin-left: 8px; font-weight: 500;">(${err.timestamp_12h})</span>` : ''}
                     </td>
                     <td style="font-weight: 600; color: #f87171;">${err.user}</td>
                     <td>${err.action}</td>
@@ -2279,7 +2293,7 @@ async def handle_clear_errors(request):
     return web.json_response({"success": True, "message": "Error log cleared"}, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 async def handle_simulate_test_error(request):
-    now_dt = datetime.now(timezone.utc)
+    now_dt = get_app_now()
     ts_24h = now_dt.strftime("%Y-%m-%d %H:%M:%S")
     h_int = now_dt.hour
     helper_12h = to_12h_short(h_int)

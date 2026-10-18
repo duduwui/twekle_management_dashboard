@@ -489,14 +489,42 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         return pages;
     };
 
-    function downloadCsv(filename, headers, rows) {
-        var csvContent = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+    function exportToExcel(filename, sheetName, headers, rows) {
+        var baseName = filename.replace(/\.xlsx$/i, '').replace(/\.csv$/i, '');
+        var xlsxName = baseName + '.xlsx';
+
+        if (window.XLSX && XLSX.utils && XLSX.writeFile) {
+            try {
+                var wb = XLSX.utils.book_new();
+                var aoa = [headers].concat(rows);
+                var ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                // Auto-fit column widths
+                var colWidths = headers.map(function(h, colIdx) {
+                    var maxLen = String(h).length;
+                    rows.forEach(function(r) {
+                        var cellVal = r[colIdx] != null ? String(r[colIdx]) : '';
+                        if (cellVal.length > maxLen) maxLen = Math.min(cellVal.length, 45);
+                    });
+                    return { wch: Math.max(maxLen + 3, 12) };
+                });
+                ws['!cols'] = colWidths;
+
+                XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Report');
+                XLSX.writeFile(wb, xlsxName);
+                return true;
+            } catch (e) {
+                console.warn('XLSX generation failed, falling back to CSV', e);
+            }
+        }
+
+        // Fallback to UTF-8 BOM CSV if XLSX is unavailable
+        var csvContent = '\uFEFF';
         var escapeField = function(val) {
             if (val == null) return '""';
             var str = String(val).replace(/"/g, '""');
             return '"' + str + '"';
         };
-
         csvContent += headers.map(escapeField).join(',') + '\r\n';
         rows.forEach(function(row) {
             csvContent += row.map(escapeField).join(',') + '\r\n';
@@ -504,21 +532,22 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
 
         var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         if (window.navigator && window.navigator.msSaveBlob) {
-            window.navigator.msSaveBlob(blob, filename);
+            window.navigator.msSaveBlob(blob, baseName + '.csv');
         } else {
             var link = document.createElement('a');
             var url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', filename);
+            link.setAttribute('download', baseName + '.csv');
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
+        return false;
     }
 
-    $scope.exportReportCsv = function() {
+    $scope.exportReportExcel = function() {
         var subTab = $scope.reportSubTab || 'customers';
         var nowStr = new Date().toISOString().slice(0, 10);
 
@@ -541,8 +570,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
                     c.pendingFollowups != null ? c.pendingFollowups : 0
                 ];
             });
-            downloadCsv('customer_report_' + nowStr + '.csv', headers, rows);
-            ToastService.success('Exported ' + rows.length + ' customer records to CSV.');
+            exportToExcel('Twekl_Customer_Report_' + nowStr, 'Customers', headers, rows);
+            ToastService.success('Exported ' + rows.length + ' customer records to Excel.');
         } else if (subTab === 'milestones') {
             var miles = ($scope.reportData && $scope.reportData.milestones) ? $scope.reportData.milestones : [];
             if (miles.length === 0) {
@@ -561,8 +590,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
                     m.targetDays != null ? m.targetDays : 0
                 ];
             });
-            downloadCsv('milestones_report_' + nowStr + '.csv', headers, rows);
-            ToastService.success('Exported milestone report to CSV.');
+            exportToExcel('Twekl_Milestones_Report_' + nowStr, 'Milestones', headers, rows);
+            ToastService.success('Exported milestone report to Excel.');
         } else if (subTab === 'satisfaction') {
             var notes = $scope.getFilteredReportNotes();
             if (!notes || notes.length === 0) {
@@ -581,8 +610,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
                     n.note || ''
                 ];
             });
-            downloadCsv('satisfaction_report_' + nowStr + '.csv', headers, rows);
-            ToastService.success('Exported ' + rows.length + ' feedback notes to CSV.');
+            exportToExcel('Twekl_Satisfaction_Report_' + nowStr, 'Satisfaction', headers, rows);
+            ToastService.success('Exported ' + rows.length + ' feedback notes to Excel.');
         } else if (subTab === 'products') {
             var prods = $scope.getFilteredReportProducts();
             if (!prods || prods.length === 0) {
@@ -600,10 +629,11 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
                     p.lowRatingCount != null ? p.lowRatingCount : 0
                 ];
             });
-            downloadCsv('products_report_' + nowStr + '.csv', headers, rows);
-            ToastService.success('Exported ' + rows.length + ' product records to CSV.');
+            exportToExcel('Twekl_Products_Report_' + nowStr, 'Products', headers, rows);
+            ToastService.success('Exported ' + rows.length + ' product records to Excel.');
         }
     };
+    $scope.exportReportCsv = $scope.exportReportExcel;
 
     // Auto-reload when time filter presets change or login occurs
     $scope.$on('timePresets:changed', function() {

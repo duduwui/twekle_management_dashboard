@@ -198,6 +198,8 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
 
     $scope.customerFollowupStatusFilter = 'ALL';
     $scope.pendingCustomerFollowupStatus = 'ALL';
+    $scope.pendingCustomerType = 'ALL';
+    $scope.pendingCustomerCity = 'ALL';
     $scope.selectedUserTimePreset = null;
 
     $scope.openFilterModal = function(target) {
@@ -206,6 +208,8 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         if ($scope.currentFilterTarget === 'customer') {
             $scope.pendingFilterPreset = $scope.selectedTimePreset;
             $scope.pendingCustomerFollowupStatus = $scope.customerFollowupStatusFilter || 'ALL';
+            $scope.pendingCustomerType = $scope.customerTypeFilter || 'ALL';
+            $scope.pendingCustomerCity = $scope.customerCityFilter || 'ALL';
         } else if ($scope.currentFilterTarget === 'user') {
             $scope.pendingFilterPreset = $scope.selectedUserTimePreset;
         } else if ($scope.currentFilterTarget === 'order') {
@@ -242,8 +246,12 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         if ($scope.currentFilterTarget === 'customer') {
             $scope.selectedTimePreset = $scope.pendingFilterPreset;
             $scope.customerFollowupStatusFilter = $scope.pendingCustomerFollowupStatus || 'ALL';
+            $scope.customerTypeFilter = $scope.pendingCustomerType || 'ALL';
+            $scope.customerCityFilter = $scope.pendingCustomerCity || 'ALL';
             $scope.$broadcast('filter:timePresetChanged', $scope.selectedTimePreset);
             $scope.$broadcast('filter:followupStatusChanged', $scope.customerFollowupStatusFilter);
+            $scope.$broadcast('filter:customerTypeChanged', $scope.customerTypeFilter);
+            $scope.$broadcast('filter:customerCityChanged', $scope.customerCityFilter);
         } else if ($scope.currentFilterTarget === 'user') {
             $scope.selectedUserTimePreset = $scope.pendingFilterPreset;
             $scope.$broadcast('filter:userTimePresetChanged', $scope.selectedUserTimePreset);
@@ -255,6 +263,14 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
             $scope.$broadcast('filter:reportTimePresetChanged', $scope.selectedReportPreset);
         }
         $scope.closeFilterModal();
+    };
+
+    $scope.resetBigFilterModal = function() {
+        $scope.pendingFilterPreset = null;
+        $scope.pendingCustomerFollowupStatus = 'ALL';
+        $scope.pendingCustomerType = 'ALL';
+        $scope.pendingCustomerCity = 'ALL';
+        $scope.confirmApplyFilterModal();
     };
 
     $scope.clearCustomerFollowupStatusFilter = function() {

@@ -235,7 +235,7 @@
     <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
         <!-- Report Filters Modal -->
         <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': (showReportFilterModal || (modalState && modalState.reportFilter)) ? 'flex' : 'none'}" ng-cloak ng-show="showReportFilterModal || (modalState && modalState.reportFilter)" ng-click="closeReportFilterModal()">
-            <div class="filter-modal-card" style="max-width: 720px;" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-card" style="max-width: 860px; width: 95%;" ng-click="$event.stopPropagation()">
                 <div class="filter-modal-header-simple">
                     <strong class="filter-modal-title-simple">Report Filters</strong>
                     <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
@@ -374,66 +374,123 @@
 
         <!-- Global Time & Follow-up Filter Modal -->
         <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showBigFilterModal ? 'flex' : 'none'}" ng-cloak ng-show="showBigFilterModal" ng-click="closeFilterModal()">
-            <div class="filter-modal-card" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-card" style="max-width: 860px; width: 95%;" ng-click="$event.stopPropagation()">
                 <div class="filter-modal-header-simple">
                     <strong class="filter-modal-title-simple">Filter Criteria</strong>
                     <button type="button" class="comic-modal-close" ng-click="closeFilterModal()">&times;</button>
                 </div>
 
-                <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 18px;">
-                    <div>
-                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Time Range</div>
-                        <div class="filter-presets-grid-3">
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': isPendingPresetSelected(null)}"
-                                 ng-click="selectPendingPreset(null)">
-                                <span class="filter-simple-name">All Time</span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(null)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div style="padding: 18px 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+                        <!-- Col 1: Time Range -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Time Range
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-repeat="preset in timeFilterPresets track by preset.id"
-                                 ng-if="preset.active !== false || preset.isActive"
-                                 ng-class="{'selected': isPendingPresetSelected(preset)}"
-                                 ng-click="selectPendingPreset(preset)">
-                                <span class="filter-simple-name" ng-bind="preset.name || preset.labelEn"></span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingPresetSelected(preset)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingPresetSelected(null)"
+                                           ng-click="selectPendingPreset(null)">
+                                    <span>All Time</span>
+                                </label>
+                                <label ng-repeat="preset in timeFilterPresets track by preset.id"
+                                       ng-if="preset.active !== false || preset.isActive"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingPresetSelected(preset)"
+                                           ng-click="selectPendingPreset(preset)">
+                                    <span ng-bind="preset.name || preset.labelEn"></span>
+                                </label>
                             </div>
                         </div>
-                    </div>
 
-                    <div ng-if="currentFilterTarget === 'customer'">
-                        <div style="font-size: 0.82rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Follow-up Status</div>
-                        <div class="filter-presets-grid-4">
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': isPendingFollowupStatusSelected('ALL')}"
-                                 ng-click="selectPendingFollowupStatus('ALL')">
-                                <span class="filter-simple-name">All Customers</span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALL')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        <!-- Col 2: Follow-up Status -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Follow-up Status
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': isPendingFollowupStatusSelected('ALERT')}"
-                                 ng-click="selectPendingFollowupStatus('ALERT')">
-                                <span class="filter-simple-name" style="color: #EF4444;">Needs Action</span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('ALERT')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingFollowupStatusSelected('ALL')"
+                                           ng-click="selectPendingFollowupStatus('ALL')">
+                                    <span>All Customers</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingFollowupStatusSelected('ALERT') || isPendingFollowupStatusSelected('OVERDUE')"
+                                           ng-click="selectPendingFollowupStatus('ALERT')">
+                                    <span style="color: #DC2626;">Needs Action</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingFollowupStatusSelected('UPCOMING') || isPendingFollowupStatusSelected('IDLE')"
+                                           ng-click="selectPendingFollowupStatus('UPCOMING')">
+                                    <span style="color: #D97706;">Scheduled</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingFollowupStatusSelected('COMPLETED') || isPendingFollowupStatusSelected('DONE')"
+                                           ng-click="selectPendingFollowupStatus('COMPLETED')">
+                                    <span style="color: #16A34A;">Completed</span>
+                                </label>
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': isPendingFollowupStatusSelected('UPCOMING')}"
-                                 ng-click="selectPendingFollowupStatus('UPCOMING')">
-                                <span class="filter-simple-name" style="color: #F59E0B;">Scheduled</span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('UPCOMING')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        </div>
+
+                        <!-- Col 3: Customer Type -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Customer Type
                             </div>
-                            <div class="filter-preset-card-simple"
-                                 ng-class="{'selected': isPendingFollowupStatusSelected('COMPLETED')}"
-                                 ng-click="selectPendingFollowupStatus('COMPLETED')">
-                                <span class="filter-simple-name" style="color: #10B981;">Completed</span>
-                                <div class="filter-simple-check"><svg ng-if="isPendingFollowupStatusSelected('COMPLETED')" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingCustomerType === 'ALL' || !pendingCustomerType"
+                                           ng-click="pendingCustomerType = 'ALL'">
+                                    <span>All Types</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingCustomerType === 'ORGANIZATION'"
+                                           ng-click="pendingCustomerType = 'ORGANIZATION'">
+                                    <span>Organization</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingCustomerType === 'INDIVIDUAL'"
+                                           ng-click="pendingCustomerType = 'INDIVIDUAL'">
+                                    <span>Individual</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Col 4: City -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                City
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingCustomerCity === 'ALL' || !pendingCustomerCity"
+                                           ng-click="pendingCustomerCity = 'ALL'">
+                                    <span>All Cities</span>
+                                </label>
+                                <label ng-repeat="city in ['Baghdad', 'Erbil', 'Basra', 'Sulaymaniyah', 'Najaf', 'Karbala', 'Kirkuk', 'Duhok', 'Mosul'] track by city"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingCustomerCity === city"
+                                           ng-click="pendingCustomerCity = city">
+                                    <span ng-bind="city"></span>
+                                </label>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="filter-modal-footer-simple">
-                    <button type="button" class="comic-btn-secondary" ng-click="selectPendingPreset(null); selectPendingFollowupStatus('ALL')" style="padding: 9px 16px;">
+                    <button type="button" class="comic-btn-secondary" ng-click="resetBigFilterModal()" style="padding: 9px 16px;">
                         Reset
                     </button>
                     <div style="display: flex; gap: 8px;">
@@ -539,6 +596,7 @@
     <!-- ========================================================= -->
     <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
         <script src="/js/core/angular.min.js"></script>
+        <script src="/js/core/xlsx.mini.min.js"></script>
         <script src="/js/core/app.js?v=18"></script>
         <script src="/js/core/dateFilterHelper.js?v=18"></script>
         <script src="/js/core/toast.js?v=18"></script>

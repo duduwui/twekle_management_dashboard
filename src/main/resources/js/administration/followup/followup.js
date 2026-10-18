@@ -785,11 +785,89 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         $scope.loadCustomers(1);
     });
 
+    // Listen for customer type filter change from LayoutController
+    $scope.$on('filter:customerTypeChanged', function(event, type) {
+        $scope.customerFilters.customerType = type || 'ALL';
+        $scope.dt.currentPage = 1;
+        $scope.loadCustomers(1);
+    });
+
+    // Listen for customer city filter change from LayoutController
+    $scope.$on('filter:customerCityChanged', function(event, city) {
+        $scope.customerFilters.city = city || 'ALL';
+        $scope.dt.currentPage = 1;
+        $scope.loadCustomers(1);
+    });
+
     $scope.clearFollowupStatusFilter = function() {
         $scope.customerFilters.followupStatus = 'ALL';
         $scope.dt.currentPage = 1;
         $scope.$emit('filter:clearFollowupStatus');
         $scope.loadCustomers(1);
+    };
+
+    $scope.exportFollowupsExcel = function() {
+        var custs = $scope.customers || [];
+        if (custs.length === 0) {
+            ToastService.warning('No customer follow-up records to export.');
+            return;
+        }
+
+        var headers = ['ID', 'Customer Name', 'Type', 'Phone Number', 'City', 'Total Orders', 'Follow-up Status', 'Remaining Checks', 'Next Scheduled Check'];
+        var rows = custs.map(function(c) {
+            var isOrg = (c.name || '').toLowerCase().match(/mart|market|superstore|pos|company|corp|solutions|logistics/i);
+            var typeLabel = isOrg ? 'Organization' : 'Individual';
+            var statusLabel = (c.followupStatus === 'ALERT' || c.followupStatus === 'OVERDUE') ? 'Needs Action' : (c.allFollowupsCompleted ? 'Completed' : 'Scheduled');
+            return [
+                c.id,
+                c.name || '',
+                typeLabel,
+                c.phoneNumber || '',
+                c.city || '',
+                c.totalOrders != null ? c.totalOrders : 0,
+                statusLabel,
+                c.remainingFollowupsCount != null ? c.remainingFollowupsCount : 0,
+                c.nextPendingFollowup || 'None'
+            ];
+        });
+
+        var nowStr = new Date().toISOString().slice(0, 10);
+        var filename = 'Twekl_Followups_' + nowStr;
+
+        if (window.XLSX && XLSX.utils && XLSX.writeFile) {
+            try {
+                var wb = XLSX.utils.book_new();
+                var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
+                ws['!cols'] = headers.map(function(h, idx) {
+                    var maxLen = h.length;
+                    rows.forEach(function(r) {
+                        var l = String(r[idx] || '').length;
+                        if (l > maxLen) maxLen = Math.min(l, 40);
+                    });
+                    return { wch: Math.max(maxLen + 3, 12) };
+                });
+                XLSX.utils.book_append_sheet(wb, ws, 'Follow-ups');
+                XLSX.writeFile(wb, filename + '.xlsx');
+                ToastService.success('Exported ' + rows.length + ' follow-up records to Excel.');
+                return;
+            } catch (e) {
+                console.warn('XLSX export failed', e);
+            }
+        }
+
+        // Fallback to CSV
+        var csvContent = '\uFEFF' + headers.map(function(h) { return '"' + h + '"'; }).join(',') + '\r\n';
+        rows.forEach(function(r) {
+            csvContent += r.map(function(val) { return '"' + String(val == null ? '' : val).replace(/"/g, '""') + '"'; }).join(',') + '\r\n';
+        });
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        ToastService.success('Exported ' + rows.length + ' records to Excel format.');
     };
 
     // Listen for sub-view navigation from sidebar

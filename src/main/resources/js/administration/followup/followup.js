@@ -557,14 +557,32 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     // =========================================================
     // FEEDBACK & CHECKPOINT MODAL ACTIONS
     // =========================================================
+    $scope.getCheckImages = function(item) {
+        if (!item) return [];
+        var url = item.imageUrl || item.photoUrl;
+        if (!url || typeof url !== 'string' || !url.trim()) return [];
+        url = url.trim();
+        if (url.startsWith('[') && url.endsWith(']')) {
+            try {
+                var parsed = JSON.parse(url);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(function(x) { return typeof x === 'string' && x.trim().length > 0; });
+                }
+            } catch(e) {}
+        }
+        return [url];
+    };
+
     $scope.openEditFollowupModal = function(order, check, $event) {
         if ($event) $event.stopPropagation();
         var item = angular.copy(check) || {};
         item.orderId = order ? order.id : null;
         item.note = check.note || check.notes || '';
         item.imageUrl = check.imageUrl || check.photoUrl || '';
+        item.images = angular.copy($scope.getCheckImages(check));
         item.satisfaction = (check.satisfaction && check.satisfaction.trim() !== '') ? check.satisfaction.toUpperCase() : 'NEUTRAL';
         $scope.editingFollowup = item;
+        $scope.tempImageUrl = '';
         $scope.showEditFollowupModal = true;
         if ($scope.$parent && $scope.$parent.openEditFollowupModal) {
             $scope.$parent.openEditFollowupModal(order, check, $event);
@@ -574,17 +592,38 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     $scope.closeEditFollowupModal = function() {
         $scope.showEditFollowupModal = false;
         $scope.editingFollowup = {};
+        $scope.tempImageUrl = '';
         if ($scope.$parent && $scope.$parent.closeEditFollowupModal) {
             $scope.$parent.closeEditFollowupModal();
         }
     };
 
+    $scope.removeFollowupImage = function(index) {
+        if ($scope.editingFollowup && $scope.editingFollowup.images) {
+            $scope.editingFollowup.images.splice(index, 1);
+            $scope.editingFollowup.imageUrl = $scope.editingFollowup.images.length > 0 ? JSON.stringify($scope.editingFollowup.images) : '';
+        }
+    };
+
+    $scope.addFollowupImageUrl = function() {
+        if (!$scope.tempImageUrl || !$scope.tempImageUrl.trim()) return;
+        if (!$scope.editingFollowup.images) $scope.editingFollowup.images = [];
+        $scope.editingFollowup.images.push($scope.tempImageUrl.trim());
+        $scope.editingFollowup.imageUrl = JSON.stringify($scope.editingFollowup.images);
+        $scope.tempImageUrl = '';
+    };
+
     $scope.saveFollowupCheck = function() {
         if (!$scope.editingFollowup || !$scope.editingFollowup.id) return;
         var sat = $scope.editingFollowup.satisfaction || 'NEUTRAL';
+        var finalImages = $scope.editingFollowup.images || [];
+        var finalImageUrl = finalImages.length > 0 ? JSON.stringify(finalImages) : '';
+        $scope.editingFollowup.imageUrl = finalImageUrl;
+
         var payload = {
             notes: $scope.editingFollowup.note || '',
-            photoUrl: $scope.editingFollowup.imageUrl || '',
+            photoUrl: finalImageUrl,
+            imageUrl: finalImageUrl,
             satisfaction: sat
         };
         FollowupService.updateFollowup($scope.editingFollowup.id, payload).then(function(res) {
@@ -595,8 +634,8 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                     if (list[i].id === $scope.editingFollowup.id) {
                         list[i].note = $scope.editingFollowup.note;
                         list[i].notes = $scope.editingFollowup.note;
-                        list[i].imageUrl = $scope.editingFollowup.imageUrl;
-                        list[i].photoUrl = $scope.editingFollowup.imageUrl;
+                        list[i].imageUrl = finalImageUrl;
+                        list[i].photoUrl = finalImageUrl;
                         list[i].satisfaction = sat;
                         break;
                     }
@@ -620,20 +659,25 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
     };
 
     $scope.handleFollowupImageUpload = function(element) {
-        if (element.files && element.files[0]) {
-            var file = element.files[0];
-            FollowupImageHelper.processImageFile(
-                file,
-                function(dataUrl) {
+        if (element.files && element.files.length > 0) {
+            if (!$scope.editingFollowup.images) $scope.editingFollowup.images = [];
+            FollowupImageHelper.processImageFiles(
+                element.files,
+                function(dataUrls) {
                     $scope.$apply(function() {
-                        $scope.editingFollowup.imageUrl = dataUrl;
+                        dataUrls.forEach(function(url) {
+                            $scope.editingFollowup.images.push(url);
+                        });
+                        $scope.editingFollowup.imageUrl = JSON.stringify($scope.editingFollowup.images);
                         if ($scope.$parent && $scope.$parent.editingFollowup) {
-                            $scope.$parent.editingFollowup.imageUrl = dataUrl;
+                            $scope.$parent.editingFollowup.images = $scope.editingFollowup.images;
+                            $scope.$parent.editingFollowup.imageUrl = $scope.editingFollowup.imageUrl;
                         }
+                        element.value = '';
                     });
                 },
                 function(errMsg) {
-                    ToastService.error(errMsg);
+                    ToastService.error(errMsg || 'Failed to process image');
                 }
             );
         }

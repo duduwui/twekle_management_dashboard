@@ -8,16 +8,38 @@
 <body>
     <div layout:fragment="content">
         <section class="comic-card page-slide-fade" ng-controller="ReportController">
+            <!-- Reports Sub-tab Navigation Bar -->
+            <div class="comic-tabs" style="display: flex; gap: 8px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                <button type="button" class="comic-btn" ng-class="{'tag-primary': reportSubTab === 'milestones', 'comic-btn-secondary': reportSubTab !== 'milestones'}" ng-click="setReportSubTab('milestones')" style="padding: 7px 16px; font-weight: 800; font-size: 0.88rem;">
+                    Follow-ups &amp; Milestones
+                </button>
+                <button type="button" class="comic-btn" ng-class="{'tag-primary': reportSubTab === 'satisfaction', 'comic-btn-secondary': reportSubTab !== 'satisfaction'}" ng-click="setReportSubTab('satisfaction')" style="padding: 7px 16px; font-weight: 800; font-size: 0.88rem;">
+                    Satisfaction &amp; Sentiment
+                </button>
+                <button type="button" class="comic-btn" ng-class="{'active-filter-btn': reportSubTab === 'financial', 'comic-btn-secondary': reportSubTab !== 'financial'}" ng-click="setReportSubTab('financial')" style="padding: 7px 16px; font-weight: 900; font-size: 0.88rem; background-color: #FEF08A; color: #854D0E;">
+                    Financial &amp; Revenue
+                </button>
+                <button type="button" class="comic-btn" ng-class="{'tag-primary': reportSubTab === 'products', 'comic-btn-secondary': reportSubTab !== 'products'}" ng-click="setReportSubTab('products')" style="padding: 7px 16px; font-weight: 800; font-size: 0.88rem;">
+                    Product Distribution
+                </button>
+                <button type="button" class="comic-btn" ng-class="{'tag-primary': reportSubTab === 'followups' || reportSubTab === 'customers', 'comic-btn-secondary': reportSubTab !== 'followups' && reportSubTab !== 'customers'}" ng-click="setReportSubTab('followups')" style="padding: 7px 16px; font-weight: 800; font-size: 0.88rem;">
+                    Customer Lifecycles
+                </button>
+            </div>
+
             <!-- REPORT TAB 1: FOLLOW-UPS & MILESTONES -->
             <th:block th:replace="~{administration/report/milestonesTab :: milestonesTab}"></th:block>
 
             <!-- REPORT TAB 2: CUSTOMER SATISFACTION & NOTES -->
             <th:block th:replace="~{administration/report/satisfactionTab :: satisfactionTab}"></th:block>
 
-            <!-- REPORT TAB 3: PRODUCT INSIGHTS & REVIEWS -->
+            <!-- REPORT TAB 3: FINANCIAL & REVENUE INTELLIGENCE -->
+            <th:block th:replace="~{administration/report/financialTab :: financialTab}"></th:block>
+
+            <!-- REPORT TAB 4: PRODUCT INSIGHTS & REVIEWS -->
             <th:block th:replace="~{administration/report/productsTab :: productsTab}"></th:block>
 
-            <!-- REPORT TAB 4: FOLLOW-UP SUMMARY -->
+            <!-- REPORT TAB 5: FOLLOW-UP SUMMARY -->
             <th:block th:replace="~{administration/report/followupsTab :: followupsTab}"></th:block>
         </section>
     </div>

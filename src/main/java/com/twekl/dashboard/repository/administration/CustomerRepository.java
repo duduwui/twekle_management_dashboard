@@ -62,5 +62,17 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
 
     @Query("SELECT DISTINCT c FROM Customer c LEFT JOIN FETCH c.orders o LEFT JOIN FETCH o.checks ORDER BY c.id DESC")
     List<Customer> findAllWithOrdersAndChecks();
+
+    @Query(value = "SELECT " +
+           "SUM(CASE WHEN TOTAL_SPENT >= 5000 THEN 1 ELSE 0 END), " +
+           "COALESCE(SUM(CASE WHEN TOTAL_SPENT >= 5000 THEN TOTAL_SPENT ELSE 0 END), 0), " +
+           "SUM(CASE WHEN TOTAL_SPENT >= 1000 AND TOTAL_SPENT < 5000 THEN 1 ELSE 0 END), " +
+           "COALESCE(SUM(CASE WHEN TOTAL_SPENT >= 1000 AND TOTAL_SPENT < 5000 THEN TOTAL_SPENT ELSE 0 END), 0), " +
+           "SUM(CASE WHEN TOTAL_SPENT >= 250 AND TOTAL_SPENT < 1000 THEN 1 ELSE 0 END), " +
+           "COALESCE(SUM(CASE WHEN TOTAL_SPENT >= 250 AND TOTAL_SPENT < 1000 THEN TOTAL_SPENT ELSE 0 END), 0), " +
+           "SUM(CASE WHEN TOTAL_SPENT < 250 THEN 1 ELSE 0 END), " +
+           "COALESCE(SUM(CASE WHEN TOTAL_SPENT < 250 THEN TOTAL_SPENT ELSE 0 END), 0) " +
+           "FROM CUSTOMERS", nativeQuery = true)
+    List<Object[]> getCustomerTierStats();
 }
 

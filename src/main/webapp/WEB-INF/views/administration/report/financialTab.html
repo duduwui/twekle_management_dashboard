@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- REPORT TAB: FINANCIAL & REVENUE INTELLIGENCE -->
+    <div th:fragment="financialTab" ng-show="reportSubTab === 'financial'" style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Filter Toolbar -->
+        <div class="comic-filter-toolbar">
+            <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
+                <span class="filter-date-label">From:</span>
+                <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                <span class="filter-date-label">To:</span>
+                <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                <button type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;" ng-click="openReportFilterModal()" title="Open Filters Popup">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                    <span>Filters</span>
+                </button>
+
+                <!-- Active Filter Badges -->
+                <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
+                    <span ng-bind="selectedReportPreset.name"></span> ✕
+                </span>
+                <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="clearSatisfactionFilter()" title="Click to clear scale">
+                    <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
+                </span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportCsv()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export Financial CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Executive Financial KPI Stat Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+            <!-- Card 1: Gross Revenue -->
+            <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Gross Period Revenue</div>
+                <div style="font-size: 1.65rem; font-weight: 900; color: #0F172A; margin: 4px 0;">
+                    ${{ (reportData.financial.totalRevenue || reportData.summary.revenue || 0) | number:2 }}
+                </div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #166534;">
+                    Across {{ (reportData.financial.totalOrders || reportData.summary.totalOrders || 0).toLocaleString() }} orders
+                </div>
+            </div>
+
+            <!-- Card 2: Average Order Value -->
+            <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Average Order Value (AOV)</div>
+                <div style="font-size: 1.65rem; font-weight: 900; color: #0284C7; margin: 4px 0;">
+                    ${{ (reportData.financial.avgOrderValue || reportData.summary.avgOrderValue || 0) | number:2 }}
+                </div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #475569;">
+                    Avg ticket per completed checkout
+                </div>
+            </div>
+
+            <!-- Card 3: Repeat Customer Revenue -->
+            <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Repeat Buyer Revenue</div>
+                <div style="font-size: 1.65rem; font-weight: 900; color: #7C3AED; margin: 4px 0;">
+                    ${{ (reportData.financial.repeatRevenue || 0) | number:2 }}
+                </div>
+                <div style="font-size: 0.8rem; font-weight: 800; color: #6D28D9;">
+                    {{ (reportData.financial.repeatRevenueShare || 0) }}% of total gross revenue
+                </div>
+            </div>
+
+            <!-- Card 4: Revenue At Churn Risk -->
+            <div class="comic-stat-card" style="background: #FEF2F2; border: 2.5px solid #991B1B; box-shadow: 4px 4px 0px #991B1B; border-radius: 8px; padding: 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">Revenue at Churn Risk</div>
+                <div style="font-size: 1.65rem; font-weight: 900; color: #DC2626; margin: 4px 0;">
+                    ${{ (reportData.financial.revenueAtRisk || 0) | number:2 }}
+                </div>
+                <div style="font-size: 0.8rem; font-weight: 800; color: #991B1B;">
+                    Tied to unsatisfied / complaint reviews
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Customer Value Tiers (LTV Breakdown) -->
+        <div class="table-responsive" style="margin-top: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-weight: 900; font-size: 1.05rem; color: #0F172A;">
+                    Customer Account Lifetime Value Tiers (LTV)
+                </div>
+                <span style="font-size: 0.8rem; color: #64748B; font-weight: 700;">
+                    Active account distribution across spending thresholds
+                </span>
+            </div>
+            <table class="comic-table">
+                <thead>
+                    <tr>
+                        <th>Customer Spending Tier</th>
+                        <th class="nowrap" style="text-align: center;">Account Count</th>
+                        <th class="nowrap" style="text-align: right;">Total Spent</th>
+                        <th class="nowrap" style="text-align: right;">Revenue Share</th>
+                        <th class="nowrap" style="text-align: right;">Avg Spend / Account</th>
+                        <th class="nowrap" style="text-align: center;">Operational Strategy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="t in reportData.financial.tiers track by t.tierName">
+                        <td>
+                            <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="t.tierName"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <strong ng-bind="t.customerCount.toLocaleString()"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="'$' + (t.totalRevenue | number:2)"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <span class="comic-tag tag-primary" style="font-weight: 900;" ng-bind="t.revenueShare + '%'"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <strong style="color: #334155;" ng-bind="'$' + (t.avgSpend | number:2)"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <span class="comic-tag" style="background: #F1F5F9; color: #0F172A; font-weight: 800;" ng-bind="t.status"></span>
+                        </td>
+                    </tr>
+                    <tr ng-if="!reportData.financial.tiers || reportData.financial.tiers.length === 0">
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #64748B; font-weight: 700;">
+                            No customer spending tier records available.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. Revenue Impact of Customer Follow-up Feedback -->
+        <div class="table-responsive" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-weight: 900; font-size: 1.05rem; color: #0F172A;">
+                    Revenue Impact of Follow-up Customer Satisfaction
+                </div>
+                <span style="font-size: 0.8rem; color: #64748B; font-weight: 700;">
+                    Monetary value associated with customer feedback ratings
+                </span>
+            </div>
+            <table class="comic-table">
+                <thead>
+                    <tr>
+                        <th>Feedback Sentiment Category</th>
+                        <th class="nowrap" style="text-align: center;">Total Checkpoints</th>
+                        <th class="nowrap" style="text-align: right;">Order Revenue Generated</th>
+                        <th class="nowrap" style="text-align: right;">Revenue Share %</th>
+                        <th class="nowrap" style="text-align: right;">Average Ticket</th>
+                        <th class="nowrap" style="text-align: center;">Account Retention Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="f in reportData.financial.feedbackImpact track by f.feedbackType">
+                        <td>
+                            <span class="sat-badge" ng-class="f.badgeClass" style="font-size: 0.85rem;" ng-bind="f.feedbackType"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <strong ng-bind="f.checkCount.toLocaleString()"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="'$' + (f.totalRevenue | number:2)"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <strong ng-bind="f.revenueShare + '%'"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <span style="color: #475569; font-weight: 800;" ng-bind="'$' + (f.avgOrderValue | number:2)"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <span class="comic-tag" ng-class="{'tag-primary': f.feedbackType.indexOf('Satisfied') >= 0, 'tag-alert': f.feedbackType.indexOf('Unsatisfied') >= 0}" style="font-weight: 800;" ng-bind="f.impactStatus"></span>
+                        </td>
+                    </tr>
+                    <tr ng-if="!reportData.financial.feedbackImpact || reportData.financial.feedbackImpact.length === 0">
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #64748B; font-weight: 700;">
+                            No feedback sentiment financial data recorded for the selected period.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. Top Products by Revenue & Quality Defect Risk -->
+        <div class="table-responsive" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-weight: 900; font-size: 1.05rem; color: #0F172A;">
+                    Product Revenue Distribution &amp; Quality Risk
+                </div>
+                <div class="filter-search-box" style="min-width: 220px;">
+                    <input type="search" class="comic-search-bar" placeholder="Filter product name..." ng-model="reportFilters.searchProducts">
+                </div>
+            </div>
+            <table class="comic-table">
+                <thead>
+                    <tr>
+                        <th>Product Bundle / Item Name</th>
+                        <th class="nowrap" style="text-align: center;">Orders Sold</th>
+                        <th class="nowrap" style="text-align: right;">Gross Revenue</th>
+                        <th class="nowrap" style="text-align: right;">Avg Price / Order</th>
+                        <th class="nowrap" style="text-align: right;">Revenue Share</th>
+                        <th class="nowrap" style="text-align: center;">Defect / Complaint Rate</th>
+                        <th class="nowrap" style="text-align: right;">Quality Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="p in getPagedReportFinancialProducts() track by p.productName">
+                        <td>
+                            <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="p.productName"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <strong ng-bind="p.orderCount.toLocaleString() + ' orders'"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="'$' + (p.totalRevenue | number:2)"></strong>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <span style="color: #475569; font-weight: 800;" ng-bind="'$' + (p.avgTicket | number:2)"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <span class="comic-tag tag-primary" style="font-weight: 900;" ng-bind="p.revenueShare + '%'"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: center;">
+                            <span style="font-weight: 800;" ng-class="{'color: #DC2626': p.defectRate > 20, 'color: #166534': p.defectRate <= 20}" ng-bind="p.defectRate + '% (' + p.unsatisfiedCount + ' reviews)'"></span>
+                        </td>
+                        <td class="nowrap" style="text-align: right;">
+                            <span ng-if="p.defectRate > 25" style="color: #DC2626; font-weight: 900;">Quality Review Needed</span>
+                            <span ng-if="p.defectRate <= 25" style="color: #16A34A; font-weight: 900;">High Satisfaction</span>
+                        </td>
+                    </tr>
+                    <tr ng-if="dtFinancialProducts.totalItems === 0">
+                        <td colspan="7" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                            No product revenue data matches the selected criteria.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- DataTable Pagination Footer for Financial Products Table -->
+        <div class="datatable-footer" ng-if="dtFinancialProducts.totalItems > 0">
+            <div class="datatable-info" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span>
+                    Showing <strong>{{ (dtFinancialProducts.currentPage - 1) * dtFinancialProducts.pageSize + 1 }}</strong> to <strong>{{ dtFinancialProducts.currentPage * dtFinancialProducts.pageSize > dtFinancialProducts.totalItems ? dtFinancialProducts.totalItems : dtFinancialProducts.currentPage * dtFinancialProducts.pageSize }}</strong> of <strong>{{ dtFinancialProducts.totalItems.toLocaleString() }}</strong> products (Page {{ dtFinancialProducts.currentPage }} of {{ dtFinancialProducts.totalPages.toLocaleString() }})
+                </span>
+                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Rows:</span>
+                    <select class="comic-input" style="width: auto; padding: 2px 8px; height: 28px; font-size: 0.82rem; font-weight: 800;" ng-model="dtFinancialProducts.pageSize" ng-change="setReportPage(dtFinancialProducts, 1)">
+                        <option ng-value="20">20</option>
+                        <option ng-value="40">40</option>
+                        <option ng-value="80">80</option>
+                        <option ng-value="100">100</option>
+                    </select>
+                </div>
+            </div>
+            <div class="datatable-pagination">
+                <button type="button" class="page-btn" ng-disabled="dtFinancialProducts.currentPage === 1" ng-click="setReportPage(dtFinancialProducts, 1)" title="First Page">«</button>
+                <button type="button" class="page-btn" ng-disabled="dtFinancialProducts.currentPage === 1" ng-click="setReportPage(dtFinancialProducts, dtFinancialProducts.currentPage - 1)" title="Previous Page">‹ Prev</button>
+                <button type="button" class="page-btn" ng-repeat="p in getReportPageNumbers(dtFinancialProducts) track by $index" ng-class="{'active': dtFinancialProducts.currentPage === p, 'page-ellipsis': p === '...'}" ng-disabled="p === '...'" ng-click="setReportPage(dtFinancialProducts, p)" ng-bind="p"></button>
+                <button type="button" class="page-btn" ng-disabled="dtFinancialProducts.currentPage === dtFinancialProducts.totalPages" ng-click="setReportPage(dtFinancialProducts, dtFinancialProducts.currentPage + 1)" title="Next Page">Next ›</button>
+                <button type="button" class="page-btn" ng-disabled="dtFinancialProducts.currentPage === dtFinancialProducts.totalPages" ng-click="setReportPage(dtFinancialProducts, dtFinancialProducts.totalPages)" title="Last Page">»</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

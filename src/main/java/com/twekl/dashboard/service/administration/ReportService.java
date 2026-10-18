@@ -272,54 +272,211 @@ public class ReportService {
         satisfactionMap.put("unsatisfiedCount", unsatCount);
         satisfactionMap.put("positiveRate", positiveRate);
 
+        double negativeRate = totalRated > 0 ? Math.round(((double) unsatCount / totalRated * 1000.0)) / 10.0 : 0.0;
+        double netSentimentScore = Math.round((positiveRate - negativeRate) * 10.0) / 10.0;
+
         summary.put("satisfactionRate", positiveRate);
+        summary.put("negativeRate", negativeRate);
+        summary.put("netSentimentScore", netSentimentScore);
         summary.put("satisfiedCount", satCount);
         summary.put("neutralCount", neuCount);
         summary.put("unsatisfiedCount", unsatCount);
         summary.put("totalRated", totalRated);
 
-        // 4. Product Insights & Reviews
-        Map<String, Map<String, Object>> productMap = new LinkedHashMap<>();
-        for (CustomerOrder ord : filteredOrders) {
-            String items = ord.getItemsSummary();
-            if (items == null || items.trim().isEmpty()) continue;
+        // ---------------------------------------------------------------------
+        // 4. FINANCIAL INTELLIGENCE & REVENUE METRICS
+        // ---------------------------------------------------------------------
+        List<Object[]> satFinStats = followupCheckRepository.getSatisfactionFinancialStatsByDateRange(startDate, rangeEnd);
+        double satisfiedRevenue = 0.0;
+        double neutralRevenue = 0.0;
+        double unsatisfiedRevenue = 0.0;
+        long satFinCount = 0;
+        long neuFinCount = 0;
+        long unsatFinCount = 0;
 
-            String[] tokens = items.split("[,;\\n]+");
-            for (String t : tokens) {
-                String prodName = t.trim();
-                if (prodName.isEmpty()) continue;
-
-                productMap.putIfAbsent(prodName, new LinkedHashMap<>());
-                Map<String, Object> pData = productMap.get(prodName);
-                pData.putIfAbsent("productName", prodName);
-                pData.put("orderCount", (int) pData.getOrDefault("orderCount", 0) + 1);
-                pData.putIfAbsent("satisfiedCount", 0);
-                pData.putIfAbsent("neutralCount", 0);
-                pData.putIfAbsent("unsatisfiedCount", 0);
-                pData.putIfAbsent("notesCount", 0);
-
-                List<OrderFollowupCheck> checksForOrder = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
-                for (OrderFollowupCheck chk : checksForOrder) {
-                    if (chk.getSatisfaction() != null) {
-                        String sat = chk.getSatisfaction().toUpperCase();
-                        if ("SATISFIED".equals(sat) || "5".equals(sat) || "4".equals(sat)) {
-                            pData.put("satisfiedCount", (int) pData.get("satisfiedCount") + 1);
-                        } else if ("NEUTRAL".equals(sat) || "3".equals(sat)) {
-                            pData.put("neutralCount", (int) pData.get("neutralCount") + 1);
-                        } else if ("UNSATISFIED".equals(sat) || "1".equals(sat) || "2".equals(sat)) {
-                            pData.put("unsatisfiedCount", (int) pData.get("unsatisfiedCount") + 1);
-                        }
-                    }
-                    if (chk.getNotes() != null && !chk.getNotes().trim().isEmpty()) {
-                        pData.put("notesCount", (int) pData.get("notesCount") + 1);
-                    }
-                }
+        for (Object[] row : satFinStats) {
+            String s = row[0] != null ? row[0].toString().trim().toUpperCase() : "";
+            long cnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+            double rev = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            if ("SATISFIED".equals(s) || "4".equals(s) || "5".equals(s)) {
+                satisfiedRevenue += rev;
+                satFinCount += cnt;
+            } else if ("NEUTRAL".equals(s) || "3".equals(s)) {
+                neutralRevenue += rev;
+                neuFinCount += cnt;
+            } else if ("UNSATISFIED".equals(s) || "1".equals(s) || "2".equals(s)) {
+                unsatisfiedRevenue += rev;
+                unsatFinCount += cnt;
             }
         }
-        List<Map<String, Object>> productList = new ArrayList<>(productMap.values());
-        productList.sort(Comparator.comparing((Map<String, Object> p) -> (int) p.get("orderCount")).reversed());
 
-        // 5. Customer Directory Summary
+        List<Object[]> repeatStats = orderRepository.getRepeatOrderStatsByDateRange(startDate, rangeEnd);
+        long repeatOrders = 0L;
+        double repeatRevenue = 0.0;
+        if (!repeatStats.isEmpty() && repeatStats.get(0) != null) {
+            Object[] rRow = repeatStats.get(0);
+            repeatOrders = rRow[0] != null ? ((Number) rRow[0]).longValue() : 0L;
+            repeatRevenue = rRow[1] != null ? ((Number) rRow[1]).doubleValue() : 0.0;
+        }
+
+        double avgOrderValue = totalOrdersInPeriod > 0 ? Math.round((revenueInPeriod / totalOrdersInPeriod) * 100.0) / 100.0 : 0.0;
+        double arpu = newCustomers > 0 ? Math.round((revenueInPeriod / newCustomers) * 100.0) / 100.0 : 0.0;
+        double repeatRevenueShare = revenueInPeriod > 0 ? Math.round((repeatRevenue / revenueInPeriod * 1000.0)) / 10.0 : 0.0;
+
+        // Customer Tiers (VIP, Gold, Silver, Bronze)
+        List<Object[]> tierStats = customerRepository.getCustomerTierStats();
+        List<Map<String, Object>> tierList = new ArrayList<>();
+        if (!tierStats.isEmpty() && tierStats.get(0) != null) {
+            Object[] tRow = tierStats.get(0);
+            long vipCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
+            double vipRev = tRow[1] != null ? ((Number) tRow[1]).doubleValue() : 0.0;
+            long goldCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
+            double goldRev = tRow[3] != null ? ((Number) tRow[3]).doubleValue() : 0.0;
+            long silvCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
+            double silvRev = tRow[5] != null ? ((Number) tRow[5]).doubleValue() : 0.0;
+            long bronzCnt = tRow[6] != null ? ((Number) tRow[6]).longValue() : 0L;
+            double bronzRev = tRow[7] != null ? ((Number) tRow[7]).doubleValue() : 0.0;
+
+            double totTierRev = vipRev + goldRev + silvRev + bronzRev;
+            if (totTierRev == 0.0) totTierRev = 1.0;
+
+            Map<String, Object> vipMap = new LinkedHashMap<>();
+            vipMap.put("tierName", "VIP Platinum (> $5,000)");
+            vipMap.put("customerCount", vipCnt);
+            vipMap.put("totalRevenue", Math.round(vipRev * 100.0) / 100.0);
+            vipMap.put("revenueShare", Math.round((vipRev / totTierRev * 1000.0)) / 10.0);
+            vipMap.put("avgSpend", vipCnt > 0 ? Math.round((vipRev / vipCnt) * 100.0) / 100.0 : 0.0);
+            vipMap.put("status", "High Priority");
+            tierList.add(vipMap);
+
+            Map<String, Object> goldMap = new LinkedHashMap<>();
+            goldMap.put("tierName", "Gold Tier ($1,000 - $5,000)");
+            goldMap.put("customerCount", goldCnt);
+            goldMap.put("totalRevenue", Math.round(goldRev * 100.0) / 100.0);
+            goldMap.put("revenueShare", Math.round((goldRev / totTierRev * 1000.0)) / 10.0);
+            goldMap.put("avgSpend", goldCnt > 0 ? Math.round((goldRev / goldCnt) * 100.0) / 100.0 : 0.0);
+            goldMap.put("status", "Core Business");
+            tierList.add(goldMap);
+
+            Map<String, Object> silvMap = new LinkedHashMap<>();
+            silvMap.put("tierName", "Silver Tier ($250 - $1,000)");
+            silvMap.put("customerCount", silvCnt);
+            silvMap.put("totalRevenue", Math.round(silvRev * 100.0) / 100.0);
+            silvMap.put("revenueShare", Math.round((silvRev / totTierRev * 1000.0)) / 10.0);
+            silvMap.put("avgSpend", silvCnt > 0 ? Math.round((silvRev / silvCnt) * 100.0) / 100.0 : 0.0);
+            silvMap.put("status", "Growth Opportunity");
+            tierList.add(silvMap);
+
+            Map<String, Object> bronzMap = new LinkedHashMap<>();
+            bronzMap.put("tierName", "Bronze Tier (< $250)");
+            bronzMap.put("customerCount", bronzCnt);
+            bronzMap.put("totalRevenue", Math.round(bronzRev * 100.0) / 100.0);
+            bronzMap.put("revenueShare", Math.round((bronzRev / totTierRev * 1000.0)) / 10.0);
+            bronzMap.put("avgSpend", bronzCnt > 0 ? Math.round((bronzRev / bronzCnt) * 100.0) / 100.0 : 0.0);
+            bronzMap.put("status", "New / Entry Level");
+            tierList.add(bronzMap);
+        }
+
+        // Financial Impact of Customer Feedback
+        List<Map<String, Object>> feedbackImpactList = new ArrayList<>();
+        double totalFeedbackRev = satisfiedRevenue + neutralRevenue + unsatisfiedRevenue;
+        if (totalFeedbackRev == 0.0) totalFeedbackRev = 1.0;
+
+        Map<String, Object> satImpact = new LinkedHashMap<>();
+        satImpact.put("feedbackType", "Satisfied Customers");
+        satImpact.put("checkCount", satFinCount);
+        satImpact.put("totalRevenue", Math.round(satisfiedRevenue * 100.0) / 100.0);
+        satImpact.put("revenueShare", Math.round((satisfiedRevenue / totalFeedbackRev * 1000.0)) / 10.0);
+        satImpact.put("avgOrderValue", satFinCount > 0 ? Math.round((satisfiedRevenue / satFinCount) * 100.0) / 100.0 : 0.0);
+        satImpact.put("impactStatus", "Retained & Active");
+        feedbackImpactList.add(satImpact);
+
+        Map<String, Object> neuImpact = new LinkedHashMap<>();
+        neuImpact.put("feedbackType", "Neutral Customers");
+        neuImpact.put("checkCount", neuFinCount);
+        neuImpact.put("totalRevenue", Math.round(neutralRevenue * 100.0) / 100.0);
+        neuImpact.put("revenueShare", Math.round((neutralRevenue / totalFeedbackRev * 1000.0)) / 10.0);
+        neuImpact.put("avgOrderValue", neuFinCount > 0 ? Math.round((neutralRevenue / neuFinCount) * 100.0) / 100.0 : 0.0);
+        neuImpact.put("impactStatus", "Upsell Potential");
+        feedbackImpactList.add(neuImpact);
+
+        Map<String, Object> unsatImpact = new LinkedHashMap<>();
+        unsatImpact.put("feedbackType", "Unsatisfied / Complaints");
+        unsatImpact.put("checkCount", unsatFinCount);
+        unsatImpact.put("totalRevenue", Math.round(unsatisfiedRevenue * 100.0) / 100.0);
+        unsatImpact.put("revenueShare", Math.round((unsatisfiedRevenue / totalFeedbackRev * 1000.0)) / 10.0);
+        unsatImpact.put("avgOrderValue", unsatFinCount > 0 ? Math.round((unsatisfiedRevenue / unsatFinCount) * 100.0) / 100.0 : 0.0);
+        unsatImpact.put("impactStatus", "Revenue at Churn Risk");
+        feedbackImpactList.add(unsatImpact);
+
+        Map<String, Object> financial = new LinkedHashMap<>();
+        financial.put("totalRevenue", Math.round(revenueInPeriod * 100.0) / 100.0);
+        financial.put("totalOrders", totalOrdersInPeriod);
+        financial.put("avgOrderValue", avgOrderValue);
+        financial.put("arpu", arpu);
+        financial.put("repeatRevenue", Math.round(repeatRevenue * 100.0) / 100.0);
+        financial.put("repeatOrders", repeatOrders);
+        financial.put("repeatRevenueShare", repeatRevenueShare);
+        financial.put("revenueAtRisk", Math.round(unsatisfiedRevenue * 100.0) / 100.0);
+        financial.put("satisfiedRevenue", Math.round(satisfiedRevenue * 100.0) / 100.0);
+        financial.put("neutralRevenue", Math.round(neutralRevenue * 100.0) / 100.0);
+        financial.put("tiers", tierList);
+        financial.put("feedbackImpact", feedbackImpactList);
+
+        summary.put("avgOrderValue", avgOrderValue);
+        summary.put("arpu", arpu);
+        summary.put("repeatRevenue", Math.round(repeatRevenue * 100.0) / 100.0);
+        summary.put("repeatRevenueShare", repeatRevenueShare);
+        summary.put("revenueAtRisk", Math.round(unsatisfiedRevenue * 100.0) / 100.0);
+
+        // ---------------------------------------------------------------------
+        // 5. ACCURATE PRODUCT DISTRIBUTION & REVENUE
+        // ---------------------------------------------------------------------
+        List<Object[]> rawProdFinancials = orderRepository.getProductFinancialStatsByDateRange(startDate, rangeEnd);
+        List<Object[]> rawProdReviews = followupCheckRepository.getProductSatisfactionCountsByDateRange(startDate, rangeEnd);
+
+        Map<String, long[]> prodReviewMap = new HashMap<>();
+        for (Object[] row : rawProdReviews) {
+            String pName = row[0] != null ? row[0].toString().trim() : "";
+            if (!pName.isEmpty()) {
+                long sCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+                long nCnt = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                long uCnt = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+                long totChk = row[4] != null ? ((Number) row[4]).longValue() : 0L;
+                prodReviewMap.put(pName, new long[]{sCnt, nCnt, uCnt, totChk});
+            }
+        }
+
+        List<Map<String, Object>> productList = new ArrayList<>();
+        for (Object[] row : rawProdFinancials) {
+            String pName = row[0] != null ? row[0].toString().trim() : "Standard Item";
+            long ordCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+            double totRev = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            double avgTicket = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+
+            long[] rStats = prodReviewMap.getOrDefault(pName, new long[]{0L, 0L, 0L, 0L});
+            long sCnt = rStats[0];
+            long nCnt = rStats[1];
+            long uCnt = rStats[2];
+            long totRevCnt = sCnt + nCnt + uCnt;
+            double defectRate = totRevCnt > 0 ? Math.round(((double) uCnt / totRevCnt * 1000.0)) / 10.0 : 0.0;
+            double revShare = revenueInPeriod > 0 ? Math.round((totRev / revenueInPeriod * 1000.0)) / 10.0 : 0.0;
+
+            Map<String, Object> pItem = new LinkedHashMap<>();
+            pItem.put("productName", pName);
+            pItem.put("orderCount", ordCnt);
+            pItem.put("totalRevenue", Math.round(totRev * 100.0) / 100.0);
+            pItem.put("avgTicket", Math.round(avgTicket * 100.0) / 100.0);
+            pItem.put("revenueShare", revShare);
+            pItem.put("satisfiedCount", sCnt);
+            pItem.put("neutralCount", nCnt);
+            pItem.put("unsatisfiedCount", uCnt);
+            pItem.put("notesCount", totRevCnt);
+            pItem.put("defectRate", defectRate);
+            productList.add(pItem);
+        }
+
+        // 6. Customer Directory Summary
         Map<Long, List<CustomerOrder>> ordersByCustomerId = new HashMap<>();
         for (CustomerOrder o : filteredOrders) {
             if (o.getCustomer() != null && o.getCustomer().getId() != null) {
@@ -341,6 +498,13 @@ public class ReportService {
             cData.put("totalOrders", custOrders.size());
             double totalSpent = custOrders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
             cData.put("totalSpent", Math.round(totalSpent * 100.0) / 100.0);
+
+            // Tier assignment
+            String tier = "Bronze";
+            if (totalSpent >= 5000) tier = "VIP Platinum";
+            else if (totalSpent >= 1000) tier = "Gold";
+            else if (totalSpent >= 250) tier = "Silver";
+            cData.put("tier", tier);
 
             int pendingFollowups = 0;
             for (CustomerOrder o : custOrders) {
@@ -365,6 +529,7 @@ public class ReportService {
         report.put("period", period);
         report.put("generatedAt", Instant.now());
         report.put("summary", summary);
+        report.put("financial", financial);
         report.put("milestones", milestoneList);
         report.put("satisfaction", satisfactionMap);
         report.put("satisfactionNotes", notesLedger);

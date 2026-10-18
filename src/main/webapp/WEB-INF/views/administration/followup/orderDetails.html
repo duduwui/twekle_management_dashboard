@@ -158,11 +158,11 @@
                                                     </div>
 
                                                     <!-- 4. Attached Images (Lightbox Preview) -->
-                                                    <div class="check-col-images">
-                                                        <div ng-if="check.imageUrl" class="check-image-thumb-wrapper" ng-click="previewImage(check.imageUrl)" title="Click to view full image in lightbox">
-                                                            <img ng-src="{{check.imageUrl}}" class="check-image-thumb" alt="Proof">
+                                                    <div class="check-col-images" style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+                                                        <div ng-repeat="img in getCheckImages(check) track by $index" class="check-image-thumb-wrapper" ng-click="previewImage(img)" title="Click to view full photo in lightbox">
+                                                            <img ng-src="{{img}}" class="check-image-thumb" alt="Proof">
                                                         </div>
-                                                        <span class="check-no-image" ng-if="!check.imageUrl">No image</span>
+                                                        <span class="check-no-image" ng-if="getCheckImages(check).length === 0">No image</span>
                                                     </div>
 
                                                     <!-- 5. Direct Action to Add/Edit Feedback for this checkpoint -->

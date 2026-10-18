@@ -86,7 +86,40 @@ var FollowupImageHelper = (function () {
         reader.readAsDataURL(file);
     }
 
+    /**
+     * Processes multiple image files proportionally and returns an array of JPEG data URLs.
+     * 
+     * @param {FileList|Array<File>} files - HTML input files collection.
+     * @param {Function} onSuccess - Callback invoked with (Array<string> dataUrls).
+     * @param {Function} onError - Callback invoked with (errorMessage).
+     * @param {number} [maxWidth] - Maximum dimension width.
+     * @param {number} [maxHeight] - Maximum dimension height.
+     */
+    function processImageFiles(files, onSuccess, onError, maxWidth, maxHeight) {
+        if (!files || files.length === 0) return;
+        var fileList = Array.from(files);
+        var results = [];
+        var pending = fileList.length;
+        var hadError = false;
+
+        fileList.forEach(function (file) {
+            processImageFile(file, function (dataUrl) {
+                results.push(dataUrl);
+                pending--;
+                if (pending === 0 && !hadError && typeof onSuccess === 'function') {
+                    onSuccess(results);
+                }
+            }, function (errMsg) {
+                if (!hadError) {
+                    hadError = true;
+                    if (typeof onError === 'function') onError(errMsg);
+                }
+            }, maxWidth, maxHeight);
+        });
+    }
+
     return {
-        processImageFile: processImageFile
+        processImageFile: processImageFile,
+        processImageFiles: processImageFiles
     };
 })();

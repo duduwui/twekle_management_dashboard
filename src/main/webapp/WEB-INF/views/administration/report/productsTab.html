@@ -36,16 +36,61 @@
                     </div>
                 </div>
 
+                <!-- Product Insights Executive KPI Stat Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active Product Bundles</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #0F172A; margin: 4px 0;">
+                            {{ (reportData.products || []).length }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #475569;">
+                            Catalog items generating sales
+                        </div>
+                    </div>
+
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Top Revenue Product</div>
+                        <div style="font-size: 1.15rem; font-weight: 900; color: #166534; margin: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ (reportData.products && reportData.products[0]) ? reportData.products[0].productName : '-' }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #16A34A;">
+                            ${{ ((reportData.products && reportData.products[0]) ? reportData.products[0].totalRevenue : 0) | number:2 }}
+                        </div>
+                    </div>
+
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Average Ticket / Order</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #0284C7; margin: 4px 0;">
+                            ${{ (reportData.summary.avgOrderValue || 0) | number:2 }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #0369A1;">
+                            Order checkout average
+                        </div>
+                    </div>
+
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Overall Defect / Risk Rate</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #DC2626; margin: 4px 0;">
+                            {{ (reportData.summary.negativeRate || 0) }}%
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #991B1B;">
+                            Customer dissatisfaction share
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="comic-table">
                         <thead>
                             <tr>
-                                <th>Product Name</th>
-                                <th class="nowrap" style="text-align: center;">Total Orders</th>
-                                <th class="nowrap" style="text-align: center;">Satisfied Reviews</th>
-                                <th class="nowrap" style="text-align: center;">Neutral Reviews</th>
-                                <th class="nowrap" style="text-align: center;">Unsatisfied Reviews</th>
-                                <th class="nowrap" style="text-align: right;">Total Notes Logged</th>
+                                <th>Product Bundle Name</th>
+                                <th class="nowrap" style="text-align: center;">Orders</th>
+                                <th class="nowrap" style="text-align: right;">Gross Revenue</th>
+                                <th class="nowrap" style="text-align: right;">Avg Ticket</th>
+                                <th class="nowrap" style="text-align: center;">Satisfied</th>
+                                <th class="nowrap" style="text-align: center;">Neutral</th>
+                                <th class="nowrap" style="text-align: center;">Unsatisfied</th>
+                                <th class="nowrap" style="text-align: right;">Defect Rate</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -55,6 +100,12 @@
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
                                     <strong style="font-size: 0.92rem;" ng-bind="p.orderCount + ' Orders'"></strong>
+                                </td>
+                                <td class="nowrap" style="text-align: right;">
+                                    <strong style="color: #0F172A; font-size: 0.92rem;" ng-bind="'$' + (p.totalRevenue | number:2)"></strong>
+                                </td>
+                                <td class="nowrap" style="text-align: right;">
+                                    <span style="color: #475569; font-weight: 700;" ng-bind="'$' + (p.avgTicket | number:2)"></span>
                                 </td>
                                 <td class="nowrap" style="text-align: center;">
                                     <span class="sat-badge sat-badge-satisfied" ng-bind="p.satisfiedCount"></span>
@@ -66,11 +117,11 @@
                                     <span class="sat-badge sat-badge-unsatisfied" ng-bind="p.unsatisfiedCount"></span>
                                 </td>
                                 <td class="nowrap" style="text-align: right;">
-                                    <strong style="color: #0F172A;" ng-bind="p.notesCount"></strong>
+                                    <strong ng-class="{'color: #DC2626': p.defectRate > 20, 'color: #166534': p.defectRate <= 20}" ng-bind="p.defectRate + '%'"></strong>
                                 </td>
                             </tr>
                             <tr ng-if="dtProducts.totalItems === 0">
-                                <td colspan="6" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                <td colspan="8" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
                                     No products found for the selected period.
                                 </td>
                             </tr>

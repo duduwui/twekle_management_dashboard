@@ -90,8 +90,34 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     // Pagination states for each report table (40 rows per page default)
     $scope.dtMilestones = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
     $scope.dtSatisfaction = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
+    $scope.dtFinancialProducts = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
     $scope.dtProducts = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
     $scope.dtCustomers = { currentPage: 1, pageSize: 40, totalItems: 0, totalPages: 1 };
+
+    $scope.getCheckImages = function(item) {
+        if (!item) return [];
+        var url = item.imageUrl || item.photoUrl;
+        if (!url || typeof url !== 'string' || !url.trim()) return [];
+        url = url.trim();
+        if (url.startsWith('[') && url.endsWith(']')) {
+            try {
+                var parsed = JSON.parse(url);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(function(x) { return typeof x === 'string' && x.trim().length > 0; });
+                }
+            } catch(e) {}
+        }
+        return [url];
+    };
+
+    $scope.previewImage = function(url) {
+        if (!url) return;
+        if ($scope.$parent && $scope.$parent.previewImage) {
+            $scope.$parent.previewImage(url);
+        } else {
+            window.open(url, '_blank');
+        }
+    };
 
     function toDateParam(d) {
         if (!d) return null;
@@ -123,6 +149,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             $scope.loading = false;
             var raw = res.data;
             var data = (raw && raw.data) ? raw.data : (raw || {});
+            $scope.reportData.summary = data.summary || {};
+            $scope.reportData.financial = data.financial || { tiers: [], feedbackImpact: [] };
             $scope.reportData.milestones = data.milestones || [];
             $scope.reportData.pendingContacts = data.pendingContacts || [];
             $scope.reportData.satisfaction = data.satisfaction || { breakdown: [], recentNotes: [] };
@@ -133,6 +161,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             // Reset to page 1 on filter or data reload
             $scope.dtMilestones.currentPage = 1;
             $scope.dtSatisfaction.currentPage = 1;
+            $scope.dtFinancialProducts.currentPage = 1;
             $scope.dtProducts.currentPage = 1;
             $scope.dtCustomers.currentPage = 1;
         }, function(err) {
@@ -282,6 +311,15 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         return items.slice(start, start + $scope.dtProducts.pageSize);
     };
 
+    $scope.getPagedReportFinancialProducts = function() {
+        var items = $scope.getFilteredReportProducts();
+        $scope.dtFinancialProducts.totalItems = items.length;
+        $scope.dtFinancialProducts.totalPages = Math.max(1, Math.ceil(items.length / $scope.dtFinancialProducts.pageSize));
+        if ($scope.dtFinancialProducts.currentPage > $scope.dtFinancialProducts.totalPages) $scope.dtFinancialProducts.currentPage = $scope.dtFinancialProducts.totalPages;
+        var start = ($scope.dtFinancialProducts.currentPage - 1) * $scope.dtFinancialProducts.pageSize;
+        return items.slice(start, start + $scope.dtFinancialProducts.pageSize);
+    };
+
     $scope.getFilteredReportCustomers = function() {
         var custs = $scope.reportData.followups || $scope.reportData.customers || [];
         var search = $scope.reportFilters.searchFollowups || $scope.reportFilters.searchCustomers;
@@ -352,7 +390,10 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     // Hydrate immediately from server-side rendered data if present
     if (window.SERVER_REPORT_DATA) {
         var srd = window.SERVER_REPORT_DATA;
+        $scope.reportData.summary = srd.summary || {};
+        $scope.reportData.financial = srd.financial || { tiers: [], feedbackImpact: [] };
         $scope.reportData.milestones = srd.milestones || [];
+        $scope.reportData.pendingContacts = srd.pendingContacts || [];
         $scope.reportData.satisfaction = srd.satisfaction || { breakdown: [], recentNotes: [] };
         $scope.reportData.products = srd.products || [];
         $scope.reportData.customers = srd.customers || [];

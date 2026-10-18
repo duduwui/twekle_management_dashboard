@@ -398,10 +398,28 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
     };
 
     // =========================================================
-    // FOLLOW-UP & FEEDBACK MODALS (Global)
+    // =========================================================
+    // FOLLOW-UP & FEEDBACK MODALS (Global Multi-Image Support)
     // =========================================================
     $scope.showEditFollowupModal = false;
     $scope.editingFollowup = {};
+    $scope.tempImageUrl = '';
+
+    $scope.getCheckImages = function(item) {
+        if (!item) return [];
+        var url = item.imageUrl || item.photoUrl;
+        if (!url || typeof url !== 'string' || !url.trim()) return [];
+        url = url.trim();
+        if (url.startsWith('[') && url.endsWith(']')) {
+            try {
+                var parsed = JSON.parse(url);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(function(x) { return typeof x === 'string' && x.trim().length > 0; });
+                }
+            } catch(e) {}
+        }
+        return [url];
+    };
 
     $scope.openEditFollowupModal = function(order, check, $event) {
         if ($event) $event.stopPropagation();
@@ -409,14 +427,17 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         item.orderId = order ? order.id : null;
         item.note = check.note || check.notes || '';
         item.imageUrl = check.imageUrl || check.photoUrl || '';
+        item.images = angular.copy($scope.getCheckImages(check));
         item.satisfaction = (check.satisfaction && check.satisfaction.trim() !== '') ? check.satisfaction.toUpperCase() : 'NEUTRAL';
         $scope.editingFollowup = item;
+        $scope.tempImageUrl = '';
         $scope.showEditFollowupModal = true;
     };
 
     $scope.closeEditFollowupModal = function() {
         $scope.showEditFollowupModal = false;
         $scope.editingFollowup = {};
+        $scope.tempImageUrl = '';
     };
 
     $scope.toggleSatisfaction = function(target, val) {
@@ -424,54 +445,53 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         target.satisfaction = val;
     };
 
-    $scope.handleFollowupImageUpload = function(element) {
-        if (element.files && element.files[0]) {
-            var file = element.files[0];
-            if (!file.type.match('image.*')) {
-                return;
-            }
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var MAX_WIDTH = 1200;
-                    var MAX_HEIGHT = 1200;
-                    var width = img.width;
-                    var height = img.height;
+    $scope.removeFollowupImage = function(index) {
+        if ($scope.editingFollowup && $scope.editingFollowup.images) {
+            $scope.editingFollowup.images.splice(index, 1);
+            $scope.editingFollowup.imageUrl = $scope.editingFollowup.images.length > 0 ? JSON.stringify($scope.editingFollowup.images) : '';
+        }
+    };
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    var ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    $scope.addFollowupImageUrl = function() {
+        if (!$scope.tempImageUrl || !$scope.tempImageUrl.trim()) return;
+        if (!$scope.editingFollowup.images) $scope.editingFollowup.images = [];
+        $scope.editingFollowup.images.push($scope.tempImageUrl.trim());
+        $scope.editingFollowup.imageUrl = JSON.stringify($scope.editingFollowup.images);
+        $scope.tempImageUrl = '';
+    };
+
+    $scope.handleFollowupImageUpload = function(element) {
+        if (element.files && element.files.length > 0) {
+            if (!$scope.editingFollowup.images) $scope.editingFollowup.images = [];
+            FollowupImageHelper.processImageFiles(
+                element.files,
+                function(dataUrls) {
                     $scope.$apply(function() {
-                        $scope.editingFollowup.imageUrl = dataUrl;
+                        dataUrls.forEach(function(url) {
+                            $scope.editingFollowup.images.push(url);
+                        });
+                        $scope.editingFollowup.imageUrl = JSON.stringify($scope.editingFollowup.images);
+                        element.value = '';
                     });
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                },
+                function(errMsg) {
+                    ToastService.error(errMsg || 'Failed to process images');
+                }
+            );
         }
     };
 
     $scope.saveFollowupCheck = function() {
         if (!$scope.editingFollowup || !$scope.editingFollowup.id) return;
         var sat = $scope.editingFollowup.satisfaction || 'NEUTRAL';
+        var finalImages = $scope.editingFollowup.images || [];
+        var finalImageUrl = finalImages.length > 0 ? JSON.stringify(finalImages) : '';
+        $scope.editingFollowup.imageUrl = finalImageUrl;
+
         var payload = {
             notes: $scope.editingFollowup.note || '',
-            photoUrl: $scope.editingFollowup.imageUrl || '',
+            photoUrl: finalImageUrl,
+            imageUrl: finalImageUrl,
             satisfaction: sat
         };
         $http.post('/admin/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
@@ -480,14 +500,16 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
                 checkId: $scope.editingFollowup.id,
                 orderId: $scope.editingFollowup.orderId,
                 note: $scope.editingFollowup.note,
-                imageUrl: $scope.editingFollowup.imageUrl,
+                imageUrl: finalImageUrl,
+                photoUrl: finalImageUrl,
                 satisfaction: sat
             });
             $scope.$broadcast('dashboard:reload');
             $scope.$broadcast('customer:reload');
             $scope.$broadcast('report:reload');
+            ToastService.success('Milestone and feedback saved');
         }).catch(function() {
-            ToastService.error('Could not save the follow-up. Your changes have not been submitted again.');
+            ToastService.error('Could not save the follow-up. Your changes have not been submitted.');
         });
     };
 

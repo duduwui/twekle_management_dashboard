@@ -134,4 +134,21 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     List<OrderFollowupCheck> findPendingChecksByDateRange(@Param("startDate") java.time.Instant startDate,
                                                          @Param("endDate") java.time.Instant endDate,
                                                          org.springframework.data.domain.Pageable pageable);
+
+    @Query(value = "SELECT c.SATISFACTION, COUNT(c.ID), COALESCE(SUM(o.TOTAL_AMOUNT), 0) " +
+           "FROM ORDER_FOLLOWUP_CHECKS c JOIN CUSTOMER_ORDERS o ON c.ORDER_ID = o.ID " +
+           "WHERE c.SATISFACTION IS NOT NULL AND c.SATISFACTION != '' " +
+           "AND (:startDate IS NULL OR (c.CREATED_AT >= :startDate AND c.CREATED_AT <= :endDate)) " +
+           "GROUP BY c.SATISFACTION", nativeQuery = true)
+    List<Object[]> getSatisfactionFinancialStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query(value = "SELECT o.ITEMS_SUMMARY, " +
+           "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('SATISFIED', '4', '5') THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('NEUTRAL', '3') THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('UNSATISFIED', '1', '2') THEN 1 ELSE 0 END), " +
+           "COUNT(c.ID) " +
+           "FROM CUSTOMER_ORDERS o JOIN ORDER_FOLLOWUP_CHECKS c ON o.ID = c.ORDER_ID " +
+           "WHERE (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate)) " +
+           "GROUP BY o.ITEMS_SUMMARY", nativeQuery = true)
+    List<Object[]> getProductSatisfactionCountsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
 }

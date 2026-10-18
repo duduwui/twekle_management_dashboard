@@ -36,6 +36,49 @@
                     </div>
                 </div>
 
+                <!-- Customer Follow-up Executive KPI Stat Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active Accounts</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #0F172A; margin: 4px 0;">
+                            {{ (reportData.customers || []).length }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #475569;">
+                            Customers with orders in period
+                        </div>
+                    </div>
+
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Scheduled Checks</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #0284C7; margin: 4px 0;">
+                            {{ (reportData.summary.scheduledCount || 0) }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #0369A1;">
+                            Milestone checkpoints
+                        </div>
+                    </div>
+
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Pending Action Backlog</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #DC2626; margin: 4px 0;">
+                            {{ (reportData.summary.pendingCount || 0) }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #991B1B;">
+                            Incomplete follow-up tasks
+                        </div>
+                    </div>
+
+                    <div class="comic-stat-card" style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">SLA Follow-up Rate</div>
+                        <div style="font-size: 1.65rem; font-weight: 900; color: #16A34A; margin: 4px 0;">
+                            {{ (reportData.summary.completionRate || 0) }}%
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #166534;">
+                            Resolution compliance rate
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="comic-table">
                         <thead>
@@ -44,6 +87,7 @@
                                 <th>Name</th>
                                 <th class="nowrap col-phone">Phone Number</th>
                                 <th>City</th>
+                                <th class="nowrap" style="text-align: center;">Account Tier</th>
                                 <th class="nowrap" style="text-align: center;">Orders in Period</th>
                                 <th class="nowrap">Total Spent</th>
                                 <th class="nowrap" style="text-align: center;">Pending Checks</th>
@@ -56,6 +100,17 @@
                                 <td><strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="c.name"></strong></td>
                                 <td class="nowrap col-phone"><strong ng-bind="c.phoneNumber"></strong></td>
                                 <td><span ng-bind="c.city"></span></td>
+                                <td class="nowrap" style="text-align: center;">
+                                    <span class="comic-tag"
+                                          ng-style="{
+                                              'VIP Platinum': {'background': '#F3E8FF', 'color': '#6B21A8', 'border-color': '#9333EA'},
+                                              'Gold': {'background': '#FEF3C7', 'color': '#92400E', 'border-color': '#F59E0B'},
+                                              'Silver': {'background': '#F1F5F9', 'color': '#334155', 'border-color': '#94A3B8'},
+                                              'Bronze': {'background': '#FFEDD5', 'color': '#9A3412', 'border-color': '#FB923C'}
+                                          }[c.tier] || {'background': '#F1F5F9', 'color': '#334155', 'border-color': '#94A3B8'}"
+                                          ng-bind="c.tier">
+                                    </span>
+                                </td>
                                 <td class="nowrap" style="text-align: center;">
                                     <strong ng-bind="c.totalOrders"></strong>
                                 </td>
@@ -75,7 +130,7 @@
                                 </td>
                             </tr>
                             <tr ng-if="dtCustomers.totalItems === 0">
-                                <td colspan="8" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
+                                <td colspan="9" style="text-align: center; padding: 24px; color: #64748B; font-weight: 700;">
                                     No follow-up records found for the selected period.
                                 </td>
                             </tr>

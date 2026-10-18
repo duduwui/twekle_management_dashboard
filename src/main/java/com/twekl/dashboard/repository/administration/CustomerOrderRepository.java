@@ -56,5 +56,16 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     List<CustomerOrder> findRecentOrdersWithCustomerByDateRange(@Param("startDate") java.time.Instant startDate,
                                                                @Param("endDate") java.time.Instant endDate,
                                                                org.springframework.data.domain.Pageable pageable);
+
+    @Query(value = "SELECT o.ITEMS_SUMMARY, COUNT(o.ID) as ord_cnt, COALESCE(SUM(o.TOTAL_AMOUNT), 0) as tot_rev, COALESCE(AVG(o.TOTAL_AMOUNT), 0) as avg_rev " +
+           "FROM CUSTOMER_ORDERS o " +
+           "WHERE (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate)) " +
+           "GROUP BY o.ITEMS_SUMMARY ORDER BY tot_rev DESC", nativeQuery = true)
+    List<Object[]> getProductFinancialStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Query(value = "SELECT COUNT(o.ID), COALESCE(SUM(o.TOTAL_AMOUNT), 0) " +
+           "FROM CUSTOMER_ORDERS o JOIN CUSTOMERS c ON o.CUSTOMER_ID = c.ID " +
+           "WHERE c.TOTAL_ORDERS > 1 AND (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate))", nativeQuery = true)
+    List<Object[]> getRepeatOrderStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
 }
 

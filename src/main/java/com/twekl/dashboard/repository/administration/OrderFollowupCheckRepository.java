@@ -151,7 +151,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     List<Object[]> getSatisfactionCountsCombined(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
                    "SET ch.STATUS = 'OVERDUE' " +
                    "WHERE ch.COMPLETED = 0 AND ch.STATUS != 'OVERDUE' " +
@@ -165,7 +165,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     int syncOverdueChecks();
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
                    "SET ch.STATUS = 'PENDING' " +
                    "WHERE ch.COMPLETED = 0 AND ch.STATUS = 'OVERDUE' " +

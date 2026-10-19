@@ -50,12 +50,12 @@ public class FollowupService {
     }
 
     @org.springframework.scheduling.annotation.Scheduled(fixedDelay = 30000)
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void scheduledSyncOverdueChecks() {
         syncOverdueStatuses();
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void syncOverdueStatuses() {
         try {
             int overdueUpdated = followupCheckRepository.syncOverdueChecks();
@@ -71,7 +71,7 @@ public class FollowupService {
         } catch (Exception ignored) {}
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<CustomerFollowupSummary> findPagedSummaries(
             String timeFilter,
             String statusFilter,
@@ -80,7 +80,7 @@ public class FollowupService {
         return findPagedSummaries(timeFilter, statusFilter, search, null, null, pageable);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<CustomerFollowupSummary> findPagedSummaries(
             String timeFilter,
             String statusFilter,
@@ -88,8 +88,6 @@ public class FollowupService {
             Instant dateFrom,
             Instant dateTo,
             org.springframework.data.domain.Pageable pageable) {
-
-        syncOverdueStatuses();
 
         Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
         String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;

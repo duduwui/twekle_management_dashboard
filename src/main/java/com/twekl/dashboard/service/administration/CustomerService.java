@@ -115,7 +115,7 @@ public class CustomerService {
     @Cacheable(value = "customerStats", sync = true)
     @Transactional(readOnly = true)
     public Map<String, Object> getStats() {
-        return getStats(followupService.findAllSummaries("ALL"));
+        return getStats(null);
     }
 
     @Transactional(readOnly = true)
@@ -128,9 +128,18 @@ public class CustomerService {
         long completedFollowups = followupCheckRepository.countByCompletedTrue();
         long pendingFollowups = totalFollowups > completedFollowups ? totalFollowups - completedFollowups : 0;
 
-        long alertFollowups = summaries != null ? summaries.stream().filter(s -> "ALERT".equalsIgnoreCase(s.getFollowupStatus())).count() : 0;
-        long idleFollowups = summaries != null ? summaries.stream().filter(s -> "IDLE".equalsIgnoreCase(s.getFollowupStatus())).count() : 0;
-        long doneFollowups = summaries != null ? summaries.stream().filter(s -> "DONE".equalsIgnoreCase(s.getFollowupStatus())).count() : 0;
+        long alertFollowups = 0;
+        long idleFollowups = 0;
+        long doneFollowups = 0;
+        if (summaries != null) {
+            alertFollowups = summaries.stream().filter(s -> "ALERT".equalsIgnoreCase(s.getFollowupStatus())).count();
+            idleFollowups = summaries.stream().filter(s -> "IDLE".equalsIgnoreCase(s.getFollowupStatus())).count();
+            doneFollowups = summaries.stream().filter(s -> "DONE".equalsIgnoreCase(s.getFollowupStatus())).count();
+        } else {
+            alertFollowups = customerRepository.findOverdueCustomers(org.springframework.data.domain.PageRequest.of(0, 1)).getTotalElements();
+            idleFollowups = customerRepository.findInQueueCustomers(org.springframework.data.domain.PageRequest.of(0, 1)).getTotalElements();
+            doneFollowups = customerRepository.findCompletedCustomers(org.springframework.data.domain.PageRequest.of(0, 1)).getTotalElements();
+        }
 
         long overdueFollowups = alertFollowups;
         long inQueueFollowups = pendingFollowups > overdueFollowups ? pendingFollowups - overdueFollowups : 0;

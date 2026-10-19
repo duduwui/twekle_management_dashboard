@@ -395,12 +395,10 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
 
             // 2. Customer Tier filter
             if (tierFilter !== 'all') {
-                var tk = c.tierKey || '';
-                var to = c.totalOrders || 0;
-                if ((tierFilter === 'HIGH_VOLUME' || tierFilter === 'VIP') && (to < 5 && tk.indexOf('HIGH_VOLUME') === -1 && tk.indexOf('VIP') === -1)) return false;
-                if ((tierFilter === 'REGULAR' || tierFilter === 'FREQUENT') && ((to < 3 || to >= 5) && tk.indexOf('REGULAR') === -1 && tk.indexOf('FREQUENT') === -1)) return false;
-                if (tierFilter === 'RETURNING' && (to !== 2 && tk.indexOf('RETURNING') === -1)) return false;
-                if ((tierFilter === 'FIRST_TIME' || tierFilter === 'ONE_TIME') && (to !== 1 && tk.indexOf('FIRST_TIME') === -1 && tk.indexOf('ONE_TIME') === -1)) return false;
+                var tk = (c.tierKey || '').toUpperCase();
+                if ((tierFilter === 'LOYAL' || tierFilter === 'HIGH_VOLUME' || tierFilter === 'VIP') && tk !== 'LOYAL' && tk !== 'HIGH_VOLUME' && tk !== 'VIP') return false;
+                if (tierFilter === 'REGULAR' && tk !== 'REGULAR') return false;
+                if ((tierFilter === 'ONE_TIME' || tierFilter === 'FIRST_TIME' || tierFilter === 'RETURNING') && tk !== 'ONE_TIME' && tk !== 'FIRST_TIME' && tk !== 'RETURNING') return false;
             }
 
             // 3. Follow-up queue status filter

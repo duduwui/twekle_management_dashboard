@@ -23,7 +23,7 @@
                             <span>Type: {{ (reportFilters.customerTypeFilter === 'ORGANIZATION' || reportFilters.customerTypeFilter === 'MARKET') ? 'Organization' : 'Individual' }}</span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerTierFilter && reportFilters.customerTierFilter !== 'all'" ng-click="reportFilters.customerTierFilter = 'all'">
-                            <span>Tier: {{ reportFilters.customerTierFilter }}</span> ✕
+                            <span>Tier: {{ reportFilters.customerTierFilter === 'LOYAL' ? 'Loyal' : (reportFilters.customerTierFilter === 'REGULAR' ? 'Regular' : (reportFilters.customerTierFilter === 'ONE_TIME' ? 'One-Time' : reportFilters.customerTierFilter)) }}</span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.customerCityFilter && reportFilters.customerCityFilter !== 'all'" ng-click="reportFilters.customerCityFilter = 'all'">
                             <span>City: {{ reportFilters.customerCityFilter }}</span> ✕
@@ -64,10 +64,9 @@
                                     </td>
                                     <td class="nowrap" style="text-align: center;">
                                         <strong style="color: #0F172A; font-size: 0.92rem;">
-                                            <span ng-if="tier.tierKey === 'HIGH_VOLUME' || tier.tierKey === 'VIP_CHAMPION'">5+ Orders</span>
-                                            <span ng-if="tier.tierKey === 'REGULAR' || tier.tierKey === 'FREQUENT_BUYER'">3 - 4 Orders</span>
-                                            <span ng-if="tier.tierKey === 'RETURNING' || tier.tierKey === 'RETURNING_BUYER'">2 Orders</span>
-                                            <span ng-if="tier.tierKey === 'FIRST_TIME' || tier.tierKey === 'ONE_TIME_BUYER'">1 Order</span>
+                                            <span ng-if="tier.tierKey === 'LOYAL' || tier.tierKey === 'HIGH_VOLUME' || tier.tierKey === 'VIP_CHAMPION'">Monthly / 1-2 Months (3+ Orders)</span>
+                                            <span ng-if="tier.tierKey === 'REGULAR' || tier.tierKey === 'FREQUENT_BUYER'">Every 3-4 Months (2+ Orders)</span>
+                                            <span ng-if="tier.tierKey === 'ONE_TIME' || tier.tierKey === 'RETURNING' || tier.tierKey === 'FIRST_TIME' || tier.tierKey === 'ONE_TIME_BUYER'">Yearly / Infrequent (1 Order)</span>
                                         </strong>
                                     </td>
                                     <td class="nowrap" style="text-align: center;">

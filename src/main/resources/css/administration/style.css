@@ -2663,7 +2663,7 @@ input:checked + .comic-slider:before {
 
 .followup-check-card {
   display: grid;
-  grid-template-columns: 180px 60px minmax(0, 1fr) 60px 140px;
+  grid-template-columns: 180px 60px minmax(0, 1fr) 88px 140px;
   gap: 12px;
   align-items: center;
   background-color: #FFFFFF;
@@ -2678,23 +2678,6 @@ input:checked + .comic-slider:before {
 .followup-check-card:hover {
   transform: translate(-1px, -1px);
   box-shadow: var(--shadow-sm);
-}
-
-/* Smooth Tab & Page Switch Transition Animation */
-@keyframes pageSlideFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.comic-card > div[ng-show],
-section.comic-card {
-  animation: pageSlideFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .order-followup-tree-box {
@@ -2802,9 +2785,12 @@ section.comic-card {
 }
 
 .check-col-images {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 38px);
+  gap: 4px;
   align-items: center;
   justify-content: center;
+  width: 84px;
 }
 
 .check-image-thumb-wrapper {
@@ -2813,8 +2799,8 @@ section.comic-card {
   border-radius: 6px;
   overflow: hidden;
   border: 1.5px solid var(--border-black);
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   box-shadow: 1px 1px 0px #000000;
   transition: transform 0.15s;
 }
@@ -2831,6 +2817,8 @@ section.comic-card {
 }
 
 .check-no-image {
+  grid-column: 1 / -1;
+  text-align: center;
   font-size: 0.72rem;
   color: #94A3B8;
   font-weight: 700;

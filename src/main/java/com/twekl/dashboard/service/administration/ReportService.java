@@ -289,64 +289,50 @@ public class ReportService {
 
             if (!tierStats.isEmpty() && tierStats.get(0) != null) {
                 Object[] tRow = tierStats.get(0);
-                long vipCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
-                long vipOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
-                long freqCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
-                long freqOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
-                long retCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
-                long retOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
-                long oneCnt = tRow[6] != null ? ((Number) tRow[6]).longValue() : 0L;
-                long oneOrders = tRow[7] != null ? ((Number) tRow[7]).longValue() : 0L;
+                long loyalCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
+                long loyalOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
+                long regCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
+                long regOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
+                long oneCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
+                long oneOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
 
-                repeatCustomerCount = vipCnt + freqCnt + retCnt;
+                repeatCustomerCount = loyalCnt + regCnt;
                 oneTimeCustomerCount = oneCnt;
                 totalCatalogCustomers = repeatCustomerCount + oneTimeCustomerCount;
                 if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
 
-                Map<String, Object> vipMap = new LinkedHashMap<>();
-                vipMap.put("tierName", "High Volume");
-                vipMap.put("tierKey", "HIGH_VOLUME");
-                vipMap.put("customerCount", vipCnt);
-                vipMap.put("totalOrders", vipOrders);
-                vipMap.put("customerShare", Math.round(((double) vipCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-                vipMap.put("avgOrdersPerCustomer", vipCnt > 0 ? Math.round(((double) vipOrders / vipCnt * 10.0)) / 10.0 : 0.0);
-                vipMap.put("retentionStatus", "Active Repeat");
-                vipMap.put("badgeColor", "#6B21A8");
-                vipMap.put("badgeBg", "#F3E8FF");
-                loyaltyTierList.add(vipMap);
+                Map<String, Object> loyalMap = new LinkedHashMap<>();
+                loyalMap.put("tierName", "Loyal");
+                loyalMap.put("tierKey", "LOYAL");
+                loyalMap.put("customerCount", loyalCnt);
+                loyalMap.put("totalOrders", loyalOrders);
+                loyalMap.put("customerShare", Math.round(((double) loyalCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+                loyalMap.put("avgOrdersPerCustomer", loyalCnt > 0 ? Math.round(((double) loyalOrders / loyalCnt * 10.0)) / 10.0 : 0.0);
+                loyalMap.put("retentionStatus", "Frequent Repeat");
+                loyalMap.put("badgeColor", "#15803D");
+                loyalMap.put("badgeBg", "#DCFCE7");
+                loyaltyTierList.add(loyalMap);
 
-                Map<String, Object> freqMap = new LinkedHashMap<>();
-                freqMap.put("tierName", "Regular");
-                freqMap.put("tierKey", "REGULAR");
-                freqMap.put("customerCount", freqCnt);
-                freqMap.put("totalOrders", freqOrders);
-                freqMap.put("customerShare", Math.round(((double) freqCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-                freqMap.put("avgOrdersPerCustomer", freqCnt > 0 ? Math.round(((double) freqOrders / freqCnt * 10.0)) / 10.0 : 0.0);
-                freqMap.put("retentionStatus", "Regular");
-                freqMap.put("badgeColor", "#15803D");
-                freqMap.put("badgeBg", "#DCFCE7");
-                loyaltyTierList.add(freqMap);
-
-                Map<String, Object> retMap = new LinkedHashMap<>();
-                retMap.put("tierName", "Returning");
-                retMap.put("tierKey", "RETURNING");
-                retMap.put("customerCount", retCnt);
-                retMap.put("totalOrders", retOrders);
-                retMap.put("customerShare", Math.round(((double) retCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-                retMap.put("avgOrdersPerCustomer", retCnt > 0 ? Math.round(((double) retOrders / retCnt * 10.0)) / 10.0 : 0.0);
-                retMap.put("retentionStatus", "Returning");
-                retMap.put("badgeColor", "#0369A1");
-                retMap.put("badgeBg", "#E0F2FE");
-                loyaltyTierList.add(retMap);
+                Map<String, Object> regMap = new LinkedHashMap<>();
+                regMap.put("tierName", "Regular");
+                regMap.put("tierKey", "REGULAR");
+                regMap.put("customerCount", regCnt);
+                regMap.put("totalOrders", regOrders);
+                regMap.put("customerShare", Math.round(((double) regCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+                regMap.put("avgOrdersPerCustomer", regCnt > 0 ? Math.round(((double) regOrders / regCnt * 10.0)) / 10.0 : 0.0);
+                regMap.put("retentionStatus", "Regular");
+                regMap.put("badgeColor", "#0369A1");
+                regMap.put("badgeBg", "#E0F2FE");
+                loyaltyTierList.add(regMap);
 
                 Map<String, Object> oneMap = new LinkedHashMap<>();
-                oneMap.put("tierName", "First-Time");
-                oneMap.put("tierKey", "FIRST_TIME");
+                oneMap.put("tierName", "One-Time");
+                oneMap.put("tierKey", "ONE_TIME");
                 oneMap.put("customerCount", oneCnt);
                 oneMap.put("totalOrders", oneOrders);
                 oneMap.put("customerShare", Math.round(((double) oneCnt / totalCatalogCustomers * 1000.0)) / 10.0);
                 oneMap.put("avgOrdersPerCustomer", oneCnt > 0 ? Math.round(((double) oneOrders / oneCnt * 10.0)) / 10.0 : 0.0);
-                oneMap.put("retentionStatus", "Single Order");
+                oneMap.put("retentionStatus", "Single / Infrequent");
                 oneMap.put("badgeColor", "#B45309");
                 oneMap.put("badgeBg", "#FEF3C7");
                 loyaltyTierList.add(oneMap);
@@ -463,21 +449,23 @@ public class ReportService {
             cData.put("customerType", customerType);
             cData.put("customerTypeLabel", customerTypeLabel);
 
-            // Tier based on Order Frequency
+            // Dynamic Tier based on Order Frequency & Recency
+            long daysSinceLast = cust.getLastOrderDate() != null
+                    ? java.time.Duration.between(cust.getLastOrderDate(), Instant.now()).toDays() : -1;
+            boolean isLoyal = totalOrders >= 3 && (daysSinceLast < 0 || daysSinceLast <= 90 || totalOrders >= 4);
+            boolean isRegular = !isLoyal && totalOrders >= 2 && (daysSinceLast < 0 || daysSinceLast <= 270);
+
             String tier;
             String tierKey;
-            if (totalOrders >= 5) {
-                tier = "High Volume";
-                tierKey = "HIGH_VOLUME";
-            } else if (totalOrders >= 3) {
+            if (isLoyal) {
+                tier = "Loyal";
+                tierKey = "LOYAL";
+            } else if (isRegular) {
                 tier = "Regular";
                 tierKey = "REGULAR";
-            } else if (totalOrders == 2) {
-                tier = "Returning";
-                tierKey = "RETURNING";
             } else {
-                tier = "First-Time";
-                tierKey = "FIRST_TIME";
+                tier = "One-Time";
+                tierKey = "ONE_TIME";
             }
 
             cData.put("tier", tier);

@@ -307,27 +307,21 @@
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
                                     <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
-                                           ng-checked="pendingReportFilters.customerTier === 'HIGH_VOLUME' || pendingReportFilters.customerTier === 'VIP'"
-                                           ng-click="pendingReportFilters.customerTier = 'HIGH_VOLUME'">
-                                    <span>High Volume</span>
+                                           ng-checked="pendingReportFilters.customerTier === 'LOYAL' || pendingReportFilters.customerTier === 'HIGH_VOLUME' || pendingReportFilters.customerTier === 'VIP'"
+                                           ng-click="pendingReportFilters.customerTier = 'LOYAL'">
+                                    <span>Loyal</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
                                     <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
-                                           ng-checked="pendingReportFilters.customerTier === 'REGULAR' || pendingReportFilters.customerTier === 'FREQUENT'"
+                                           ng-checked="pendingReportFilters.customerTier === 'REGULAR'"
                                            ng-click="pendingReportFilters.customerTier = 'REGULAR'">
                                     <span>Regular</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
                                     <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
-                                           ng-checked="pendingReportFilters.customerTier === 'RETURNING'"
-                                           ng-click="pendingReportFilters.customerTier = 'RETURNING'">
-                                    <span>Returning</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
-                                           ng-checked="pendingReportFilters.customerTier === 'FIRST_TIME' || pendingReportFilters.customerTier === 'ONE_TIME'"
-                                           ng-click="pendingReportFilters.customerTier = 'FIRST_TIME'">
-                                    <span>First-Time</span>
+                                           ng-checked="pendingReportFilters.customerTier === 'ONE_TIME' || pendingReportFilters.customerTier === 'FIRST_TIME' || pendingReportFilters.customerTier === 'RETURNING'"
+                                           ng-click="pendingReportFilters.customerTier = 'ONE_TIME'">
+                                    <span>One-Time</span>
                                 </label>
                             </div>
                         </div>
@@ -536,15 +530,9 @@
                             </div>
                         </div>
 
-                        <!-- Direct URL link input -->
-                        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                            <input type="text" class="comic-input" ng-model="tempImageUrl" placeholder="Paste image link and click + Add..." style="flex: 1;" ng-keydown="$event.keyCode === 13 && addFollowupImageUrl()">
-                            <button type="button" class="comic-btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="addFollowupImageUrl()">+ Add Link</button>
-                        </div>
-
                         <!-- Local Multiple File Upload -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 0.8rem; font-weight: 700; color: #475569;">Or upload image files from your computer (select one or more):</label>
+                            <label style="font-size: 0.8rem; font-weight: 700; color: #475569;">Upload image files from your computer (select one or more):</label>
                             <input type="file" accept="image/*" multiple class="comic-input" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
                         </div>
                     </div>

@@ -29,7 +29,8 @@
         if (mins >= 0) {
             if (mins < 60) return mins + 'm left';
             const hours = Math.floor(mins / 60);
-            if (hours < 24) return hours + 'h ' + (mins % 60) + 'm left';
+            const remM = mins % 60;
+            if (hours < 24) return remM > 0 ? (hours + 'h ' + remM + 'm left') : (hours + 'h left');
             const days = Math.floor(hours / 24);
             const remH = hours % 24;
             return remH > 0 ? (days + 'd ' + remH + 'h left') : (days + 'd left');
@@ -37,7 +38,8 @@
             const overdue = Math.abs(mins);
             if (overdue < 60) return overdue + 'm overdue';
             const ovH = Math.floor(overdue / 60);
-            if (ovH < 24) return ovH + 'h overdue';
+            const ovM = overdue % 60;
+            if (ovH < 24) return ovM > 0 ? (ovH + 'h ' + ovM + 'm overdue') : (ovH + 'h overdue');
             const ovD = Math.floor(ovH / 24);
             const ovRH = ovH % 24;
             return ovRH > 0 ? (ovD + 'd ' + ovRH + 'h overdue') : (ovD + 'd overdue');

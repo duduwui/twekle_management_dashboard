@@ -61,7 +61,8 @@ public class CustomerFollowupSummary {
         if (mins >= 0) {
             if (mins < 60) return mins + "m left";
             int hours = mins / 60;
-            if (hours < 24) return hours + "h " + (mins % 60) + "m left";
+            int remM = mins % 60;
+            if (hours < 24) return remM > 0 ? (hours + "h " + remM + "m left") : (hours + "h left");
             int days = hours / 24;
             int remH = hours % 24;
             return remH > 0 ? (days + "d " + remH + "h left") : (days + "d left");
@@ -69,7 +70,8 @@ public class CustomerFollowupSummary {
             int overdue = Math.abs(mins);
             if (overdue < 60) return overdue + "m overdue";
             int ovH = overdue / 60;
-            if (ovH < 24) return ovH + "h overdue";
+            int ovM = overdue % 60;
+            if (ovH < 24) return ovM > 0 ? (ovH + "h " + ovM + "m overdue") : (ovH + "h overdue");
             int ovD = ovH / 24;
             int ovRH = ovH % 24;
             return ovRH > 0 ? (ovD + "d " + ovRH + "h overdue") : (ovD + "d overdue");

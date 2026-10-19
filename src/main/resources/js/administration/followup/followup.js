@@ -294,7 +294,8 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         if (mins >= 0) {
             if (mins < 60) return mins + 'm';
             var hours = Math.floor(mins / 60);
-            if (hours < 24) return hours + 'h ' + (mins % 60) + 'm';
+            var remM = mins % 60;
+            if (hours < 24) return remM > 0 ? (hours + 'h ' + remM + 'm') : (hours + 'h');
             var days = Math.floor(hours / 24);
             var remH = hours % 24;
             return remH > 0 ? (days + 'd ' + remH + 'h') : (days + 'd');
@@ -302,7 +303,8 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             var overdue = Math.abs(mins);
             if (overdue < 60) return overdue + 'm overdue';
             var ovH = Math.floor(overdue / 60);
-            if (ovH < 24) return ovH + 'h overdue';
+            var ovM = overdue % 60;
+            if (ovH < 24) return ovM > 0 ? (ovH + 'h ' + ovM + 'm overdue') : (ovH + 'h overdue');
             var ovD = Math.floor(ovH / 24);
             var ovRH = ovH % 24;
             return ovRH > 0 ? (ovD + 'd ' + ovRH + 'h overdue') : (ovD + 'd overdue');
@@ -549,7 +551,8 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         var totalMins = Math.floor(diffMs / 60000);
         if (totalMins < 60) return totalMins + 'm ago';
         var hours = Math.floor(totalMins / 60);
-        if (hours < 24) return hours + 'h ago';
+        var remM = totalMins % 60;
+        if (hours < 24) return remM > 0 ? (hours + 'h ' + remM + 'm ago') : (hours + 'h ago');
         var days = Math.floor(hours / 24);
         var remH = hours % 24;
         return remH > 0 ? (days + 'd ' + remH + 'h ago') : (days + 'd ago');
@@ -559,7 +562,8 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         if (minutes == null || minutes < 0) return 'Soon';
         if (minutes < 60) return minutes + 'm';
         var hours = Math.floor(minutes / 60);
-        if (hours < 24) return hours + 'h';
+        var remM = minutes % 60;
+        if (hours < 24) return remM > 0 ? (hours + 'h ' + remM + 'm') : (hours + 'h');
         var days = Math.floor(hours / 24);
         var remH = hours % 24;
         return remH > 0 ? (days + 'd ' + remH + 'h') : (days + 'd');

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Configuration
 @EnableTransactionManagement
+@org.springframework.scheduling.annotation.EnableScheduling
 @EnableJpaRepositories(basePackages = { "com.twekl.dashboard.repository.administration" })
 @ComponentScan(basePackages = {
     "com.twekl.dashboard.service.administration",

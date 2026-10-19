@@ -94,9 +94,11 @@
                                 </td>
                                 <td>
                                     <form th:action="@{/admin/timelines/{presetId}/toggle(presetId=${preset.presetId})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
-                                        <button type="submit" class="status-pill-btn" th:classappend="${preset.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
-                                            <span class="status-dot"></span>
-                                            <span th:text="${preset.active} ? 'Active' : 'Inactive'">Active</span>
+                                        <button type="submit" class="status-toggle-btn" th:classappend="${preset.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
+                                            <span class="toggle-slider">
+                                                <span class="toggle-knob"></span>
+                                            </span>
+                                            <span class="toggle-label" th:text="${preset.active} ? 'Active' : 'Inactive'">Active</span>
                                         </button>
                                     </form>
                                 </td>

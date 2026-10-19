@@ -5,6 +5,7 @@ import com.twekl.dashboard.model.administration.Customer;
 import com.twekl.dashboard.model.administration.CustomerFeedback;
 import com.twekl.dashboard.model.administration.CustomerOrder;
 import com.twekl.dashboard.response.ApiResponse;
+import com.twekl.dashboard.service.administration.CustomerGeneratorService;
 import com.twekl.dashboard.service.administration.CustomerService;
 import com.twekl.dashboard.service.administration.FollowupService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +28,15 @@ public class CustomerController {
 
     private final CustomerService customerService;
     private final FollowupService followupService;
+    private final CustomerGeneratorService customerGeneratorService;
 
     @Autowired
-    public CustomerController(final CustomerService customerService, final FollowupService followupService) {
+    public CustomerController(final CustomerService customerService,
+                              final FollowupService followupService,
+                              final CustomerGeneratorService customerGeneratorService) {
         this.customerService = customerService;
         this.followupService = followupService;
+        this.customerGeneratorService = customerGeneratorService;
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -142,10 +147,39 @@ public class CustomerController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<Customer>> createCustomer(@RequestBody Customer customer) {
+    public ResponseEntity<ApiResponse<Customer>> createCustomer(
+            @RequestBody Customer customer,
+            @RequestParam(value = "autoOrder", defaultValue = "true") boolean autoOrder) {
         Customer created = customerService.createCustomer(customer);
+        if (autoOrder && created.getTotalOrders() == 0) {
+            // Automatically create initial order and follow-up milestones so all activities show immediately
+            CustomerOrder initialOrder = new CustomerOrder();
+            initialOrder.setCustomer(created);
+            initialOrder.setOrderNumber("ORD-" + System.currentTimeMillis());
+            initialOrder.setItemsSummary("Customer Initial Intake Order");
+            initialOrder.setQuantity(1);
+            initialOrder.setTotalAmount(created.getTotalSpent() > 0 ? created.getTotalSpent() : 150.0);
+            initialOrder.setOrderDate(created.getCreatedAt() != null ? created.getCreatedAt() : java.time.Instant.now());
+            customerService.createOrder(initialOrder);
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Customer created successfully", created));
+                .body(ApiResponse.success("Customer created successfully with synchronized activity checks", created));
+    }
+
+    @PostMapping(value = "/generate", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateCustomers(
+            @RequestParam(value = "days", defaultValue = "1") int days,
+            @RequestParam(value = "count", defaultValue = "40") int count,
+            @RequestParam(value = "seedHistory", defaultValue = "true") boolean seedHistory) {
+        Map<String, Object> result = customerGeneratorService.generateBatch(days, count, seedHistory);
+        return ResponseEntity.ok(ApiResponse.success("Successfully generated customer intake", result));
+    }
+
+    @PostMapping(value = "/daily-intake", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Map<String, Object>>> runDailyIntake(
+            @RequestParam(value = "count", defaultValue = "40") int count) {
+        Map<String, Object> result = customerGeneratorService.generateBatch(1, count, true);
+        return ResponseEntity.ok(ApiResponse.success("Daily customer intake generated successfully", result));
     }
 
     @PutMapping(value = "/{customerId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

@@ -189,6 +189,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         var pf = {
             preset: $scope.selectedReportPreset,
             satisfaction: $scope.reportFilters.satisfactionFilter || 'all',
+            milestone: $scope.reportFilters.milestoneFilter || 'all',
             customerType: $scope.reportFilters.customerTypeFilter || 'all',
             customerTier: $scope.reportFilters.customerTierFilter || 'all',
             customerStatus: $scope.reportFilters.customerStatusFilter || 'all',
@@ -219,6 +220,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         $scope.pendingReportFilters = {
             preset: null,
             satisfaction: 'all',
+            milestone: 'all',
             customerType: 'all',
             customerTier: 'all',
             customerStatus: 'all',
@@ -262,6 +264,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         var pf = $scope.pendingReportFilters || ($scope.$parent && $scope.$parent.pendingReportFilters) || {};
         $scope.selectedReportPreset = pf.preset;
         $scope.reportFilters.satisfactionFilter = pf.satisfaction || 'all';
+        $scope.reportFilters.milestoneFilter = pf.milestone || 'all';
         $scope.reportFilters.customerTypeFilter = pf.customerType || 'all';
         $scope.reportFilters.customerTierFilter = pf.customerTier || 'all';
         $scope.reportFilters.customerStatusFilter = pf.customerStatus || 'all';
@@ -292,19 +295,24 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         var notes = ($scope.reportData && $scope.reportData.satisfaction && $scope.reportData.satisfaction.recentNotes) ? $scope.reportData.satisfaction.recentNotes : [];
         var search = ($scope.reportFilters.searchNotes || '').trim().toLowerCase();
         var satFilter = $scope.reportFilters.satisfactionFilter;
+        var milestoneFilter = $scope.reportFilters.milestoneFilter;
         return notes.filter(function(n) {
             if (satFilter && satFilter !== 'all' && n.satisfaction !== satFilter) return false;
+            if (milestoneFilter && milestoneFilter !== 'all') {
+                var pName = (n.presetName || '').toLowerCase();
+                if (pName !== milestoneFilter.toLowerCase()) return false;
+            }
             if (search) {
                 var cName = (n.customerName || '').toLowerCase();
                 var cPhone = (n.customerPhone || '').toLowerCase();
                 var ordNum = (n.orderNumber || '').toLowerCase();
                 var noteText = (n.note || '').toLowerCase();
-                var pName = (n.presetName || '').toLowerCase();
+                var pNameSearch = (n.presetName || '').toLowerCase();
                 if (cName.indexOf(search) === -1 &&
                     cPhone.indexOf(search) === -1 &&
                     ordNum.indexOf(search) === -1 &&
                     noteText.indexOf(search) === -1 &&
-                    pName.indexOf(search) === -1) {
+                    pNameSearch.indexOf(search) === -1) {
                     return false;
                 }
             }
@@ -324,9 +332,17 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     $scope.getFilteredReportProducts = function() {
         var prods = $scope.reportData.products || [];
         var search = ($scope.reportFilters.searchProducts || '').trim().toLowerCase();
-        if (!search) return prods;
+        var satFilter = $scope.reportFilters.satisfactionFilter;
         return prods.filter(function(p) {
-            return (p.productName || '').toLowerCase().indexOf(search) !== -1;
+            if (satFilter && satFilter !== 'all') {
+                if (satFilter === 'SATISFIED' && (!p.satisfiedCount || p.satisfiedCount <= 0)) return false;
+                if (satFilter === 'NEUTRAL' && (!p.neutralCount || p.neutralCount <= 0)) return false;
+                if (satFilter === 'UNSATISFIED' && (!p.unsatisfiedCount || p.unsatisfiedCount <= 0)) return false;
+            }
+            if (search && (p.productName || '').toLowerCase().indexOf(search) === -1) {
+                return false;
+            }
+            return true;
         });
     };
 
@@ -647,6 +663,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         if (data) {
             $scope.selectedReportPreset = data.preset;
             $scope.reportFilters.satisfactionFilter = data.satisfaction || 'all';
+            $scope.reportFilters.milestoneFilter = data.milestone || 'all';
             $scope.reportFilters.customerTypeFilter = data.customerType || 'all';
             $scope.reportFilters.customerTierFilter = data.customerTier || 'all';
             $scope.reportFilters.customerCityFilter = data.customerCity || 'all';

@@ -46,4 +46,11 @@ public class OrderController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error("Order not found with ID: " + orderId)));
     }
+
+    @org.springframework.web.bind.annotation.PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<CustomerOrder>> createOrder(@org.springframework.web.bind.annotation.RequestBody CustomerOrder order) {
+        CustomerOrder saved = customerService.createOrder(order);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Order created and follow-up milestones scheduled", saved));
+    }
 }

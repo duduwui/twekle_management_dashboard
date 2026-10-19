@@ -20,7 +20,7 @@
                             <span ng-bind="selectedReportPreset.name"></span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.satisfactionFilter && reportFilters.satisfactionFilter !== 'all'" ng-click="clearSatisfactionFilter()" title="Click to clear scale">
-                            <span ng-bind="'Scale: ' + reportFilters.satisfactionFilter"></span> ✕
+                            <span ng-bind="'Satisfaction: ' + reportFilters.satisfactionFilter"></span> ✕
                         </span>
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.milestoneFilter && reportFilters.milestoneFilter !== 'all'" ng-click="reportFilters.milestoneFilter = 'all'" title="Click to clear milestone">
                             <span ng-bind="'Milestone: ' + reportFilters.milestoneFilter"></span> ✕

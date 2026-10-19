@@ -29,7 +29,7 @@ public class CustomerOrder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CUSTOMER_ID", nullable = false)
-    @JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private Customer customer;
 
     @Column(name = "ITEMS_SUMMARY", length = 500)
@@ -85,6 +85,16 @@ public class CustomerOrder {
         return (customer != null) ? customer.getId() : null;
     }
 
+    @com.fasterxml.jackson.annotation.JsonProperty("customerId")
+    public void setCustomerId(Long customerId) {
+        if (customerId != null) {
+            if (this.customer == null) {
+                this.customer = new Customer();
+            }
+            this.customer.setId(customerId);
+        }
+    }
+
     public String getOrderNumber() { return orderNumber; }
     public void setOrderNumber(String orderNumber) { this.orderNumber = orderNumber; }
 
@@ -93,6 +103,11 @@ public class CustomerOrder {
 
     public String getItemsSummary() { return itemsSummary; }
     public void setItemsSummary(String itemsSummary) { this.itemsSummary = itemsSummary; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("productSummary")
+    public void setProductSummary(String productSummary) {
+        this.itemsSummary = productSummary;
+    }
 
     @JsonIgnore
     public String getProductName() { return itemsSummary; }

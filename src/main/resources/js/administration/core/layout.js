@@ -313,10 +313,11 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         $scope.pendingReportFilters = initialFilters || {
             satisfaction: ($scope.reportFilters && $scope.reportFilters.satisfaction) || 'all',
             preset: $scope.selectedReportPreset,
-            customerType: 'all',
-            customerTier: 'all',
-            customerStatus: 'all',
-            customerCity: 'all'
+            milestone: ($scope.reportFilters && $scope.reportFilters.milestone) || 'all',
+            customerType: ($scope.reportFilters && $scope.reportFilters.customerType) || 'all',
+            customerTier: ($scope.reportFilters && $scope.reportFilters.customerTier) || 'all',
+            customerStatus: ($scope.reportFilters && $scope.reportFilters.customerStatus) || 'all',
+            customerCity: ($scope.reportFilters && $scope.reportFilters.customerCity) || 'all'
         };
         $scope.showReportFilterModal = true;
         if ($scope.modalState) $scope.modalState.reportFilter = true;
@@ -343,14 +344,20 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         var pf = $scope.pendingReportFilters || {};
         $scope.selectedReportPreset = pf.preset;
         $scope.reportFilters.satisfaction = pf.satisfaction || 'all';
+        $scope.reportFilters.milestone = pf.milestone || 'all';
+        $scope.reportFilters.customerType = pf.customerType || 'all';
+        $scope.reportFilters.customerTier = pf.customerTier || 'all';
+        $scope.reportFilters.customerStatus = pf.customerStatus || 'all';
+        $scope.reportFilters.customerCity = pf.customerCity || 'all';
         $scope.closeReportFilterModal();
         $scope.$broadcast('filter:reportFiltersChanged', {
             preset: $scope.selectedReportPreset,
             satisfaction: $scope.reportFilters.satisfaction,
-            customerType: pf.customerType || 'all',
-            customerTier: pf.customerTier || 'all',
-            customerStatus: pf.customerStatus || 'all',
-            customerCity: pf.customerCity || 'all'
+            milestone: $scope.reportFilters.milestone,
+            customerType: $scope.reportFilters.customerType,
+            customerTier: $scope.reportFilters.customerTier,
+            customerStatus: $scope.reportFilters.customerStatus,
+            customerCity: $scope.reportFilters.customerCity
         });
     };
 
@@ -358,17 +365,26 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         $scope.pendingReportFilters = {
             satisfaction: 'all',
             preset: null,
+            milestone: 'all',
             customerType: 'all',
             customerTier: 'all',
             customerStatus: 'all',
             customerCity: 'all'
         };
         $scope.selectedReportPreset = null;
-        $scope.reportFilters.satisfaction = 'all';
+        $scope.reportFilters = {
+            satisfaction: 'all',
+            milestone: 'all',
+            customerType: 'all',
+            customerTier: 'all',
+            customerStatus: 'all',
+            customerCity: 'all'
+        };
         $scope.closeReportFilterModal();
         $scope.$broadcast('filter:reportFiltersChanged', {
             preset: null,
             satisfaction: 'all',
+            milestone: 'all',
             customerType: 'all',
             customerTier: 'all',
             customerStatus: 'all',

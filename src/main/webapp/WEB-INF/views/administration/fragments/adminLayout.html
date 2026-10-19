@@ -235,14 +235,20 @@
     <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
         <!-- Report Filters Modal -->
         <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': (showReportFilterModal || (modalState && modalState.reportFilter)) ? 'flex' : 'none'}" ng-cloak ng-show="showReportFilterModal || (modalState && modalState.reportFilter)" ng-click="closeReportFilterModal()">
-            <div class="filter-modal-card" style="max-width: 860px; width: 95%;" ng-click="$event.stopPropagation()">
+            <div class="filter-modal-card" ng-style="{'max-width': (reportSubTab === 'milestones' ? '380px' : (reportSubTab === 'products' ? '560px' : (reportSubTab === 'satisfaction' ? '680px' : '860px'))), 'width': '95%'}" ng-click="$event.stopPropagation()">
                 <div class="filter-modal-header-simple">
-                    <strong class="filter-modal-title-simple">Report Filters</strong>
+                    <strong class="filter-modal-title-simple">
+                        <span ng-if="reportSubTab === 'milestones'">Milestone Time Filter</span>
+                        <span ng-if="reportSubTab === 'satisfaction'">Satisfaction &amp; Notes Filters</span>
+                        <span ng-if="reportSubTab === 'products'">Product Distribution Filters</span>
+                        <span ng-if="reportSubTab === 'customers' || reportSubTab === 'followups' || !reportSubTab">Customer Details Filters</span>
+                    </strong>
                     <button type="button" class="comic-modal-close" ng-click="closeReportFilterModal()">&times;</button>
                 </div>
 
                 <div style="padding: 18px 20px;">
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+                    <!-- Case 1: Customer Details Subtab (4 Columns: Time Range, Customer Type, Customer Tier, City) -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;" ng-if="reportSubTab === 'customers' || reportSubTab === 'followups' || (!reportSubTab && activeTab === 'reports')">
                         <!-- Col 1: Time Range -->
                         <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
                             <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
@@ -344,6 +350,172 @@
                                            ng-checked="pendingReportFilters.customerCity === city"
                                            ng-click="pendingReportFilters.customerCity = city">
                                     <span ng-bind="city"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case 2: Satisfaction & Notes Subtab (3 Columns: Time Range, Satisfaction Rating, Milestone) -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" ng-if="reportSubTab === 'satisfaction'">
+                        <!-- Col 1: Time Range -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Time Range
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(null)"
+                                           ng-click="selectPendingReportPreset(null)">
+                                    <span>All Time</span>
+                                </label>
+                                <label ng-repeat="preset in timeFilterPresets track by preset.id"
+                                       ng-if="preset.active !== false || preset.isActive"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(preset)"
+                                           ng-click="selectPendingReportPreset(preset)">
+                                    <span ng-bind="preset.name || preset.labelEn"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Col 2: Satisfaction Rating -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Satisfaction Rating
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction"
+                                           ng-click="pendingReportFilters.satisfaction = 'all'">
+                                    <span>All Ratings</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'SATISFIED'"
+                                           ng-click="pendingReportFilters.satisfaction = 'SATISFIED'">
+                                    <span style="color: #16A34A;">Satisfied</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'NEUTRAL'"
+                                           ng-click="pendingReportFilters.satisfaction = 'NEUTRAL'">
+                                    <span style="color: #64748B;">Neutral</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'UNSATISFIED'"
+                                           ng-click="pendingReportFilters.satisfaction = 'UNSATISFIED'">
+                                    <span style="color: #DC2626;">Unsatisfied</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Col 3: Milestone -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Milestone
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.milestone === 'all' || !pendingReportFilters.milestone"
+                                           ng-click="pendingReportFilters.milestone = 'all'">
+                                    <span>All Milestones</span>
+                                </label>
+                                <label ng-repeat="preset in timeFilterPresets track by preset.id"
+                                       ng-if="preset.active !== false || preset.isActive"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.milestone === (preset.name || preset.labelEn)"
+                                           ng-click="pendingReportFilters.milestone = (preset.name || preset.labelEn)">
+                                    <span ng-bind="preset.name || preset.labelEn"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case 3: Follow-ups & Milestones Subtab (1 Column: Time Range) -->
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 14px;" ng-if="reportSubTab === 'milestones'">
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 14px 16px;">
+                            <div style="font-size: 0.82rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 8px;">
+                                Time Range
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 16px; height: 16px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(null)"
+                                           ng-click="selectPendingReportPreset(null)">
+                                    <span>All Time</span>
+                                </label>
+                                <label ng-repeat="preset in timeFilterPresets track by preset.id"
+                                       ng-if="preset.active !== false || preset.isActive"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 16px; height: 16px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(preset)"
+                                           ng-click="selectPendingReportPreset(preset)">
+                                    <span ng-bind="preset.name || preset.labelEn"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case 4: Product Distribution Subtab (2 Columns: Time Range, Customer Satisfaction) -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;" ng-if="reportSubTab === 'products'">
+                        <!-- Col 1: Time Range -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Time Range
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(null)"
+                                           ng-click="selectPendingReportPreset(null)">
+                                    <span>All Time</span>
+                                </label>
+                                <label ng-repeat="preset in timeFilterPresets track by preset.id"
+                                       ng-if="preset.active !== false || preset.isActive"
+                                       style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="isPendingReportPresetSelected(preset)"
+                                           ng-click="selectPendingReportPreset(preset)">
+                                    <span ng-bind="preset.name || preset.labelEn"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Col 2: Customer Satisfaction -->
+                        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                Customer Satisfaction
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'all' || !pendingReportFilters.satisfaction"
+                                           ng-click="pendingReportFilters.satisfaction = 'all'">
+                                    <span>All Ratings</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'SATISFIED'"
+                                           ng-click="pendingReportFilters.satisfaction = 'SATISFIED'">
+                                    <span style="color: #16A34A;">Has Satisfied</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'NEUTRAL'"
+                                           ng-click="pendingReportFilters.satisfaction = 'NEUTRAL'">
+                                    <span style="color: #64748B;">Has Neutral</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                           ng-checked="pendingReportFilters.satisfaction === 'UNSATISFIED'"
+                                           ng-click="pendingReportFilters.satisfaction = 'UNSATISFIED'">
+                                    <span style="color: #DC2626;">Has Unsatisfied</span>
                                 </label>
                             </div>
                         </div>

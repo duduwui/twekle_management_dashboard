@@ -88,10 +88,15 @@ public class CustomerService {
         return customerRepository.count();
     }
 
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
     public Customer createCustomer(Customer customer) {
+        if (customer.getCreatedAt() == null) {
+            customer.setCreatedAt(Instant.now());
+        }
         return customerRepository.save(customer);
     }
 
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
     public Customer updateCustomer(Long customerId, Customer updated) {
         Customer existing = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));
@@ -106,10 +111,49 @@ public class CustomerService {
         return customerRepository.save(existing);
     }
 
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
     public void deleteCustomer(Long customerId) {
         Customer existing = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));
         customerRepository.delete(existing);
+    }
+
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
+    public CustomerOrder createOrder(CustomerOrder order) {
+        if (order.getOrderDate() == null) {
+            order.setOrderDate(Instant.now());
+        }
+        if (order.getOrderNumber() == null || order.getOrderNumber().trim().isEmpty()) {
+            order.setOrderNumber("ORD-" + System.currentTimeMillis());
+        }
+        Customer cust = null;
+        Long targetCustId = null;
+        if (order.getCustomer() != null) {
+            targetCustId = order.getCustomer().getId() != null ? order.getCustomer().getId() : order.getCustomer().getCustomerId();
+        }
+        if (targetCustId != null) {
+            cust = customerRepository.findById(targetCustId).orElse(null);
+        }
+        if (cust == null) {
+            throw new com.twekl.dashboard.exception.BadRequestException("Valid customer ID is required to create an order (customer not found: " + targetCustId + ")");
+        }
+        order.setCustomer(cust);
+        cust.setTotalOrders(cust.getTotalOrders() + 1);
+        cust.setTotalSpent(cust.getTotalSpent() + order.getTotalAmount());
+        cust.setLastOrderDate(order.getOrderDate());
+        customerRepository.save(cust);
+        CustomerOrder savedOrder = orderRepository.save(order);
+        // Automatically schedule milestone checks for all active presets
+        followupService.findChecksByOrderId(savedOrder.getId());
+        return savedOrder;
+    }
+
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
+    public CustomerFeedback createFeedback(CustomerFeedback feedback) {
+        if (feedback.getFeedbackDate() == null) {
+            feedback.setFeedbackDate(Instant.now());
+        }
+        return feedbackRepository.save(feedback);
     }
 
     @Cacheable(value = "customerStats", sync = true)

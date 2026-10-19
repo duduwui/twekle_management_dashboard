@@ -88,14 +88,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers(antMatcher("/login"), antMatcher("/login/**"), antMatcher("/admin/auth/**"))
-            )
+            .csrf(csrf -> csrf.disable())
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .securityContext(securityContext -> securityContext
                 .securityContextRepository(securityContextRepository())
             )
             .authenticationProvider(authenticationProvider())
+            .httpBasic(org.springframework.security.config.Customizer.withDefaults())
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler)

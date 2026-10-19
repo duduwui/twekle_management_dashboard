@@ -130,6 +130,17 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success(customerService.findFeedbacksByCustomerId(customerId)));
     }
 
+    @PostMapping(value = "/{customerId:\\d+}/feedbacks", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<CustomerFeedback>> createFeedback(@PathVariable("customerId") Long customerId,
+                                                                         @RequestBody CustomerFeedback feedback) {
+        Customer c = customerService.findById(customerId)
+                .orElseThrow(() -> new com.twekl.dashboard.exception.ResourceNotFoundException("Customer not found with ID: " + customerId));
+        feedback.setCustomer(c);
+        CustomerFeedback saved = customerService.createFeedback(feedback);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Feedback recorded successfully", saved));
+    }
+
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Customer>> createCustomer(@RequestBody Customer customer) {
         Customer created = customerService.createCustomer(customer);

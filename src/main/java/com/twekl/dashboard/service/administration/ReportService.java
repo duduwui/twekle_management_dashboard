@@ -37,26 +37,6 @@ public class ReportService {
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final TimeFilterPresetRepository presetRepository;
 
-    private static class CachedLoyaltyTiers {
-        final Map<String, Object> loyaltyTiers;
-        final long timestamp;
-        CachedLoyaltyTiers(Map<String, Object> loyaltyTiers, long timestamp) {
-            this.loyaltyTiers = loyaltyTiers;
-            this.timestamp = timestamp;
-        }
-    }
-    private volatile CachedLoyaltyTiers cachedLoyaltyTiers = null;
-
-    private static class CachedProductReviews {
-        final Map<String, long[]> reviewMap;
-        final long timestamp;
-        CachedProductReviews(Map<String, long[]> reviewMap, long timestamp) {
-            this.reviewMap = reviewMap;
-            this.timestamp = timestamp;
-        }
-    }
-    private final java.util.concurrent.ConcurrentMap<String, CachedProductReviews> productReviewsCache = new java.util.concurrent.ConcurrentHashMap<>();
-
     @Autowired
     public ReportService(final CustomerRepository customerRepository,
                          final CustomerOrderRepository orderRepository,
@@ -275,83 +255,75 @@ public class ReportService {
         // ---------------------------------------------------------------------
         // 4. CUSTOMER RETENTION & ORDER LOYALTY TIERS (Frequency & Repetition)
         // ---------------------------------------------------------------------
-        long nowMs = System.currentTimeMillis();
-        Map<String, Object> loyaltyTiers;
-        CachedLoyaltyTiers clt = cachedLoyaltyTiers;
-        if (clt != null && (nowMs - clt.timestamp) < 60_000L) {
-            loyaltyTiers = clt.loyaltyTiers;
-        } else {
-            List<Object[]> tierStats = customerRepository.getCustomerTierStats();
-            List<Map<String, Object>> loyaltyTierList = new ArrayList<>();
-            long repeatCustomerCount = 0L;
-            long oneTimeCustomerCount = 0L;
-            long totalCatalogCustomers = 0L;
+        List<Object[]> tierStats = customerRepository.getCustomerTierStats();
+        List<Map<String, Object>> loyaltyTierList = new ArrayList<>();
+        long repeatCustomerCount = 0L;
+        long oneTimeCustomerCount = 0L;
+        long totalCatalogCustomers = 0L;
 
-            if (!tierStats.isEmpty() && tierStats.get(0) != null) {
-                Object[] tRow = tierStats.get(0);
-                long loyalCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
-                long loyalOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
-                long regCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
-                long regOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
-                long oneCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
-                long oneOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
+        if (!tierStats.isEmpty() && tierStats.get(0) != null) {
+            Object[] tRow = tierStats.get(0);
+            long loyalCnt = tRow[0] != null ? ((Number) tRow[0]).longValue() : 0L;
+            long loyalOrders = tRow[1] != null ? ((Number) tRow[1]).longValue() : 0L;
+            long regCnt = tRow[2] != null ? ((Number) tRow[2]).longValue() : 0L;
+            long regOrders = tRow[3] != null ? ((Number) tRow[3]).longValue() : 0L;
+            long oneCnt = tRow[4] != null ? ((Number) tRow[4]).longValue() : 0L;
+            long oneOrders = tRow[5] != null ? ((Number) tRow[5]).longValue() : 0L;
 
-                repeatCustomerCount = loyalCnt + regCnt;
-                oneTimeCustomerCount = oneCnt;
-                totalCatalogCustomers = repeatCustomerCount + oneTimeCustomerCount;
-                if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
+            repeatCustomerCount = loyalCnt + regCnt;
+            oneTimeCustomerCount = oneCnt;
+            totalCatalogCustomers = repeatCustomerCount + oneTimeCustomerCount;
+            if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
 
-                Map<String, Object> loyalMap = new LinkedHashMap<>();
-                loyalMap.put("tierName", "Loyal");
-                loyalMap.put("tierKey", "LOYAL");
-                loyalMap.put("customerCount", loyalCnt);
-                loyalMap.put("totalOrders", loyalOrders);
-                loyalMap.put("customerShare", Math.round(((double) loyalCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-                loyalMap.put("avgOrdersPerCustomer", loyalCnt > 0 ? Math.round(((double) loyalOrders / loyalCnt * 10.0)) / 10.0 : 0.0);
-                loyalMap.put("retentionStatus", "Frequent Repeat");
-                loyalMap.put("badgeColor", "#15803D");
-                loyalMap.put("badgeBg", "#DCFCE7");
-                loyaltyTierList.add(loyalMap);
+            Map<String, Object> loyalMap = new LinkedHashMap<>();
+            loyalMap.put("tierName", "Loyal");
+            loyalMap.put("tierKey", "LOYAL");
+            loyalMap.put("customerCount", loyalCnt);
+            loyalMap.put("totalOrders", loyalOrders);
+            loyalMap.put("customerShare", Math.round(((double) loyalCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            loyalMap.put("avgOrdersPerCustomer", loyalCnt > 0 ? Math.round(((double) loyalOrders / loyalCnt * 10.0)) / 10.0 : 0.0);
+            loyalMap.put("retentionStatus", "Frequent Repeat");
+            loyalMap.put("badgeColor", "#15803D");
+            loyalMap.put("badgeBg", "#DCFCE7");
+            loyaltyTierList.add(loyalMap);
 
-                Map<String, Object> regMap = new LinkedHashMap<>();
-                regMap.put("tierName", "Regular");
-                regMap.put("tierKey", "REGULAR");
-                regMap.put("customerCount", regCnt);
-                regMap.put("totalOrders", regOrders);
-                regMap.put("customerShare", Math.round(((double) regCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-                regMap.put("avgOrdersPerCustomer", regCnt > 0 ? Math.round(((double) regOrders / regCnt * 10.0)) / 10.0 : 0.0);
-                regMap.put("retentionStatus", "Regular");
-                regMap.put("badgeColor", "#0369A1");
-                regMap.put("badgeBg", "#E0F2FE");
-                loyaltyTierList.add(regMap);
+            Map<String, Object> regMap = new LinkedHashMap<>();
+            regMap.put("tierName", "Regular");
+            regMap.put("tierKey", "REGULAR");
+            regMap.put("customerCount", regCnt);
+            regMap.put("totalOrders", regOrders);
+            regMap.put("customerShare", Math.round(((double) regCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            regMap.put("avgOrdersPerCustomer", regCnt > 0 ? Math.round(((double) regOrders / regCnt * 10.0)) / 10.0 : 0.0);
+            regMap.put("retentionStatus", "Regular");
+            regMap.put("badgeColor", "#0369A1");
+            regMap.put("badgeBg", "#E0F2FE");
+            loyaltyTierList.add(regMap);
 
-                Map<String, Object> oneMap = new LinkedHashMap<>();
-                oneMap.put("tierName", "One-Time");
-                oneMap.put("tierKey", "ONE_TIME");
-                oneMap.put("customerCount", oneCnt);
-                oneMap.put("totalOrders", oneOrders);
-                oneMap.put("customerShare", Math.round(((double) oneCnt / totalCatalogCustomers * 1000.0)) / 10.0);
-                oneMap.put("avgOrdersPerCustomer", oneCnt > 0 ? Math.round(((double) oneOrders / oneCnt * 10.0)) / 10.0 : 0.0);
-                oneMap.put("retentionStatus", "Single / Infrequent");
-                oneMap.put("badgeColor", "#B45309");
-                oneMap.put("badgeBg", "#FEF3C7");
-                loyaltyTierList.add(oneMap);
-            }
-
-            double repeatCustomerRate = totalCatalogCustomers > 0
-                    ? Math.round(((double) repeatCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
-            double oneTimeRate = totalCatalogCustomers > 0
-                    ? Math.round(((double) oneTimeCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
-
-            loyaltyTiers = new LinkedHashMap<>();
-            loyaltyTiers.put("tiers", loyaltyTierList);
-            loyaltyTiers.put("repeatCustomerCount", repeatCustomerCount);
-            loyaltyTiers.put("repeatCustomerRate", repeatCustomerRate);
-            loyaltyTiers.put("oneTimeCustomerCount", oneTimeCustomerCount);
-            loyaltyTiers.put("oneTimeRate", oneTimeRate);
-            loyaltyTiers.put("totalCustomers", totalCatalogCustomers);
-            cachedLoyaltyTiers = new CachedLoyaltyTiers(loyaltyTiers, nowMs);
+            Map<String, Object> oneMap = new LinkedHashMap<>();
+            oneMap.put("tierName", "One-Time");
+            oneMap.put("tierKey", "ONE_TIME");
+            oneMap.put("customerCount", oneCnt);
+            oneMap.put("totalOrders", oneOrders);
+            oneMap.put("customerShare", Math.round(((double) oneCnt / totalCatalogCustomers * 1000.0)) / 10.0);
+            oneMap.put("avgOrdersPerCustomer", oneCnt > 0 ? Math.round(((double) oneOrders / oneCnt * 10.0)) / 10.0 : 0.0);
+            oneMap.put("retentionStatus", "Single / Infrequent");
+            oneMap.put("badgeColor", "#B45309");
+            oneMap.put("badgeBg", "#FEF3C7");
+            loyaltyTierList.add(oneMap);
         }
+
+        double repeatCustomerRate = totalCatalogCustomers > 0
+                ? Math.round(((double) repeatCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
+        double oneTimeRate = totalCatalogCustomers > 0
+                ? Math.round(((double) oneTimeCustomerCount / totalCatalogCustomers * 1000.0)) / 10.0 : 0.0;
+
+        Map<String, Object> loyaltyTiers = new LinkedHashMap<>();
+        loyaltyTiers.put("tiers", loyaltyTierList);
+        loyaltyTiers.put("repeatCustomerCount", repeatCustomerCount);
+        loyaltyTiers.put("repeatCustomerRate", repeatCustomerRate);
+        loyaltyTiers.put("oneTimeCustomerCount", oneTimeCustomerCount);
+        loyaltyTiers.put("oneTimeRate", oneTimeRate);
+        loyaltyTiers.put("totalCustomers", totalCatalogCustomers);
 
         summary.put("repeatCustomerCount", loyaltyTiers.get("repeatCustomerCount"));
         summary.put("repeatCustomerRate", loyaltyTiers.get("repeatCustomerRate"));
@@ -362,25 +334,17 @@ public class ReportService {
         // 5. ACCURATE PRODUCT DISTRIBUTION & QUALITY HEALTH
         // ---------------------------------------------------------------------
         List<Object[]> rawProdFinancials = orderRepository.getProductFinancialStatsByDateRange(startDate, rangeEnd);
-        String pCacheKey = (startDate != null ? startDate.toString() : "ALL") + "_" + (rangeEnd != null ? rangeEnd.toString() : "NOW");
-        CachedProductReviews cpr = productReviewsCache.get(pCacheKey);
-        Map<String, long[]> prodReviewMap;
-        if (cpr != null && (nowMs - cpr.timestamp) < 60_000L) {
-            prodReviewMap = cpr.reviewMap;
-        } else {
-            List<Object[]> rawProdReviews = followupCheckRepository.getProductSatisfactionCountsByDateRange(startDate, rangeEnd);
-            prodReviewMap = new HashMap<>();
-            for (Object[] row : rawProdReviews) {
-                String pName = row[0] != null ? row[0].toString().trim() : "";
-                if (!pName.isEmpty()) {
-                    long sCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
-                    long nCnt = row[2] != null ? ((Number) row[2]).longValue() : 0L;
-                    long uCnt = row[3] != null ? ((Number) row[3]).longValue() : 0L;
-                    long totChk = row[4] != null ? ((Number) row[4]).longValue() : 0L;
-                    prodReviewMap.put(pName, new long[]{sCnt, nCnt, uCnt, totChk});
-                }
+        List<Object[]> rawProdReviews = followupCheckRepository.getProductSatisfactionCountsByDateRange(startDate, rangeEnd);
+        Map<String, long[]> prodReviewMap = new HashMap<>();
+        for (Object[] row : rawProdReviews) {
+            String pName = row[0] != null ? row[0].toString().trim() : "";
+            if (!pName.isEmpty()) {
+                long sCnt = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+                long nCnt = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                long uCnt = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+                long totChk = row[4] != null ? ((Number) row[4]).longValue() : 0L;
+                prodReviewMap.put(pName, new long[]{sCnt, nCnt, uCnt, totChk});
             }
-            productReviewsCache.put(pCacheKey, new CachedProductReviews(prodReviewMap, nowMs));
         }
 
         List<Map<String, Object>> productList = new ArrayList<>();

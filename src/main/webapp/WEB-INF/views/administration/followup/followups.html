@@ -75,6 +75,9 @@
                                 <th class="comic-sortable-th col-phone nowrap" style="width: 140px;" ng-click="sortBy('phoneNumber')">
                                      Phone Number <span class="sort-indicator" ng-bind="getSortIndicator('phoneNumber')"></span>
                                 </th>
+                                <th class="comic-sortable-th nowrap" style="width: 105px;" ng-click="sortBy('city')">
+                                     City <span class="sort-indicator" ng-bind="getSortIndicator('city')"></span>
+                                </th>
                                 <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortBy('totalOrders')">
                                      Total Orders <span class="sort-indicator" ng-bind="getSortIndicator('totalOrders')"></span>
                                 </th>
@@ -98,6 +101,9 @@
                                 </td>
                                 <td class="col-phone nowrap">
                                     <strong style="font-size: 0.92rem; white-space: nowrap;" ng-bind="cust.phoneNumber"></strong>
+                                </td>
+                                <td class="nowrap">
+                                    <span style="font-weight: 600; color: #334155; font-size: 0.88rem;" ng-bind="cust.city || '-'"></span>
                                 </td>
                                 <td class="nowrap">
                                     <strong style="font-size: 0.95rem; color: var(--text-main); white-space: nowrap;" ng-bind="cust.totalOrders + ' Orders'"></strong>

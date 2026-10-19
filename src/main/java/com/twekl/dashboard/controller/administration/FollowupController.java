@@ -38,6 +38,12 @@ public class FollowupController {
         this.timeFilterService = timeFilterService;
     }
 
+    private boolean canRead() {
+        return adminService.getCurrentAdmin()
+                .map(a -> a.isSuperAdmin() || a.isCanReadFollowups())
+                .orElse(false);
+    }
+
     private boolean canUpdate() {
         return adminService.getCurrentAdmin()
                 .map(a -> a.isSuperAdmin() || a.isCanUpdateFollowups())
@@ -46,6 +52,9 @@ public class FollowupController {
 
     @GetMapping({"", "/", "/orders/{customerId:\\d+}", "/feedback/{customerId:\\d+}"})
     public String showFollowups(@PathVariable(value = "customerId", required = false) Long customerId, Model model) {
+        if (!canRead()) {
+            return "redirect:/admin/dashboard";
+        }
         model.addAttribute("activeTab", "followups");
         org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> initialPage =
                 followupService.findPagedSummaries("ALL", "ALL", null,
@@ -74,6 +83,11 @@ public class FollowupController {
             @RequestParam(value = "endDate", required = false) String endDate,
             @RequestParam(value = "sortField", defaultValue = "id") String sortField,
             @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+
+        if (!canRead()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You do not have permission to view follow-ups"));
+        }
 
         int pageZeroIndex = Math.max(0, page - 1);
         int pageSize = Math.min(100, Math.max(10, size));

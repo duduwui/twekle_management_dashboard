@@ -78,7 +78,7 @@ public class RoleController {
                 "redirect:/admin/roles", () -> roleService.updateRole(roleId, roleDto));
     }
 
-    @PostMapping("/assign_user_role")
+    @PostMapping({"/assign_user_role", "/{adminId:\\d+}/assign_user_role"})
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
                                      @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,

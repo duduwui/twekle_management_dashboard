@@ -199,10 +199,10 @@ public class Admin {
                 }
             }
         }
-        if (roles != null) {
+        if (roles != null && !roles.isEmpty()) {
             return roles.stream().anyMatch(r -> r.isCanRead() || r.isCanCreate() || r.isCanUpdate() || r.isCanDelete());
         }
-        return true; // read-only is default for all admins
+        return false;
     }
 
     /** True if user can update (write notes/photos, toggle completion) on follow-ups. */

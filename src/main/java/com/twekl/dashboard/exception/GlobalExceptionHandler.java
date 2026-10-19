@@ -59,80 +59,70 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    private boolean isHtmlRequest(HttpServletRequest request) {
+        if (request == null) return false;
+        String accept = request.getHeader("Accept");
+        String requestedWith = request.getHeader("X-Requested-With");
+        String uri = request.getRequestURI();
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) return false;
+        if (uri != null && (uri.contains("/paged") || uri.contains("/data") || uri.contains("/stats") || uri.endsWith(".json"))) return false;
+        return accept != null && accept.contains("text/html");
+    }
+
+    private Object buildErrorResponse(HttpStatus status, String error, String message, HttpServletRequest request) {
+        if (isHtmlRequest(request)) {
+            org.springframework.web.servlet.ModelAndView mav = new org.springframework.web.servlet.ModelAndView("administration/error");
+            mav.setStatus(status);
+            mav.addObject("status", status.value());
+            mav.addObject("error", error);
+            mav.addObject("message", message);
+            mav.addObject("path", request.getRequestURI());
+            return mav;
+        }
+        ErrorResponse errorResponse = new ErrorResponse(status.value(), error, message, request.getRequestURI());
+        return ResponseEntity.status(status).body(errorResponse);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    public Object handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    public Object handleBadRequest(BadRequestException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    public Object handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
     }
 
     @ExceptionHandler({
         AuthenticationException.class,
         AuthenticationCredentialsNotFoundException.class
     })
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(Exception ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    public Object handleAuthenticationException(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request);
     }
 
     @ExceptionHandler({
         SecurityException.class,
         AccessDeniedException.class
     })
-    public ResponseEntity<ErrorResponse> handleSecurityException(Exception ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.FORBIDDEN.value(),
-                "Forbidden",
-                ex.getMessage() != null ? ex.getMessage() : "Access denied",
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    public Object handleSecurityException(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden",
+                ex.getMessage() != null ? ex.getMessage() : "Access denied", request);
     }
 
     @ExceptionHandler({NoResourceFoundException.class, org.springframework.web.servlet.NoHandlerFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNotFound(Exception ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                "The requested resource was not found: " + request.getRequestURI(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    public Object handleNotFound(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found",
+                "The requested resource was not found: " + request.getRequestURI(), request);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+    public Object handleGenericException(Exception ex, HttpServletRequest request) {
         // Check if this is a broken-pipe / client-abort wrapped in another exception
         Throwable cause = ex;
         while (cause != null) {
@@ -145,12 +135,7 @@ public class GlobalExceptionHandler {
             cause = cause.getCause();
         }
         log.error("Unhandled exception processing request to {}", request.getRequestURI(), ex);
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected internal error occurred",
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "An unexpected internal error occurred", request);
     }
 }

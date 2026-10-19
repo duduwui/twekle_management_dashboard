@@ -79,7 +79,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.save(preset);
     }
 
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary"}, allEntries = true)
+    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
     public TimeFilterPreset updatePreset(Long presetId, TimeFilterPreset updated) {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
@@ -95,7 +95,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.save(preset);
     }
 
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary"}, allEntries = true)
+    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
     public TimeFilterPreset toggleStatus(Long presetId) {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
@@ -104,7 +104,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.save(preset);
     }
 
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary"}, allEntries = true)
+    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
     public void deletePreset(Long presetId) {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));

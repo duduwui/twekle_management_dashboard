@@ -95,24 +95,7 @@ public class CustomerGeneratorService {
         { "Modular Heavy-Duty L-Shaped Workstation", "380" }
     };
 
-    private static final String[] POSITIVE_NOTES = {
-        "Customer confirmed receipt and is very satisfied with quality.",
-        "Followed up via WhatsApp, confirmed all items delivered on time.",
-        "Customer commended the fast delivery and professional packaging.",
-        "Staff assisted customer with device setup. Highly satisfied.",
-        "Confirmed receipt, customer stated they will order again soon."
-    };
 
-    private static final String[] NEUTRAL_NOTES = {
-        "Delivery took slightly longer than expected due to courier, but received.",
-        "Customer requested an extra invoice copy via email; sent successfully.",
-        "Package arrived in good condition; customer is testing functionality."
-    };
-
-    private static final String[] UNSATISFIED_NOTES = {
-        "Courier arrived 2 hours late. Customer expressed slight dissatisfaction.",
-        "Customer asked for clarification on warranty terms."
-    };
 
     @Autowired
     public CustomerGeneratorService(
@@ -274,51 +257,39 @@ public class CustomerGeneratorService {
                     CustomerOrder savedOrder = orderRepository.save(order);
                     totalOrdersCreated++;
 
-                    // Generate milestone checks for this order
-                    for (TimeFilterPreset preset : activePresets) {
+                    // Schedule milestone checks for this order based on realistic progression
+                    long orderAgeHours = Duration.between(orderDate, now).toHours();
+                    for (int pIdx = 0; pIdx < activePresets.size(); pIdx++) {
+                        TimeFilterPreset preset = activePresets.get(pIdx);
+                        long durationHours = calculateDurationInHours(preset.getDurationValue(), preset.getDurationUnit());
+
+                        // An order is only scheduled for a milestone if it is the first milestone (e.g. 24h)
+                        // OR if the order has actually aged enough to reach or approach this milestone window.
+                        // Orders placed today will NOT have far-future milestones (30 days, 60 days) prematurely scheduled!
+                        boolean isFirstMilestone = (pIdx == 0 || durationHours <= 24);
+                        boolean hasReachedMilestone = isFirstMilestone || (orderAgeHours >= (durationHours * 0.4));
+                        if (!hasReachedMilestone) {
+                            continue; // Skip future milestones that the order hasn't reached yet
+                        }
+
                         OrderFollowupCheck check = new OrderFollowupCheck(savedOrder, preset);
                         check.setCreatedAt(orderDate);
                         check.setUpdatedAt(orderDate);
 
                         // Calculate target deadline
-                        long durationHours = calculateDurationInHours(preset.getDurationValue(), preset.getDurationUnit());
                         Instant targetDeadline = orderDate.plus(durationHours, ChronoUnit.HOURS);
 
-                        // If the milestone deadline is in the past (> 2 hours ago), complete it realistically
+                        // If the milestone deadline is in the past (> 2 hours ago), it was completed previously
                         if (targetDeadline.isBefore(now.minus(2, ChronoUnit.HOURS))) {
                             check.setCompleted(true);
                             check.setStatus("COMPLETED");
                             check.setCheckedBy(isOrganization ? "Account Manager" : "Customer Support");
                             check.setCompletedDate(targetDeadline.plus(ThreadLocalRandom.current().nextInt(15, 90), ChronoUnit.MINUTES));
                             check.setCheckedAt(check.getCompletedDate());
-
-                            // Realistic satisfaction: 80% SATISFIED, 15% NEUTRAL, 5% UNSATISFIED
-                            int satRoll = ThreadLocalRandom.current().nextInt(100);
-                            int rating;
-                            String note;
-                            if (satRoll < 80) {
-                                check.setSatisfaction("SATISFIED");
-                                rating = ThreadLocalRandom.current().nextInt(4, 6); // 4 or 5
-                                note = POSITIVE_NOTES[ThreadLocalRandom.current().nextInt(POSITIVE_NOTES.length)];
-                            } else if (satRoll < 95) {
-                                check.setSatisfaction("NEUTRAL");
-                                rating = 3;
-                                note = NEUTRAL_NOTES[ThreadLocalRandom.current().nextInt(NEUTRAL_NOTES.length)];
-                            } else {
-                                check.setSatisfaction("UNSATISFIED");
-                                rating = ThreadLocalRandom.current().nextInt(1, 3); // 1 or 2
-                                note = UNSATISFIED_NOTES[ThreadLocalRandom.current().nextInt(UNSATISFIED_NOTES.length)];
-                            }
-                            check.setNotes(note);
-
-                            // Also save CustomerFeedback record for satisfaction reporting
-                            CustomerFeedback feedback = new CustomerFeedback(savedCustomer, savedOrder, rating, note);
-                            feedback.setFeedbackDate(check.getCompletedDate());
-                            feedbackRepository.save(feedback);
-                            totalFeedbacksCreated++;
-
+                            check.setNotes("");
+                            check.setSatisfaction(null);
                         } else {
-                            // Check is currently pending or approaching
+                            // Check is currently pending or approaching in staff queue
                             check.setCompleted(false);
                             if (targetDeadline.isBefore(now)) {
                                 check.setStatus("OVERDUE");

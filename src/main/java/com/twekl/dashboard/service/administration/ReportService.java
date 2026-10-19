@@ -87,10 +87,10 @@ public class ReportService {
                 : (cutoff == null ? orderRepository.count() : orderRepository.countByOrderDateAfter(cutoff));
 
         List<Customer> allCustomers = hasDateRange
-                ? customerRepository.findByLastOrderDateBetween(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 500, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")))
+                ? customerRepository.findByLastOrderDateBetween(startDate, rangeEnd, org.springframework.data.domain.PageRequest.of(0, 100, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate")))
                 : (cutoff == null
-                    ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 500, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
-                    : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 500, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate"))));
+                    ? customerRepository.findAll(org.springframework.data.domain.PageRequest.of(0, 100, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))).getContent()
+                    : customerRepository.findByLastOrderDateAfter(cutoff, org.springframework.data.domain.PageRequest.of(0, 100, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastOrderDate"))));
 
         List<Long> customerIds = allCustomers.stream().map(Customer::getId).filter(Objects::nonNull).toList();
         List<CustomerOrder> filteredOrders = customerIds.isEmpty() ? Collections.emptyList() : orderRepository.findByCustomerIds(customerIds);
@@ -158,22 +158,6 @@ public class ReportService {
             milestoneList.add(m);
         }
 
-        for (Map.Entry<String, long[]> entry : dbMilestoneCounts.entrySet()) {
-            if (!matchedPresets.contains(entry.getKey())) {
-                long tot = entry.getValue()[0];
-                long comp = entry.getValue()[1];
-                long pend = entry.getValue()[2];
-                double pct = tot > 0 ? Math.round(((double) comp / tot * 1000.0)) / 10.0 : 0.0;
-
-                Map<String, Object> m = new LinkedHashMap<>();
-                m.put("presetName", entry.getKey());
-                m.put("total", tot);
-                m.put("completed", comp);
-                m.put("pending", pend);
-                m.put("completionRate", pct);
-                milestoneList.add(m);
-            }
-        }
 
         // Summary follow-up metrics across entire database
         double completionRate = totalChecks > 0 ? Math.round(((double) completedChecks / totalChecks * 1000.0)) / 10.0 : 0.0;

@@ -35,6 +35,9 @@ public class FollowupService {
     private final OrderFollowupCheckRepository followupCheckRepository;
     private final TimeFilterPresetRepository timeFilterPresetRepository;
 
+    @Autowired(required = false)
+    private org.springframework.cache.CacheManager cacheManager;
+
     @Autowired
     public FollowupService(final CustomerRepository customerRepository,
                            final CustomerOrderRepository orderRepository,
@@ -46,7 +49,29 @@ public class FollowupService {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
     }
 
-    @Transactional(readOnly = true)
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay = 30000)
+    @Transactional
+    public void scheduledSyncOverdueChecks() {
+        syncOverdueStatuses();
+    }
+
+    @Transactional
+    public void syncOverdueStatuses() {
+        try {
+            int overdueUpdated = followupCheckRepository.syncOverdueChecks();
+            int pendingUpdated = followupCheckRepository.syncPendingChecks();
+            if ((overdueUpdated > 0 || pendingUpdated > 0) && cacheManager != null) {
+                for (String cacheName : List.of("dashboardSummary", "customerStats", "followupSummaries")) {
+                    var cache = cacheManager.getCache(cacheName);
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    @Transactional
     public org.springframework.data.domain.Page<CustomerFollowupSummary> findPagedSummaries(
             String timeFilter,
             String statusFilter,
@@ -55,7 +80,7 @@ public class FollowupService {
         return findPagedSummaries(timeFilter, statusFilter, search, null, null, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public org.springframework.data.domain.Page<CustomerFollowupSummary> findPagedSummaries(
             String timeFilter,
             String statusFilter,
@@ -63,6 +88,8 @@ public class FollowupService {
             Instant dateFrom,
             Instant dateTo,
             org.springframework.data.domain.Pageable pageable) {
+
+        syncOverdueStatuses();
 
         Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
         String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;

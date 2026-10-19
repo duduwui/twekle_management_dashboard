@@ -162,8 +162,13 @@ public class CustomerService {
         return getStats(null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> getStats(List<CustomerFollowupSummary> summaries) {
+        try {
+            followupCheckRepository.syncOverdueChecks();
+            followupCheckRepository.syncPendingChecks();
+        } catch (Exception ignored) {}
+
         long totalCustomers = customerRepository.count();
         long totalOrders = orderRepository.count();
         Instant now = Instant.now();

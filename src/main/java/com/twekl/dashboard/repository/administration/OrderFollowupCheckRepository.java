@@ -149,4 +149,32 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "FROM ORDER_FOLLOWUP_CHECKS c " +
            "WHERE (:startDate IS NULL OR (c.CREATED_AT >= :startDate AND c.CREATED_AT <= :endDate))", nativeQuery = true)
     List<Object[]> getSatisfactionCountsCombined(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
+                   "SET ch.STATUS = 'OVERDUE' " +
+                   "WHERE ch.COMPLETED = 0 AND ch.STATUS != 'OVERDUE' " +
+                   "  AND (CASE " +
+                   "        WHEN ch.DURATION_UNIT = 'HOURS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE HOUR) " +
+                   "        WHEN ch.DURATION_UNIT = 'DAYS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE DAY) " +
+                   "        WHEN ch.DURATION_UNIT = 'WEEKS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL (ch.DURATION_VALUE * 7) DAY) " +
+                   "        WHEN ch.DURATION_UNIT = 'MONTHS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE MONTH) " +
+                   "        ELSE DATE_ADD(o.ORDER_DATE, INTERVAL ch.TARGET_DAYS DAY) " +
+                   "      END) < UTC_TIMESTAMP()", nativeQuery = true)
+    int syncOverdueChecks();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
+                   "SET ch.STATUS = 'PENDING' " +
+                   "WHERE ch.COMPLETED = 0 AND ch.STATUS = 'OVERDUE' " +
+                   "  AND (CASE " +
+                   "        WHEN ch.DURATION_UNIT = 'HOURS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE HOUR) " +
+                   "        WHEN ch.DURATION_UNIT = 'DAYS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE DAY) " +
+                   "        WHEN ch.DURATION_UNIT = 'WEEKS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL (ch.DURATION_VALUE * 7) DAY) " +
+                   "        WHEN ch.DURATION_UNIT = 'MONTHS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE MONTH) " +
+                   "        ELSE DATE_ADD(o.ORDER_DATE, INTERVAL ch.TARGET_DAYS DAY) " +
+                   "      END) >= UTC_TIMESTAMP()", nativeQuery = true)
+    int syncPendingChecks();
 }

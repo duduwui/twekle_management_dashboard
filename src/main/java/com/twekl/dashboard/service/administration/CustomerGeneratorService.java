@@ -310,6 +310,11 @@ public class CustomerGeneratorService {
             }
         }
 
+        try {
+            followupCheckRepository.syncOverdueChecks();
+            followupCheckRepository.syncPendingChecks();
+        } catch (Exception ignored) {}
+
         // Evict all caches so reports, dashboards, and follow-ups reflect new data instantly
         evictAllCaches();
 

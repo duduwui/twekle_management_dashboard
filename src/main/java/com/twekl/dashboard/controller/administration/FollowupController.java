@@ -44,8 +44,8 @@ public class FollowupController {
                 .orElse(false);
     }
 
-    @GetMapping
-    public String showFollowups(Model model) {
+    @GetMapping({"", "/", "/orders/{customerId:\\d+}", "/feedback/{customerId:\\d+}"})
+    public String showFollowups(@PathVariable(value = "customerId", required = false) Long customerId, Model model) {
         model.addAttribute("activeTab", "followups");
         org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> initialPage =
                 followupService.findPagedSummaries("ALL", "ALL", null,
@@ -56,6 +56,9 @@ public class FollowupController {
         model.addAttribute("currentPage", 1);
         model.addAttribute("pageSize", 40);
         model.addAttribute("presets", timeFilterService.findAll());
+        if (customerId != null) {
+            model.addAttribute("targetCustomerId", customerId);
+        }
         return "administration/followup/followups";
     }
 
@@ -155,7 +158,7 @@ public class FollowupController {
         return ResponseEntity.ok(ApiResponse.success("Follow-up completed successfully", check));
     }
 
-    @GetMapping(value = {"/orders/{orderId:\\d+}", "/orders/{orderId:\\d+}/checks"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/orders/{orderId:\\d+}/checks", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderChecks(@PathVariable("orderId") Long orderId) {
         return ResponseEntity.ok(ApiResponse.success(followupService.findChecksByOrderId(orderId)));

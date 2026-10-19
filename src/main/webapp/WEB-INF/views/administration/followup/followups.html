@@ -117,7 +117,6 @@
                                         <span class="milestone-countdown overdue" ng-if="cust.nextPendingMinutesLeft != null">
                                             {{ getLiveCountdown(cust) }}
                                         </span>
-                                        <span class="milestone-arrow">➔</span>
                                     </button>
                                     <!-- Idle / Not Due Yet -->
                                     <button type="button"
@@ -129,7 +128,6 @@
                                         <span class="milestone-countdown upcoming" ng-if="cust.nextPendingMinutesLeft != null && cust.nextPendingMinutesLeft > 0">
                                             {{ getLiveCountdown(cust) }} left
                                         </span>
-                                        <span class="milestone-arrow">➔</span>
                                     </button>
                                     <span ng-if="!cust.totalOrders || cust.totalOrders === 0" style="color: var(--text-muted); font-weight: 700;">-</span>
                                 </td>

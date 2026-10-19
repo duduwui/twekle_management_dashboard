@@ -304,7 +304,7 @@ public class ReportService {
                 if (totalCatalogCustomers == 0L) totalCatalogCustomers = 1L;
 
                 Map<String, Object> vipMap = new LinkedHashMap<>();
-                vipMap.put("tierName", "High Volume (5+)");
+                vipMap.put("tierName", "High Volume");
                 vipMap.put("tierKey", "HIGH_VOLUME");
                 vipMap.put("customerCount", vipCnt);
                 vipMap.put("totalOrders", vipOrders);
@@ -316,7 +316,7 @@ public class ReportService {
                 loyaltyTierList.add(vipMap);
 
                 Map<String, Object> freqMap = new LinkedHashMap<>();
-                freqMap.put("tierName", "Regular (3-4)");
+                freqMap.put("tierName", "Regular");
                 freqMap.put("tierKey", "REGULAR");
                 freqMap.put("customerCount", freqCnt);
                 freqMap.put("totalOrders", freqOrders);
@@ -328,7 +328,7 @@ public class ReportService {
                 loyaltyTierList.add(freqMap);
 
                 Map<String, Object> retMap = new LinkedHashMap<>();
-                retMap.put("tierName", "Returning (2)");
+                retMap.put("tierName", "Returning");
                 retMap.put("tierKey", "RETURNING");
                 retMap.put("customerCount", retCnt);
                 retMap.put("totalOrders", retOrders);
@@ -340,7 +340,7 @@ public class ReportService {
                 loyaltyTierList.add(retMap);
 
                 Map<String, Object> oneMap = new LinkedHashMap<>();
-                oneMap.put("tierName", "First-Time (1)");
+                oneMap.put("tierName", "First-Time");
                 oneMap.put("tierKey", "FIRST_TIME");
                 oneMap.put("customerCount", oneCnt);
                 oneMap.put("totalOrders", oneOrders);
@@ -467,16 +467,16 @@ public class ReportService {
             String tier;
             String tierKey;
             if (totalOrders >= 5) {
-                tier = "High Volume (5+)";
+                tier = "High Volume";
                 tierKey = "HIGH_VOLUME";
             } else if (totalOrders >= 3) {
-                tier = "Regular (3-4)";
+                tier = "Regular";
                 tierKey = "REGULAR";
             } else if (totalOrders == 2) {
-                tier = "Returning (2)";
+                tier = "Returning";
                 tierKey = "RETURNING";
             } else {
-                tier = "First-Time (1)";
+                tier = "First-Time";
                 tierKey = "FIRST_TIME";
             }
 

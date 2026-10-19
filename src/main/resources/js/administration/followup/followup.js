@@ -118,9 +118,34 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         }
 
         if (window.location.search) {
-            var match = window.location.search.match(/status=([^&]+)/i);
-            if (match && match[1]) {
-                $scope.customerFilters.followupStatus = decodeURIComponent(match[1]).toUpperCase();
+            try {
+                var searchParams = new URLSearchParams(window.location.search);
+                var statusParam = searchParams.get('status');
+                if (statusParam) {
+                    $scope.customerFilters.followupStatus = statusParam.toUpperCase();
+                }
+                var custIdParam = searchParams.get('customerId') || searchParams.get('id');
+                var viewParam = searchParams.get('view') || 'orders';
+                if (custIdParam) {
+                    var targetId = parseInt(custIdParam, 10);
+                    if (targetId) {
+                        $scope.customerView = viewParam;
+                        pendingTargetCustomerId = targetId;
+                        FollowupService.getById(targetId).then(function(res) {
+                            var c = res.data ? (res.data.data || res.data) : null;
+                            if (c) {
+                                $scope.selectedCustomer = c;
+                            }
+                        });
+                        $scope.loadCustomerOrders(targetId);
+                    }
+                }
+                var searchParam = searchParams.get('search');
+                if (searchParam && !custIdParam) {
+                    $scope.customerFilters.search = searchParam;
+                }
+            } catch(e) {
+                console.warn('Error parsing search params', e);
             }
         }
     }
@@ -332,7 +357,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             $scope.customerOrders = list;
             if ($scope.expandedOrderId) {
                 $scope.loadOrderFollowups($scope.expandedOrderId);
-            } else if (list.length === 1) {
+            } else if (list.length > 0) {
                 $scope.expandedOrderId = list[0].id;
                 $scope.loadOrderFollowups(list[0].id);
             }

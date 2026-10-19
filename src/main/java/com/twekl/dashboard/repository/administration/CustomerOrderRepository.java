@@ -25,17 +25,6 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     @Query("SELECT o FROM CustomerOrder o WHERE o.customer.id = :customerId ORDER BY o.orderDate DESC")
     List<CustomerOrder> findByCustomerIdOrderByOrderDateDesc(@Param("customerId") Long customerId);
 
-    @Query("SELECT o FROM CustomerOrder o LEFT JOIN FETCH o.checks WHERE o.id = :orderId")
-    Optional<CustomerOrder> findWithChecksById(@Param("orderId") Long orderId);
-
-    @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.checks ORDER BY o.orderDate DESC")
-    List<CustomerOrder> findAllWithCustomerAndChecks();
-
-    @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.checks ORDER BY o.orderDate DESC")
-    List<CustomerOrder> findRecentOrdersWithCustomerAndChecks(org.springframework.data.domain.Pageable pageable);
-
-    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE (:cutoff IS NULL OR o.orderDate >= :cutoff) ORDER BY o.orderDate DESC, o.id DESC")
-    List<CustomerOrder> findRecentOrdersWithCustomer(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM CustomerOrder o")
     Double sumTotalRevenue();
@@ -51,11 +40,6 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM CustomerOrder o WHERE o.orderDate >= :startDate AND o.orderDate <= :endDate")
     Double sumRevenueByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE o.orderDate >= :startDate AND o.orderDate <= :endDate ORDER BY o.orderDate DESC, o.id DESC")
-    List<CustomerOrder> findRecentOrdersWithCustomerByDateRange(@Param("startDate") java.time.Instant startDate,
-                                                               @Param("endDate") java.time.Instant endDate,
-                                                               org.springframework.data.domain.Pageable pageable);
 
     @Query(value = "SELECT o.ITEMS_SUMMARY, COUNT(o.ID) as ord_cnt " +
            "FROM CUSTOMER_ORDERS o " +

@@ -57,11 +57,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
            "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')))")
     org.springframework.data.domain.Page<Customer> searchCustomersWithCutoff(@Param("query") String query, @Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
 
-    @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.orders o LEFT JOIN FETCH o.checks WHERE c.id = :id")
-    Optional<Customer> findWithOrdersAndChecksById(@Param("id") Long id);
-
-    @Query("SELECT DISTINCT c FROM Customer c LEFT JOIN FETCH c.orders o LEFT JOIN FETCH o.checks ORDER BY c.id DESC")
-    List<Customer> findAllWithOrdersAndChecks();
 
     @Query(value = "SELECT " +
            "SUM(CASE WHEN TOTAL_ORDERS >= 3 AND (LAST_ORDER_DATE IS NULL OR DATEDIFF(NOW(), LAST_ORDER_DATE) <= 90 OR TOTAL_ORDERS >= 4) THEN 1 ELSE 0 END), " +

@@ -44,7 +44,6 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                         <div>
                             <div style="font-size: 1.05rem; font-weight: 900; color: #0F172A;">Customer Order Frequency &amp; Loyalty Tiers</div>
-                            <div style="font-size: 0.8rem; color: #64748B; font-weight: 700;">Customer segmentation by repeat purchase frequency and retention behavior</div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -54,7 +53,7 @@
                                     <th>Loyalty Tier</th>
                                     <th class="nowrap" style="text-align: center;">Order Cadence</th>
                                     <th class="nowrap" style="text-align: center;">Customer Count</th>
-                                    <th class="nowrap" style="text-align: right;">Retention Status</th>
+                                    <th class="nowrap" style="text-align: right;">Distribution (%)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -73,7 +72,7 @@
                                         <strong style="color: #0F172A;" ng-bind="(tier.customerCount | number:0)"></strong>
                                     </td>
                                     <td class="nowrap" style="text-align: right;">
-                                        <span style="font-weight: 700; font-size: 0.88rem; color: #475569;" ng-bind="tier.retentionStatus"></span>
+                                        <strong style="color: #0F172A; font-size: 0.92rem;" ng-bind="(tier.customerShare != null ? (tier.customerShare | number:1) + '%' : '0.0%')"></strong>
                                     </td>
                                 </tr>
                             </tbody>

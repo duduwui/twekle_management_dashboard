@@ -46,14 +46,29 @@
                     </div>
                     <!-- Segmented Progress Bar -->
                     <div style="display: flex; height: 26px; border: 2px solid #000; border-radius: 6px; overflow: hidden; background: #E2E8F0;">
-                        <div style="background: #16A34A; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s;" ng-style="{'width': ((reportData.summary.satisfiedCount / reportData.summary.totalRated) * 100) + '%'}" title="Satisfied">
-                            {{ ((reportData.summary.satisfiedCount / reportData.summary.totalRated) * 100) | number:1 }}%
+                        <div style="background: #16A34A; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s; overflow: hidden; white-space: nowrap;"
+                             ng-if="reportData.summary.satisfiedCount > 0"
+                             ng-style="{'width': ((reportData.summary.satisfiedCount / reportData.summary.totalRated) * 100) + '%'}"
+                             title="Satisfied">
+                            <span ng-if="((reportData.summary.satisfiedCount / reportData.summary.totalRated) * 100) >= 7">
+                                {{ ((reportData.summary.satisfiedCount / reportData.summary.totalRated) * 100) | number:1 }}%
+                            </span>
                         </div>
-                        <div style="background: #64748B; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s;" ng-style="{'width': ((reportData.summary.neutralCount / reportData.summary.totalRated) * 100) + '%'}" title="Neutral">
-                            {{ ((reportData.summary.neutralCount / reportData.summary.totalRated) * 100) | number:1 }}%
+                        <div style="background: #64748B; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s; overflow: hidden; white-space: nowrap;"
+                             ng-if="reportData.summary.neutralCount > 0"
+                             ng-style="{'width': ((reportData.summary.neutralCount / reportData.summary.totalRated) * 100) + '%'}"
+                             title="Neutral">
+                            <span ng-if="((reportData.summary.neutralCount / reportData.summary.totalRated) * 100) >= 7">
+                                {{ ((reportData.summary.neutralCount / reportData.summary.totalRated) * 100) | number:1 }}%
+                            </span>
                         </div>
-                        <div style="background: #DC2626; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s;" ng-style="{'width': ((reportData.summary.unsatisfiedCount / reportData.summary.totalRated) * 100) + '%'}" title="Unsatisfied">
-                            {{ ((reportData.summary.unsatisfiedCount / reportData.summary.totalRated) * 100) | number:1 }}%
+                        <div style="background: #DC2626; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s; overflow: hidden; white-space: nowrap;"
+                             ng-if="reportData.summary.unsatisfiedCount > 0"
+                             ng-style="{'width': ((reportData.summary.unsatisfiedCount / reportData.summary.totalRated) * 100) + '%'}"
+                             title="Unsatisfied">
+                            <span ng-if="((reportData.summary.unsatisfiedCount / reportData.summary.totalRated) * 100) >= 7">
+                                {{ ((reportData.summary.unsatisfiedCount / reportData.summary.totalRated) * 100) | number:1 }}%
+                            </span>
                         </div>
                     </div>
                     <div style="display: flex; gap: 16px; margin-top: 8px; font-size: 0.8rem; font-weight: 800;">

@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -46,9 +47,15 @@ public class CustomerFeedback {
     @Column(name = "COMMENT", length = 1000)
     private String comment;
 
-    @CreationTimestamp
     @Column(name = "FEEDBACK_DATE", nullable = false)
     private Instant feedbackDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.feedbackDate == null) {
+            this.feedbackDate = Instant.now();
+        }
+    }
 
     public CustomerFeedback() {}
 

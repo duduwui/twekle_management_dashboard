@@ -202,8 +202,18 @@ public class CustomerGeneratorService {
                 String email = cleanName.length() > 20 ? cleanName.substring(0, 20) : cleanName;
                 email = email.replaceAll("^\\.+|\\.+$", "") + (ThreadLocalRandom.current().nextInt(10, 99)) + "@" + emailDomain;
 
-                // Random intake timestamp throughout that day
-                int minuteOffset = ThreadLocalRandom.current().nextInt(30, 1400);
+                // Stagger intake times dynamically across different hours and minutes so remaining times are diverse and unique
+                int minuteOffset;
+                if (dayOffset == 0) {
+                    // For today: distribute across the day from 15 minutes ago up to 28 hours ago
+                    // Some will have 23h left, some 18h left, some 6h left, some 45m left, some overdue
+                    double ratio = (double) i / Math.max(1, dailyCount - 1);
+                    int baseMinutes = (int) (15 + ratio * (28 * 60 - 30));
+                    int jitter = ThreadLocalRandom.current().nextInt(-18, 19);
+                    minuteOffset = Math.max(15, baseMinutes + jitter);
+                } else {
+                    minuteOffset = ThreadLocalRandom.current().nextInt(60, 1380);
+                }
                 Instant customerCreatedAt = dayBase.minus(minuteOffset, ChronoUnit.MINUTES);
 
                 Customer customer = new Customer();
@@ -342,6 +352,16 @@ public class CustomerGeneratorService {
         response.put("message", "Generated " + totalCustomersCreated + " customers and " + totalOrdersCreated + " orders across " + safeDays + " days.");
 
         return response;
+    }
+
+    @Transactional
+    public Map<String, Object> resetAndSeed(int count) {
+        feedbackRepository.deleteAllInBatch();
+        followupCheckRepository.deleteAllInBatch();
+        orderRepository.deleteAllInBatch();
+        customerRepository.deleteAllInBatch();
+        evictAllCaches();
+        return generateBatch(1, count, true);
     }
 
     private long calculateDurationInHours(Integer val, String unit) {

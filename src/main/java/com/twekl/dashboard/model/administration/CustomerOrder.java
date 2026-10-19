@@ -44,9 +44,15 @@ public class CustomerOrder {
     @Column(name = "ORDER_STATUS", length = 20)
     private String orderStatus = "DELIVERED"; // PENDING, DELIVERED, CANCELLED
 
-    @CreationTimestamp
     @Column(name = "ORDER_DATE", nullable = false)
     private Instant orderDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.orderDate == null) {
+            this.orderDate = Instant.now();
+        }
+    }
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore

@@ -182,6 +182,13 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success("Daily customer intake generated successfully", result));
     }
 
+    @PostMapping(value = "/reset-and-seed", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resetAndSeed(
+            @RequestParam(value = "count", defaultValue = "40") int count) {
+        Map<String, Object> result = customerGeneratorService.resetAndSeed(count);
+        return ResponseEntity.ok(ApiResponse.success("Catalog reset and cleanly seeded with diverse staggered intake times", result));
+    }
+
     @PutMapping(value = "/{customerId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Customer>> updateCustomer(@PathVariable("customerId") Long customerId,
                                                                 @RequestBody Customer customer) {

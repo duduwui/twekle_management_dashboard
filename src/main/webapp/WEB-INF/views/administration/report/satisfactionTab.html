@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
             <!-- REPORT TAB 2: CUSTOMER SATISFACTION & NOTES -->
-            <div th:fragment="satisfactionTab" ng-show="reportSubTab === 'satisfaction'" th:style="${reportSubTab == 'satisfaction' ? 'display: flex; flex-direction: column; gap: 16px;' : 'display: none;'}" style="display: none;">
+            <div th:fragment="satisfactionTab" class="report-tab-pane" th:classappend="${reportSubTab == 'satisfaction'} ? '' : 'ng-hide'" ng-show="reportSubTab === 'satisfaction'">
                 <div class="comic-filter-toolbar">
                     <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
                         <span class="filter-date-label">From:</span>
@@ -30,7 +30,7 @@
                         <div class="filter-search-box" style="min-width: 210px;">
                             <input type="search" class="comic-search-bar" placeholder="Search customer, order, note text..." ng-model="reportFilters.searchNotes">
                         </div>
-                        <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Satisfaction to Excel">
+                        <button th:if="${@portalAccess.canExportReports()}" type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Satisfaction to Excel">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export Excel
                         </button>
                     </div>
@@ -39,13 +39,13 @@
 
 
                 <!-- Visual Sentiment Distribution Spectrum Bar -->
-                <div style="background: #FFFFFF; border: 2.5px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 8px; padding: 16px;" ng-if="reportData.summary.totalRated > 0">
+                <div style="background: #FFFFFF; border: 1px solid var(--border-color); box-shadow: var(--shadow-card); border-radius: var(--radius-md); padding: 16px;" ng-if="reportData.summary.totalRated > 0">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <strong style="font-size: 0.95rem; color: #0F172A;">Customer Feedback Sentiment Distribution</strong>
                         <span style="font-size: 0.82rem; color: #64748B; font-weight: 700;">{{ (reportData.summary.totalRated || 0).toLocaleString() }} Total Responses</span>
                     </div>
                     <!-- Segmented Progress Bar -->
-                    <div style="display: flex; height: 26px; border: 2px solid #000; border-radius: 6px; overflow: hidden; background: #E2E8F0;">
+                    <div style="display: flex; height: 26px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden; background: #E2E8F0; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
                         <div style="background: #16A34A; color: #FFF; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: width 0.3s; overflow: hidden; white-space: nowrap;"
                              ng-if="reportData.summary.satisfiedCount > 0"
                              ng-style="{'width': ((reportData.summary.satisfiedCount / reportData.summary.totalRated) * 100) + '%'}"
@@ -107,7 +107,7 @@
                                 </td>
                                 <td class="nowrap" style="min-width: 90px;">
                                     <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;" ng-if="getCheckImages(n).length > 0">
-                                        <img ng-repeat="img in getCheckImages(n) track by $index" ng-src="{{img}}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1.5px solid #000; cursor: pointer;" ng-click="previewImage(img)" title="Click to view full photo" alt="Photo">
+                                        <img ng-repeat="img in getCheckImages(n) track by $index" ng-src="{{img}}" style="width: 36px; height: 36px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer;" ng-click="previewImage(img)" title="Click to view full photo" alt="Photo">
                                     </div>
                                     <span ng-if="getCheckImages(n).length === 0" style="color: #94A3B8; font-size: 0.8rem;">-</span>
                                 </td>

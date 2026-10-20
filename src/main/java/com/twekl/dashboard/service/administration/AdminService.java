@@ -78,29 +78,37 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public boolean hasPermission(Admin admin, String moduleKey, String action) {
-        if (admin == null || moduleKey == null || action == null) return false;
+        if (admin == null || action == null) return false;
         if (admin.isSuperAdmin()) return true;
+
+        String actUpper = action.trim().toUpperCase();
+        if (admin.hasAction(actUpper)) {
+            return true;
+        }
+
+        if (moduleKey == null) return false;
+
         if (admin.getPermissions() != null && !admin.getPermissions().isEmpty()) {
             for (AdminPermission p : admin.getPermissions()) {
                 if (p.getModuleKey().equalsIgnoreCase(moduleKey)) {
-                    return switch (action.toUpperCase()) {
+                    return switch (actUpper) {
                         case "CREATE" -> p.isCanCreate();
                         case "READ" -> p.isCanRead();
                         case "UPDATE" -> p.isCanUpdate();
                         case "DELETE" -> p.isCanDelete();
-                        default -> false;
+                        default -> p.hasAction(actUpper);
                     };
                 }
             }
         }
         if (admin.getRoles() != null && !admin.getRoles().isEmpty()) {
             for (Role role : admin.getRoles()) {
-                boolean allowed = switch (action.toUpperCase()) {
+                boolean allowed = switch (actUpper) {
                     case "CREATE" -> role.isCanCreate();
                     case "READ" -> role.isCanRead();
                     case "UPDATE" -> role.isCanUpdate();
                     case "DELETE" -> role.isCanDelete();
-                    default -> false;
+                    default -> role.hasAction(actUpper);
                 };
                 if (allowed) return true;
             }
@@ -131,7 +139,7 @@ public class AdminService {
         if (req.getPermissions() != null && !req.getPermissions().isEmpty()) {
             for (AdminPermissionDto dto : req.getPermissions()) {
                 AdminPermission p = new AdminPermission(admin, dto.getModuleKey(), dto.getModuleNameEn(),
-                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete());
+                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete(), dto.getActions());
                 admin.getPermissions().add(p);
             }
         } else {
@@ -161,7 +169,7 @@ public class AdminService {
             admin.getPermissions().clear();
             for (AdminPermissionDto dto : req.getPermissions()) {
                 AdminPermission p = new AdminPermission(admin, dto.getModuleKey(), dto.getModuleNameEn(),
-                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete());
+                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete(), dto.getActions());
                 admin.getPermissions().add(p);
             }
         }

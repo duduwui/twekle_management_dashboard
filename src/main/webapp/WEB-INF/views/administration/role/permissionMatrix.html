@@ -7,7 +7,7 @@
         <input type="hidden" id="formRoleId" name="roleIds" value="">
 
         <!-- Permissions Header for Selected Staff Member -->
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 14px 20px; background: #EEF2FF; border: 2px solid var(--border-black); border-radius: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 14px 20px; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: var(--radius-md);">
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="comic-tag tag-primary" style="font-weight: 800; font-size: 0.82rem;">PERMISSIONS FOR:</span>
                 <strong id="selectedAdminDisplay" style="font-size: 1.15rem; color: #1E1B4B;">-</strong>
@@ -23,223 +23,270 @@
             </div>
         </div>
 
-        <!-- Module Permissions Grid (3 Core Modules) -->
-        <div style="margin-bottom: 16px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                <div style="font-size: 1.05rem; font-weight: 900; color: #000000;">
-                    Module Permissions
-                </div>
-                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
-                    Customize individual access switches or use quick action buttons below.
-                </span>
-            </div>
+        <!-- Super Admin Notice Banner -->
+        <div id="superAdminNoticeBanner" style="display: none; margin-bottom: 18px; padding: 12px 18px; background: #FDF4FF; border: 1px solid #F0ABFC; border-radius: var(--radius-md); color: #86198F; font-size: 0.88rem; font-weight: 700;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            This account is a Super Administrator and holds unrestricted access across all system actions, tabs, and export operations.
+        </div>
 
+        <!-- Action Permissions Grid (3 Clean Cards, Zero Scrollbars) -->
+        <div style="margin-bottom: 16px;">
             <div class="module-cards-grid">
                 
-                <!-- MODULE 0: Administration & Staff -->
-                <div class="comic-module-card" id="card_ADMIN_MANAGEMENT">
-                    <input type="hidden" name="permissions[0].moduleKey" value="ADMIN_MANAGEMENT">
-                    <input type="hidden" name="permissions[0].moduleNameEn" value="Administration & Staff">
-
-                    <div class="module-card-header">
-                        <div class="module-title-group">
-                            <h3 class="module-title">Administration &amp; Staff</h3>
-                        </div>
-                        <span class="module-tag" style="background-color: #E2E8F0;">ADMIN_MANAGEMENT</span>
-                    </div>
-
-                    <p class="module-desc">
-                        Manage administrator accounts, security credentials, role assignments, and system privilege matrix.
-                    </p>
-
-                    <div class="crud-switches-box">
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_create">C</span>
-                                <span>Create</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[0].canCreate" value="true" id="switch_ADMIN_MANAGEMENT_create" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'create')">
-                                <span class="comic-slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge active" id="badge_ADMIN_MANAGEMENT_read">R</span>
-                                <span>Read</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[0].canRead" value="true" id="switch_ADMIN_MANAGEMENT_read" checked onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'read')">
-                                <span class="comic-slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_update">U</span>
-                                <span>Update</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[0].canUpdate" value="true" id="switch_ADMIN_MANAGEMENT_update" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'update')">
-                                <span class="comic-slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_ADMIN_MANAGEMENT_delete">D</span>
-                                <span>Delete</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[0].canDelete" value="true" id="switch_ADMIN_MANAGEMENT_delete" onchange="syncModuleSwitch('ADMIN_MANAGEMENT', 'delete')">
-                                <span class="comic-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="module-quick-actions">
-                        <button type="button" class="preset-btn" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'full')">Full CRUD</button>
-                        <button type="button" class="preset-btn" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'readonly')">Read Only</button>
-                        <button type="button" class="preset-btn-danger" onclick="applyModulePreset('ADMIN_MANAGEMENT', 'revoke')">Revoke</button>
-                    </div>
-                </div>
-
-                <!-- MODULE 1: Customer Follow-ups -->
+                <!-- CARD 1: Customer Follow-ups -->
                 <div class="comic-module-card" id="card_CUSTOMER_FOLLOWUP">
-                    <input type="hidden" name="permissions[1].moduleKey" value="CUSTOMER_FOLLOWUP">
-                    <input type="hidden" name="permissions[1].moduleNameEn" value="Customer Follow-ups">
+                    <input type="hidden" name="permissions[0].moduleKey" value="CUSTOMER_FOLLOWUP">
+                    <input type="hidden" name="permissions[0].moduleNameEn" value="Customer Follow-ups">
+                    <input type="hidden" id="actions_CUSTOMER_FOLLOWUP" name="permissions[0].actions" value="">
+                    <input type="hidden" id="canCreate_CUSTOMER_FOLLOWUP" name="permissions[0].canCreate" value="false">
+                    <input type="hidden" id="canRead_CUSTOMER_FOLLOWUP" name="permissions[0].canRead" value="true">
+                    <input type="hidden" id="canUpdate_CUSTOMER_FOLLOWUP" name="permissions[0].canUpdate" value="false">
+                    <input type="hidden" id="canDelete_CUSTOMER_FOLLOWUP" name="permissions[0].canDelete" value="false">
 
                     <div class="module-card-header">
-                        <div class="module-title-group">
-                            <h3 class="module-title">Customer Follow-ups</h3>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#35B89F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            <h3 style="font-size: 1.05rem; font-weight: 800; color: #0F172A; margin: 0;">Customer Follow-ups</h3>
                         </div>
-                        <span class="module-tag" style="background-color: #E2E8F0;">CUSTOMER_FOLLOWUP</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #64748B; background: #F1F5F9; padding: 3px 8px; border-radius: 9999px;">6 actions</span>
                     </div>
 
-                    <p class="module-desc">
-                        Customer directory, sales order timelines, checkpoint checklists, note documentation &amp; photo attachments.
-                    </p>
-
-                    <div class="crud-switches-box">
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_create">C</span>
-                                <span>Create</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[1].canCreate" value="true" id="switch_CUSTOMER_FOLLOWUP_create" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'create')">
-                                <span class="comic-slider"></span>
+                    <div class="action-switches-box">
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                View Customer Directory
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="CUSTOMER_FOLLOWUP" data-action="CUSTOMER_VIEW_LIST" onchange="onActionCheckboxChanged('CUSTOMER_FOLLOWUP')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
 
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge active" id="badge_CUSTOMER_FOLLOWUP_read">R</span>
-                                <span>Read</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[1].canRead" value="true" id="switch_CUSTOMER_FOLLOWUP_read" checked onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'read')">
-                                <span class="comic-slider"></span>
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Open Log &amp; Milestones
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="CUSTOMER_FOLLOWUP" data-action="CUSTOMER_VIEW_LOG" onchange="onActionCheckboxChanged('CUSTOMER_FOLLOWUP')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
 
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_update">U</span>
-                                <span>Update</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[1].canUpdate" value="true" id="switch_CUSTOMER_FOLLOWUP_update" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'update')">
-                                <span class="comic-slider"></span>
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Toggle Checklist (&check;)
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="CUSTOMER_FOLLOWUP" data-action="CUSTOMER_CHECK_TOGGLE" onchange="onActionCheckboxChanged('CUSTOMER_FOLLOWUP')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
 
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_CUSTOMER_FOLLOWUP_delete">D</span>
-                                <span>Delete</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[1].canDelete" value="true" id="switch_CUSTOMER_FOLLOWUP_delete" onchange="syncModuleSwitch('CUSTOMER_FOLLOWUP', 'delete')">
-                                <span class="comic-slider"></span>
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Add Notes &amp; Feedback
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="CUSTOMER_FOLLOWUP" data-action="CUSTOMER_ADD_FEEDBACK" onchange="onActionCheckboxChanged('CUSTOMER_FOLLOWUP')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Upload Milestone Photos
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="CUSTOMER_FOLLOWUP" data-action="CUSTOMER_UPLOAD_PHOTOS" onchange="onActionCheckboxChanged('CUSTOMER_FOLLOWUP')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Export to Excel
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="CUSTOMER_FOLLOWUP" data-action="CUSTOMER_EXPORT_EXCEL" onchange="onActionCheckboxChanged('CUSTOMER_FOLLOWUP')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
                     </div>
 
                     <div class="module-quick-actions">
-                        <button type="button" class="preset-btn" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'full')">Full CRUD</button>
-                        <button type="button" class="preset-btn" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'readonly')">Read Only</button>
-                        <button type="button" class="preset-btn-danger" onclick="applyModulePreset('CUSTOMER_FOLLOWUP', 'revoke')">Revoke</button>
+                        <button type="button" class="soft-btn-pill" onclick="applyModuleActionPreset('CUSTOMER_FOLLOWUP', 'all')">All Actions</button>
+                        <button type="button" class="soft-btn-pill" onclick="applyModuleActionPreset('CUSTOMER_FOLLOWUP', 'readonly')">View Only</button>
+                        <button type="button" class="soft-btn-pill-danger" onclick="applyModuleActionPreset('CUSTOMER_FOLLOWUP', 'revoke')">Revoke</button>
                     </div>
                 </div>
 
-                <!-- MODULE 2: Reports & Analytics -->
+                <!-- CARD 2: Reports & Analytics -->
                 <div class="comic-module-card" id="card_REPORTS_INSIGHTS">
-                    <input type="hidden" name="permissions[2].moduleKey" value="REPORTS_INSIGHTS">
-                    <input type="hidden" name="permissions[2].moduleNameEn" value="Reports & Analytics">
+                    <input type="hidden" name="permissions[1].moduleKey" value="REPORTS_INSIGHTS">
+                    <input type="hidden" name="permissions[1].moduleNameEn" value="Reports & Analytics">
+                    <input type="hidden" id="actions_REPORTS_INSIGHTS" name="permissions[1].actions" value="">
+                    <input type="hidden" id="canCreate_REPORTS_INSIGHTS" name="permissions[1].canCreate" value="false">
+                    <input type="hidden" id="canRead_REPORTS_INSIGHTS" name="permissions[1].canRead" value="true">
+                    <input type="hidden" id="canUpdate_REPORTS_INSIGHTS" name="permissions[1].canUpdate" value="false">
+                    <input type="hidden" id="canDelete_REPORTS_INSIGHTS" name="permissions[1].canDelete" value="false">
 
                     <div class="module-card-header">
-                        <div class="module-title-group">
-                            <h3 class="module-title">Reports &amp; Analytics</h3>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#35B89F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            <h3 style="font-size: 1.05rem; font-weight: 800; color: #0F172A; margin: 0;">Reports &amp; Analytics</h3>
                         </div>
-                        <span class="module-tag" style="background-color: #E2E8F0;">REPORTS_INSIGHTS</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #64748B; background: #F1F5F9; padding: 3px 8px; border-radius: 9999px;">5 actions</span>
                     </div>
 
-                    <p class="module-desc">
-                        Operational milestone turnaround metrics, customer satisfaction feedback, product reviews, and period export.
-                    </p>
-
-                    <div class="crud-switches-box">
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_create">C</span>
-                                <span>Create</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[2].canCreate" value="true" id="switch_REPORTS_INSIGHTS_create" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'create')">
-                                <span class="comic-slider"></span>
+                    <div class="action-switches-box">
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Milestones Tab
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="REPORTS_INSIGHTS" data-action="REPORT_VIEW_MILESTONES" onchange="onActionCheckboxChanged('REPORTS_INSIGHTS')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
 
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge active" id="badge_REPORTS_INSIGHTS_read">R</span>
-                                <span>Read</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[2].canRead" value="true" id="switch_REPORTS_INSIGHTS_read" checked onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'read')">
-                                <span class="comic-slider"></span>
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Satisfaction Tab
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="REPORTS_INSIGHTS" data-action="REPORT_VIEW_SATISFACTION" onchange="onActionCheckboxChanged('REPORTS_INSIGHTS')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
 
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_update">U</span>
-                                <span>Update</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[2].canUpdate" value="true" id="switch_REPORTS_INSIGHTS_update" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'update')">
-                                <span class="comic-slider"></span>
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Product Distribution Tab
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="REPORTS_INSIGHTS" data-action="REPORT_VIEW_PRODUCTS" onchange="onActionCheckboxChanged('REPORTS_INSIGHTS')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
 
-                        <div class="crud-switch-row">
-                            <div class="crud-switch-label">
-                                <span class="crud-unified-badge" id="badge_REPORTS_INSIGHTS_delete">D</span>
-                                <span>Delete</span>
-                            </div>
-                            <label class="comic-switch">
-                                <input type="checkbox" name="permissions[2].canDelete" value="true" id="switch_REPORTS_INSIGHTS_delete" onchange="syncModuleSwitch('REPORTS_INSIGHTS', 'delete')">
-                                <span class="comic-slider"></span>
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Customer Details Tab
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="REPORTS_INSIGHTS" data-action="REPORT_VIEW_RETENTION" onchange="onActionCheckboxChanged('REPORTS_INSIGHTS')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Export Reports
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="REPORTS_INSIGHTS" data-action="REPORT_EXPORT_EXCEL" onchange="onActionCheckboxChanged('REPORTS_INSIGHTS')">
+                                <span class="modern-slider"></span>
                             </label>
                         </div>
                     </div>
 
                     <div class="module-quick-actions">
-                        <button type="button" class="preset-btn" onclick="applyModulePreset('REPORTS_INSIGHTS', 'full')">Full CRUD</button>
-                        <button type="button" class="preset-btn" onclick="applyModulePreset('REPORTS_INSIGHTS', 'readonly')">Read Only</button>
-                        <button type="button" class="preset-btn-danger" onclick="applyModulePreset('REPORTS_INSIGHTS', 'revoke')">Revoke</button>
+                        <button type="button" class="soft-btn-pill" onclick="applyModuleActionPreset('REPORTS_INSIGHTS', 'all')">All Reports</button>
+                        <button type="button" class="soft-btn-pill" onclick="applyModuleActionPreset('REPORTS_INSIGHTS', 'readonly')">View Only</button>
+                        <button type="button" class="soft-btn-pill-danger" onclick="applyModuleActionPreset('REPORTS_INSIGHTS', 'revoke')">Revoke</button>
+                    </div>
+                </div>
+
+                <!-- CARD 3: Administration & Staff -->
+                <div class="comic-module-card" id="card_ADMIN_MANAGEMENT">
+                    <input type="hidden" name="permissions[2].moduleKey" value="ADMIN_MANAGEMENT">
+                    <input type="hidden" name="permissions[2].moduleNameEn" value="Administration & Staff">
+                    <input type="hidden" id="actions_ADMIN_MANAGEMENT" name="permissions[2].actions" value="">
+                    <input type="hidden" id="canCreate_ADMIN_MANAGEMENT" name="permissions[2].canCreate" value="false">
+                    <input type="hidden" id="canRead_ADMIN_MANAGEMENT" name="permissions[2].canRead" value="true">
+                    <input type="hidden" id="canUpdate_ADMIN_MANAGEMENT" name="permissions[2].canUpdate" value="false">
+                    <input type="hidden" id="canDelete_ADMIN_MANAGEMENT" name="permissions[2].canDelete" value="false">
+
+                    <div class="module-card-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#35B89F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            <h3 style="font-size: 1.05rem; font-weight: 800; color: #0F172A; margin: 0;">Administration &amp; Staff</h3>
+                        </div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #64748B; background: #F1F5F9; padding: 3px 8px; border-radius: 9999px;">5 actions</span>
+                    </div>
+
+                    <div class="action-switches-box">
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                View Staff Directory
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="ADMIN_MANAGEMENT" data-action="STAFF_VIEW" onchange="onActionCheckboxChanged('ADMIN_MANAGEMENT')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Manage Staff Accounts
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="ADMIN_MANAGEMENT" data-action="STAFF_MANAGE" onchange="onActionCheckboxChanged('ADMIN_MANAGEMENT')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Roles &amp; Permissions
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="ADMIN_MANAGEMENT" data-action="STAFF_PERMISSIONS" onchange="onActionCheckboxChanged('ADMIN_MANAGEMENT')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                View Time Filters
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="ADMIN_MANAGEMENT" data-action="PRESETS_VIEW" onchange="onActionCheckboxChanged('ADMIN_MANAGEMENT')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="action-switch-item">
+                            <span class="action-title">
+                                <span class="action-dot"></span>
+                                Manage Time Filters
+                            </span>
+                            <label class="modern-switch">
+                                <input type="checkbox" class="action-checkbox" data-module="ADMIN_MANAGEMENT" data-action="PRESETS_MANAGE" onchange="onActionCheckboxChanged('ADMIN_MANAGEMENT')">
+                                <span class="modern-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="module-quick-actions">
+                        <button type="button" class="soft-btn-pill" onclick="applyModuleActionPreset('ADMIN_MANAGEMENT', 'all')">Full Admin</button>
+                        <button type="button" class="soft-btn-pill" onclick="applyModuleActionPreset('ADMIN_MANAGEMENT', 'readonly')">View Only</button>
+                        <button type="button" class="soft-btn-pill-danger" onclick="applyModuleActionPreset('ADMIN_MANAGEMENT', 'revoke')">Revoke</button>
                     </div>
                 </div>
 

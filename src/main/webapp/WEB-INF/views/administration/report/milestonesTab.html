@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
             <!-- REPORT TAB 1: FOLLOW-UPS & MILESTONES -->
-            <div th:fragment="milestonesTab" ng-show="reportSubTab === 'milestones'" th:style="${reportSubTab == 'milestones' ? 'display: flex; flex-direction: column; gap: 16px;' : 'display: none;'}" style="display: none;">
+            <div th:fragment="milestonesTab" class="report-tab-pane" th:classappend="${reportSubTab == 'milestones' or reportSubTab == null} ? '' : 'ng-hide'" ng-show="reportSubTab === 'milestones' || !reportSubTab">
                 <div class="comic-filter-toolbar">
                     <div class="filter-left-controls" style="flex-wrap: wrap; gap: 8px; align-items: center;">
                         <span class="filter-date-label">From:</span>
@@ -21,7 +21,7 @@
                         </span>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Milestones to Excel">
+                        <button th:if="${@portalAccess.canExportReports()}" type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Milestones to Excel">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export Excel
                         </button>
                     </div>

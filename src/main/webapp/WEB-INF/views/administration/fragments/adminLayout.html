@@ -63,7 +63,7 @@
                 <div class="nav-divider"></div>
 
                 <!-- Group 1: Administration Category Accordion -->
-                <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}">
+                <div class="nav-category-group" th:if="${@portalAccess.canViewStaff() or @portalAccess.canEditPermissions()}">
                     <button type="button" 
                             class="nav-category-toggle" 
                             th:classappend="${activeTab == 'admins' || activeTab == 'roles'} ? 'active-category' : ''"
@@ -88,25 +88,25 @@
                          th:style="${activeTab == 'admins' || activeTab == 'roles'} ? 'display: flex;' : 'display: none;'">
                         <a th:href="@{/admin/admins}" 
                            class="nav-sub-item" 
-                           th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers}"
+                           th:if="${@portalAccess.canViewStaff()}"
                            th:classappend="${activeTab == 'admins'} ? 'active' : ''">
                             <span>Admin Management</span>
                         </a>
                         <a th:href="@{/admin/roles}" 
                            class="nav-sub-item" 
-                           th:if="${currentUser == null || currentUser.superAdmin || currentUser.canCreateRoles}"
+                           th:if="${@portalAccess.canEditPermissions()}"
                            th:classappend="${activeTab == 'roles'} ? 'active' : ''">
                             <span>Role Templates</span>
                         </a>
                     </div>
                 </div>
 
-                <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canManageUsers || currentUser.canCreateRoles}"></div>
+                <div class="nav-divider" th:if="${@portalAccess.canViewStaff() or @portalAccess.canEditPermissions()}"></div>
 
                 <!-- Group 2: Follow-ups -->
                 <a th:href="@{/admin/followups}" 
                    class="nav-item" 
-                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadFollowups}"
+                   th:if="${@portalAccess.canViewCustomerList()}"
                    th:classappend="${activeTab == 'followups' || activeTab == 'customers'} ? 'active' : ''">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -117,10 +117,10 @@
                     </div>
                 </a>
 
-                <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}"></div>
+                <div class="nav-divider" th:if="${@portalAccess.canViewReportMilestones() or @portalAccess.canViewReportSatisfaction() or @portalAccess.canViewReportProducts() or @portalAccess.canViewReportRetention()}"></div>
 
                 <!-- Group 3: Reports Category Accordion -->
-                <div class="nav-category-group" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}">
+                <div class="nav-category-group" th:if="${@portalAccess.canViewReportMilestones() or @portalAccess.canViewReportSatisfaction() or @portalAccess.canViewReportProducts() or @portalAccess.canViewReportRetention()}">
                     <button type="button" 
                             class="nav-category-toggle" 
                             th:classappend="${activeTab == 'reports'} ? 'active-category' : ''"
@@ -144,33 +144,45 @@
                          th:style="${activeTab == 'reports'} ? 'display: flex;' : 'display: none;'">
                         <a th:href="@{/admin/reports(tab='milestones')}" 
                            class="nav-sub-item" 
+                           th:if="${@portalAccess.canViewReportMilestones()}"
+                           ng-click="activeTab === 'reports' ? (setReportSubTab('milestones'), $event.preventDefault()) : null"
+                           ng-class="{'active': activeTab === 'reports' && (reportSubTab === 'milestones' || !reportSubTab)}"
                            th:classappend="${activeTab == 'reports' and (reportSubTab == 'milestones' or reportSubTab == null)} ? 'active' : ''">
                             <span>Follow-ups &amp; Milestones</span>
                         </a>
                         <a th:href="@{/admin/reports(tab='satisfaction')}" 
                            class="nav-sub-item" 
+                           th:if="${@portalAccess.canViewReportSatisfaction()}"
+                           ng-click="activeTab === 'reports' ? (setReportSubTab('satisfaction'), $event.preventDefault()) : null"
+                           ng-class="{'active': activeTab === 'reports' && reportSubTab === 'satisfaction'}"
                            th:classappend="${activeTab == 'reports' and reportSubTab == 'satisfaction'} ? 'active' : ''">
                             <span>Satisfaction &amp; Notes</span>
                         </a>
                         <a th:href="@{/admin/reports(tab='products')}" 
                            class="nav-sub-item" 
+                           th:if="${@portalAccess.canViewReportProducts()}"
+                           ng-click="activeTab === 'reports' ? (setReportSubTab('products'), $event.preventDefault()) : null"
+                           ng-class="{'active': activeTab === 'reports' && reportSubTab === 'products'}"
                            th:classappend="${activeTab == 'reports' and reportSubTab == 'products'} ? 'active' : ''">
                             <span>Product Distribution</span>
                         </a>
                         <a th:href="@{/admin/reports(tab='customers')}" 
                            class="nav-sub-item" 
-                           th:classappend="${activeTab == 'reports' and (reportSubTab == 'customers' or reportSubTab == 'followups')} ? 'active' : ''">
+                           th:if="${@portalAccess.canViewReportRetention()}"
+                           ng-click="activeTab === 'reports' ? (setReportSubTab('customers'), $event.preventDefault()) : null"
+                           ng-class="{'active': activeTab === 'reports' && (reportSubTab === 'customers' || reportSubTab === 'followups')}"
+                           th:classappend="${activeTab == 'reports' and (reportSubTab == 'customers' or reportSubTab == null)} ? 'active' : ''">
                             <span>Customer Details</span>
                         </a>
                     </div>
                 </div>
 
-                <div class="nav-divider" th:if="${currentUser == null || currentUser.superAdmin || currentUser.canReadReports}"></div>
+                <div class="nav-divider" th:if="${@portalAccess.canViewPresets()}"></div>
 
                 <!-- Group 4: Time Filter Presets -->
                 <a th:href="@{/admin/timelines}" 
                    class="nav-item" 
-                   th:if="${currentUser == null || currentUser.superAdmin || currentUser.canCreateRoles}"
+                   th:if="${@portalAccess.canViewPresets()}"
                    th:classappend="${activeTab == 'timelines' || activeTab == 'time-filters'} ? 'active' : ''">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -687,18 +699,18 @@
                     <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
                 </div>
                 <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-                    <div>
+                    <div ng-if="auth.canAddFeedback !== false">
                         <label class="form-label">Internal Notes / Log</label>
                         <textarea class="comic-input" rows="3" ng-model="editingFollowup.note" placeholder="Write any internal operational remarks here..."></textarea>
                     </div>
-                    <div>
+                    <div ng-if="auth.canUploadPhotos !== false">
                         <label class="form-label">Attached Proof Photos &amp; Receipts (Multiple Allowed)</label>
                         
                         <!-- Thumbnail gallery strip with remove buttons -->
                         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;" ng-if="editingFollowup.images && editingFollowup.images.length > 0">
-                            <div ng-repeat="img in editingFollowup.images track by $index" style="position: relative; width: 68px; height: 68px; border: 2px solid #000; border-radius: 6px; overflow: hidden; background: #E2E8F0; box-shadow: 2px 2px 0px rgba(0,0,0,0.15);">
+                            <div ng-repeat="img in editingFollowup.images track by $index" style="position: relative; width: 68px; height: 68px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden; background: #E2E8F0; box-shadow: var(--shadow-sm);">
                                 <img ng-src="{{img}}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" ng-click="previewImage(img)" title="Click to view full photo">
-                                <button type="button" ng-click="removeFollowupImage($index)" style="position: absolute; top: 2px; right: 2px; background: #DC2626; color: #FFF; border: 1.5px solid #000; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 900; line-height: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Remove this photo">✕</button>
+                                <button type="button" ng-click="removeFollowupImage($index)" style="position: absolute; top: 3px; right: 3px; background: #DC2626; color: #FFF; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 900; line-height: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: var(--shadow-sm);" title="Remove this photo">✕</button>
                             </div>
                         </div>
 
@@ -708,7 +720,7 @@
                             <input type="file" accept="image/*" multiple class="comic-input" onchange="angular.element(this).scope().handleFollowupImageUpload(this)">
                         </div>
                     </div>
-                    <div>
+                    <div ng-if="auth.canAddFeedback !== false">
                         <label class="form-label">Customer Satisfaction Rating</label>
                         <div style="display: flex; gap: 8px; margin-top: 6px;">
                             <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'SATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">Satisfied</button>
@@ -748,6 +760,24 @@
         window.SERVER_ADMIN_LIST = /*[[${admins}]]*/ null;
         window.SERVER_ROLE_LIST = /*[[${roles}]]*/ null;
         window.SERVER_CURRENT_USER = /*[[${currentUser}]]*/ null;
+        window.SERVER_ACTIONS = {
+            canViewCustomerList: /*[[${@portalAccess.canViewCustomerList()}]]*/ true,
+            canViewCustomerLog: /*[[${@portalAccess.canViewCustomerLog()}]]*/ true,
+            canToggleCheck: /*[[${@portalAccess.canToggleCheck()}]]*/ true,
+            canAddFeedback: /*[[${@portalAccess.canAddFeedback()}]]*/ true,
+            canUploadPhotos: /*[[${@portalAccess.canUploadPhotos()}]]*/ true,
+            canExportCustomers: /*[[${@portalAccess.canExportCustomers()}]]*/ true,
+            canViewReportMilestones: /*[[${@portalAccess.canViewReportMilestones()}]]*/ true,
+            canViewReportSatisfaction: /*[[${@portalAccess.canViewReportSatisfaction()}]]*/ true,
+            canViewReportProducts: /*[[${@portalAccess.canViewReportProducts()}]]*/ true,
+            canViewReportRetention: /*[[${@portalAccess.canViewReportRetention()}]]*/ true,
+            canExportReports: /*[[${@portalAccess.canExportReports()}]]*/ true,
+            canViewStaff: /*[[${@portalAccess.canViewStaff()}]]*/ true,
+            canManageStaff: /*[[${@portalAccess.canManageStaff()}]]*/ true,
+            canEditPermissions: /*[[${@portalAccess.canEditPermissions()}]]*/ true,
+            canViewPresets: /*[[${@portalAccess.canViewPresets()}]]*/ true,
+            canManagePresets: /*[[${@portalAccess.canManagePresets()}]]*/ true
+        };
         /*]]>*/
     </script>
 

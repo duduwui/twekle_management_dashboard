@@ -38,16 +38,22 @@ public class FollowupController {
         this.timeFilterService = timeFilterService;
     }
 
-    private boolean canRead() {
+    private boolean hasAction(String actionKey) {
         return adminService.getCurrentAdmin()
-                .map(a -> a.isSuperAdmin() || a.isCanReadFollowups())
+                .map(a -> a.hasAction(actionKey))
                 .orElse(false);
     }
 
-    private boolean canUpdate() {
-        return adminService.getCurrentAdmin()
-                .map(a -> a.isSuperAdmin() || a.isCanUpdateFollowups())
-                .orElse(false);
+    private boolean canRead() {
+        return hasAction("CUSTOMER_VIEW_LIST");
+    }
+
+    private boolean canToggleCheck() {
+        return hasAction("CUSTOMER_CHECK_TOGGLE");
+    }
+
+    private boolean canUpdateDetails() {
+        return hasAction("CUSTOMER_ADD_FEEDBACK") || hasAction("CUSTOMER_UPLOAD_PHOTOS");
     }
 
     @GetMapping({"", "/", "/orders/{customerId:\\d+}", "/feedback/{customerId:\\d+}"})
@@ -134,9 +140,9 @@ public class FollowupController {
     @PatchMapping("/{checkId:\\d+}/status")
     @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> toggleFollowupStatus(@PathVariable("checkId") Long checkId) {
-        if (!canUpdate()) {
+        if (!canToggleCheck()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error("You do not have permission to update follow-ups"));
+                    .body(ApiResponse.error("You do not have permission to toggle follow-up checkpoint status"));
         }
         OrderFollowupCheck check = followupService.toggleFollowupStatus(checkId);
         return ResponseEntity.ok(ApiResponse.success("Follow-up status updated successfully", check));
@@ -147,9 +153,9 @@ public class FollowupController {
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> updateFollowupDetails(
             @PathVariable("checkId") Long checkId,
             @RequestBody(required = false) Map<String, String> body) {
-        if (!canUpdate()) {
+        if (!canUpdateDetails()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error("You do not have permission to update follow-ups"));
+                    .body(ApiResponse.error("You do not have permission to edit follow-up notes or photos"));
         }
         String notes = body != null ? body.get("notes") : null;
         String photoUrl = body != null ? body.get("photoUrl") : null;
@@ -163,7 +169,7 @@ public class FollowupController {
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> completeCheck(
             @PathVariable("checkId") Long checkId,
             @RequestBody(required = false) FollowupCheckRequest request) {
-        if (!canUpdate()) {
+        if (!canToggleCheck()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("You do not have permission to complete follow-ups"));
         }
@@ -175,6 +181,10 @@ public class FollowupController {
     @GetMapping(value = "/orders/{orderId:\\d+}/checks", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderChecks(@PathVariable("orderId") Long orderId) {
+        if (!hasAction("CUSTOMER_VIEW_LOG")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You do not have permission to view order follow-up logs"));
+        }
         return ResponseEntity.ok(ApiResponse.success(followupService.findChecksByOrderId(orderId)));
     }
 }

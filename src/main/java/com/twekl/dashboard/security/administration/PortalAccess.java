@@ -91,32 +91,61 @@ public class PortalAccess {
         return adminService.hasPermission(getCurrent(), moduleKey, action);
     }
 
+    public boolean hasAction(final String actionKey) {
+        Admin admin = getCurrent();
+        return admin != null && admin.hasAction(actionKey);
+    }
+
+    // Customer Follow-ups Actions
+    public boolean canViewCustomerList() { return hasAction("CUSTOMER_VIEW_LIST"); }
+    public boolean canViewCustomerLog() { return hasAction("CUSTOMER_VIEW_LOG"); }
+    public boolean canToggleCheck() { return hasAction("CUSTOMER_CHECK_TOGGLE"); }
+    public boolean canAddFeedback() { return hasAction("CUSTOMER_ADD_FEEDBACK"); }
+    public boolean canUploadPhotos() { return hasAction("CUSTOMER_UPLOAD_PHOTOS"); }
+    public boolean canExportCustomers() { return hasAction("CUSTOMER_EXPORT_EXCEL"); }
+
+    // Reports & Analytics Actions
+    public boolean canViewReportMilestones() { return hasAction("REPORT_VIEW_MILESTONES"); }
+    public boolean canViewReportSatisfaction() { return hasAction("REPORT_VIEW_SATISFACTION"); }
+    public boolean canViewReportProducts() { return hasAction("REPORT_VIEW_PRODUCTS"); }
+    public boolean canViewReportRetention() { return hasAction("REPORT_VIEW_RETENTION"); }
+    public boolean canExportReports() { return hasAction("REPORT_EXPORT_EXCEL"); }
+
+    // Staff & Roles Actions
+    public boolean canViewStaff() { return hasAction("STAFF_VIEW"); }
+    public boolean canManageStaff() { return hasAction("STAFF_MANAGE"); }
+    public boolean canEditPermissions() { return hasAction("STAFF_PERMISSIONS"); }
+
+    // Time Filter Presets Actions
+    public boolean canViewPresets() { return hasAction("PRESETS_VIEW"); }
+    public boolean canManagePresets() { return hasAction("PRESETS_MANAGE"); }
+
     public boolean canManageUsers() {
         Admin admin = getCurrent();
-        return admin != null && (admin.isSuperAdmin() || admin.isCanManageUsers() || hasPermission("ADMIN_MANAGEMENT", "READ"));
+        return admin != null && (admin.isSuperAdmin() || hasAction("STAFF_MANAGE") || admin.isCanManageUsers());
     }
 
     public boolean canCreateRoles() {
         Admin admin = getCurrent();
-        return admin != null && (admin.isSuperAdmin() || admin.isCanCreateRoles() || hasPermission("ROLE_MANAGEMENT", "READ"));
+        return admin != null && (admin.isSuperAdmin() || hasAction("STAFF_PERMISSIONS") || admin.isCanCreateRoles());
     }
 
     public boolean canUpdateFollowups() {
         Admin admin = getCurrent();
-        return admin != null && (admin.isSuperAdmin() || admin.isCanUpdateFollowups() || hasPermission("CUSTOMER_FOLLOWUP", "UPDATE"));
+        return admin != null && (admin.isSuperAdmin() || hasAction("CUSTOMER_CHECK_TOGGLE") || admin.isCanUpdateFollowups());
     }
 
     public boolean canReadReports() {
         Admin admin = getCurrent();
-        return admin != null && (admin.isSuperAdmin() || admin.isCanReadReports() || hasPermission("REPORTS_INSIGHTS", "READ"));
+        return admin != null && (admin.isSuperAdmin() || admin.isCanReadReports());
     }
 
     // Template convenience shortcuts
     public boolean staff() {
-        return canManageUsers();
+        return canViewStaff() || canManageStaff();
     }
 
     public boolean roles() {
-        return canCreateRoles();
+        return canEditPermissions();
     }
 }

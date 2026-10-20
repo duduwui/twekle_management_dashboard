@@ -25,11 +25,15 @@ public class RoleController {
 
     private final RoleService roleService;
     private final AdminService adminService;
+    private final com.twekl.dashboard.security.administration.PortalAccess portalAccess;
 
     @Autowired
-    public RoleController(final RoleService roleService, final AdminService adminService) {
+    public RoleController(final RoleService roleService,
+                          final AdminService adminService,
+                          final com.twekl.dashboard.security.administration.PortalAccess portalAccess) {
         this.roleService = roleService;
         this.adminService = adminService;
+        this.portalAccess = portalAccess;
     }
 
     // =========================================================
@@ -39,6 +43,9 @@ public class RoleController {
     @GetMapping
     public String showRoles(@RequestParam(value = "selectedAdminId", required = false) Long selectedAdminId,
                             Model model) {
+        if (!portalAccess.canViewStaff() && !portalAccess.canEditPermissions()) {
+            return "redirect:/admin/dashboard";
+        }
         model.addAttribute("activeTab", "roles");
         List<Admin> admins = adminService.findAll();
         List<Role> roles = roleService.findAll();
@@ -62,6 +69,10 @@ public class RoleController {
 
     @PostMapping("/create")
     public String createRoleSsr(@ModelAttribute("newRole") RoleDto roleDto, RedirectAttributes flash) {
+        if (!portalAccess.canEditPermissions()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to manage roles.");
+            return "redirect:/admin/roles";
+        }
         if (roleDto.getName() == null || roleDto.getName().trim().isEmpty()) {
             flash.addFlashAttribute("errorMessage", "Role template name is required.");
             return "redirect:/admin/roles";
@@ -74,6 +85,10 @@ public class RoleController {
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
                                 @ModelAttribute RoleDto roleDto,
                                 RedirectAttributes flash) {
+        if (!portalAccess.canEditPermissions()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to manage roles.");
+            return "redirect:/admin/roles";
+        }
         return executeRoleAction(flash, "Role template updated successfully.",
                 "redirect:/admin/roles", () -> roleService.updateRole(roleId, roleDto));
     }
@@ -85,6 +100,10 @@ public class RoleController {
                                      @RequestParam(value = "roleId", required = false) Long roleId,
                                      @ModelAttribute UpdateAdminRequest updateAdminRequest,
                                      RedirectAttributes flash) {
+        if (!portalAccess.canEditPermissions()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to modify staff permissions.");
+            return "redirect:/admin/roles";
+        }
         Long targetAdminId = pathAdminId != null ? pathAdminId : paramAdminId;
         if (targetAdminId == null) {
             flash.addFlashAttribute("errorMessage", "No administrator was selected for role assignment.");
@@ -113,6 +132,10 @@ public class RoleController {
 
     @PostMapping("/{roleId:\\d+}/delete")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
+        if (!portalAccess.canEditPermissions()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to delete roles.");
+            return "redirect:/admin/roles";
+        }
         return executeRoleAction(flash, "Role template deleted successfully.",
                 "redirect:/admin/roles", () -> roleService.deleteRole(roleId));
     }

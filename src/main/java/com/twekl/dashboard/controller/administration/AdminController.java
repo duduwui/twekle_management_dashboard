@@ -21,12 +21,15 @@ public class AdminController {
 
     private final AdminService adminService;
     private final RoleService roleService;
+    private final com.twekl.dashboard.security.administration.PortalAccess portalAccess;
 
     @Autowired
     public AdminController(final AdminService adminService,
-                           final RoleService roleService) {
+                           final RoleService roleService,
+                           final com.twekl.dashboard.security.administration.PortalAccess portalAccess) {
         this.adminService = adminService;
         this.roleService = roleService;
+        this.portalAccess = portalAccess;
     }
 
     // =========================================================
@@ -35,6 +38,9 @@ public class AdminController {
 
     @GetMapping("/admin/admins")
     public String showAdmins(Model model) {
+        if (!portalAccess.canViewStaff()) {
+            return "redirect:/admin/dashboard";
+        }
         model.addAttribute("activeTab", "admins");
         model.addAttribute("admins", adminService.findAll());
         model.addAttribute("roles", roleService.findAll());
@@ -48,6 +54,10 @@ public class AdminController {
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
                                  RedirectAttributes flash) {
+        if (!portalAccess.canManageStaff()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to create administrators.");
+            return "redirect:/admin/admins";
+        }
         if (bindingResult.hasErrors()) {
             flash.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/admins";
@@ -58,12 +68,20 @@ public class AdminController {
 
     @PostMapping("/admin/admins/{adminId:\\d+}/toggle-status")
     public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
+        if (!portalAccess.canManageStaff()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to toggle administrator status.");
+            return "redirect:/admin/admins";
+        }
         return executeAdminAction(flash, "Administrator status updated successfully.", 
                 () -> adminService.toggleStatus(adminId));
     }
 
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
+        if (!portalAccess.canManageStaff()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to delete administrators.");
+            return "redirect:/admin/admins";
+        }
         return executeAdminAction(flash, "Administrator deleted successfully.", 
                 () -> adminService.deleteAdmin(adminId));
     }

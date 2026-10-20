@@ -64,7 +64,8 @@ public class RoleService {
                 req.isCanCreate(),
                 req.isCanRead(),
                 req.isCanUpdate(),
-                req.isCanDelete()
+                req.isCanDelete(),
+                req.getActions()
         );
         return roleRepository.save(role);
     }
@@ -85,6 +86,9 @@ public class RoleService {
         role.setCanRead(req.isCanRead());
         role.setCanUpdate(req.isCanUpdate());
         role.setCanDelete(req.isCanDelete());
+        if (req.getActions() != null) {
+            role.setActions(req.getActions());
+        }
 
         return roleRepository.save(role);
     }

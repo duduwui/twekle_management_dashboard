@@ -76,7 +76,6 @@
                                     <th>City</th>
                                     <th>Milestone</th>
                                     <th>Remaining Time</th>
-                                    <th>Status</th>
                                     <th style="width: 120px;">Action</th>
                                 </tr>
                             </thead>
@@ -100,13 +99,6 @@
                                               th:attr="data-minutes-left=${summary.nextPendingMinutesLeft}"
                                               th:text="${summary.formattedRemainingTime}">
                                             Scheduled
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="comic-tag"
-                                              th:classappend="${summary.overdue ? 'tag-danger' : 'tag-warning'}"
-                                              th:text="${summary.overdue ? 'Overdue' : 'In Queue'}">
-                                            In Queue
                                         </span>
                                     </td>
                                     <td>

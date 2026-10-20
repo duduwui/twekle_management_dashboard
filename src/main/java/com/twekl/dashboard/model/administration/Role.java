@@ -38,14 +38,59 @@ public class Role {
     @Column(name = "CAN_DELETE", nullable = false)
     private boolean canDelete = false;
 
+    @Column(name = "ACTIONS", length = 1000)
+    private String actions;
+
     public Role() {}
 
     public Role(String name, boolean canCreate, boolean canRead, boolean canUpdate, boolean canDelete) {
+        this(name, canCreate, canRead, canUpdate, canDelete, null);
+    }
+
+    public Role(String name, boolean canCreate, boolean canRead, boolean canUpdate, boolean canDelete, String actions) {
         this.name = name;
         this.canCreate = canCreate;
         this.canRead = canRead;
         this.canUpdate = canUpdate;
         this.canDelete = canDelete;
+        this.actions = actions;
+    }
+
+    public String getActions() { return actions; }
+    public void setActions(String actions) { this.actions = actions; }
+
+    public java.util.Set<String> getActionSet() {
+        if (actions == null || actions.trim().isEmpty()) {
+            return java.util.Collections.emptySet();
+        }
+        return java.util.Arrays.stream(actions.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toUpperCase)
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
+    public void setActionSet(java.util.Collection<String> actionKeys) {
+        if (actionKeys == null || actionKeys.isEmpty()) {
+            this.actions = null;
+        } else {
+            this.actions = String.join(",", actionKeys);
+        }
+    }
+
+    public boolean hasAction(String actionKey) {
+        if (actionKey == null || actionKey.trim().isEmpty()) return false;
+        String target = actionKey.trim().toUpperCase();
+        java.util.Set<String> set = getActionSet();
+        if (set.contains(target)) {
+            return true;
+        }
+        if (set.isEmpty()) {
+            return ActionPermission.fromKey(target)
+                    .map(ap -> ap.matchesFallback(canCreate, canRead, canUpdate, canDelete))
+                    .orElse(canRead);
+        }
+        return false;
     }
 
     // Standard ID getters & explicit domain roleId bridges

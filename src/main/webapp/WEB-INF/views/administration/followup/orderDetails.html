@@ -114,7 +114,7 @@
 
                                 <!-- Expandable Follow-up Checklist Tree for this Order Record -->
                                 <tr ng-show="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
-                                    <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
+                                    <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 1px solid var(--border-color);">
                                         <div class="order-followup-tree-box">
                                             <div class="followup-tree-header">
                                                 <div>
@@ -157,8 +157,9 @@
                                                     </div>
 
                                                     <!-- 4. Direct Action: Check Status Toggle NEXT TO Feedback Button -->
-                                                    <div class="check-col-action" ng-if="auth.canUpdateFollowups" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                                    <div class="check-col-action" ng-if="auth.canToggleCheck || auth.canAddFeedback || auth.canUploadPhotos || auth.canUpdateFollowups" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
                                                         <button type="button"
+                                                                ng-if="auth.canToggleCheck !== false"
                                                                 class="followup-check-toggle-btn"
                                                                 ng-class="check.isCompleted ? 'btn-status-completed' : 'btn-status-pending'"
                                                                 ng-click="toggleFollowupCheck(order, check)"
@@ -171,7 +172,9 @@
                                                             <span ng-if="!check.isCompleted">Check</span>
                                                         </button>
 
-                                                        <button type="button" class="comic-btn" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="openEditFollowupModal(order, check, $event)" title="Add or edit feedback & photos for this milestone">
+                                                        <button type="button"
+                                                                ng-if="auth.canAddFeedback !== false || auth.canUploadPhotos !== false"
+                                                                class="comic-btn" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="openEditFollowupModal(order, check, $event)" title="Add or edit feedback & photos for this milestone">
                                                             <span ng-if="!check.note && !check.imageUrl">+ Feedback</span>
                                                             <span ng-if="check.note || check.imageUrl">Edit Feedback</span>
                                                         </button>

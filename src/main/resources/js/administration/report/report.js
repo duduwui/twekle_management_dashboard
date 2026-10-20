@@ -75,15 +75,13 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     }
 
     $scope.setReportSubTab = function(subTab) {
-        $scope.reportSubTab = subTab;
-        if ($scope.$parent && $scope.$parent.setReportSubTab) {
-            $scope.$parent.setReportSubTab(subTab);
-        } else if ($scope.$parent) {
+        $scope.reportSubTab = (subTab === 'customers') ? 'followups' : subTab;
+        if ($scope.$parent) {
             $scope.$parent.reportSubTab = subTab;
         }
-        if (window.history && window.history.replaceState) {
+        if (window.history && window.history.pushState) {
             var newUrl = window.location.pathname + '?tab=' + encodeURIComponent(subTab);
-            window.history.replaceState(null, '', newUrl);
+            window.history.pushState(null, '', newUrl);
         }
     };
 

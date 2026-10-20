@@ -21,11 +21,15 @@ public class TimeFilterController {
 
     private final TimeFilterService timeFilterService;
     private final AdminService adminService;
+    private final com.twekl.dashboard.security.administration.PortalAccess portalAccess;
 
     @Autowired
-    public TimeFilterController(final TimeFilterService timeFilterService, final AdminService adminService) {
+    public TimeFilterController(final TimeFilterService timeFilterService,
+                                final AdminService adminService,
+                                final com.twekl.dashboard.security.administration.PortalAccess portalAccess) {
         this.timeFilterService = timeFilterService;
         this.adminService = adminService;
+        this.portalAccess = portalAccess;
     }
 
     // =========================================================
@@ -34,6 +38,9 @@ public class TimeFilterController {
 
     @GetMapping(value = "/admin/timelines", produces = MediaType.TEXT_HTML_VALUE)
     public String showTimelines(Model model) {
+        if (!portalAccess.canViewPresets()) {
+            return "redirect:/admin/dashboard";
+        }
         model.addAttribute("activeTab", "timelines");
         var presets = timeFilterService.findAll();
         model.addAttribute("presets", presets);
@@ -47,6 +54,10 @@ public class TimeFilterController {
 
     @PostMapping("/admin/timelines/create")
     public String createPresetSsr(@ModelAttribute("newPreset") TimeFilterPreset preset, RedirectAttributes flash) {
+        if (!portalAccess.canManagePresets()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to manage time filters.");
+            return "redirect:/admin/timelines";
+        }
         if (preset.getLabelEn() == null || preset.getLabelEn().trim().isEmpty()) {
             flash.addFlashAttribute("errorMessage", "Preset name is required.");
             return "redirect:/admin/timelines";
@@ -57,12 +68,20 @@ public class TimeFilterController {
 
     @PostMapping("/admin/timelines/{presetId:\\d+}/toggle")
     public String togglePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
+        if (!portalAccess.canManagePresets()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to manage time filters.");
+            return "redirect:/admin/timelines";
+        }
         return executeTimeFilterAction(flash, "Preset status updated successfully.",
                 () -> timeFilterService.toggleStatus(presetId));
     }
 
     @PostMapping("/admin/timelines/{presetId:\\d+}/delete")
     public String deletePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
+        if (!portalAccess.canManagePresets()) {
+            flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to delete time filters.");
+            return "redirect:/admin/timelines";
+        }
         return executeTimeFilterAction(flash, "Time filter preset deleted successfully.",
                 () -> timeFilterService.deletePreset(presetId));
     }

@@ -94,6 +94,7 @@
                                 <div style="display: none;" th:id="'perms-data-' + ${adm.id}">
                                     <span th:each="p : ${adm.permissions}"
                                           th:data-module="${p.moduleKey}"
+                                          th:data-actions="${p.actions}"
                                           th:data-create="${p.canCreate}"
                                           th:data-read="${p.canRead}"
                                           th:data-update="${p.canUpdate}"

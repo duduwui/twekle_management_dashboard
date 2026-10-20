@@ -6,6 +6,7 @@ import com.twekl.dashboard.response.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.ReportService;
 import com.twekl.dashboard.service.administration.TimeFilterService;
+import com.twekl.dashboard.security.administration.PortalAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -32,14 +33,17 @@ public class ReportController {
     private final ReportService reportService;
     private final AdminService adminService;
     private final TimeFilterService timeFilterService;
+    private final PortalAccess portalAccess;
 
     @Autowired
     public ReportController(final ReportService reportService,
                             final AdminService adminService,
-                            final TimeFilterService timeFilterService) {
+                            final TimeFilterService timeFilterService,
+                            final PortalAccess portalAccess) {
         this.reportService = reportService;
         this.adminService = adminService;
         this.timeFilterService = timeFilterService;
+        this.portalAccess = portalAccess;
     }
 
     @GetMapping
@@ -48,9 +52,24 @@ public class ReportController {
                               @RequestParam(value = "dateFrom", required = false) String dateFrom,
                               @RequestParam(value = "dateTo", required = false) String dateTo,
                               Model model) {
-        Admin admin = adminService.getCurrentAdmin().orElse(null);
-        if (admin != null && !admin.isSuperAdmin() && !admin.isCanReadReports()) {
+        boolean canMilestones = portalAccess.canViewReportMilestones();
+        boolean canSatisfaction = portalAccess.canViewReportSatisfaction();
+        boolean canProducts = portalAccess.canViewReportProducts();
+        boolean canRetention = portalAccess.canViewReportRetention();
+
+        if (!canMilestones && !canSatisfaction && !canProducts && !canRetention) {
             return "redirect:/admin/dashboard";
+        }
+
+        // Auto fallback to first accessible tab if requested tab is forbidden
+        if ("milestones".equalsIgnoreCase(tab) && !canMilestones) {
+            tab = canSatisfaction ? "satisfaction" : (canProducts ? "products" : "retention");
+        } else if ("satisfaction".equalsIgnoreCase(tab) && !canSatisfaction) {
+            tab = canMilestones ? "milestones" : (canProducts ? "products" : "retention");
+        } else if ("products".equalsIgnoreCase(tab) && !canProducts) {
+            tab = canMilestones ? "milestones" : (canSatisfaction ? "satisfaction" : "retention");
+        } else if ("retention".equalsIgnoreCase(tab) && !canRetention) {
+            tab = canMilestones ? "milestones" : (canSatisfaction ? "satisfaction" : "products");
         }
 
         model.addAttribute("activeTab", "reports");
@@ -81,6 +100,9 @@ public class ReportController {
     @GetMapping("/export")
     @ResponseBody
     public ResponseEntity<byte[]> exportSatisfactionCsv(@RequestParam(required = false, defaultValue = "ALL") String period) {
+        if (!portalAccess.canExportReports()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+        }
         List<SatisfactionReportDto> list = reportService.getSatisfactionDetails(period);
 
         StringBuilder sb = new StringBuilder();

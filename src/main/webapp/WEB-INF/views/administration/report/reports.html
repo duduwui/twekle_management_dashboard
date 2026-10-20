@@ -8,17 +8,49 @@
 <body>
     <div layout:fragment="content">
         <section class="comic-card page-slide-fade ng-cloak" ng-controller="ReportController">
+            <!-- Modern In-Page Report Sub-Tab Navigation Bar -->
+            <div class="report-subnav-bar">
+                <button th:if="${@portalAccess.canViewReportMilestones()}"
+                        type="button" class="report-subnav-btn"
+                        ng-class="{'active': reportSubTab === 'milestones' || !reportSubTab}"
+                        ng-click="setReportSubTab('milestones')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Follow-ups &amp; Milestones</span>
+                </button>
+                <button th:if="${@portalAccess.canViewReportSatisfaction()}"
+                        type="button" class="report-subnav-btn"
+                        ng-class="{'active': reportSubTab === 'satisfaction'}"
+                        ng-click="setReportSubTab('satisfaction')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                    <span>Satisfaction &amp; Notes</span>
+                </button>
+                <button th:if="${@portalAccess.canViewReportProducts()}"
+                        type="button" class="report-subnav-btn"
+                        ng-class="{'active': reportSubTab === 'products'}"
+                        ng-click="setReportSubTab('products')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    <span>Product Distribution</span>
+                </button>
+                <button th:if="${@portalAccess.canViewReportRetention()}"
+                        type="button" class="report-subnav-btn"
+                        ng-class="{'active': reportSubTab === 'customers' || reportSubTab === 'followups'}"
+                        ng-click="setReportSubTab('customers')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Customer Details</span>
+                </button>
+            </div>
+
             <!-- REPORT TAB 1: FOLLOW-UPS & MILESTONES -->
-            <th:block th:replace="~{administration/report/milestonesTab :: milestonesTab}"></th:block>
+            <th:block th:if="${@portalAccess.canViewReportMilestones()}" th:replace="~{administration/report/milestonesTab :: milestonesTab}"></th:block>
 
             <!-- REPORT TAB 2: CUSTOMER SATISFACTION & NOTES -->
-            <th:block th:replace="~{administration/report/satisfactionTab :: satisfactionTab}"></th:block>
+            <th:block th:if="${@portalAccess.canViewReportSatisfaction()}" th:replace="~{administration/report/satisfactionTab :: satisfactionTab}"></th:block>
 
             <!-- REPORT TAB 3: PRODUCT INSIGHTS & REVIEWS -->
-            <th:block th:replace="~{administration/report/productsTab :: productsTab}"></th:block>
+            <th:block th:if="${@portalAccess.canViewReportProducts()}" th:replace="~{administration/report/productsTab :: productsTab}"></th:block>
 
             <!-- REPORT TAB 4: FOLLOW-UP SUMMARY & CUSTOMER LIFECYCLES -->
-            <th:block th:replace="~{administration/report/followupsTab :: followupsTab}"></th:block>
+            <th:block th:if="${@portalAccess.canViewReportRetention()}" th:replace="~{administration/report/followupsTab :: followupsTab}"></th:block>
         </section>
     </div>
 </body>

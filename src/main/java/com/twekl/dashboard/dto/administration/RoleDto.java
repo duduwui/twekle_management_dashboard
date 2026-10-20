@@ -12,25 +12,39 @@ public class RoleDto {
     private boolean canRead;
     private boolean canUpdate;
     private boolean canDelete;
+    private String actions;
 
     public RoleDto() {}
 
     public RoleDto(String name, boolean canCreate, boolean canRead, boolean canUpdate, boolean canDelete) {
+        this(name, canCreate, canRead, canUpdate, canDelete, null);
+    }
+
+    public RoleDto(String name, boolean canCreate, boolean canRead, boolean canUpdate, boolean canDelete, String actions) {
         this.name = name;
         this.canCreate = canCreate;
         this.canRead = canRead;
         this.canUpdate = canUpdate;
         this.canDelete = canDelete;
+        this.actions = actions;
     }
 
     public RoleDto(Long id, String name, boolean canCreate, boolean canRead, boolean canUpdate, boolean canDelete) {
+        this(id, name, canCreate, canRead, canUpdate, canDelete, null);
+    }
+
+    public RoleDto(Long id, String name, boolean canCreate, boolean canRead, boolean canUpdate, boolean canDelete, String actions) {
         this.id = id;
         this.name = name;
         this.canCreate = canCreate;
         this.canRead = canRead;
         this.canUpdate = canUpdate;
         this.canDelete = canDelete;
+        this.actions = actions;
     }
+
+    public String getActions() { return actions; }
+    public void setActions(String actions) { this.actions = actions; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

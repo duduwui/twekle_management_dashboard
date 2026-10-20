@@ -113,9 +113,9 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
     $scope.setReportSubTab = function(subTab) {
         $scope.reportSubTab = subTab;
         $scope.$broadcast('reportSubTab:changed', subTab);
-        if (window.history && window.history.replaceState) {
+        if (window.history && window.history.pushState) {
             var newUrl = window.location.pathname + '?tab=' + encodeURIComponent(subTab);
-            window.history.replaceState(null, '', newUrl);
+            window.history.pushState(null, '', newUrl);
         }
     };
 
@@ -134,6 +134,9 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
             canUpdateFollowups: !!su.superAdmin || !!su.canUpdateFollowups,
             canCreateFollowups: !!su.superAdmin || !!su.canCreateFollowups
         };
+        if (window.SERVER_ACTIONS) {
+            angular.extend($scope.auth, window.SERVER_ACTIONS);
+        }
     } else {
         $scope.currentUser = null;
         $scope.auth = {
@@ -146,6 +149,9 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
             canReadFollowups: false,
             canReadReports: false
         };
+        if (window.SERVER_ACTIONS) {
+            angular.extend($scope.auth, window.SERVER_ACTIONS);
+        }
     }
 
     $scope.showLoginModal = false;

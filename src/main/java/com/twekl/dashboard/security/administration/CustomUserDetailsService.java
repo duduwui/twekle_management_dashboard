@@ -52,6 +52,14 @@ public class CustomUserDetailsService implements UserDetailsService {
             }
         }
 
+        // Register action-level business permissions as Spring Security authorities
+        for (com.twekl.dashboard.model.administration.ActionPermission ap : com.twekl.dashboard.model.administration.ActionPermission.values()) {
+            if (admin.hasAction(ap.getKey())) {
+                authorities.add(new SimpleGrantedAuthority("ACTION_" + ap.getKey()));
+                authorities.add(new SimpleGrantedAuthority(ap.getKey()));
+            }
+        }
+
         return User.builder()
                 .username(admin.getUsername())
                 .password(admin.getPassword())

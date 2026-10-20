@@ -173,9 +173,38 @@ public class Admin {
 
     // --- Permission convenience helpers for Thymeleaf templates ---
 
+    public boolean hasAction(String actionKey) {
+        if (isSuperAdmin) return true;
+        if (actionKey == null || actionKey.trim().isEmpty()) return false;
+        String target = actionKey.trim().toUpperCase();
+
+        if (permissions != null) {
+            for (AdminPermission p : permissions) {
+                if (p.hasAction(target)) {
+                    return true;
+                }
+            }
+        }
+
+        if (roles != null) {
+            for (Role r : roles) {
+                if (r.hasAction(target)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /** True if user can read the Reports & Analytics module. */
     public boolean isCanReadReports() {
         if (isSuperAdmin) return true;
+        if (hasAction("REPORT_VIEW_MILESTONES") || hasAction("REPORT_VIEW_SATISFACTION")
+                || hasAction("REPORT_VIEW_PRODUCTS") || hasAction("REPORT_VIEW_RETENTION")
+                || hasAction("REPORT_EXPORT_EXCEL")) {
+            return true;
+        }
         if (permissions != null) {
             for (AdminPermission p : permissions) {
                 if ("REPORTS_INSIGHTS".equalsIgnoreCase(p.getModuleKey())) {
@@ -192,6 +221,11 @@ public class Admin {
     /** True if user can read the Customer Follow-ups module. */
     public boolean isCanReadFollowups() {
         if (isSuperAdmin) return true;
+        if (hasAction("CUSTOMER_VIEW_LIST") || hasAction("CUSTOMER_VIEW_LOG")
+                || hasAction("CUSTOMER_CHECK_TOGGLE") || hasAction("CUSTOMER_ADD_FEEDBACK")
+                || hasAction("CUSTOMER_UPLOAD_PHOTOS") || hasAction("CUSTOMER_EXPORT_EXCEL")) {
+            return true;
+        }
         if (permissions != null) {
             for (AdminPermission p : permissions) {
                 if ("CUSTOMER_FOLLOWUP".equalsIgnoreCase(p.getModuleKey())) {
@@ -208,6 +242,9 @@ public class Admin {
     /** True if user can update (write notes/photos, toggle completion) on follow-ups. */
     public boolean isCanUpdateFollowups() {
         if (isSuperAdmin) return true;
+        if (hasAction("CUSTOMER_CHECK_TOGGLE") || hasAction("CUSTOMER_ADD_FEEDBACK") || hasAction("CUSTOMER_UPLOAD_PHOTOS")) {
+            return true;
+        }
         if (permissions != null) {
             for (AdminPermission p : permissions) {
                 if ("CUSTOMER_FOLLOWUP".equalsIgnoreCase(p.getModuleKey())) {
@@ -224,6 +261,9 @@ public class Admin {
     /** True if user can create new follow-up entries. */
     public boolean isCanCreateFollowups() {
         if (isSuperAdmin) return true;
+        if (hasAction("CUSTOMER_CHECK_TOGGLE") || hasAction("CUSTOMER_ADD_FEEDBACK")) {
+            return true;
+        }
         if (permissions != null) {
             for (AdminPermission p : permissions) {
                 if ("CUSTOMER_FOLLOWUP".equalsIgnoreCase(p.getModuleKey())) {

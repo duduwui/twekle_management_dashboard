@@ -28,10 +28,6 @@
                             <span ng-bind="selectedTimePreset.name"></span> ✕
                         </span>
 
-                        <span class="comic-tag tag-primary active-preset-pill" ng-if="customerFilters.followupStatus && customerFilters.followupStatus !== 'ALL'" ng-click="clearFollowupStatusFilter()" title="Click to clear queue filter">
-                            <span>Queue: {{ (customerFilters.followupStatus === 'ALERT' || customerFilters.followupStatus === 'OVERDUE') ? 'Needs Action' : ((customerFilters.followupStatus === 'IDLE' || customerFilters.followupStatus === 'UPCOMING' || customerFilters.followupStatus === 'PENDING') ? 'Scheduled' : 'Completed') }}</span> ✕
-                        </span>
-
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="customerFilters.customerType && customerFilters.customerType !== 'ALL'" ng-click="customerFilters.customerType = 'ALL'; loadCustomers(1);" title="Click to clear type filter">
                             <span>Type: {{ customerFilters.customerType === 'ORGANIZATION' ? 'Organization' : 'Individual' }}</span> ✕
                         </span>

@@ -59,6 +59,9 @@
                                     <th class="comic-sortable-th" ng-click="sortOrdersBy('itemsSummary')">
                                         Item Name <span class="sort-indicator" ng-bind="getOrderSortIndicator('itemsSummary')"></span>
                                     </th>
+                                    <th class="comic-sortable-th nowrap col-phone" style="width: 140px;" ng-click="sortOrdersBy('customerPhoneNumber')">
+                                        Phone Number <span class="sort-indicator" ng-bind="getOrderSortIndicator('customerPhoneNumber')"></span>
+                                    </th>
                                     <th class="comic-sortable-th nowrap" style="width: 110px;" ng-click="sortOrdersBy('orderStatus')">
                                         Status <span class="sort-indicator" ng-bind="getOrderSortIndicator('orderStatus')"></span>
                                     </th>
@@ -89,6 +92,9 @@
                                     <td>
                                         <strong style="color: var(--text-main); font-size: 0.92rem;" ng-bind="order.itemsSummary || 'Standard Products'"></strong>
                                     </td>
+                                    <td class="col-phone nowrap">
+                                        <strong style="font-size: 0.92rem; white-space: nowrap; color: #0F172A;" ng-bind="order.customerPhoneNumber || selectedCustomer.phoneNumber || '-'"></strong>
+                                    </td>
                                     <td class="nowrap">
                                         <span class="comic-tag tag-primary" ng-bind="order.orderStatus"></span>
                                     </td>
@@ -108,7 +114,7 @@
 
                                 <!-- Expandable Follow-up Checklist Tree for this Order Record -->
                                 <tr ng-show="isOrderExpanded(order.id)" ng-repeat-end class="order-expand-row">
-                                    <td colspan="6" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
+                                    <td colspan="7" style="padding: 0; background: #F8FAFC; border-bottom: 2px solid var(--border-black);">
                                         <div class="order-followup-tree-box">
                                             <div class="followup-tree-header">
                                                 <div>
@@ -136,26 +142,13 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- 2. Status Check Yes/No toggle -->
-                                                    <div class="check-col-status">
-                                                        <button type="button"
-                                                                class="followup-status-btn"
-                                                                ng-if="auth.canUpdateFollowups"
-                                                                ng-class="check.isCompleted ? 'status-yes' : 'status-no'"
-                                                                ng-click="toggleFollowupCheck(order, check)"
-                                                                title="Click to toggle completion status">
-                                                            <span ng-if="check.isCompleted">✔</span>
-                                                            <span ng-if="!check.isCompleted">✖</span>
-                                                        </button>
-                                                    </div>
-
-                                                    <!-- 3. Details & User Note (View-Only) -->
+                                                    <!-- 2. Details & User Note (View-Only) -->
                                                     <div class="check-col-note">
                                                         <div class="check-note-text" ng-if="check.note" ng-bind="check.note"></div>
                                                         <div class="check-note-empty" ng-if="!check.note">No note added</div>
                                                     </div>
 
-                                                    <!-- 4. Attached Images (Lightbox Preview) -->
+                                                    <!-- 3. Attached Images (Lightbox Preview) -->
                                                     <div class="check-col-images">
                                                         <div ng-repeat="img in getCheckImages(check) track by $index" class="check-image-thumb-wrapper" ng-click="previewImage(img)" title="Click to view full photo in lightbox">
                                                             <img ng-src="{{img}}" class="check-image-thumb" alt="Proof">
@@ -163,9 +156,22 @@
                                                         <span class="check-no-image" ng-if="getCheckImages(check).length === 0">No image</span>
                                                     </div>
 
-                                                    <!-- 5. Direct Action to Add/Edit Feedback for this checkpoint -->
-                                                    <div class="check-col-action" ng-if="auth.canUpdateFollowups">
-                                                        <button type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.78rem;" ng-click="openEditFollowupModal(order, check, $event)" title="Add or edit feedback & photos for this milestone">
+                                                    <!-- 4. Direct Action: Check Status Toggle NEXT TO Feedback Button -->
+                                                    <div class="check-col-action" ng-if="auth.canUpdateFollowups" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                                        <button type="button"
+                                                                class="followup-check-toggle-btn"
+                                                                ng-class="check.isCompleted ? 'btn-status-completed' : 'btn-status-pending'"
+                                                                ng-click="toggleFollowupCheck(order, check)"
+                                                                title="{{ check.isCompleted ? 'Status: Completed (Click to toggle)' : 'Status: Pending (Click to complete)' }}">
+                                                            <span class="check-icon-circle">
+                                                                <svg ng-if="check.isCompleted" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                                <svg ng-if="!check.isCompleted" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>
+                                                            </span>
+                                                            <span ng-if="check.isCompleted">Completed</span>
+                                                            <span ng-if="!check.isCompleted">Check</span>
+                                                        </button>
+
+                                                        <button type="button" class="comic-btn" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="openEditFollowupModal(order, check, $event)" title="Add or edit feedback & photos for this milestone">
                                                             <span ng-if="!check.note && !check.imageUrl">+ Feedback</span>
                                                             <span ng-if="check.note || check.imageUrl">Edit Feedback</span>
                                                         </button>
@@ -181,18 +187,18 @@
                                 </tr>
 
                                 <tr ng-if="loadingOrders">
-                                    <td colspan="6" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
+                                    <td colspan="7" style="text-align: center; padding: 28px; color: var(--text-muted); font-weight: 800;">
                                         Loading purchase orders...
                                     </td>
                                 </tr>
                                 <tr ng-if="!loadingOrders && customerOrders.length === 0">
-                                    <td colspan="6" style="text-align: center; padding: 32px 16px;">
+                                    <td colspan="7" style="text-align: center; padding: 32px 16px;">
                                         <div style="font-size: 1.05rem; font-weight: 800; color: #1E293B; margin-bottom: 4px;">No purchase orders found for this customer</div>
                                         <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">This customer account does not have any recorded purchase orders yet.</div>
                                     </td>
                                 </tr>
                                 <tr ng-if="!loadingOrders && customerOrders.length > 0 && getFilteredCustomerOrders().length === 0">
-                                    <td colspan="6" style="text-align: center; padding: 28px 16px;">
+                                    <td colspan="7" style="text-align: center; padding: 28px 16px;">
                                         <div style="font-size: 0.95rem; font-weight: 800; color: #1E293B; margin-bottom: 8px;">No orders match the selected filter criteria.</div>
                                         <button type="button" class="comic-btn-secondary-sm" ng-click="clearAllOrderFilters()">Clear Filters</button>
                                     </td>

@@ -101,6 +101,11 @@ public class CustomerOrder {
         }
     }
 
+    @com.fasterxml.jackson.annotation.JsonProperty(value = "customerPhoneNumber", access = com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public String getCustomerPhoneNumber() {
+        return (customer != null) ? customer.getPhoneNumber() : null;
+    }
+
     public String getOrderNumber() { return orderNumber; }
     public void setOrderNumber(String orderNumber) { this.orderNumber = orderNumber; }
 

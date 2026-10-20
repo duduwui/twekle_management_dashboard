@@ -583,23 +583,23 @@
                                            ng-click="selectPendingFollowupStatus('ALL')">
                                     <span>All Customers</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 700; cursor: pointer; color: #DC2626;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #DC2626; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('ALERT') || isPendingFollowupStatusSelected('OVERDUE')"
                                            ng-click="selectPendingFollowupStatus('ALERT')">
-                                    <span style="color: #DC2626;">Needs Action</span>
+                                    <span>Need Follow-up</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 700; cursor: pointer; color: #D97706;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #D97706; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('UPCOMING') || isPendingFollowupStatusSelected('IDLE')"
                                            ng-click="selectPendingFollowupStatus('UPCOMING')">
-                                    <span style="color: #D97706;">Scheduled</span>
+                                    <span>Queued</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 700; cursor: pointer; color: #16A34A;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #16A34A; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('COMPLETED') || isPendingFollowupStatusSelected('DONE')"
                                            ng-click="selectPendingFollowupStatus('COMPLETED')">
-                                    <span style="color: #16A34A;">Completed</span>
+                                    <span>Finished</span>
                                 </label>
                             </div>
                         </div>

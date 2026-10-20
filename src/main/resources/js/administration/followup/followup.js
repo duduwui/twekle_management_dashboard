@@ -356,6 +356,11 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
             $scope.loadingOrders = false;
             var raw = res.data;
             var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+            list.forEach(function(o) {
+                if (!o.customerPhoneNumber && $scope.selectedCustomer) {
+                    o.customerPhoneNumber = $scope.selectedCustomer.phoneNumber;
+                }
+            });
             $scope.customerOrders = list;
             if ($scope.expandedOrderId) {
                 $scope.loadOrderFollowups($scope.expandedOrderId);
@@ -854,7 +859,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
         var rows = custs.map(function(c) {
             var isOrg = (c.name || '').toLowerCase().match(/mart|market|superstore|pos|company|corp|solutions|logistics/i);
             var typeLabel = isOrg ? 'Organization' : 'Individual';
-            var statusLabel = (c.followupStatus === 'ALERT' || c.followupStatus === 'OVERDUE') ? 'Needs Action' : (c.allFollowupsCompleted ? 'Completed' : 'Scheduled');
+            var statusLabel = (c.followupStatus === 'ALERT' || c.followupStatus === 'OVERDUE') ? 'Need Follow-up' : (c.allFollowupsCompleted ? 'Finished' : 'Queued');
             return [
                 c.id,
                 c.name || '',

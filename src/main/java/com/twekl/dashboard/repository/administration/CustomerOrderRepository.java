@@ -22,7 +22,7 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     Optional<CustomerOrder> findByOrderNumber(String orderNumber);
 
-    @Query("SELECT o FROM CustomerOrder o WHERE o.customer.id = :customerId ORDER BY o.orderDate DESC")
+    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE o.customer.id = :customerId ORDER BY o.orderDate DESC")
     List<CustomerOrder> findByCustomerIdOrderByOrderDateDesc(@Param("customerId") Long customerId);
 
 

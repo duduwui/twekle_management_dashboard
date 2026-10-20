@@ -2663,8 +2663,8 @@ input:checked + .comic-slider:before {
 
 .followup-check-card {
   display: grid;
-  grid-template-columns: 180px 60px minmax(0, 1fr) 88px 140px;
-  gap: 12px;
+  grid-template-columns: 200px minmax(0, 1fr) 90px auto;
+  gap: 14px;
   align-items: center;
   background-color: #FFFFFF;
   border: 1px solid var(--border-color);
@@ -2701,6 +2701,58 @@ input:checked + .comic-slider:before {
   flex-direction: column;
   align-items: center;
   gap: 2px;
+}
+
+.followup-check-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border-radius: 6px;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.followup-check-toggle-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.followup-check-toggle-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+.followup-check-toggle-btn.btn-status-completed {
+  background-color: #22C55E;
+  color: #FFFFFF;
+}
+
+.followup-check-toggle-btn.btn-status-completed:hover {
+  background-color: #16A34A;
+}
+
+.followup-check-toggle-btn.btn-status-pending {
+  background-color: #FFFFFF;
+  color: #1E293B;
+}
+
+.followup-check-toggle-btn.btn-status-pending:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+.check-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .followup-status-btn {

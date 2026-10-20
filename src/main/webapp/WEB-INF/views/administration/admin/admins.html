@@ -67,12 +67,35 @@
                                 </span>
                             </td>
                             <td>
-                                <form th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${admin.id})}" method="post" style="display: inline-flex; align-items: center; margin: 0;">
-                                    <button type="submit" class="status-toggle-btn" th:classappend="${admin.active} ? 'active' : 'inactive'" th:title="'Click to toggle status'">
-                                        <span class="toggle-slider">
-                                            <span class="toggle-knob"></span>
+                                <!-- Super Admin Root Account: Always Active / Status Locked -->
+                                <div th:if="${admin.username == 'twekl_super_admin'}"
+                                     class="status-toggle-locked active"
+                                     title="Primary super administrator account cannot be deactivated">
+                                    <span class="status-toggle-track active" style="opacity: 0.7; cursor: not-allowed;">
+                                        <span class="status-toggle-thumb active"></span>
+                                    </span>
+                                    <span class="status-toggle-label active" style="opacity: 0.8; font-size: 0.82rem; font-weight: 700;">Always Active</span>
+                                </div>
+
+                                <!-- Regular Staff Admins: Interactive Live Toggle -->
+                                <form th:unless="${admin.username == 'twekl_super_admin'}"
+                                      th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${admin.id})}"
+                                      method="post"
+                                      style="display: inline-flex; align-items: center; margin: 0;">
+                                    <input type="hidden" name="redirectUrl" value="/admin/admins">
+                                    <button type="submit"
+                                            class="status-toggle-btn"
+                                            th:classappend="${admin.active} ? 'active' : 'inactive'"
+                                            th:data-admin-id="${admin.id}"
+                                            th:data-active="${admin.active}"
+                                            th:title="${admin.active} ? 'Active - Click to deactivate' : 'Inactive - Click to activate'"
+                                            onclick="toggleAdminStatusLive(this, event)">
+                                        <span class="status-toggle-track" th:classappend="${admin.active} ? 'active' : ''">
+                                            <span class="status-toggle-thumb" th:classappend="${admin.active} ? 'active' : ''"></span>
                                         </span>
-                                        <span class="toggle-label" th:text="${admin.active} ? 'Active' : 'Inactive'">Active</span>
+                                        <span class="status-toggle-label"
+                                              th:classappend="${admin.active} ? 'active' : 'inactive'"
+                                              th:text="${admin.active} ? 'Active' : 'Inactive'">Active</span>
                                     </button>
                                 </form>
                             </td>

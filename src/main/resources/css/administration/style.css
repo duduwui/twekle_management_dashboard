@@ -3432,24 +3432,36 @@ input:checked + .comic-slider:before {
 .report-kpi-grid  { display: none; }
 
 /* Modern, Sleek Toggle Switch for Admins & Time Filters */
-.status-toggle-btn {
+.status-toggle-btn,
+.status-toggle-locked {
   background: transparent;
-  border: none;
-  padding: 4px 8px;
+  border: 1px solid transparent;
+  padding: 4px 10px 4px 6px;
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
+  gap: 8px;
   border-radius: 9999px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  font-family: inherit;
+}
+
+.status-toggle-btn {
+  cursor: pointer;
 }
 
 .status-toggle-btn:hover {
   background-color: #F1F5F9;
+  border-color: #E2E8F0;
 }
 
+.status-toggle-locked {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.status-toggle-track,
 .toggle-slider {
   position: relative;
   width: 40px;
@@ -3464,6 +3476,7 @@ input:checked + .comic-slider:before {
   box-sizing: border-box;
 }
 
+.status-toggle-thumb,
 .toggle-knob {
   width: 18px;
   height: 18px;
@@ -3474,21 +3487,31 @@ input:checked + .comic-slider:before {
   transform: translateX(0);
 }
 
+.status-toggle-btn.active .status-toggle-track,
+.status-toggle-locked.active .status-toggle-track,
+.status-toggle-track.active,
 .status-toggle-btn.active .toggle-slider {
   background-color: #10B981;
 }
 
+.status-toggle-btn.active .status-toggle-thumb,
+.status-toggle-locked.active .status-toggle-thumb,
+.status-toggle-thumb.active,
 .status-toggle-btn.active .toggle-knob {
   transform: translateX(18px);
 }
 
+.status-toggle-label,
 .toggle-label {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #64748B;
   transition: color 0.2s ease;
 }
 
+.status-toggle-btn.active .status-toggle-label,
+.status-toggle-locked.active .status-toggle-label,
+.status-toggle-label.active,
 .status-toggle-btn.active .toggle-label {
   color: #059669;
 }
@@ -3496,6 +3519,11 @@ input:checked + .comic-slider:before {
 .status-toggle-btn:focus-visible {
   outline: 2px solid #10B981;
   outline-offset: 2px;
+}
+
+.status-toggle-btn.loading {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 /* Also refine status-pill-btn to be clean, modern, and subtle */

@@ -3,13 +3,19 @@ package com.twekl.dashboard.controller.administration;
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
+import com.twekl.dashboard.model.administration.Admin;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 /**
  * Primary Administrative Controller.
@@ -66,14 +72,46 @@ public class AdminController {
                 () -> adminService.createAdmin(request));
     }
 
-    @PostMapping("/admin/admins/{adminId:\\d+}/toggle-status")
-    public String toggleAdminStatusSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
-        if (!portalAccess.canManageStaff()) {
+    @PostMapping({"/admin/admins/{adminId:\\d+}/toggle-status", "/admin/roles/{adminId:\\d+}/toggle-status"})
+    public Object toggleAdminStatusSsr(@PathVariable("adminId") Long adminId,
+                                       @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+                                       HttpServletRequest request,
+                                       RedirectAttributes flash) {
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
+        if (!portalAccess.canManageStaff() && !portalAccess.canEditPermissions()) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "Access denied: You do not have permission to toggle administrator status."));
+            }
             flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to toggle administrator status.");
-            return "redirect:/admin/admins";
+            return redirectUrl != null && !redirectUrl.isBlank() ? "redirect:" + redirectUrl : "redirect:/admin/admins";
         }
-        return executeAdminAction(flash, "Administrator status updated successfully.", 
-                () -> adminService.toggleStatus(adminId));
+
+        try {
+            Admin updated = adminService.toggleStatus(adminId);
+            if (isAjax) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "active", updated.isActive(),
+                        "adminId", adminId,
+                        "message", "Administrator status updated to " + (updated.isActive() ? "Active" : "Inactive") + "."
+                ));
+            }
+            flash.addFlashAttribute("successMessage", "Administrator status updated successfully.");
+        } catch (Exception ex) {
+            String errorMsg = ex.getMessage() != null ? ex.getMessage() : "Failed to toggle administrator status.";
+            if (isAjax) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", errorMsg
+                ));
+            }
+            flash.addFlashAttribute("errorMessage", errorMsg);
+        }
+
+        return redirectUrl != null && !redirectUrl.isBlank() ? "redirect:" + redirectUrl : "redirect:/admin/admins";
     }
 
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")

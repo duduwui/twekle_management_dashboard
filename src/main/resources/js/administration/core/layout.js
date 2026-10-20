@@ -621,3 +621,150 @@ function toggleCategoryNav(name) {
         if (arrow) arrow.classList.remove('expanded');
     }
 }
+
+// =========================================================
+// 4. GLOBAL TOAST & STATUS TOGGLE CONTROLS
+// =========================================================
+
+/**
+ * Universal Floating Toast Notification (works with or without AngularJS)
+ */
+function showStatusToast(message, type) {
+    if (typeof angular !== 'undefined') {
+        try {
+            var el = document.querySelector('[ng-app="tweklApp"]') || document.body;
+            var inj = angular.element(el).injector();
+            if (inj && inj.has('ToastService')) {
+                var ts = inj.get('ToastService');
+                var rs = inj.get('$rootScope');
+                rs.$apply(function() {
+                    ts.show(message, type);
+                });
+                return;
+            }
+        } catch (e) {}
+    }
+
+    var container = document.getElementById('vanillaToastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'vanillaToastContainer';
+        container.style.cssText = 'position: fixed; top: 24px; right: 24px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
+        document.body.appendChild(container);
+    }
+
+    var toast = document.createElement('div');
+    var isSuccess = type !== 'error';
+    var bg = isSuccess ? '#ECFDF5' : '#FEF2F2';
+    var border = isSuccess ? '#A7F3D0' : '#FECACA';
+    var text = isSuccess ? '#065F46' : '#991B1B';
+    var icon = isSuccess ? '✓' : '✕';
+
+    toast.style.cssText = 'pointer-events: auto; background: ' + bg + '; border: 1.5px solid ' + border + '; color: ' + text + '; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 10px; min-width: 260px; max-width: 420px; transform: translateY(-10px); opacity: 0; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);';
+    toast.innerHTML = '<span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:' + (isSuccess ? '#10B981' : '#EF4444') + '; color:#fff; font-size:12px; font-weight:900;">' + icon + '</span><span>' + message + '</span>';
+
+    container.appendChild(toast);
+    requestAnimationFrame(function() {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    });
+
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(function() {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 250);
+    }, 3500);
+}
+window.showStatusToast = showStatusToast;
+
+/**
+ * Interactive Live Status Toggle for Administrators
+ */
+async function toggleAdminStatusLive(btn, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    if (!btn || btn.classList.contains('loading')) return;
+
+    var adminId = btn.getAttribute('data-admin-id');
+    if (!adminId) return;
+
+    var wasActive = btn.getAttribute('data-active') === 'true';
+    var willBeActive = !wasActive;
+
+    // Optimistic UI update
+    btn.classList.add('loading');
+    btn.classList.toggle('active', willBeActive);
+    btn.classList.toggle('inactive', !willBeActive);
+
+    var slider = btn.querySelector('.status-toggle-track, .toggle-slider');
+    var thumb = btn.querySelector('.status-toggle-thumb, .toggle-knob');
+    var label = btn.querySelector('.status-toggle-label, .toggle-label');
+
+    if (slider) slider.classList.toggle('active', willBeActive);
+    if (thumb) thumb.classList.toggle('active', willBeActive);
+    if (label) {
+        label.textContent = willBeActive ? 'Active' : 'Inactive';
+        label.classList.toggle('active', willBeActive);
+        label.classList.toggle('inactive', !willBeActive);
+    }
+    btn.setAttribute('data-active', willBeActive ? 'true' : 'false');
+    btn.setAttribute('title', willBeActive ? 'Active - Click to deactivate' : 'Inactive - Click to activate');
+
+    try {
+        var response = await fetch('/admin/admins/' + adminId + '/toggle-status', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        var data = {};
+        try {
+            data = await response.json();
+        } catch (e) {
+            data = {};
+        }
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to update administrator status');
+        }
+
+        var confirmedActive = (data.active !== undefined) ? data.active : willBeActive;
+        btn.classList.toggle('active', confirmedActive);
+        btn.classList.toggle('inactive', !confirmedActive);
+        if (slider) slider.classList.toggle('active', confirmedActive);
+        if (thumb) thumb.classList.toggle('active', confirmedActive);
+        if (label) {
+            label.textContent = confirmedActive ? 'Active' : 'Inactive';
+            label.classList.toggle('active', confirmedActive);
+            label.classList.toggle('inactive', !confirmedActive);
+        }
+        btn.setAttribute('data-active', confirmedActive ? 'true' : 'false');
+        btn.setAttribute('title', confirmedActive ? 'Active - Click to deactivate' : 'Inactive - Click to activate');
+
+        showStatusToast(data.message || ('Status updated to ' + (confirmedActive ? 'Active' : 'Inactive')), 'success');
+    } catch (err) {
+        // Rollback on failure
+        btn.classList.toggle('active', wasActive);
+        btn.classList.toggle('inactive', !wasActive);
+        if (slider) slider.classList.toggle('active', wasActive);
+        if (thumb) thumb.classList.toggle('active', wasActive);
+        if (label) {
+            label.textContent = wasActive ? 'Active' : 'Inactive';
+            label.classList.toggle('active', wasActive);
+            label.classList.toggle('inactive', !wasActive);
+        }
+        btn.setAttribute('data-active', wasActive ? 'true' : 'false');
+        btn.setAttribute('title', wasActive ? 'Active - Click to deactivate' : 'Inactive - Click to activate');
+
+        showStatusToast(err.message || 'Failed to update status', 'error');
+    } finally {
+        btn.classList.remove('loading');
+    }
+}
+window.toggleAdminStatusLive = toggleAdminStatusLive;

@@ -44,7 +44,7 @@
                             <th>Staff Member</th>
                             <th>Phone Number</th>
                             <th style="width: 130px;">Access Level</th>
-                            <th style="width: 100px;">Status</th>
+                            <th style="width: 140px;">Status</th>
                             <th style="text-align: right; width: 180px;">Action</th>
                         </tr>
                     </thead>
@@ -75,14 +75,37 @@
                                 </span>
                             </td>
                             <td>
-                                <span th:if="${adm.active}" class="status-pill-btn active" style="cursor: default;">
-                                    <span class="status-dot"></span>
-                                    <span>Active</span>
-                                </span>
-                                <span th:unless="${adm.active}" class="status-pill-btn inactive" style="cursor: default;">
-                                    <span class="status-dot"></span>
-                                    <span>Inactive</span>
-                                </span>
+                                <!-- Super Admin Root Account: Always Active / Status Locked -->
+                                <div th:if="${adm.username == 'twekl_super_admin'}"
+                                     class="status-toggle-locked active"
+                                     title="Primary super administrator account cannot be deactivated">
+                                    <span class="status-toggle-track active" style="opacity: 0.7; cursor: not-allowed;">
+                                        <span class="status-toggle-thumb active"></span>
+                                    </span>
+                                    <span class="status-toggle-label active" style="opacity: 0.8; font-size: 0.82rem; font-weight: 700;">Always Active</span>
+                                </div>
+
+                                <!-- Regular Staff Admins: Interactive Live Toggle -->
+                                <form th:unless="${adm.username == 'twekl_super_admin'}"
+                                      th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${adm.id})}"
+                                      method="post"
+                                      style="display: inline-flex; align-items: center; margin: 0;">
+                                    <input type="hidden" name="redirectUrl" value="/admin/roles">
+                                    <button type="submit"
+                                            class="status-toggle-btn"
+                                            th:classappend="${adm.active} ? 'active' : 'inactive'"
+                                            th:data-admin-id="${adm.id}"
+                                            th:data-active="${adm.active}"
+                                            th:title="${adm.active} ? 'Active - Click to deactivate' : 'Inactive - Click to activate'"
+                                            onclick="toggleAdminStatusLive(this, event)">
+                                        <span class="status-toggle-track" th:classappend="${adm.active} ? 'active' : ''">
+                                            <span class="status-toggle-thumb" th:classappend="${adm.active} ? 'active' : ''"></span>
+                                        </span>
+                                        <span class="status-toggle-label"
+                                              th:classappend="${adm.active} ? 'active' : 'inactive'"
+                                              th:text="${adm.active} ? 'Active' : 'Inactive'">Active</span>
+                                    </button>
+                                </form>
                             </td>
                             <td style="text-align: right;">
                                 <button type="button" class="comic-btn-sm btn-select-admin"

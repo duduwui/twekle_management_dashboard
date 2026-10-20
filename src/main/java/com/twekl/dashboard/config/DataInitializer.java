@@ -91,7 +91,6 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
             timeFilterPresetRepository.save(new TimeFilterPreset("7_DAYS", "Last 7 Days", "آخر 7 أيام", "٧ ڕۆژی ڕابردوو", 7, "DAYS", 3));
             timeFilterPresetRepository.save(new TimeFilterPreset("30_DAYS", "Last 30 Days", "آخر 30 يوم", "٣٠ ڕۆژی ڕابردوو", 30, "DAYS", 4));
             timeFilterPresetRepository.save(new TimeFilterPreset("2_MONTHS", "Last 2 Months", "آخر شهرين", "٢ مانگی ڕابردوو", 2, "MONTHS", 5));
-            timeFilterPresetRepository.save(new TimeFilterPreset("60_DAYS", "60 Days Review", "مراجعة 60 يوم", "پێداچوونەوەی ٦٠ ڕۆژ", 60, "DAYS", 6));
         }
     }
 

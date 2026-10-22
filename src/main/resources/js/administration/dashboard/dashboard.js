@@ -372,16 +372,158 @@
 
                 const legTotal = document.getElementById('kpi-legend-total');
                 if (legTotal && data.totalFollowups != null) legTotal.textContent = Number(data.totalFollowups).toLocaleString();
+
+                // Dynamic Charts Sync
+                if (data.satisfactionChart) {
+                    updateSatisfactionChart(data.satisfactionChart);
+                } else if (data.satisfactionRate != null) {
+                    updateSatisfactionChart(data);
+                }
+
+                if (data.milestoneChart) {
+                    updateMilestoneChart(data.milestoneChart);
+                }
             })
             .catch(function() {
                 // Ignore transient network errors
             });
     }
 
+    function updateSatisfactionChart(data) {
+        if (!data) return;
+        const total = Number(data.totalRated || 0);
+        const satCount = Number(data.satisfiedCount || 0);
+        const neuCount = Number(data.neutralCount || 0);
+        const unsatCount = Number(data.unsatisfiedCount || 0);
+
+        const satRate = data.satisfactionRate != null ? Number(data.satisfactionRate) : (total > 0 ? (satCount / total) * 100 : 100);
+        const avgRating = data.averageRating != null ? Number(data.averageRating) : 5.0;
+
+        const elAvg = document.getElementById('sat-avg-rating');
+        if (elAvg) elAvg.textContent = avgRating.toFixed(1);
+
+        const elCenter = document.getElementById('donut-center-pct');
+        if (elCenter) elCenter.textContent = Math.round(satRate) + '%';
+
+        const elSatCount = document.getElementById('sat-count-satisfied');
+        if (elSatCount) elSatCount.textContent = satCount.toLocaleString();
+
+        const elSatPct = document.getElementById('sat-pct-satisfied');
+        if (elSatPct) elSatPct.textContent = total > 0 ? ((satCount / total) * 100).toFixed(1) + '%' : '100%';
+
+        const elNeuCount = document.getElementById('sat-count-neutral');
+        if (elNeuCount) elNeuCount.textContent = neuCount.toLocaleString();
+
+        const elNeuPct = document.getElementById('sat-pct-neutral');
+        if (elNeuPct) elNeuPct.textContent = total > 0 ? ((neuCount / total) * 100).toFixed(1) + '%' : '0%';
+
+        const elUnsatCount = document.getElementById('sat-count-unsatisfied');
+        if (elUnsatCount) elUnsatCount.textContent = unsatCount.toLocaleString();
+
+        const elUnsatPct = document.getElementById('sat-pct-unsatisfied');
+        if (elUnsatPct) elUnsatPct.textContent = total > 0 ? ((unsatCount / total) * 100).toFixed(1) + '%' : '0%';
+
+        const elTotal = document.getElementById('sat-total-rated');
+        if (elTotal) elTotal.textContent = total.toLocaleString();
+
+        // SVG Donut Circumference: 2 * Math.PI * 48 = 301.59
+        const C = 301.59;
+        const satPct = total > 0 ? satCount / total : 1.0;
+        const neuPct = total > 0 ? neuCount / total : 0;
+        const unsatPct = total > 0 ? unsatCount / total : 0;
+
+        const satArc = document.getElementById('donut-arc-satisfied');
+        if (satArc) {
+            const len = Math.max(0, satPct * C);
+            satArc.setAttribute('stroke-dasharray', len + ' ' + (C - len));
+            satArc.setAttribute('stroke-dashoffset', '0');
+        }
+
+        const neuArc = document.getElementById('donut-arc-neutral');
+        if (neuArc) {
+            const len = Math.max(0, neuPct * C);
+            const offset = -(satPct * C);
+            neuArc.setAttribute('stroke-dasharray', len + ' ' + (C - len));
+            neuArc.setAttribute('stroke-dashoffset', offset.toString());
+        }
+
+        const unsatArc = document.getElementById('donut-arc-unsatisfied');
+        if (unsatArc) {
+            const len = Math.max(0, unsatPct * C);
+            const offset = -((satPct + neuPct) * C);
+            unsatArc.setAttribute('stroke-dasharray', len + ' ' + (C - len));
+            unsatArc.setAttribute('stroke-dashoffset', offset.toString());
+        }
+    }
+
+    function updateMilestoneChart(milestones) {
+        if (!milestones) return;
+        const badge = document.getElementById('milestones-active-badge');
+        if (badge) badge.textContent = milestones.length + ' Active';
+
+        const container = document.getElementById('milestones-chart-list');
+        if (!container) return;
+
+        if (milestones.length === 0) {
+            container.innerHTML = '<div class="milestone-empty" style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.85rem;">No active time filters found.</div>';
+            return;
+        }
+
+        let html = '';
+        milestones.forEach(function(m) {
+            const compRate = Number(m.completionRate || 0);
+            const overdueRate = Number(m.overdueRate || 0);
+            const pendingRate = Number(m.pendingRate || 0);
+            const total = Number(m.total || 0);
+            const completed = Number(m.completed || 0);
+            const overdue = Number(m.overdue || 0);
+            const pending = Number(m.pending || 0);
+
+            const badgeClass = compRate >= 80 ? 'milestone-rate-high' : (compRate >= 40 ? 'milestone-rate-mid' : 'milestone-rate-low');
+
+            html += `
+                <div class="milestone-bar-item" data-preset-id="${m.id}">
+                    <div class="milestone-meta-row">
+                        <span class="milestone-name-tag">
+                            <span class="text-muted">#${m.displayOrder || 1}</span>
+                            <span>${escapeHtml(m.name || '')}</span>
+                        </span>
+                        <span class="milestone-rate-badge ${badgeClass}">
+                            ${compRate}% Done
+                        </span>
+                    </div>
+                    <div class="milestone-bar-row">
+                        <div class="milestone-seg-completed" style="width: ${compRate}%"></div>
+                        <div class="milestone-seg-overdue" style="width: ${overdueRate}%"></div>
+                        <div class="milestone-seg-pending" style="width: ${pendingRate}%"></div>
+                    </div>
+                    <div class="milestone-counts-row">
+                        <span><strong>${completed}</strong> completed</span>
+                        ${overdue > 0 ? `<span style="color: #EF4444;"><strong>${overdue}</strong> overdue</span>` : ''}
+                        <span><strong>${pending}</strong> in queue</span>
+                        <span><strong>${total}</strong> total</span>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function init() {
         setupInteractionListeners();
         tickCountdowns();
         initPriorityPagination();
+        updateDashboardStats();
 
         // Tick countdowns every 60 seconds
         setInterval(function () {

@@ -31,13 +31,13 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.completed = false AND (c.status = 'PENDING' OR c.status IS NULL) AND (c.preset IS NULL OR c.preset.active = true)")
     long countActivePendingChecks();
 
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('SATISFIED', '4', '5') AND (c.preset IS NULL OR c.preset.active = true)")
     long countSatisfied();
 
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('NEUTRAL', '3')")
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('NEUTRAL', '3') AND (c.preset IS NULL OR c.preset.active = true)")
     long countNeutral();
 
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2') AND (c.preset IS NULL OR c.preset.active = true)")
     long countUnsatisfied();
 
     @Query("SELECT c FROM OrderFollowupCheck c JOIN FETCH c.order o LEFT JOIN FETCH c.preset " +
@@ -70,6 +70,17 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset " +
            "WHERE c.satisfaction IS NOT NULL AND TRIM(c.satisfaction) != '' ORDER BY c.id DESC")
     List<OrderFollowupCheck> findChecksWithSatisfaction(org.springframework.data.domain.Pageable pageable);
+
+    @Query(value = "SELECT p.ID, p.LABEL_EN, p.DISPLAY_ORDER, COUNT(c.ID), " +
+           "SUM(CASE WHEN c.COMPLETED = 1 THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN c.COMPLETED = 0 AND c.STATUS = 'OVERDUE' THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN c.COMPLETED = 0 AND (c.STATUS = 'PENDING' OR c.STATUS IS NULL) THEN 1 ELSE 0 END) " +
+           "FROM TIME_FILTER_PRESETS p " +
+           "LEFT JOIN ORDER_FOLLOWUP_CHECKS c ON c.PRESET_ID = p.ID " +
+           "WHERE p.ACTIVE = 1 " +
+           "GROUP BY p.ID, p.LABEL_EN, p.DISPLAY_ORDER " +
+           "ORDER BY p.DISPLAY_ORDER ASC", nativeQuery = true)
+    List<Object[]> getActivePresetCheckBreakdown();
 
     @Query("SELECT c.milestoneName, COUNT(c.id), " +
            "SUM(CASE WHEN c.completed = true THEN 1L ELSE 0L END), " +

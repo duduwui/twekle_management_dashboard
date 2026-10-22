@@ -58,6 +58,7 @@ public class TimeFilterService {
         return timeFilterPresetRepository.count();
     }
 
+    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
     public TimeFilterPreset createPreset(TimeFilterPreset preset) {
         if (preset.getPresetKey() == null || preset.getPresetKey().trim().isEmpty()) {
             String generatedKey = (preset.getDurationValue() + "_" + preset.getDurationUnit()).toUpperCase();
@@ -80,7 +81,10 @@ public class TimeFilterService {
             preset.setDisplayOrder((int) timeFilterPresetRepository.count() + 1);
         }
 
-        return timeFilterPresetRepository.save(preset);
+        TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
+        followupCheckRepository.syncPendingChecks();
+        followupCheckRepository.syncOverdueChecks();
+        return saved;
     }
 
     @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)

@@ -57,7 +57,156 @@
                     </div>
                 </div>
 
-                <!-- 2. PRIORITY ATTENTION TABLE -->
+                <!-- 2. DYNAMIC ANALYTICS CHARTS (Customer Satisfaction & Active Timeline Milestones) -->
+                <div class="dashboard-charts-grid">
+                    <!-- Chart 1: Customer Satisfaction Sentiment -->
+                    <div class="dashboard-chart-card">
+                        <div class="chart-card-header">
+                            <div class="chart-title-group">
+                                <h3>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #10B981;"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                    <span>Customer Satisfaction</span>
+                                </h3>
+                                <span class="chart-title-subtext">Overall sentiment &amp; review distribution</span>
+                            </div>
+                            <span class="chart-pill-badge badge-gold" id="sat-rating-badge">
+                                ★ <span id="sat-avg-rating" th:text="${#numbers.formatDecimal(stats.averageRating != null ? stats.averageRating : 5.0, 1, 1)}">5.0</span> / 5.0
+                            </span>
+                        </div>
+
+                        <div class="chart-card-body">
+                            <div class="satisfaction-chart-body">
+                                <div class="donut-chart-container">
+                                    <svg class="donut-chart-svg" viewBox="0 0 120 120" aria-label="Satisfaction Donut Chart">
+                                        <circle class="donut-ring-bg" cx="60" cy="60" r="48"></circle>
+                                        <!-- Circumference = 2 * PI * 48 = 301.59 -->
+                                        <!-- Satisfied Arc -->
+                                        <circle id="donut-arc-satisfied" class="donut-segment seg-satisfied" cx="60" cy="60" r="48"
+                                                stroke-dasharray="301.59 301.59" stroke-dashoffset="0"></circle>
+                                        <!-- Neutral Arc -->
+                                        <circle id="donut-arc-neutral" class="donut-segment seg-neutral" cx="60" cy="60" r="48"
+                                                stroke-dasharray="0 301.59" stroke-dashoffset="0"></circle>
+                                        <!-- Unsatisfied Arc -->
+                                        <circle id="donut-arc-unsatisfied" class="donut-segment seg-unsatisfied" cx="60" cy="60" r="48"
+                                                stroke-dasharray="0 301.59" stroke-dashoffset="0"></circle>
+                                    </svg>
+                                    <div class="donut-chart-label">
+                                        <span class="donut-rate-value" id="donut-center-pct" th:text="|${stats.satisfactionRate != null ? stats.satisfactionRate : 100}%|">100%</span>
+                                        <span class="donut-rate-sub" id="donut-center-sub">Positive</span>
+                                    </div>
+                                </div>
+
+                                <div class="satisfaction-legend-col">
+                                    <div class="sentiment-row">
+                                        <div class="sentiment-label-box">
+                                            <span class="legend-dot dot-completed"></span>
+                                            <span>Satisfied</span>
+                                        </div>
+                                        <div class="sentiment-values-box">
+                                            <span class="sentiment-count" id="sat-count-satisfied" th:text="${stats.satisfiedCount != null ? stats.satisfiedCount : 0}">0</span>
+                                            <span class="sentiment-pct" id="sat-pct-satisfied">
+                                                <th:block th:if="${stats.totalRated != null and stats.totalRated > 0}" th:text="|${#numbers.formatDecimal((stats.satisfiedCount * 100.0) / stats.totalRated, 1, 1)}%|">0%</th:block>
+                                                <th:block th:unless="${stats.totalRated != null and stats.totalRated > 0}">100%</th:block>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="sentiment-row">
+                                        <div class="sentiment-label-box">
+                                            <span class="legend-dot dot-inqueue"></span>
+                                            <span>Neutral</span>
+                                        </div>
+                                        <div class="sentiment-values-box">
+                                            <span class="sentiment-count" id="sat-count-neutral" th:text="${stats.neutralCount != null ? stats.neutralCount : 0}">0</span>
+                                            <span class="sentiment-pct" id="sat-pct-neutral">
+                                                <th:block th:if="${stats.totalRated != null and stats.totalRated > 0}" th:text="|${#numbers.formatDecimal((stats.neutralCount * 100.0) / stats.totalRated, 1, 1)}%|">0%</th:block>
+                                                <th:block th:unless="${stats.totalRated != null and stats.totalRated > 0}">0%</th:block>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="sentiment-row">
+                                        <div class="sentiment-label-box">
+                                            <span class="legend-dot dot-overdue"></span>
+                                            <span>Unsatisfied</span>
+                                        </div>
+                                        <div class="sentiment-values-box">
+                                            <span class="sentiment-count" id="sat-count-unsatisfied" th:text="${stats.unsatisfiedCount != null ? stats.unsatisfiedCount : 0}">0</span>
+                                            <span class="sentiment-pct" id="sat-pct-unsatisfied">
+                                                <th:block th:if="${stats.totalRated != null and stats.totalRated > 0}" th:text="|${#numbers.formatDecimal((stats.unsatisfiedCount * 100.0) / stats.totalRated, 1, 1)}%|">0%</th:block>
+                                                <th:block th:unless="${stats.totalRated != null and stats.totalRated > 0}">0%</th:block>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card-footer">
+                            <span>Total ratings: <strong id="sat-total-rated" th:text="${stats.totalRated != null ? stats.totalRated : 0}">0</strong></span>
+                            <a th:href="@{/admin/reports(tab='satisfaction')}" title="Open satisfaction reports tab">
+                                Satisfaction Report →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Active Follow-up Milestones Breakdown -->
+                    <div class="dashboard-chart-card">
+                        <div class="chart-card-header">
+                            <div class="chart-title-group">
+                                <h3>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-dark);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    <span>Timeline Milestones</span>
+                                </h3>
+                                <span class="chart-title-subtext">Completion progress by active filter preset</span>
+                            </div>
+                            <span class="chart-pill-badge badge-teal" id="milestones-active-badge" th:text="|${#lists.size(milestoneChart != null ? milestoneChart : {})} Active|">
+                                Active Filters
+                            </span>
+                        </div>
+
+                        <div class="chart-card-body">
+                            <div class="milestones-chart-body" id="milestones-chart-list">
+                                <div class="milestone-bar-item" th:each="m : ${milestoneChart}">
+                                    <div class="milestone-meta-row">
+                                        <span class="milestone-name-tag">
+                                            <span class="text-muted" th:text="|#${m.displayOrder}|">#1</span>
+                                            <span th:text="${m.name}">Milestone Name</span>
+                                        </span>
+                                        <span class="milestone-rate-badge"
+                                              th:classappend="${m.completionRate >= 80 ? 'milestone-rate-high' : (m.completionRate >= 40 ? 'milestone-rate-mid' : 'milestone-rate-low')}"
+                                              th:text="|${m.completionRate}% Done|">
+                                            100% Done
+                                        </span>
+                                    </div>
+                                    <div class="milestone-bar-row">
+                                        <div class="milestone-seg-completed" th:style="|width: ${m.completionRate}%|"></div>
+                                        <div class="milestone-seg-overdue" th:style="|width: ${m.overdueRate}%|"></div>
+                                        <div class="milestone-seg-pending" th:style="|width: ${m.pendingRate}%|"></div>
+                                    </div>
+                                    <div class="milestone-counts-row">
+                                        <span><strong th:text="${m.completed}">0</strong> completed</span>
+                                        <span th:if="${m.overdue > 0}" style="color: #EF4444;"><strong th:text="${m.overdue}">0</strong> overdue</span>
+                                        <span><strong th:text="${m.pending}">0</strong> in queue</span>
+                                        <span><strong th:text="${m.total}">0</strong> total</span>
+                                    </div>
+                                </div>
+                                <div class="milestone-empty" th:if="${#lists.isEmpty(milestoneChart)}" style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.85rem;">
+                                    No active time filters found.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card-footer">
+                            <span>Dynamic timeline sync active</span>
+                            <a th:href="@{/admin/timelines}" title="Configure and manage time filters">
+                                Manage Milestones →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. PRIORITY ATTENTION TABLE -->
                 <div class="priority-table-card">
                     <div class="priority-header" style="justify-content: space-between;">
                         <h3 class="priority-title" style="margin: 0;">

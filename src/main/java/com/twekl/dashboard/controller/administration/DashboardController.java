@@ -47,8 +47,12 @@ public class DashboardController {
         org.springframework.data.domain.Page<CustomerFollowupSummary> urgentPage = followupService.findPagedSummaries("ALL", "ALERT", null,
                 org.springframework.data.domain.PageRequest.of(0, 50, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
 
+        Map<String, Object> summary = dashboardService.getDashboardSummary();
+
         model.addAttribute("activeTab", "dashboard");
-        model.addAttribute("stats", customerService.getStats());
+        model.addAttribute("stats", summary);
+        model.addAttribute("milestoneChart", summary.get("milestoneChart"));
+        model.addAttribute("satisfactionChart", summary.get("satisfactionChart"));
         model.addAttribute("urgentCustomers", urgentPage.getContent());
         model.addAttribute("allCustomers", recentPage.getContent());
         model.addAttribute("satisfactionDetails", reportService.getSatisfactionDetails("ALL").stream()

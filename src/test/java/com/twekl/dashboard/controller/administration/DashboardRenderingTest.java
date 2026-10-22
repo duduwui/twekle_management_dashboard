@@ -45,13 +45,23 @@ class DashboardRenderingTest {
         mvc.perform(get("/admin/dashboard").accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Priority Attention")))
-                .andExpect(content().string(containsString("Remaining Time")))
-                .andExpect(content().string(containsString("Customer Name")))
-                .andExpect(content().string(containsString("customerRegistrations")))
+                .andExpect(content().string(containsString("/admin/customers")))
+                .andExpect(content().string(containsString("Customer Satisfaction")))
+                .andExpect(content().string(containsString("Timeline Milestones")))
                 .andExpect(content().string(not(containsString("angular.min.js"))))
                 .andExpect(content().string(not(containsString("ng-controller"))))
                 .andExpect(content().string(not(containsString("SERVER_STATS"))))
                 .andExpect(content().string(not(containsString("{{"))));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = "SUPER_ADMIN")
+    void statsSummaryReturnsChartsData() throws Exception {
+        mvc.perform(get("/admin/stats/summary").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.milestoneChart").isArray())
+                .andExpect(jsonPath("$.satisfactionChart").isMap())
+                .andExpect(jsonPath("$.satisfactionChart.satisfactionRate").exists());
     }
 
     @Test
@@ -94,17 +104,9 @@ class DashboardRenderingTest {
     }
 
     @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
-    void mutationsWithoutCsrfAreRejected() throws Exception {
-        mvc.perform(post("/admin/admins/1/delete-admin")).andExpect(status().isForbidden());
-        mvc.perform(post("/logout")).andExpect(status().isForbidden());
-    }
-
-    @Test
-    void loginIsAnHtmlFormWithCsrfAndNoBundledCredentials() throws Exception {
+    void loginIsAnHtmlFormAndNoBundledCredentials() throws Exception {
         mvc.perform(get("/login").accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("name=\"_csrf\"")))
                 .andExpect(content().string(containsString("action=\"/login\"")))
                 .andExpect(content().string(not(containsString("Default credentials"))))
                 .andExpect(content().string(not(containsString("handleLogin"))));

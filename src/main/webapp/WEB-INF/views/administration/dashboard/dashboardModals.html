@@ -3,49 +3,119 @@
 <body>
     <div th:fragment="dashboardModals" style="display: contents;">
         <!-- 3. DASHBOARD DIALOG MODALS -->
-        <dialog id="customerRegistrations" class="comic-modal dashboard-dialog" aria-labelledby="registrationsTitle">
+        <dialog id="customerRegistrations" class="comic-modal dashboard-dialog" aria-labelledby="registrationsTitle" style="max-width: 980px; width: 95%;">
             <div class="comic-modal-header">
                 <div>
-                    <h3 id="registrationsTitle" class="modal-title">Customer Registrations</h3>
-                    <p class="modal-subtitle">Browse recently registered customers</p>
+                    <h3 id="registrationsTitle" class="modal-title">Customer Registrations &amp; Activity Log</h3>
+                    <p class="modal-subtitle">Breakdown by daily, weekly, monthly, and all-time with detailed customer activity logs</p>
                 </div>
                 <button type="button" class="comic-modal-close" data-close-dialog aria-label="Close">&times;</button>
             </div>
-            <div class="comic-modal-body" style="padding: 18px 20px; max-height: 420px; overflow-y: auto;">
-                <div class="visual-legend-row" style="margin-bottom: 14px;">
-                    <button type="button" class="comic-btn btn-sm" data-registration-days="7">Last 7 days</button>
-                    <button type="button" class="comic-btn btn-sm" data-registration-days="30">Last 30 days</button>
-                    <button type="button" class="comic-btn btn-sm" data-registration-days="0">All customers</button>
+            <div class="comic-modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+                <!-- 4 Interactive Metric Breakdown Cards -->
+                <div class="modal-stat-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px;">
+                    <div class="modal-stat-card" data-filter-days="1" onclick="selectRegistrationFilter(1)">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Today</span>
+                        <div style="font-size: 1.5rem; font-weight: 900; color: #0F172A; margin: 4px 0 2px;" id="modal-stat-today" th:text="${stats.customersToday}">0</div>
+                        <span style="font-size: 0.75rem; color: #35B89F; font-weight: 700;">Last 24 Hours</span>
+                    </div>
+                    <div class="modal-stat-card" data-filter-days="7" onclick="selectRegistrationFilter(7)">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Last 7 Days</span>
+                        <div style="font-size: 1.5rem; font-weight: 900; color: #0F172A; margin: 4px 0 2px;" id="modal-stat-week" th:text="${stats.customersThisWeek}">0</div>
+                        <span style="font-size: 0.75rem; color: #6366F1; font-weight: 700;">Past 7 Days</span>
+                    </div>
+                    <div class="modal-stat-card" data-filter-days="30" onclick="selectRegistrationFilter(30)">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Last 30 Days</span>
+                        <div style="font-size: 1.5rem; font-weight: 900; color: #0F172A; margin: 4px 0 2px;" id="modal-stat-month" th:text="${stats.customersThisMonth}">0</div>
+                        <span style="font-size: 0.75rem; color: #8B5CF6; font-weight: 700;">Past 30 Days</span>
+                    </div>
+                    <div class="modal-stat-card active" data-filter-days="0" onclick="selectRegistrationFilter(0)">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">All-Time Total</span>
+                        <div style="font-size: 1.5rem; font-weight: 900; color: #0F172A; margin: 4px 0 2px;" id="modal-stat-total" th:text="${stats.totalCustomers}">0</div>
+                        <span style="font-size: 0.75rem; color: #0EA5E9; font-weight: 700;">All Registrations</span>
+                    </div>
                 </div>
-                <div class="table-responsive">
-                    <table class="comic-table table-centered">
-                        <thead>
+
+                <!-- Filter Toolbar & Search Bar -->
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+                    <div class="pill-group" style="display: inline-flex; gap: 4px; background: #F1F5F9; padding: 4px; border-radius: 8px;">
+                        <button type="button" class="comic-btn-pill active" data-registration-days="0">All Customers</button>
+                        <button type="button" class="comic-btn-pill" data-registration-days="1">Today (24h)</button>
+                        <button type="button" class="comic-btn-pill" data-registration-days="7">Last 7 Days</button>
+                        <button type="button" class="comic-btn-pill" data-registration-days="30">Last 30 Days</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="customerVisibleCount" style="font-size: 0.82rem; font-weight: 700; color: #64748B;"></span>
+                        <input type="text" id="customerSearchInput" placeholder="Search name, phone, city..." class="comic-input" style="padding: 6px 12px; font-size: 0.85rem; width: 220px; border-radius: 8px;" oninput="filterCustomerTableLive(this.value)">
+                    </div>
+                </div>
+
+                <!-- Customer Detailed Log Table -->
+                <div class="table-responsive" style="border: 1px solid #E2E8F0; border-radius: 8px; max-height: 400px; overflow-y: auto;">
+                    <table class="comic-table table-centered" id="modalCustomerTable" style="margin: 0;">
+                        <thead style="position: sticky; top: 0; background: #F8FAFC; z-index: 2;">
                             <tr>
+                                <th style="width: 45px;">#</th>
                                 <th>Customer Name</th>
                                 <th>Phone Number</th>
                                 <th>City</th>
-                                <th>Registered Date</th>
+                                <th>Registered Date &amp; Time</th>
                                 <th>Orders</th>
+                                <th>Follow-up Status</th>
+                                <th style="width: 80px; text-align: center;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="summary : ${allCustomers}" th:with="customer=${summary.customer}" th:attr="data-registered=${customer.createdAt}">
-                                <td><strong style="color: var(--text-main);" th:text="${customer.name}">Customer Name</strong></td>
-                                <td th:text="${customer.phoneNumber}">-</td>
-                                <td><span class="comic-tag tag-gray" th:text="${customer.city ?: '-'}">-</span></td>
-                                <td><span class="text-muted" style="font-size: 0.8rem;" th:text="${customer.createdAt != null ? #temporals.format(customer.createdAt, 'MMM d, yyyy') : 'Recently'}">Recently</span></td>
-                                <td><strong th:text="${customer.totalOrders ?: 0}">0</strong></td>
+                            <tr th:each="summary, iter : ${allCustomers}" th:with="customer=${summary.customer}"
+                                th:attr="data-registered=${customer.createdAt}, data-search=|${customer.name} ${customer.phoneNumber} ${customer.city ?: ''}|"
+                                class="customer-modal-row">
+                                <td style="color: #94A3B8; font-weight: 700; font-size: 0.82rem;" th:text="${iter.count}">1</td>
+                                <td>
+                                    <strong style="color: var(--text-main); font-size: 0.92rem;" th:text="${customer.name}">Customer Name</strong>
+                                </td>
+                                <td>
+                                    <span style="color: #334155; font-weight: 600;" th:text="${customer.phoneNumber}">-</span>
+                                </td>
+                                <td>
+                                    <span class="comic-tag tag-gray" th:text="${customer.city ?: '-'}">-</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted" style="font-size: 0.82rem; font-weight: 600;"
+                                          th:text="${customer.createdAt != null ? #temporals.format(customer.createdAt, 'MMM d, yyyy HH:mm') : 'Recently'}">Recently</span>
+                                </td>
+                                <td>
+                                    <strong th:text="${customer.totalOrders ?: 0}">0</strong>
+                                </td>
+                                <td>
+                                    <span th:if="${summary.allFollowupsCompleted}" class="comic-tag tag-success">Completed</span>
+                                    <span th:if="${!summary.allFollowupsCompleted and summary.overdue}" class="comic-tag tag-danger">Overdue</span>
+                                    <span th:if="${!summary.allFollowupsCompleted and !summary.overdue}" class="comic-tag tag-warning">In Queue</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <a class="comic-btn-sm" style="padding: 4px 10px; font-size: 0.78rem;"
+                                       th:href="@{/admin/followups/orders/{id}(id=${customer.id})}"
+                                       title="Open customer follow-up orders">
+                                        Open
+                                    </a>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div id="registrationsEmpty" class="priority-empty-state" hidden style="text-align: center; padding: 24px;">
-                    <h4 class="priority-empty-title">No Customers in This Category</h4>
-                    <p class="priority-empty-desc">No customer registrations recorded for the selected time range.</p>
+
+                <div id="registrationsEmpty" class="priority-empty-state" hidden style="text-align: center; padding: 28px;">
+                    <h4 class="priority-empty-title">No Customers in This Timeframe</h4>
+                    <p class="priority-empty-desc">No customer registrations recorded for the selected filter range.</p>
                 </div>
             </div>
-            <div class="comic-modal-footer">
-                <a class="comic-btn btn-primary" th:href="@{/admin/followups}">Open Customer Directory</a>
+            <div class="comic-modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="text-muted" style="font-size: 0.82rem; font-weight: 700;">
+                    Total Registered: <strong style="color: var(--text-main);" th:text="${stats.totalCustomers}">0</strong>
+                </span>
+                <div style="display: inline-flex; gap: 8px;">
+                    <button type="button" class="comic-btn-secondary" data-close-dialog style="padding: 6px 14px;">Close</button>
+                    <a class="comic-btn btn-primary" th:href="@{/admin/followups}" style="padding: 6px 16px;">Open Customer Directory</a>
+                </div>
             </div>
         </dialog>
 

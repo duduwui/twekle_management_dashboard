@@ -451,7 +451,9 @@ body {
 .dashboard-dialog::backdrop { background: rgb(15 23 42 / 55%); }
 .dashboard-dialog .comic-modal-body { overflow: auto; max-height: 60vh; padding: 20px; }
 .dashboard-dialog [hidden] { display: none; }
+.kpi-row-4 button,
 .kpi-row-5 button { font: inherit; text-align: left; }
+.kpi-row-4 a,
 .kpi-row-5 a { text-decoration: none; }
 
 .sidebar-login-btn {
@@ -1356,6 +1358,77 @@ input:checked + .comic-slider:before {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .kpi-row-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-row-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modal Stat Breakdown Cards & Filter Toolbar */
+.modal-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .modal-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.modal-stat-card {
+  cursor: pointer;
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.modal-stat-card:hover {
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+}
+
+.modal-stat-card.active {
+  border-color: #10B981;
+  background: #F0FDF4;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+}
+
+.comic-btn-pill {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  user-select: none;
+}
+
+.comic-btn-pill:hover {
+  color: #0F172A;
+}
+
+.comic-btn-pill.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .kpi-row-3 {

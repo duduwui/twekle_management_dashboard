@@ -85,14 +85,24 @@
     /**
      * Filters customer registration rows inside the KPI details dialog modal.
      * 
-     * @param {number} days - Number of days cutoff (7, 30, or 0 for all).
+     * @param {number} days - Number of days cutoff (1 for today, 7 for week, 30 for month, or 0 for all).
      */
+    let currentFilterDays = 0;
+
     function renderFilteredRegistrations(days) {
-        const cutoff = days ? Date.now() - (days * 86400000) : 0;
+        currentFilterDays = Number(days || 0);
+        const cutoff = currentFilterDays ? Date.now() - (currentFilterDays * 86400000) : 0;
+        const searchInput = document.getElementById('customerSearchInput');
+        const query = searchInput ? (searchInput.value || '').toLowerCase().trim() : '';
+
         let visible = 0;
 
-        document.querySelectorAll('[data-registered]').forEach(function (row) {
-            const isVisible = isWithinCutoff(row.dataset.registered, cutoff);
+        document.querySelectorAll('#modalCustomerTable tbody tr, [data-registered]').forEach(function (row) {
+            const isDateMatch = isWithinCutoff(row.dataset.registered, cutoff);
+            const searchTarget = (row.dataset.search || row.textContent).toLowerCase();
+            const isSearchMatch = !query || searchTarget.indexOf(query) !== -1;
+            const isVisible = isDateMatch && isSearchMatch;
+
             row.hidden = !isVisible;
             if (isVisible) visible++;
         });
@@ -100,10 +110,28 @@
         const emptyEl = document.getElementById('registrationsEmpty');
         if (emptyEl) emptyEl.hidden = visible > 0;
 
+        const countEl = document.getElementById('customerVisibleCount');
+        if (countEl) countEl.textContent = `Showing ${visible} customer${visible === 1 ? '' : 's'}`;
+
+        // Toggle active states on modal top cards
+        document.querySelectorAll('.modal-stat-card[data-filter-days]').forEach(function (card) {
+            card.classList.toggle('active', Number(card.dataset.filterDays) === currentFilterDays);
+        });
+
+        // Toggle active states on filter pills
         document.querySelectorAll('[data-registration-days]').forEach(function (btn) {
-            btn.classList.toggle('btn-primary', Number(btn.dataset.registrationDays) === Number(days));
+            btn.classList.toggle('active', Number(btn.dataset.registrationDays) === currentFilterDays);
+            btn.classList.toggle('btn-primary', Number(btn.dataset.registrationDays) === currentFilterDays);
         });
     }
+
+    window.selectRegistrationFilter = function(days) {
+        renderFilteredRegistrations(days);
+    };
+
+    window.filterCustomerTableLive = function(searchVal) {
+        renderFilteredRegistrations(currentFilterDays);
+    };
 
     /**
      * Generic controller to show or hide native HTML5 <dialog> elements.
@@ -263,17 +291,23 @@
             })
             .then(function(data) {
                 if (!data) return;
-                const el7d = document.getElementById('kpi-customers-7d');
-                if (el7d && data.customersThisWeek != null) el7d.textContent = Number(data.customersThisWeek).toLocaleString();
-
-                const el30d = document.getElementById('kpi-customers-30d');
-                if (el30d && data.customersThisMonth != null) el30d.textContent = Number(data.customersThisMonth).toLocaleString();
-
                 const elTotal = document.getElementById('kpi-customers-total');
                 if (elTotal && data.totalCustomers != null) elTotal.textContent = Number(data.totalCustomers).toLocaleString();
 
                 const elQueue = document.getElementById('kpi-followups-queue');
                 if (elQueue && data.inQueueFollowups != null) elQueue.textContent = Number(data.inQueueFollowups).toLocaleString();
+
+                const elOverdue = document.getElementById('kpi-followups-overdue');
+                if (elOverdue && data.overdueFollowups != null) {
+                    elOverdue.textContent = Number(data.overdueFollowups).toLocaleString();
+                    if (data.overdueFollowups > 0) {
+                        elOverdue.classList.add('kpi-danger');
+                        elOverdue.classList.remove('kpi-primary');
+                    } else {
+                        elOverdue.classList.add('kpi-primary');
+                        elOverdue.classList.remove('kpi-danger');
+                    }
+                }
 
                 const elUnsat = document.getElementById('kpi-feedback-unsatisfied');
                 if (elUnsat && data.unsatisfiedCount != null) {
@@ -286,6 +320,19 @@
                         elUnsat.classList.remove('kpi-danger');
                     }
                 }
+
+                // Sync modal stats if open
+                const mToday = document.getElementById('modal-stat-today');
+                if (mToday && data.customersToday != null) mToday.textContent = Number(data.customersToday).toLocaleString();
+
+                const mWeek = document.getElementById('modal-stat-week');
+                if (mWeek && data.customersThisWeek != null) mWeek.textContent = Number(data.customersThisWeek).toLocaleString();
+
+                const mMonth = document.getElementById('modal-stat-month');
+                if (mMonth && data.customersThisMonth != null) mMonth.textContent = Number(data.customersThisMonth).toLocaleString();
+
+                const mTotal = document.getElementById('modal-stat-total');
+                if (mTotal && data.totalCustomers != null) mTotal.textContent = Number(data.totalCustomers).toLocaleString();
 
                 const btnProgress = document.getElementById('kpi-progress-btn');
                 if (btnProgress && data.completionPercentage != null) {

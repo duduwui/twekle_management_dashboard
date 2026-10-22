@@ -43,9 +43,9 @@ public class DashboardController {
     @GetMapping("/admin/dashboard")
     public String showDashboard(Model model) {
         org.springframework.data.domain.Page<CustomerFollowupSummary> recentPage = followupService.findPagedSummaries("ALL", "ALL", null,
-                org.springframework.data.domain.PageRequest.of(0, 40, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
+                org.springframework.data.domain.PageRequest.of(0, 100, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
         org.springframework.data.domain.Page<CustomerFollowupSummary> urgentPage = followupService.findPagedSummaries("ALL", "ALERT", null,
-                org.springframework.data.domain.PageRequest.of(0, 40, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
+                org.springframework.data.domain.PageRequest.of(0, 50, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
 
         model.addAttribute("activeTab", "dashboard");
         model.addAttribute("stats", customerService.getStats());

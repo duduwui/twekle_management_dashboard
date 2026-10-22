@@ -10,31 +10,33 @@
         <section class="comic-card dashboard-card">
             <div class="dashboard-container">
                 <!-- 1. KPIS AND VISUAL PROGRESS -->
-                <div class="kpi-row-5">
-                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="7">
-                        <span class="kpi-label">LAST 7 DAYS</span>
-                        <span class="kpi-value kpi-primary" id="kpi-customers-7d" th:text="${stats.customersThisWeek}">0</span>
-                        <span class="kpi-subtext">Customer registrations</span>
-                    </button>
-                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="30">
-                        <span class="kpi-label">LAST 30 DAYS</span>
-                        <span class="kpi-value kpi-primary" id="kpi-customers-30d" th:text="${stats.customersThisMonth}">0</span>
-                        <span class="kpi-subtext">Customer registrations</span>
-                    </button>
-                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="0">
+                <div class="kpi-row-4">
+                    <!-- 1. Total Customers (Click opens Breakdown & Log modal) -->
+                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="0" title="Click to view daily, weekly, monthly breakdown and customer logs">
                         <span class="kpi-label">TOTAL CUSTOMERS</span>
                         <span class="kpi-value kpi-primary" id="kpi-customers-total" th:text="${stats.totalCustomers}">0</span>
-                        <span class="kpi-subtext">All-time total</span>
+                        <span class="kpi-subtext">Click for daily, week &amp; month log</span>
                     </button>
-                    <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=IDLE)}">
+
+                    <!-- 2. In Queue -->
+                    <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=IDLE)}" title="View scheduled pending checks in queue">
                         <span class="kpi-label">IN QUEUE</span>
                         <span class="kpi-value kpi-primary" id="kpi-followups-queue" th:text="${stats.inQueueFollowups}">0</span>
                         <span class="kpi-subtext">Pending checks not yet overdue</span>
                     </a>
-                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="unsatisfiedFeedback">
+
+                    <!-- 3. Overdue -->
+                    <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=ALERT)}" title="View overdue follow-ups requiring immediate attention">
+                        <span class="kpi-label">OVERDUE</span>
+                        <span class="kpi-value" id="kpi-followups-overdue" th:classappend="${stats.overdueFollowups > 0 ? 'kpi-danger' : 'kpi-primary'}" th:text="${stats.overdueFollowups}">0</span>
+                        <span class="kpi-subtext">Urgent follow-ups requiring attention</span>
+                    </a>
+
+                    <!-- 4. Unsatisfied Feedback -->
+                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="unsatisfiedFeedback" title="View customer feedback and reasons">
                         <span class="kpi-label">UNSATISFIED FEEDBACK</span>
                         <span class="kpi-value" id="kpi-feedback-unsatisfied" th:classappend="${stats.unsatisfiedCount > 0 ? 'kpi-danger' : 'kpi-primary'}" th:text="${stats.unsatisfiedCount}">0</span>
-                        <span class="kpi-subtext">View feedback and reasons</span>
+                        <span class="kpi-subtext">Customer complaints &amp; low ratings</span>
                     </button>
                 </div>
                 <div class="visual-progress-card">

@@ -25,28 +25,28 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     org.springframework.data.domain.Page<Customer> findByCreatedAtAfter(java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
     org.springframework.data.domain.Page<Customer> findByCreatedAtBetween(java.time.Instant from, java.time.Instant to, org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT c FROM Customer c WHERE EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false)",
-           countQuery = "SELECT count(c) FROM Customer c WHERE EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false)")
+    @Query(value = "SELECT c FROM Customer c WHERE EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
+           countQuery = "SELECT count(c) FROM Customer c WHERE EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
     org.springframework.data.domain.Page<Customer> findOverdueCustomers(org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false)",
-           countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false)")
+    @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
+           countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
     org.springframework.data.domain.Page<Customer> findOverdueCustomersWithCutoff(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT c FROM Customer c WHERE (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)))",
-           countQuery = "SELECT count(c) FROM Customer c WHERE (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)))")
+    @Query(value = "SELECT c FROM Customer c WHERE (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))",
+           countQuery = "SELECT count(c) FROM Customer c WHERE (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))")
     org.springframework.data.domain.Page<Customer> findInQueueCustomers(org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)))",
-           countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)))")
+    @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))",
+           countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))")
     org.springframework.data.domain.Page<Customer> findInQueueCustomersWithCutoff(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT c FROM Customer c WHERE c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)",
-           countQuery = "SELECT count(c) FROM Customer c WHERE c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)")
+    @Query(value = "SELECT c FROM Customer c WHERE c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
+           countQuery = "SELECT count(c) FROM Customer c WHERE c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
     org.springframework.data.domain.Page<Customer> findCompletedCustomers(org.springframework.data.domain.Pageable pageable);
 
-    @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)",
-           countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false)")
+    @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
+           countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
     org.springframework.data.domain.Page<Customer> findCompletedCustomersWithCutoff(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
 
     @Query("SELECT c FROM Customer c WHERE " +

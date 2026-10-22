@@ -168,8 +168,9 @@ public class CustomerService {
         long totalOrders = orderRepository.count();
         Instant now = Instant.now();
 
-        long totalFollowups = followupCheckRepository.count();
-        long completedFollowups = followupCheckRepository.countByCompletedTrue();
+        long totalFollowups = followupCheckRepository.countActiveChecks();
+        long completedFollowups = followupCheckRepository.countActiveCompletedChecks();
+        long overdueFollowups = followupCheckRepository.countActiveOverdueChecks();
         long pendingFollowups = totalFollowups > completedFollowups ? totalFollowups - completedFollowups : 0;
 
         long alertFollowups = 0;
@@ -185,7 +186,6 @@ public class CustomerService {
             doneFollowups = customerRepository.findCompletedCustomers(org.springframework.data.domain.PageRequest.of(0, 1)).getTotalElements();
         }
 
-        long overdueFollowups = alertFollowups;
         long inQueueFollowups = pendingFollowups > overdueFollowups ? pendingFollowups - overdueFollowups : 0;
 
         double totalRevenue = orderRepository.sumTotalRevenue();

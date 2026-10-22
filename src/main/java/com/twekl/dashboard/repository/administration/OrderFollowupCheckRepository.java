@@ -19,6 +19,18 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
 
     long countByCompletedTrue();
 
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.preset IS NULL OR c.preset.active = true")
+    long countActiveChecks();
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.completed = true AND (c.preset IS NULL OR c.preset.active = true)")
+    long countActiveCompletedChecks();
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.completed = false AND c.status = 'OVERDUE' AND (c.preset IS NULL OR c.preset.active = true)")
+    long countActiveOverdueChecks();
+
+    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.completed = false AND (c.status = 'PENDING' OR c.status IS NULL) AND (c.preset IS NULL OR c.preset.active = true)")
+    long countActivePendingChecks();
+
     @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
     long countSatisfied();
 
@@ -137,7 +149,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('NEUTRAL', '3') THEN 1 ELSE 0 END), " +
            "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('UNSATISFIED', '1', '2') THEN 1 ELSE 0 END), " +
            "COUNT(c.ID) " +
-           "FROM CUSTOMER_ORDERS o JOIN ORDER_FOLLOWUP_CHECKS c USE INDEX (idx_checks_order_sat) ON o.ID = c.ORDER_ID " +
+           "FROM CUSTOMER_ORDERS o JOIN ORDER_FOLLOWUP_CHECKS c ON o.ID = c.ORDER_ID " +
            "WHERE (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate)) " +
            "GROUP BY o.ITEMS_SUMMARY", nativeQuery = true)
     List<Object[]> getProductSatisfactionCountsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
@@ -153,8 +165,10 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
+                   "LEFT JOIN TIME_FILTER_PRESETS p ON ch.PRESET_ID = p.ID " +
                    "SET ch.STATUS = 'OVERDUE' " +
                    "WHERE ch.COMPLETED = 0 AND ch.STATUS != 'OVERDUE' " +
+                   "  AND (ch.PRESET_ID IS NULL OR (p.ID IS NOT NULL AND p.ACTIVE = 1)) " +
                    "  AND (CASE " +
                    "        WHEN ch.DURATION_UNIT = 'HOURS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE HOUR) " +
                    "        WHEN ch.DURATION_UNIT = 'DAYS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE DAY) " +
@@ -167,9 +181,11 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
+                   "LEFT JOIN TIME_FILTER_PRESETS p ON ch.PRESET_ID = p.ID " +
                    "SET ch.STATUS = 'PENDING' " +
                    "WHERE ch.COMPLETED = 0 AND ch.STATUS = 'OVERDUE' " +
-                   "  AND (CASE " +
+                   "  AND ((ch.PRESET_ID IS NOT NULL AND (p.ID IS NULL OR p.ACTIVE = 0)) " +
+                   "       OR (CASE " +
                    "        WHEN ch.DURATION_UNIT = 'HOURS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE HOUR) " +
                    "        WHEN ch.DURATION_UNIT = 'DAYS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE DAY) " +
                    "        WHEN ch.DURATION_UNIT = 'WEEKS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL (ch.DURATION_VALUE * 7) DAY) " +

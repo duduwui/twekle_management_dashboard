@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
@@ -22,7 +24,7 @@ import java.util.Map;
  * Controller for Customer Directory, Lifecycle History, and Statistics.
  * Consolidated resource controller.
  */
-@RestController
+@Controller
 @RequestMapping("/admin/customers")
 public class CustomerController {
 
@@ -39,7 +41,27 @@ public class CustomerController {
         this.customerGeneratorService = customerGeneratorService;
     }
 
+    @GetMapping(produces = MediaType.TEXT_HTML_VALUE)
+    public String showCustomersPage(
+            @RequestParam(value = "days", required = false) Integer days,
+            @RequestParam(value = "filter", defaultValue = "ALL") String filter,
+            @RequestParam(value = "search", required = false) String search,
+            Model model) {
+
+        org.springframework.data.domain.Page<CustomerFollowupSummary> recentPage = followupService.findPagedSummaries("ALL", "ALL", search,
+                org.springframework.data.domain.PageRequest.of(0, 300, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
+
+        model.addAttribute("activeTab", "customers");
+        model.addAttribute("stats", customerService.getStats());
+        model.addAttribute("allCustomers", recentPage.getContent());
+        model.addAttribute("activeFilter", filter);
+        model.addAttribute("initialDays", days != null ? days : 0);
+        model.addAttribute("searchQuery", search);
+        return "administration/customer/customers";
+    }
+
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllCustomers(
             @RequestParam(value = "timeFilter", required = false) String timeFilter,
             @RequestParam(value = "filter", required = false) String filter,

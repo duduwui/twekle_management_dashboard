@@ -2,6 +2,7 @@ package com.twekl.dashboard.service.administration;
 
 import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.administration.TimeFilterPreset;
+import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepository;
 import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -21,10 +22,13 @@ import java.util.Optional;
 public class TimeFilterService {
 
     private final TimeFilterPresetRepository timeFilterPresetRepository;
+    private final OrderFollowupCheckRepository followupCheckRepository;
 
     @Autowired
-    public TimeFilterService(final TimeFilterPresetRepository timeFilterPresetRepository) {
+    public TimeFilterService(final TimeFilterPresetRepository timeFilterPresetRepository,
+                             final OrderFollowupCheckRepository followupCheckRepository) {
         this.timeFilterPresetRepository = timeFilterPresetRepository;
+        this.followupCheckRepository = followupCheckRepository;
     }
 
     @Cacheable("timeFilterPresets")
@@ -92,7 +96,10 @@ public class TimeFilterService {
         if (updated.getDisplayOrder() > 0) preset.setDisplayOrder(updated.getDisplayOrder());
         preset.setActive(updated.isActive());
 
-        return timeFilterPresetRepository.save(preset);
+        TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
+        followupCheckRepository.syncPendingChecks();
+        followupCheckRepository.syncOverdueChecks();
+        return saved;
     }
 
     @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
@@ -101,7 +108,10 @@ public class TimeFilterService {
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
 
         preset.setActive(!preset.isActive());
-        return timeFilterPresetRepository.save(preset);
+        TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
+        followupCheckRepository.syncPendingChecks();
+        followupCheckRepository.syncOverdueChecks();
+        return saved;
     }
 
     @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
@@ -110,5 +120,7 @@ public class TimeFilterService {
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
 
         timeFilterPresetRepository.delete(preset);
+        followupCheckRepository.syncPendingChecks();
+        followupCheckRepository.syncOverdueChecks();
     }
 }

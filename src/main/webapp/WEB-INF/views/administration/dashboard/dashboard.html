@@ -11,12 +11,12 @@
             <div class="dashboard-container">
                 <!-- 1. KPIS AND VISUAL PROGRESS -->
                 <div class="kpi-row-4">
-                    <!-- 1. Total Customers (Click opens Breakdown & Log modal) -->
-                    <button type="button" class="comic-kpi-card kpi-card-clickable" data-dialog="customerRegistrations" data-days="0" title="Click to view daily, weekly, monthly breakdown and customer logs">
+                    <!-- 1. Total Customers (Click opens Breakdown & Log page) -->
+                    <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/customers}" title="View daily, weekly, monthly breakdown and customer registrations log">
                         <span class="kpi-label">TOTAL CUSTOMERS</span>
                         <span class="kpi-value kpi-primary" id="kpi-customers-total" th:text="${stats.totalCustomers}">0</span>
                         <span class="kpi-subtext">Click for daily, week &amp; month log</span>
-                    </button>
+                    </a>
 
                     <!-- 2. In Queue -->
                     <a class="comic-kpi-card kpi-card-clickable" th:href="@{/admin/followups(status=IDLE)}" title="View scheduled pending checks in queue">

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{administration/fragments/adminLayout}">
+<head>
+    <title>Customer Registrations &amp; Log | Twekl Administration</title>
+    <style>
+        .customer-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .customer-header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .customer-page-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .customer-page-subtitle {
+            font-size: 0.88rem;
+            color: #64748B;
+            font-weight: 500;
+            margin: 0;
+        }
+        .active-filter-card {
+            border: 2px solid var(--primary-color) !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15) !important;
+            background-color: #F8FAFC !important;
+        }
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .search-clear-btn:hover {
+            color: #0F172A;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <section class="comic-card" id="customersPageContainer" th:attr="data-initial-days=${initialDays}">
+            <!-- Page Header with Back Action -->
+            <div class="customer-page-header">
+                <div class="customer-header-left">
+                    <h1 class="customer-page-title">
+                        <span>Customer Registrations &amp; Log</span>
+                        <span class="comic-tag tag-primary" style="font-size: 0.82rem; padding: 2px 10px;" th:text="|${stats.totalCustomers} Total|">0 Total</span>
+                    </h1>
+                    <p class="customer-page-subtitle">Detailed breakdown of customer intake, order activity, and follow-up milestone status.</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <a th:href="@{/admin/dashboard}" class="comic-btn btn-ghost" style="padding: 7px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a th:href="@{/admin/followups}" class="comic-btn btn-ghost" style="padding: 7px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <span>Follow-ups Queue</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 1. TOP BREAKDOWN KPI CARDS (Clickable for instant filter) -->
+            <div class="kpi-row-4" style="margin-bottom: 24px;">
+                <!-- Total All-time -->
+                <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="0" title="Click to filter all customers">
+                    <span class="kpi-label">TOTAL CUSTOMERS</span>
+                    <span class="kpi-value kpi-primary" th:text="${stats.totalCustomers}">0</span>
+                    <span class="kpi-subtext">All-time registrations</span>
+                </button>
+
+                <!-- Today (24 Hours) -->
+                <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="1" title="Click to view today's registrations">
+                    <span class="kpi-label">TODAY'S INTAKE</span>
+                    <span class="kpi-value kpi-primary" th:text="${stats.customersToday}">0</span>
+                    <span class="kpi-subtext">Past 24 hours</span>
+                </button>
+
+                <!-- Last 7 Days -->
+                <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="7" title="Click to view registrations from last 7 days">
+                    <span class="kpi-label">LAST 7 DAYS</span>
+                    <span class="kpi-value kpi-primary" th:text="${stats.customersThisWeek}">0</span>
+                    <span class="kpi-subtext">Weekly customer intake</span>
+                </button>
+
+                <!-- Last 30 Days -->
+                <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="30" title="Click to view registrations from last 30 days">
+                    <span class="kpi-label">LAST 30 DAYS</span>
+                    <span class="kpi-value kpi-primary" th:text="${stats.customersThisMonth}">0</span>
+                    <span class="kpi-subtext">Monthly customer intake</span>
+                </button>
+            </div>
+
+            <!-- 2. FILTER TOOLBAR -->
+            <div class="comic-filter-toolbar" style="margin-bottom: 16px;">
+                <div class="filter-left-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-right: 4px;">Timeframe:</span>
+                    <button type="button" class="comic-btn-sm" data-filter-days="0">All Time</button>
+                    <button type="button" class="comic-btn-sm" data-filter-days="1">Today</button>
+                    <button type="button" class="comic-btn-sm" data-filter-days="7">Last 7 Days</button>
+                    <button type="button" class="comic-btn-sm" data-filter-days="30">Last 30 Days</button>
+                </div>
+
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <span id="customerVisibleCount" style="font-size: 0.85rem; font-weight: 700; color: #64748B;">Showing customers...</span>
+                    <div class="filter-search-box" style="position: relative; width: 280px;">
+                        <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="search" id="customerSearchInput" autocomplete="off" class="comic-search-bar" placeholder="Search by name, phone, city..." style="width: 100%;">
+                        <button type="button" id="clearCustomerSearch" class="search-clear-btn" style="display: none;" title="Clear search">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CUSTOMER LOG TABLE -->
+            <div id="customersTableContainer" class="table-responsive" style="border: 1px solid #E2E8F0; border-radius: 8px; background: #FFFFFF;">
+                <table class="comic-table table-centered" id="customerLogTable" style="margin: 0;">
+                    <thead style="background: #F8FAFC;">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th style="text-align: left;">Customer Name</th>
+                            <th>Phone Number</th>
+                            <th>City</th>
+                            <th>Registered Date &amp; Time</th>
+                            <th style="text-align: center;">Orders</th>
+                            <th style="text-align: center;">Follow-up Status</th>
+                            <th style="width: 90px; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="summary, iter : ${allCustomers}" th:with="customer=${summary.customer}"
+                            th:attr="data-registered=${customer.createdAt}, data-search=|${customer.name} ${customer.phoneNumber} ${customer.city ?: ''}|"
+                            class="customer-row">
+                            <td style="color: #94A3B8; font-weight: 700; font-size: 0.82rem;" th:text="${iter.count}">1</td>
+                            <td style="text-align: left;">
+                                <strong style="color: var(--text-main); font-size: 0.92rem;" th:text="${customer.name}">Customer Name</strong>
+                            </td>
+                            <td>
+                                <span style="color: #334155; font-weight: 600;" th:text="${customer.phoneNumber}">-</span>
+                            </td>
+                            <td>
+                                <span class="comic-tag tag-gray" th:text="${customer.city ?: '-'}">-</span>
+                            </td>
+                            <td>
+                                <span class="text-muted" style="font-size: 0.84rem; font-weight: 600;"
+                                      th:text="${customer.createdAt != null ? #temporals.format(customer.createdAt, 'MMM d, yyyy HH:mm') : 'Recently'}">Recently</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <strong class="comic-tag tag-primary" style="font-size: 0.85rem; padding: 2px 8px;" th:text="${customer.totalOrders ?: 0}">0</strong>
+                            </td>
+                            <td style="text-align: center;">
+                                <span th:if="${summary.allFollowupsCompleted}" class="comic-tag tag-success">Completed</span>
+                                <span th:if="${!summary.allFollowupsCompleted and summary.overdue}" class="comic-tag tag-danger">Overdue</span>
+                                <span th:if="${!summary.allFollowupsCompleted and !summary.overdue}" class="comic-tag tag-warning">In Queue</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <a class="comic-btn-sm" style="padding: 5px 12px; font-size: 0.80rem;"
+                                   th:href="@{/admin/followups/orders/{id}(id=${customer.id})}"
+                                   title="Open customer follow-up orders">
+                                    Open
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="customersEmptyState" class="priority-empty-state" style="display: none; text-align: center; padding: 40px 20px; background: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 8px; margin-top: 10px;">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <h4 class="priority-empty-title" style="margin: 0 0 6px 0; color: #1E293B;">No Customers Found</h4>
+                <p class="priority-empty-desc" style="margin: 0; color: #64748B; font-size: 0.9rem;">No customer records match your selected timeframe or search criteria.</p>
+                <button type="button" class="comic-btn btn-ghost" style="margin-top: 14px; padding: 6px 16px; font-size: 0.82rem;" data-filter-days="0">Reset to All Time</button>
+            </div>
+
+            <!-- 4. PAGINATION FOOTER -->
+            <div id="customersPagination" style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px; gap: 8px;">
+                <div id="paginationControls" style="display: flex; gap: 6px; align-items: center;"></div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

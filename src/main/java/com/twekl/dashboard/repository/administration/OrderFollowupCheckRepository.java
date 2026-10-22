@@ -191,6 +191,6 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
                    "        WHEN ch.DURATION_UNIT = 'WEEKS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL (ch.DURATION_VALUE * 7) DAY) " +
                    "        WHEN ch.DURATION_UNIT = 'MONTHS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE MONTH) " +
                    "        ELSE DATE_ADD(o.ORDER_DATE, INTERVAL ch.TARGET_DAYS DAY) " +
-                   "      END) >= UTC_TIMESTAMP()", nativeQuery = true)
+                   "      END) >= UTC_TIMESTAMP())", nativeQuery = true)
     int syncPendingChecks();
 }

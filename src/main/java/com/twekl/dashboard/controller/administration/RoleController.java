@@ -18,10 +18,11 @@ import java.util.Set;
 /**
  * Controller for Role & Permission templates management.
  * Consolidates SSR view rendering and administrative role actions.
+ * Implements RoleOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/roles")
-public class RoleController {
+public class RoleController implements RoleOperations {
 
     private final RoleService roleService;
     private final AdminService adminService;
@@ -40,6 +41,7 @@ public class RoleController {
     // SSR VIEW ENDPOINTS
     // =========================================================
 
+    @Override
     @GetMapping
     public String showRoles(@RequestParam(value = "selectedAdminId", required = false) Long selectedAdminId,
                             Model model) {
@@ -67,6 +69,7 @@ public class RoleController {
         return "administration/role/roles";
     }
 
+    @Override
     @PostMapping("/create")
     public String createRoleSsr(@ModelAttribute("newRole") RoleDto roleDto, RedirectAttributes flash) {
         if (!portalAccess.canEditPermissions()) {
@@ -81,6 +84,7 @@ public class RoleController {
                 "redirect:/admin/roles", () -> roleService.createRole(roleDto));
     }
 
+    @Override
     @PostMapping("/{roleId:\\d+}/update")
     public String updateRoleSsr(@PathVariable("roleId") Long roleId,
                                 @ModelAttribute RoleDto roleDto,
@@ -93,6 +97,7 @@ public class RoleController {
                 "redirect:/admin/roles", () -> roleService.updateRole(roleId, roleDto));
     }
 
+    @Override
     @PostMapping({"/assign_user_role", "/{adminId:\\d+}/assign_user_role"})
     public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
@@ -130,6 +135,7 @@ public class RoleController {
                 });
     }
 
+    @Override
     @PostMapping("/{roleId:\\d+}/delete")
     public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
         if (!portalAccess.canEditPermissions()) {

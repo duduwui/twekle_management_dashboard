@@ -20,10 +20,11 @@ import java.util.Map;
 /**
  * Primary Administrative Controller.
  * Consolidates SSR view rendering and administrative actions.
+ * Implements AdminOperations interface contract.
  * Uses constructor injection with final dependencies.
  */
 @Controller
-public class AdminController {
+public class AdminController implements AdminOperations {
 
     private final AdminService adminService;
     private final RoleService roleService;
@@ -42,6 +43,7 @@ public class AdminController {
     // STAFF ADMINISTRATORS ENDPOINTS
     // =========================================================
 
+    @Override
     @GetMapping("/admin/admins")
     public String showAdmins(Model model) {
         if (!portalAccess.canViewStaff()) {
@@ -56,6 +58,7 @@ public class AdminController {
         return "administration/admin/admins";
     }
 
+    @Override
     @PostMapping("/admin/admins/create-admin")
     public String createAdminSsr(@Valid @ModelAttribute("newAdmin") CreateAdminRequest request,
                                  BindingResult bindingResult,
@@ -72,6 +75,7 @@ public class AdminController {
                 () -> adminService.createAdmin(request));
     }
 
+    @Override
     @PostMapping({"/admin/admins/{adminId:\\d+}/toggle-status", "/admin/roles/{adminId:\\d+}/toggle-status"})
     public Object toggleAdminStatusSsr(@PathVariable("adminId") Long adminId,
                                        @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
@@ -114,6 +118,7 @@ public class AdminController {
         return redirectUrl != null && !redirectUrl.isBlank() ? "redirect:" + redirectUrl : "redirect:/admin/admins";
     }
 
+    @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
     public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
         if (!portalAccess.canManageStaff()) {

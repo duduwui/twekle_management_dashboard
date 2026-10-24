@@ -17,9 +17,10 @@ import java.util.Map;
 /**
  * Controller for Dashboard Views and Summary Statistics.
  * Dedicated dashboard domain controller.
+ * Implements DashboardOperations interface contract.
  */
 @Controller
-public class DashboardController {
+public class DashboardController implements DashboardOperations {
 
     private final DashboardService dashboardService;
     private final FollowupService followupService;
@@ -34,6 +35,7 @@ public class DashboardController {
         this.reportService = reportService;
     }
 
+    @Override
     @GetMapping("/admin/dashboard")
     public String showDashboard(Model model) {
         org.springframework.data.domain.Page<CustomerFollowupSummary> urgentPage = followupService.findPagedSummaries("ALL", "ALERT", null,
@@ -53,6 +55,7 @@ public class DashboardController {
         return "administration/dashboard/dashboard";
     }
 
+    @Override
     @GetMapping(value = "/admin/stats/summary", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getDashboardSummary() {

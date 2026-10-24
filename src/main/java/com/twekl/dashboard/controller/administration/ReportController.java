@@ -25,10 +25,11 @@ import java.util.Map;
 /**
  * Controller for Analytics and Satisfaction Reports.
  * Dedicated report domain controller.
+ * Implements ReportOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/reports")
-public class ReportController {
+public class ReportController implements ReportOperations {
 
     private final ReportService reportService;
     private final AdminService adminService;
@@ -46,6 +47,7 @@ public class ReportController {
         this.portalAccess = portalAccess;
     }
 
+    @Override
     @GetMapping
     public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
                               @RequestParam(value = "tab", defaultValue = "milestones") String tab,
@@ -80,6 +82,7 @@ public class ReportController {
         return "administration/report/reports";
     }
 
+    @Override
     @GetMapping(value = {"", "/data"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateAnalyticsReport(
@@ -90,6 +93,7 @@ public class ReportController {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
+    @Override
     @GetMapping(value = "/satisfaction", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<List<SatisfactionReportDto>>> getSatisfactionDetails(
@@ -97,6 +101,7 @@ public class ReportController {
         return ResponseEntity.ok(ApiResponse.success(reportService.getSatisfactionDetails(period)));
     }
 
+    @Override
     @GetMapping("/export")
     @ResponseBody
     public ResponseEntity<byte[]> exportSatisfactionCsv(@RequestParam(required = false, defaultValue = "ALL") String period) {

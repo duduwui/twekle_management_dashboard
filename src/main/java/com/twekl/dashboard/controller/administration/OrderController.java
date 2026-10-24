@@ -19,10 +19,11 @@ import java.util.List;
 /**
  * Controller for Customer Orders.
  * Canonical route /admin/orders.
+ * Implements OrderOperations interface contract.
  */
 @RestController
 @RequestMapping("/admin/orders")
-public class OrderController {
+public class OrderController implements OrderOperations {
 
     private final CustomerService customerService;
     private final FollowupService followupService;
@@ -33,12 +34,14 @@ public class OrderController {
         this.followupService = followupService;
     }
 
+    @Override
     @GetMapping(value = "/{orderId:\\d+}/followups", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderFollowupChecks(@PathVariable("orderId") Long orderId) {
         List<OrderFollowupCheck> checks = followupService.findChecksByOrderId(orderId);
         return ResponseEntity.ok(ApiResponse.success(checks));
     }
 
+    @Override
     @GetMapping(value = "/{orderId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CustomerOrder>> getOrderById(@PathVariable("orderId") Long orderId) {
         return customerService.findOrderById(orderId)
@@ -47,6 +50,7 @@ public class OrderController {
                         .body(ApiResponse.error("Order not found with ID: " + orderId)));
     }
 
+    @Override
     @org.springframework.web.bind.annotation.PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CustomerOrder>> createOrder(@org.springframework.web.bind.annotation.RequestBody CustomerOrder order) {
         CustomerOrder saved = customerService.createOrder(order);

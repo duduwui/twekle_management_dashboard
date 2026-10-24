@@ -15,9 +15,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * Controller for Dynamic Time Filter & Milestone Presets.
  * Pure SSR view rendering and administrative actions.
+ * Implements TimeFilterOperations interface contract.
  */
 @Controller
-public class TimeFilterController {
+public class TimeFilterController implements TimeFilterOperations {
 
     private final TimeFilterService timeFilterService;
     private final AdminService adminService;
@@ -36,6 +37,7 @@ public class TimeFilterController {
     // SSR VIEW ENDPOINTS (/admin/timelines)
     // =========================================================
 
+    @Override
     @GetMapping(value = "/admin/timelines", produces = MediaType.TEXT_HTML_VALUE)
     public String showTimelines(Model model) {
         if (!portalAccess.canViewPresets()) {
@@ -52,6 +54,7 @@ public class TimeFilterController {
         return "administration/timefilter/timeFilters";
     }
 
+    @Override
     @PostMapping("/admin/timelines/create")
     public String createPresetSsr(@ModelAttribute("newPreset") TimeFilterPreset preset, RedirectAttributes flash) {
         if (!portalAccess.canManagePresets()) {
@@ -66,6 +69,7 @@ public class TimeFilterController {
                 () -> timeFilterService.createPreset(preset));
     }
 
+    @Override
     @PostMapping("/admin/timelines/{presetId:\\d+}/toggle")
     public String togglePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         if (!portalAccess.canManagePresets()) {
@@ -76,6 +80,7 @@ public class TimeFilterController {
                 () -> timeFilterService.toggleStatus(presetId));
     }
 
+    @Override
     @PostMapping("/admin/timelines/{presetId:\\d+}/delete")
     public String deletePresetSsr(@PathVariable("presetId") Long presetId, RedirectAttributes flash) {
         if (!portalAccess.canManagePresets()) {

@@ -20,10 +20,11 @@ import java.util.Map;
 /**
  * Controller for Managing Follow-up Milestone Checks and Followups View.
  * Dedicated followup domain controller.
+ * Implements FollowupOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/followups")
-public class FollowupController {
+public class FollowupController implements FollowupOperations {
 
     private final FollowupService followupService;
     private final AdminService adminService;
@@ -56,6 +57,7 @@ public class FollowupController {
         return hasAction("CUSTOMER_ADD_FEEDBACK") || hasAction("CUSTOMER_UPLOAD_PHOTOS");
     }
 
+    @Override
     @GetMapping({"", "/", "/orders/{customerId:\\d+}", "/feedback/{customerId:\\d+}"})
     public String showFollowups(@PathVariable(value = "customerId", required = false) Long customerId, Model model) {
         if (!canRead()) {
@@ -77,6 +79,7 @@ public class FollowupController {
         return "administration/followup/followups";
     }
 
+    @Override
     @GetMapping(value = "/paged", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPagedFollowups(
@@ -137,6 +140,7 @@ public class FollowupController {
         return ResponseEntity.ok(ApiResponse.success(responseData));
     }
 
+    @Override
     @PatchMapping("/{checkId:\\d+}/status")
     @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> toggleFollowupStatus(@PathVariable("checkId") Long checkId) {
@@ -148,6 +152,7 @@ public class FollowupController {
         return ResponseEntity.ok(ApiResponse.success("Follow-up status updated successfully", check));
     }
 
+    @Override
     @RequestMapping(value = "/{checkId:\\d+}", method = {RequestMethod.POST, RequestMethod.PUT})
     @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> updateFollowupDetails(
@@ -164,6 +169,7 @@ public class FollowupController {
         return ResponseEntity.ok(ApiResponse.success("Follow-up updated successfully", updated));
     }
 
+    @Override
     @PostMapping("/{checkId:\\d+}/complete")
     @ResponseBody
     public ResponseEntity<ApiResponse<OrderFollowupCheck>> completeCheck(
@@ -178,6 +184,7 @@ public class FollowupController {
         return ResponseEntity.ok(ApiResponse.success("Follow-up completed successfully", check));
     }
 
+    @Override
     @GetMapping(value = "/orders/{orderId:\\d+}/checks", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<List<OrderFollowupCheck>>> getOrderChecks(@PathVariable("orderId") Long orderId) {

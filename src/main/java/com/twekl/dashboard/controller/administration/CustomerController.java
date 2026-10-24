@@ -23,10 +23,11 @@ import java.util.Map;
 /**
  * Controller for Customer Directory, Lifecycle History, and Statistics.
  * Consolidated resource controller.
+ * Implements CustomerOperations interface contract.
  */
 @Controller
 @RequestMapping("/admin/customers")
-public class CustomerController {
+public class CustomerController implements CustomerOperations {
 
     private final CustomerService customerService;
     private final FollowupService followupService;
@@ -41,6 +42,7 @@ public class CustomerController {
         this.customerGeneratorService = customerGeneratorService;
     }
 
+    @Override
     @GetMapping(produces = MediaType.TEXT_HTML_VALUE)
     public String showCustomersPage(
             @RequestParam(value = "days", required = false) Integer days,
@@ -60,6 +62,7 @@ public class CustomerController {
         return "administration/customer/customers";
     }
 
+    @Override
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllCustomers(
@@ -77,6 +80,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
+    @Override
     @GetMapping(value = "/paged", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPagedCustomers(
             @RequestParam(value = "page", defaultValue = "1") int page,
@@ -116,12 +120,14 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success(responseData));
     }
 
+    @Override
     @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomerStats() {
         Map<String, Object> stats = customerService.getStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
+    @Override
     @GetMapping(value = "/followups", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<CustomerFollowupSummary>>> getCustomerFollowups(
             @RequestParam(value = "timeFilter", required = false) String timeFilter,
@@ -138,6 +144,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success(summaries));
     }
 
+    @Override
     @GetMapping(value = "/{customerId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Customer>> getCustomerById(@PathVariable("customerId") Long customerId) {
         return customerService.findByCustomerId(customerId)
@@ -146,17 +153,20 @@ public class CustomerController {
                         .body(ApiResponse.error("Customer not found with ID: " + customerId)));
     }
 
+    @Override
     @GetMapping(value = "/{customerId:\\d+}/orders", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<CustomerOrder>>> getCustomerOrders(@PathVariable("customerId") Long customerId) {
         List<CustomerOrder> orders = customerService.findOrdersByCustomerId(customerId);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
+    @Override
     @GetMapping(value = "/{customerId:\\d+}/feedbacks", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<CustomerFeedback>>> getCustomerFeedbacks(@PathVariable("customerId") Long customerId) {
         return ResponseEntity.ok(ApiResponse.success(customerService.findFeedbacksByCustomerId(customerId)));
     }
 
+    @Override
     @PostMapping(value = "/{customerId:\\d+}/feedbacks", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CustomerFeedback>> createFeedback(@PathVariable("customerId") Long customerId,
                                                                          @RequestBody CustomerFeedback feedback) {
@@ -168,6 +178,7 @@ public class CustomerController {
                 .body(ApiResponse.success("Feedback recorded successfully", saved));
     }
 
+    @Override
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Customer>> createCustomer(
             @RequestBody Customer customer,
@@ -188,6 +199,7 @@ public class CustomerController {
                 .body(ApiResponse.success("Customer created successfully with synchronized activity checks", created));
     }
 
+    @Override
     @PostMapping(value = "/generate", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateCustomers(
             @RequestParam(value = "days", defaultValue = "1") int days,
@@ -197,6 +209,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success("Successfully generated customer intake", result));
     }
 
+    @Override
     @PostMapping(value = "/daily-intake", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> runDailyIntake(
             @RequestParam(value = "count", defaultValue = "40") int count) {
@@ -204,6 +217,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success("Daily customer intake generated successfully", result));
     }
 
+    @Override
     @PostMapping(value = "/reset-and-seed", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> resetAndSeed(
             @RequestParam(value = "count", defaultValue = "40") int count) {
@@ -211,6 +225,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success("Catalog reset and cleanly seeded with diverse staggered intake times", result));
     }
 
+    @Override
     @PutMapping(value = "/{customerId:\\d+}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Customer>> updateCustomer(@PathVariable("customerId") Long customerId,
                                                                 @RequestBody Customer customer) {
@@ -218,6 +233,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success("Customer updated successfully", updated));
     }
 
+    @Override
     @DeleteMapping(value = "/{customerId:\\d+}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Void>> deleteCustomer(@PathVariable("customerId") Long customerId) {
         customerService.deleteCustomer(customerId);

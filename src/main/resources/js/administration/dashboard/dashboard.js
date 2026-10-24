@@ -379,9 +379,6 @@
 
     function updateMilestoneChart(milestones) {
         if (!milestones) return;
-        const badge = document.getElementById('milestones-active-badge');
-        if (badge) badge.textContent = milestones.length + ' Active';
-
         const container = document.getElementById('milestones-chart-list');
         if (!container) return;
 

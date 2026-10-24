@@ -69,9 +69,6 @@
                                 </h3>
                                 <span class="chart-title-subtext">Overall sentiment &amp; review distribution</span>
                             </div>
-                            <span class="chart-pill-badge badge-gold" id="sat-rating-badge">
-                                ★ <span id="sat-avg-rating" th:text="${#numbers.formatDecimal(stats.averageRating != null ? stats.averageRating : 5.0, 1, 1)}">5.0</span> / 5.0
-                            </span>
                         </div>
 
                         <div class="chart-card-body">
@@ -160,9 +157,6 @@
                                 </h3>
                                 <span class="chart-title-subtext">Completion progress by active filter preset</span>
                             </div>
-                            <span class="chart-pill-badge badge-teal" id="milestones-active-badge" th:text="|${#lists.size(milestoneChart != null ? milestoneChart : {})} Active|">
-                                Active Filters
-                            </span>
                         </div>
 
                         <div class="chart-card-body">

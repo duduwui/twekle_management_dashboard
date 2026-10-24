@@ -1860,29 +1860,19 @@ input:checked + .comic-slider:before {
 .milestones-chart-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 220px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.milestones-chart-body::-webkit-scrollbar {
-  width: 5px;
-}
-
-.milestones-chart-body::-webkit-scrollbar-thumb {
-  background-color: #CBD5E1;
-  border-radius: var(--radius-full);
+  gap: 8px;
+  max-height: none;
+  overflow: visible;
 }
 
 .milestone-bar-item {
   background-color: #F8FAFC;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: 7px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   transition: border-color 0.15s ease;
 }
 

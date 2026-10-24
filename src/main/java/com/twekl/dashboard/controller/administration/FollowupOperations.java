@@ -35,7 +35,22 @@ public interface FollowupOperations {
      * @param model      Spring MVC Model container.
      * @return Thymeleaf view path: "administration/followup/followups".
      */
-    String showFollowups(Long customerId, Model model);
+    default String showFollowups(Long customerId, Model model) {
+        return showFollowups(customerId, null, null, null, null, model);
+    }
+
+    /**
+     * Renders the customer follow-up directory SSR HTML page with optional pre-filters.
+     *
+     * @param customerId Optional customer ID to pre-focus.
+     * @param timeFilter Optional time filter preset name or key.
+     * @param preset     Optional alternative preset parameter.
+     * @param presetId   Optional preset database ID.
+     * @param status     Optional status filter.
+     * @param model      Spring MVC Model container.
+     * @return Thymeleaf view path: "administration/followup/followups".
+     */
+    String showFollowups(Long customerId, String timeFilter, String preset, Long presetId, String status, Model model);
 
     /**
      * Returns a paginated JSON response of customer follow-up summaries.

@@ -103,7 +103,31 @@ public class FollowupServiceImpl implements FollowupService {
             Instant dateTo,
             Pageable pageable) {
 
-        Instant cutoff = DateUtil.getFilterCutoff(timeFilter);
+        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
+        Instant cutoff = null;
+        if (timeFilter != null && !timeFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(timeFilter)) {
+            for (TimeFilterPreset p : activePresets) {
+                if (String.valueOf(p.getId()).equals(timeFilter.trim())
+                        || (p.getPresetKey() != null && p.getPresetKey().equalsIgnoreCase(timeFilter.trim()))
+                        || (p.getLabelEn() != null && p.getLabelEn().equalsIgnoreCase(timeFilter.trim()))
+                        || (p.getName() != null && p.getName().equalsIgnoreCase(timeFilter.trim()))) {
+                    java.time.ZonedDateTime nowUtc = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC);
+                    String unit = p.getDurationUnit() != null ? p.getDurationUnit().toUpperCase() : "DAYS";
+                    int val = p.getDurationValue();
+                    cutoff = switch (unit) {
+                        case "HOURS" -> nowUtc.minusHours(val).toInstant();
+                        case "DAYS" -> nowUtc.minusDays(val).toInstant();
+                        case "WEEKS" -> nowUtc.minusWeeks(val).toInstant();
+                        case "MONTHS" -> nowUtc.minusMonths(val).toInstant();
+                        default -> nowUtc.minusDays(val).toInstant();
+                    };
+                    break;
+                }
+            }
+        }
+        if (cutoff == null) {
+            cutoff = DateUtil.getFilterCutoff(timeFilter);
+        }
         String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
         String status = (statusFilter != null) ? statusFilter.trim().toUpperCase() : "ALL";
 
@@ -144,7 +168,6 @@ public class FollowupServiceImpl implements FollowupService {
         List<Customer> customers = customerPage.getContent();
         List<Long> customerIds = customers.stream().map(Customer::getId).toList();
 
-        List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
         Set<Long> activePresetIds = new HashSet<>();
         Set<String> activePresetNames = new HashSet<>();
         for (TimeFilterPreset p : activePresets) {

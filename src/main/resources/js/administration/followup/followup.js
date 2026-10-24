@@ -144,6 +144,38 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                 if (searchParam && !custIdParam) {
                     $scope.customerFilters.search = searchParam;
                 }
+
+                var presetParam = searchParams.get('timeFilter') || searchParams.get('preset') || searchParams.get('presetId');
+                if (presetParam) {
+                    var applyPresetFromParam = function(list) {
+                        if (!list || !list.length) return false;
+                        var cleanParam = presetParam.trim().toLowerCase();
+                        for (var i = 0; i < list.length; i++) {
+                            var p = list[i];
+                            if (String(p.id) === String(presetParam) ||
+                                (p.presetKey && p.presetKey.toLowerCase() === cleanParam) ||
+                                (p.name && p.name.toLowerCase() === cleanParam) ||
+                                (p.labelEn && p.labelEn.toLowerCase() === cleanParam)) {
+                                if (typeof $scope.selectTimePreset === 'function') {
+                                    $scope.selectTimePreset(p);
+                                } else {
+                                    $scope.selectedTimePreset = p;
+                                    $scope.$broadcast('filter:timePresetChanged', p);
+                                }
+                                return true;
+                            }
+                        }
+                        return false;
+                    };
+                    var presets = $scope.timeFilterPresets || window.SERVER_PRESETS || [];
+                    if (!applyPresetFromParam(presets)) {
+                        var unwatch = $scope.$watch('timeFilterPresets', function(newVal) {
+                            if (newVal && newVal.length && applyPresetFromParam(newVal)) {
+                                if (typeof unwatch === 'function') unwatch();
+                            }
+                        });
+                    }
+                }
             } catch(e) {
                 console.warn('Error parsing search params', e);
             }

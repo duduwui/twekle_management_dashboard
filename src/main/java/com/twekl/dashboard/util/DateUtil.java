@@ -20,17 +20,23 @@ public final class DateUtil {
         if (filter == null || filter.trim().isEmpty() || "ALL".equalsIgnoreCase(filter)) {
             return null;
         }
-        String upper = filter.trim().toUpperCase();
+        String upper = filter.trim().toUpperCase().replace(" ", "_");
+        if (upper.endsWith("_AGO")) {
+            upper = upper.substring(0, upper.length() - 4);
+        }
+        if (upper.endsWith("_REVIEW")) {
+            upper = upper.substring(0, upper.length() - 7);
+        }
         ZonedDateTime nowUtc = ZonedDateTime.now(ZoneOffset.UTC);
         return switch (upper) {
             case "TODAY" -> nowUtc.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
             case "TOMORROW" -> nowUtc.plusDays(1).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
             case "YESTERDAY" -> nowUtc.minusDays(1).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
             case "24_HOURS", "LAST_24_HOURS" -> nowUtc.minusHours(24).toInstant();
-            case "3_DAYS" -> nowUtc.minusDays(3).toInstant();
+            case "3_DAYS", "LAST_3_DAYS" -> nowUtc.minusDays(3).toInstant();
             case "LAST_7_DAYS", "7_DAYS", "WEEKLY" -> nowUtc.minusDays(7).toInstant();
             case "LAST_30_DAYS", "30_DAYS", "MONTHLY" -> nowUtc.minusDays(30).toInstant();
-            case "2_MONTHS", "60_DAYS" -> nowUtc.minusDays(60).toInstant();
+            case "2_MONTHS", "LAST_2_MONTHS", "60_DAYS", "LAST_60_DAYS" -> nowUtc.minusDays(60).toInstant();
             case "THIS_MONTH" -> nowUtc.withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
             case "LAST_MONTH" -> nowUtc.minusMonths(1).withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
             case "THIS_YEAR", "YEARLY" -> nowUtc.withDayOfYear(1).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();

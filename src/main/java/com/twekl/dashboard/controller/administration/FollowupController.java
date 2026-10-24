@@ -2,6 +2,7 @@ package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.FollowupCheckRequest;
 import com.twekl.dashboard.model.administration.OrderFollowupCheck;
+import com.twekl.dashboard.model.administration.TimeFilterPreset;
 import com.twekl.dashboard.response.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.FollowupService;
@@ -59,20 +60,44 @@ public class FollowupController implements FollowupOperations {
 
     @Override
     @GetMapping({"", "/", "/orders/{customerId:\\d+}", "/feedback/{customerId:\\d+}"})
-    public String showFollowups(@PathVariable(value = "customerId", required = false) Long customerId, Model model) {
+    public String showFollowups(
+            @PathVariable(value = "customerId", required = false) Long customerId,
+            @RequestParam(value = "timeFilter", required = false) String timeFilter,
+            @RequestParam(value = "preset", required = false) String preset,
+            @RequestParam(value = "presetId", required = false) Long presetId,
+            @RequestParam(value = "status", required = false) String status,
+            Model model) {
         if (!canRead()) {
             return "redirect:/admin/dashboard";
         }
         model.addAttribute("activeTab", "followups");
+        List<TimeFilterPreset> presets = timeFilterService.findAll();
+        model.addAttribute("presets", presets);
+
+        String effectiveTimeFilter = "ALL";
+        if (timeFilter != null && !timeFilter.trim().isEmpty()) {
+            effectiveTimeFilter = timeFilter.trim();
+        } else if (preset != null && !preset.trim().isEmpty()) {
+            effectiveTimeFilter = preset.trim();
+        } else if (presetId != null) {
+            for (TimeFilterPreset p : presets) {
+                if (presetId.equals(p.getId())) {
+                    effectiveTimeFilter = p.getPresetKey() != null ? p.getPresetKey() : p.getName();
+                    break;
+                }
+            }
+        }
+
+        String effectiveStatus = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : "ALL";
+
         org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> initialPage =
-                followupService.findPagedSummaries("ALL", "ALL", null,
+                followupService.findPagedSummaries(effectiveTimeFilter, effectiveStatus, null,
                         org.springframework.data.domain.PageRequest.of(0, 40, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")));
         model.addAttribute("followupSummaries", initialPage.getContent());
         model.addAttribute("totalCustomers", initialPage.getTotalElements());
         model.addAttribute("totalPages", initialPage.getTotalPages());
         model.addAttribute("currentPage", 1);
         model.addAttribute("pageSize", 40);
-        model.addAttribute("presets", timeFilterService.findAll());
         if (customerId != null) {
             model.addAttribute("targetCustomerId", customerId);
         }

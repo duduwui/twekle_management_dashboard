@@ -375,13 +375,6 @@
             unsatArc.setAttribute('stroke-dasharray', len + ' ' + (C - len));
             unsatArc.setAttribute('stroke-dashoffset', offset.toString());
         }
-
-        const distSat = document.getElementById('sat-dist-satisfied');
-        if (distSat) distSat.style.width = (satPct * 100) + '%';
-        const distNeu = document.getElementById('sat-dist-neutral');
-        if (distNeu) distNeu.style.width = (neuPct * 100) + '%';
-        const distUnsat = document.getElementById('sat-dist-unsatisfied');
-        if (distUnsat) distUnsat.style.width = (unsatPct * 100) + '%';
     }
 
     function updateMilestoneChart(milestones) {
@@ -405,7 +398,11 @@
             const pending = Number(m.pending || 0);
 
             html += `
-                <div class="milestone-bar-item" data-preset-id="${m.id}">
+                <a href="/admin/followups?presetId=${encodeURIComponent(m.id || '')}&timeFilter=${encodeURIComponent(m.name || '')}"
+                   class="milestone-bar-item milestone-card-clickable"
+                   data-preset-id="${m.id}"
+                   data-preset-name="${escapeHtml(m.name || '')}"
+                   title="Click to open Follow-ups and filter by this milestone">
                     <div class="milestone-meta-row">
                         <span class="milestone-name-tag">${escapeHtml(m.name || '')}</span>
                         <span class="milestone-rate-text">${compRate}% Done</span>
@@ -422,7 +419,7 @@
                             <span class="count-inqueue-tag"><strong>${pending}</strong> in queue</span>
                         </span>
                     </div>
-                </div>
+                </a>
             `;
         });
         container.innerHTML = html;

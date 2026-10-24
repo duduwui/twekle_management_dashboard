@@ -39,23 +39,6 @@
                         <span class="kpi-subtext">Customer complaints &amp; low ratings</span>
                     </button>
                 </div>
-                <div class="visual-progress-card">
-                    <div class="visual-progress-header">
-                        <span class="visual-progress-title">Follow-up Completion Progress</span>
-                        <button type="button" id="kpi-progress-btn" class="comic-btn btn-sm btn-ghost" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|">View progress</button>
-                    </div>
-                    <div class="visual-bar-track" aria-hidden="true">
-                        <div id="visual-bar-completed" class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
-                        <div id="visual-bar-overdue" class="visual-bar-overdue" th:style="${stats.overdueFollowups > 0 ? 'width: ' + (stats.overduePercentage < 2 ? 2 : stats.overduePercentage) + '%; min-width: 8px;' : 'width: 0%; display: none;'}"></div>
-                        <div id="visual-bar-inqueue" class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
-                    </div>
-                    <div class="visual-legend-row" style="justify-content: center; text-align: center;">
-                        <div class="legend-item"><span class="legend-dot dot-completed"></span> Completed: <strong id="kpi-legend-completed" th:text="${stats.completedFollowups}">0</strong></div>
-                        <div class="legend-item"><span class="legend-dot dot-overdue"></span> Overdue: <strong id="kpi-legend-overdue" th:text="${stats.overdueFollowups}">0</strong></div>
-                        <div class="legend-item"><span class="legend-dot dot-inqueue"></span> In queue: <strong id="kpi-legend-inqueue" th:text="${stats.inQueueFollowups}">0</strong></div>
-                        <div class="legend-item">Total checks: <strong id="kpi-legend-total" th:text="${stats.totalFollowups}">0</strong></div>
-                    </div>
-                </div>
 
                 <!-- 2. DYNAMIC ANALYTICS CHARTS (Customer Satisfaction & Active Timeline Milestones) -->
                 <div class="dashboard-charts-grid">
@@ -157,16 +140,38 @@
                                 </h3>
                                 <span class="chart-title-subtext">Completion progress by active filter preset</span>
                             </div>
+                            <button type="button" id="kpi-progress-btn" class="comic-btn btn-sm btn-ghost milestone-overall-pill" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|" title="Click to view progress breakdown">
+                                0% Completed
+                            </button>
                         </div>
 
                         <div class="chart-card-body">
+                            <!-- Overall Progress Ability Integrated Directly -->
+                            <div class="milestones-overall-box">
+                                <div class="milestones-overall-header">
+                                    <span class="overall-label">Overall Completion</span>
+                                    <span class="overall-counts"><strong id="kpi-legend-total" th:text="${stats.totalFollowups}">0</strong> total checks</span>
+                                </div>
+                                <div class="visual-bar-track" aria-hidden="true">
+                                    <div id="visual-bar-completed" class="visual-bar-completed" th:style="|width: ${stats.completedPercentage}%|"></div>
+                                    <div id="visual-bar-overdue" class="visual-bar-overdue" th:style="${stats.overdueFollowups > 0 ? 'width: ' + (stats.overduePercentage < 2 ? 2 : stats.overduePercentage) + '%; min-width: 8px;' : 'width: 0%; display: none;'}"></div>
+                                    <div id="visual-bar-inqueue" class="visual-bar-inqueue" th:style="|width: ${stats.inQueuePercentage}%|"></div>
+                                </div>
+                                <div class="milestones-overall-legend">
+                                    <div class="legend-item"><span class="legend-dot dot-completed"></span> Completed: <strong id="kpi-legend-completed" th:text="${stats.completedFollowups}">0</strong></div>
+                                    <div class="legend-item"><span class="legend-dot dot-overdue"></span> Overdue: <strong id="kpi-legend-overdue" th:text="${stats.overdueFollowups}">0</strong></div>
+                                    <div class="legend-item"><span class="legend-dot dot-inqueue"></span> In queue: <strong id="kpi-legend-inqueue" th:text="${stats.inQueueFollowups}">0</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="milestones-section-divider">
+                                <span>Active Presets</span>
+                            </div>
+
                             <div class="milestones-chart-body" id="milestones-chart-list">
                                 <div class="milestone-bar-item" th:each="m : ${milestoneChart}">
                                     <div class="milestone-meta-row">
-                                        <span class="milestone-name-tag">
-                                            <span class="text-muted" th:text="|#${m.displayOrder}|">#1</span>
-                                            <span th:text="${m.name}">Milestone Name</span>
-                                        </span>
+                                        <span class="milestone-name-tag" th:text="${m.name}">Milestone Name</span>
                                         <span class="milestone-rate-badge"
                                               th:classappend="${m.completionRate >= 80 ? 'milestone-rate-high' : (m.completionRate >= 40 ? 'milestone-rate-mid' : 'milestone-rate-low')}"
                                               th:text="|${m.completionRate}% Done|">
@@ -179,10 +184,11 @@
                                         <div class="milestone-seg-pending" th:style="|width: ${m.pendingRate}%|"></div>
                                     </div>
                                     <div class="milestone-counts-row">
-                                        <span><strong th:text="${m.completed}">0</strong> completed</span>
-                                        <span th:if="${m.overdue > 0}" style="color: #EF4444;"><strong th:text="${m.overdue}">0</strong> overdue</span>
-                                        <span><strong th:text="${m.pending}">0</strong> in queue</span>
-                                        <span><strong th:text="${m.total}">0</strong> total</span>
+                                        <span class="milestone-count-info"><strong th:text="${m.completed}">0</strong> of <strong th:text="${m.total}">0</strong> completed</span>
+                                        <span class="milestone-sub-counts">
+                                            <span th:if="${m.overdue > 0}" class="count-overdue-tag"><strong th:text="${m.overdue}">0</strong> overdue</span>
+                                            <span class="count-inqueue-tag"><strong th:text="${m.pending}">0</strong> in queue</span>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="milestone-empty" th:if="${#lists.isEmpty(milestoneChart)}" style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.85rem;">

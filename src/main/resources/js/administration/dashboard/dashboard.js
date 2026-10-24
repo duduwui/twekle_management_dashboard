@@ -402,10 +402,7 @@
             html += `
                 <div class="milestone-bar-item" data-preset-id="${m.id}">
                     <div class="milestone-meta-row">
-                        <span class="milestone-name-tag">
-                            <span class="text-muted">#${m.displayOrder || 1}</span>
-                            <span>${escapeHtml(m.name || '')}</span>
-                        </span>
+                        <span class="milestone-name-tag">${escapeHtml(m.name || '')}</span>
                         <span class="milestone-rate-badge ${badgeClass}">
                             ${compRate}% Done
                         </span>
@@ -416,10 +413,11 @@
                         <div class="milestone-seg-pending" style="width: ${pendingRate}%"></div>
                     </div>
                     <div class="milestone-counts-row">
-                        <span><strong>${completed}</strong> completed</span>
-                        ${overdue > 0 ? `<span style="color: #EF4444;"><strong>${overdue}</strong> overdue</span>` : ''}
-                        <span><strong>${pending}</strong> in queue</span>
-                        <span><strong>${total}</strong> total</span>
+                        <span class="milestone-count-info"><strong>${completed}</strong> of <strong>${total}</strong> completed</span>
+                        <span class="milestone-sub-counts">
+                            ${overdue > 0 ? `<span class="count-overdue-tag"><strong>${overdue}</strong> overdue</span>` : ''}
+                            <span class="count-inqueue-tag"><strong>${pending}</strong> in queue</span>
+                        </span>
                     </div>
                 </div>
             `;

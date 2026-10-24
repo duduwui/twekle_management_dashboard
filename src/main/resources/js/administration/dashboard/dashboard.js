@@ -375,6 +375,13 @@
             unsatArc.setAttribute('stroke-dasharray', len + ' ' + (C - len));
             unsatArc.setAttribute('stroke-dashoffset', offset.toString());
         }
+
+        const distSat = document.getElementById('sat-dist-satisfied');
+        if (distSat) distSat.style.width = (satPct * 100) + '%';
+        const distNeu = document.getElementById('sat-dist-neutral');
+        if (distNeu) distNeu.style.width = (neuPct * 100) + '%';
+        const distUnsat = document.getElementById('sat-dist-unsatisfied');
+        if (distUnsat) distUnsat.style.width = (unsatPct * 100) + '%';
     }
 
     function updateMilestoneChart(milestones) {
@@ -397,15 +404,11 @@
             const overdue = Number(m.overdue || 0);
             const pending = Number(m.pending || 0);
 
-            const badgeClass = compRate >= 80 ? 'milestone-rate-high' : (compRate >= 40 ? 'milestone-rate-mid' : 'milestone-rate-low');
-
             html += `
                 <div class="milestone-bar-item" data-preset-id="${m.id}">
                     <div class="milestone-meta-row">
                         <span class="milestone-name-tag">${escapeHtml(m.name || '')}</span>
-                        <span class="milestone-rate-badge ${badgeClass}">
-                            ${compRate}% Done
-                        </span>
+                        <span class="milestone-rate-text">${compRate}% Done</span>
                     </div>
                     <div class="milestone-bar-row">
                         <div class="milestone-seg-completed" style="width: ${compRate}%"></div>

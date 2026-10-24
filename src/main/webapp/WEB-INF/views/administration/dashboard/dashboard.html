@@ -119,6 +119,18 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="satisfaction-distribution-box">
+                                    <div class="sentiment-dist-track" aria-hidden="true">
+                                        <div id="sat-dist-satisfied" class="seg-satisfied" th:style="|width: ${stats.totalRated != null and stats.totalRated > 0 ? (stats.satisfiedCount * 100.0) / stats.totalRated : 100}%|"></div>
+                                        <div id="sat-dist-neutral" class="seg-neutral" th:style="|width: ${stats.totalRated != null and stats.totalRated > 0 ? (stats.neutralCount * 100.0) / stats.totalRated : 0}%|"></div>
+                                        <div id="sat-dist-unsatisfied" class="seg-unsatisfied" th:style="|width: ${stats.totalRated != null and stats.totalRated > 0 ? (stats.unsatisfiedCount * 100.0) / stats.totalRated : 0}%|"></div>
+                                    </div>
+                                    <div class="sentiment-dist-legend">
+                                        <span>Average Rating: <strong id="sat-avg-rating" th:text="${stats.averageRating != null ? #numbers.formatDecimal(stats.averageRating, 1, 1) : '5.0'}">5.0</strong> / 5.0</span>
+                                        <span>Positive: <strong th:text="|${stats.satisfactionRate != null ? stats.satisfactionRate : 100}%|">100%</strong></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -140,7 +152,7 @@
                                 </h3>
                                 <span class="chart-title-subtext">Completion progress by active filter preset</span>
                             </div>
-                            <button type="button" id="kpi-progress-btn" class="comic-btn btn-sm btn-ghost milestone-overall-pill" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|" title="Click to view progress breakdown">
+                            <button type="button" id="kpi-progress-btn" class="milestone-overall-text-btn" data-dialog="followupProgress" th:text="|${stats.completionPercentage}% Completed|" title="Click to view progress breakdown">
                                 0% Completed
                             </button>
                         </div>
@@ -172,9 +184,7 @@
                                 <div class="milestone-bar-item" th:each="m : ${milestoneChart}">
                                     <div class="milestone-meta-row">
                                         <span class="milestone-name-tag" th:text="${m.name}">Milestone Name</span>
-                                        <span class="milestone-rate-badge"
-                                              th:classappend="${m.completionRate >= 80 ? 'milestone-rate-high' : (m.completionRate >= 40 ? 'milestone-rate-mid' : 'milestone-rate-low')}"
-                                              th:text="|${m.completionRate}% Done|">
+                                        <span class="milestone-rate-text" th:text="|${m.completionRate}% Done|">
                                             100% Done
                                         </span>
                                     </div>

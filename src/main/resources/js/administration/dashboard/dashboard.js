@@ -70,84 +70,16 @@
     }
 
     /**
-     * Checks if a registration timestamp falls within a specific millisecond range.
-     * 
-     * @param {string} registeredDateStr - Date string from data-registered attribute.
-     * @param {number} cutoffTimestamp - Epoch cutoff in milliseconds.
-     * @returns {boolean} True if within cutoff or cutoff is zero/null.
-     */
-    function isWithinCutoff(registeredDateStr, cutoffTimestamp) {
-        if (!cutoffTimestamp) return true;
-        if (!registeredDateStr) return false;
-        return Date.parse(registeredDateStr) > cutoffTimestamp;
-    }
-
-    /**
-     * Filters customer registration rows inside the KPI details dialog modal.
-     * 
-     * @param {number} days - Number of days cutoff (1 for today, 7 for week, 30 for month, or 0 for all).
-     */
-    let currentFilterDays = 0;
-
-    function renderFilteredRegistrations(days) {
-        currentFilterDays = Number(days || 0);
-        const cutoff = currentFilterDays ? Date.now() - (currentFilterDays * 86400000) : 0;
-        const searchInput = document.getElementById('customerSearchInput');
-        const query = searchInput ? (searchInput.value || '').toLowerCase().trim() : '';
-
-        let visible = 0;
-
-        document.querySelectorAll('#modalCustomerTable tbody tr, [data-registered]').forEach(function (row) {
-            const isDateMatch = isWithinCutoff(row.dataset.registered, cutoff);
-            const searchTarget = (row.dataset.search || row.textContent).toLowerCase();
-            const isSearchMatch = !query || searchTarget.indexOf(query) !== -1;
-            const isVisible = isDateMatch && isSearchMatch;
-
-            row.hidden = !isVisible;
-            if (isVisible) visible++;
-        });
-
-        const emptyEl = document.getElementById('registrationsEmpty');
-        if (emptyEl) emptyEl.hidden = visible > 0;
-
-        const countEl = document.getElementById('customerVisibleCount');
-        if (countEl) countEl.textContent = `Showing ${visible} customer${visible === 1 ? '' : 's'}`;
-
-        // Toggle active states on modal top cards
-        document.querySelectorAll('.modal-stat-card[data-filter-days]').forEach(function (card) {
-            card.classList.toggle('active', Number(card.dataset.filterDays) === currentFilterDays);
-        });
-
-        // Toggle active states on filter pills
-        document.querySelectorAll('[data-registration-days]').forEach(function (btn) {
-            btn.classList.toggle('active', Number(btn.dataset.registrationDays) === currentFilterDays);
-            btn.classList.toggle('btn-primary', Number(btn.dataset.registrationDays) === currentFilterDays);
-        });
-    }
-
-    window.selectRegistrationFilter = function(days) {
-        renderFilteredRegistrations(days);
-    };
-
-    window.filterCustomerTableLive = function(searchVal) {
-        renderFilteredRegistrations(currentFilterDays);
-    };
-
-    /**
      * Generic controller to show or hide native HTML5 <dialog> elements.
      * 
      * @param {string} dialogId - ID of dialog element.
      * @param {boolean} shouldOpen - True to open, false to close.
-     * @param {number|null} triggerDays - Optional registration days filter.
      */
-    function toggleNativeDialog(dialogId, shouldOpen, triggerDays) {
+    function toggleNativeDialog(dialogId, shouldOpen) {
         const dialog = document.getElementById(dialogId);
         if (!dialog) return;
 
         if (shouldOpen) {
-            if (triggerDays !== undefined && triggerDays !== null) {
-                renderFilteredRegistrations(triggerDays);
-            }
             typeof dialog.showModal === 'function' ? dialog.showModal() : dialog.setAttribute('open', '');
         } else {
             typeof dialog.close === 'function' ? dialog.close() : dialog.removeAttribute('open');
@@ -159,12 +91,7 @@
             // 1. Handle Dialog Target Openers
             const opener = event.target.closest('[data-dialog]');
             if (opener) {
-                const daysAttr = opener.dataset.days;
-                toggleNativeDialog(
-                    opener.dataset.dialog,
-                    true,
-                    daysAttr !== undefined ? Number(daysAttr) : null
-                );
+                toggleNativeDialog(opener.dataset.dialog, true);
             }
 
             // 2. Handle Explicit Dialog Closers
@@ -174,13 +101,7 @@
                 if (parentDialog) toggleNativeDialog(parentDialog.id, false);
             }
 
-            // 3. Handle Registration Days Filter Buttons
-            const filterBtn = event.target.closest('[data-registration-days]');
-            if (filterBtn) {
-                renderFilteredRegistrations(Number(filterBtn.dataset.registrationDays));
-            }
-
-            // 4. Close On Dialog Backdrop Click
+            // 3. Close On Dialog Backdrop Click
             if (event.target.tagName === 'DIALOG') {
                 const rect = event.target.getBoundingClientRect();
                 const clickedOutside = (

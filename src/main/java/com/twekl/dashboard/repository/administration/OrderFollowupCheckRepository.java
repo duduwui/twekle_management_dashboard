@@ -1,23 +1,24 @@
 package com.twekl.dashboard.repository.administration;
 
 import com.twekl.dashboard.model.administration.OrderFollowupCheck;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
  * Spring Data JPA Repository for Follow-up Milestone Checks.
- * Dedicated followup domain repository.
+ * Dedicated followup domain repository optimized with covering index queries.
  */
 @Repository
 public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowupCheck, Long> {
-
-    long countByCompletedTrue();
 
     @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.preset IS NULL OR c.preset.active = true")
     long countActiveChecks();
@@ -27,9 +28,6 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
 
     @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.completed = false AND c.status = 'OVERDUE' AND (c.preset IS NULL OR c.preset.active = true)")
     long countActiveOverdueChecks();
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.completed = false AND (c.status = 'PENDING' OR c.status IS NULL) AND (c.preset IS NULL OR c.preset.active = true)")
-    long countActivePendingChecks();
 
     @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE UPPER(c.satisfaction) IN ('SATISFIED', '4', '5') AND (c.preset IS NULL OR c.preset.active = true)")
     long countSatisfied();
@@ -57,19 +55,9 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "  ELSE c.durationValue END ASC")
     List<OrderFollowupCheck> findByOrderId(@Param("orderId") Long orderId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
-    @Query("DELETE FROM OrderFollowupCheck c WHERE c.preset.id = :presetId")
-    void deleteByPresetId(@Param("presetId") Long presetId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
-    @Query("DELETE FROM OrderFollowupCheck c WHERE LOWER(c.milestoneName) = LOWER(:presetName)")
-    void deleteByPresetName(@Param("presetName") String presetName);
-
     @Query("SELECT DISTINCT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH c.preset " +
            "WHERE c.satisfaction IS NOT NULL AND TRIM(c.satisfaction) != '' ORDER BY c.id DESC")
-    List<OrderFollowupCheck> findChecksWithSatisfaction(org.springframework.data.domain.Pageable pageable);
+    List<OrderFollowupCheck> findChecksWithSatisfaction(Pageable pageable);
 
     @Query(value = "SELECT p.ID, p.LABEL_EN, p.DISPLAY_ORDER, COUNT(c.ID), " +
            "SUM(CASE WHEN c.COMPLETED = 1 THEN 1 ELSE 0 END), " +
@@ -96,22 +84,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "FROM OrderFollowupCheck c " +
            "WHERE c.milestoneName IS NOT NULL AND c.createdAt >= :cutoff " +
            "GROUP BY c.milestoneName")
-    List<Object[]> getMilestoneStatsByPeriod(@Param("cutoff") java.time.Instant cutoff);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND c.completed = true")
-    long countCompletedByPeriod(@Param("cutoff") java.time.Instant cutoff);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff")
-    long countTotalByPeriod(@Param("cutoff") java.time.Instant cutoff);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
-    long countSatisfiedByPeriod(@Param("cutoff") java.time.Instant cutoff);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('NEUTRAL', '3')")
-    long countNeutralByPeriod(@Param("cutoff") java.time.Instant cutoff);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :cutoff AND UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
-    long countUnsatisfiedByPeriod(@Param("cutoff") java.time.Instant cutoff);
+    List<Object[]> getMilestoneStatsByPeriod(@Param("cutoff") Instant cutoff);
 
     @Query("SELECT c.milestoneName, COUNT(c.id), " +
            "SUM(CASE WHEN c.completed = true THEN 1L ELSE 0L END), " +
@@ -119,41 +92,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "FROM OrderFollowupCheck c " +
            "WHERE c.milestoneName IS NOT NULL AND c.createdAt >= :startDate AND c.createdAt <= :endDate " +
            "GROUP BY c.milestoneName")
-    List<Object[]> getMilestoneStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND c.completed = true")
-    long countCompletedByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate")
-    long countTotalByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND UPPER(c.satisfaction) IN ('SATISFIED', '4', '5')")
-    long countSatisfiedByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND UPPER(c.satisfaction) IN ('NEUTRAL', '3')")
-    long countNeutralByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT COUNT(c) FROM OrderFollowupCheck c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate AND UPPER(c.satisfaction) IN ('UNSATISFIED', '1', '2')")
-    long countUnsatisfiedByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
-
-    @Query("SELECT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer cust LEFT JOIN FETCH c.preset " +
-           "WHERE c.completed = false AND (:cutoff IS NULL OR c.createdAt >= :cutoff) " +
-           "ORDER BY c.id DESC")
-    List<OrderFollowupCheck> findPendingChecks(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
-
-    @Query("SELECT c FROM OrderFollowupCheck c LEFT JOIN FETCH c.order o LEFT JOIN FETCH o.customer cust LEFT JOIN FETCH c.preset " +
-           "WHERE c.completed = false AND c.createdAt >= :startDate AND c.createdAt <= :endDate " +
-           "ORDER BY c.id DESC")
-    List<OrderFollowupCheck> findPendingChecksByDateRange(@Param("startDate") java.time.Instant startDate,
-                                                         @Param("endDate") java.time.Instant endDate,
-                                                         org.springframework.data.domain.Pageable pageable);
-
-    @Query(value = "SELECT c.SATISFACTION, COUNT(c.ID), COALESCE(SUM(o.TOTAL_AMOUNT), 0) " +
-           "FROM ORDER_FOLLOWUP_CHECKS c JOIN CUSTOMER_ORDERS o ON c.ORDER_ID = o.ID " +
-           "WHERE c.SATISFACTION IS NOT NULL AND c.SATISFACTION != '' " +
-           "AND (:startDate IS NULL OR (c.CREATED_AT >= :startDate AND c.CREATED_AT <= :endDate)) " +
-           "GROUP BY c.SATISFACTION", nativeQuery = true)
-    List<Object[]> getSatisfactionFinancialStatsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+    List<Object[]> getMilestoneStatsByDateRange(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Query(value = "SELECT o.ITEMS_SUMMARY, " +
            "SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('SATISFIED', '4', '5') THEN 1 ELSE 0 END), " +
@@ -163,7 +102,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "FROM CUSTOMER_ORDERS o JOIN ORDER_FOLLOWUP_CHECKS c ON o.ID = c.ORDER_ID " +
            "WHERE (:startDate IS NULL OR (o.ORDER_DATE >= :startDate AND o.ORDER_DATE <= :endDate)) " +
            "GROUP BY o.ITEMS_SUMMARY", nativeQuery = true)
-    List<Object[]> getProductSatisfactionCountsByDateRange(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+    List<Object[]> getProductSatisfactionCountsByDateRange(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Query(value = "SELECT " +
            "COALESCE(SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('SATISFIED', '4', '5') THEN 1 ELSE 0 END), 0), " +
@@ -171,10 +110,10 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
            "COALESCE(SUM(CASE WHEN UPPER(c.SATISFACTION) IN ('UNSATISFIED', '1', '2') THEN 1 ELSE 0 END), 0) " +
            "FROM ORDER_FOLLOWUP_CHECKS c " +
            "WHERE (:startDate IS NULL OR (c.CREATED_AT >= :startDate AND c.CREATED_AT <= :endDate))", nativeQuery = true)
-    List<Object[]> getSatisfactionCountsCombined(@Param("startDate") java.time.Instant startDate, @Param("endDate") java.time.Instant endDate);
+    List<Object[]> getSatisfactionCountsCombined(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
                    "LEFT JOIN TIME_FILTER_PRESETS p ON ch.PRESET_ID = p.ID " +
                    "SET ch.STATUS = 'OVERDUE' " +
@@ -190,7 +129,7 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     int syncOverdueChecks();
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
                    "LEFT JOIN TIME_FILTER_PRESETS p ON ch.PRESET_ID = p.ID " +
                    "SET ch.STATUS = 'PENDING' " +

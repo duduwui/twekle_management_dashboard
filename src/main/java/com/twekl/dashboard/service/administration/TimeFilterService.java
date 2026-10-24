@@ -1,130 +1,70 @@
 package com.twekl.dashboard.service.administration;
 
-import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.administration.TimeFilterPreset;
-import com.twekl.dashboard.repository.administration.OrderFollowupCheckRepository;
-import com.twekl.dashboard.repository.administration.TimeFilterPresetRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Service for dynamic time filters, intervals, and milestone presets.
- * Consolidated single service file with final autowired dependencies.
+ * ============================================================================
+ * Time Filter Presets Service Contract (TimeFilterService.java)
+ * ============================================================================
+ * 
+ * Defines all operations for dynamic time filter intervals, milestone presets,
+ * and display ordering for executive filters and follow-up milestones.
+ * 
+ * Core Capabilities:
+ *   1. Filter Discovery: Lists all configured presets sorted by display order.
+ *   2. Dynamic Milestones: Adds new timeline milestones (e.g., 24 Hours, 3 Days, 2 Weeks).
+ *   3. Real-time Toggling: Activates or deactivates presets, triggering check re-syncs.
+ *   4. Cache Synchronization: Evicts all related caches across reports, follow-ups, and dashboard.
+ * ============================================================================
  */
-@Service
-@Transactional
-public class TimeFilterService {
+public interface TimeFilterService {
 
-    private final TimeFilterPresetRepository timeFilterPresetRepository;
-    private final OrderFollowupCheckRepository followupCheckRepository;
+    /**
+     * Retrieves all timeline presets ordered by display index ascending.
+     * Caches result under 'timeFilterPresets'.
+     *
+     * @return List of all time filter presets.
+     */
+    List<TimeFilterPreset> findAll();
 
-    @Autowired
-    public TimeFilterService(final TimeFilterPresetRepository timeFilterPresetRepository,
-                             final OrderFollowupCheckRepository followupCheckRepository) {
-        this.timeFilterPresetRepository = timeFilterPresetRepository;
-        this.followupCheckRepository = followupCheckRepository;
-    }
+    /**
+     * Finds a single time filter preset by its primary key ID.
+     *
+     * @param id Preset primary key ID.
+     * @return Optional containing TimeFilterPreset if found.
+     */
+    Optional<TimeFilterPreset> findById(Long id);
 
-    @Cacheable("timeFilterPresets")
-    @Transactional(readOnly = true)
-    public List<TimeFilterPreset> findAll() {
-        return timeFilterPresetRepository.findAllByOrderByDisplayOrderAsc();
-    }
+    /**
+     * Returns total number of configured presets.
+     *
+     * @return Total count.
+     */
+    long count();
 
-    @Cacheable("timeFilterPresets")
-    @Transactional(readOnly = true)
-    public List<TimeFilterPreset> findActive() {
-        return timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
-    }
+    /**
+     * Persists a new time filter preset and triggers automatic follow-up check re-syncs.
+     *
+     * @param preset TimeFilterPreset entity to create.
+     * @return Persisted TimeFilterPreset entity with ID.
+     */
+    TimeFilterPreset createPreset(TimeFilterPreset preset);
 
-    @Transactional(readOnly = true)
-    public Optional<TimeFilterPreset> findById(Long id) {
-        return timeFilterPresetRepository.findById(id);
-    }
+    /**
+     * Toggles the active status of a preset (active <-> inactive) and updates pending check statuses.
+     *
+     * @param presetId ID of the preset to toggle.
+     * @return Updated TimeFilterPreset entity.
+     */
+    TimeFilterPreset toggleStatus(Long presetId);
 
-    @Transactional(readOnly = true)
-    public Optional<TimeFilterPreset> findByPresetKey(String key) {
-        return timeFilterPresetRepository.findByPresetKey(key);
-    }
-
-    @Transactional(readOnly = true)
-    public long count() {
-        return timeFilterPresetRepository.count();
-    }
-
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
-    public TimeFilterPreset createPreset(TimeFilterPreset preset) {
-        if (preset.getPresetKey() == null || preset.getPresetKey().trim().isEmpty()) {
-            String generatedKey = (preset.getDurationValue() + "_" + preset.getDurationUnit()).toUpperCase();
-            preset.setPresetKey(generatedKey);
-        }
-
-        if (preset.getLabelEn() == null || preset.getLabelEn().trim().isEmpty()) {
-            preset.setLabelEn("Last " + preset.getDurationValue() + " " + preset.getDurationUnit().toLowerCase());
-        }
-
-        if (preset.getLabelAr() == null || preset.getLabelAr().trim().isEmpty()) {
-            preset.setLabelAr(preset.getLabelEn());
-        }
-
-        if (preset.getLabelKu() == null || preset.getLabelKu().trim().isEmpty()) {
-            preset.setLabelKu(preset.getLabelEn());
-        }
-
-        if (preset.getDisplayOrder() <= 0) {
-            preset.setDisplayOrder((int) timeFilterPresetRepository.count() + 1);
-        }
-
-        TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
-        followupCheckRepository.syncPendingChecks();
-        followupCheckRepository.syncOverdueChecks();
-        return saved;
-    }
-
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
-    public TimeFilterPreset updatePreset(Long presetId, TimeFilterPreset updated) {
-        TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
-
-        if (updated.getLabelEn() != null) preset.setLabelEn(updated.getLabelEn().trim());
-        if (updated.getLabelAr() != null) preset.setLabelAr(updated.getLabelAr().trim());
-        if (updated.getLabelKu() != null) preset.setLabelKu(updated.getLabelKu().trim());
-        if (updated.getDurationValue() > 0) preset.setDurationValue(updated.getDurationValue());
-        if (updated.getDurationUnit() != null) preset.setDurationUnit(updated.getDurationUnit());
-        if (updated.getDisplayOrder() > 0) preset.setDisplayOrder(updated.getDisplayOrder());
-        preset.setActive(updated.isActive());
-
-        TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
-        followupCheckRepository.syncPendingChecks();
-        followupCheckRepository.syncOverdueChecks();
-        return saved;
-    }
-
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
-    public TimeFilterPreset toggleStatus(Long presetId) {
-        TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
-
-        preset.setActive(!preset.isActive());
-        TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
-        followupCheckRepository.syncPendingChecks();
-        followupCheckRepository.syncOverdueChecks();
-        return saved;
-    }
-
-    @CacheEvict(value = {"timeFilterPresets", "dashboardSummary", "reportData", "followupSummaries", "customerStats", "satisfactionDetails"}, allEntries = true)
-    public void deletePreset(Long presetId) {
-        TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
-
-        timeFilterPresetRepository.delete(preset);
-        followupCheckRepository.syncPendingChecks();
-        followupCheckRepository.syncOverdueChecks();
-    }
+    /**
+     * Deletes a time filter preset and refreshes system overdue/pending check statuses.
+     *
+     * @param presetId ID of the preset to delete.
+     */
+    void deletePreset(Long presetId);
 }

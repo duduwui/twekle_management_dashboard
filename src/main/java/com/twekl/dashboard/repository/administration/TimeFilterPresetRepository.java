@@ -12,5 +12,4 @@ public interface TimeFilterPresetRepository extends JpaRepository<TimeFilterPres
     List<TimeFilterPreset> findAllByOrderByDisplayOrderAsc();
     List<TimeFilterPreset> findByActiveTrueOrderByDisplayOrderAsc();
     Optional<TimeFilterPreset> findByPresetKey(String presetKey);
-    boolean existsByPresetKey(String presetKey);
 }

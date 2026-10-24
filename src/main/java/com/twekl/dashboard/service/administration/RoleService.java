@@ -1,133 +1,72 @@
 package com.twekl.dashboard.service.administration;
 
 import com.twekl.dashboard.dto.administration.RoleDto;
-import com.twekl.dashboard.exception.ResourceNotFoundException;
-import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.Role;
-import com.twekl.dashboard.repository.administration.AdminRepository;
-import com.twekl.dashboard.repository.administration.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Service for administrative roles and permission templates.
- * Consolidated single service file with final autowired dependencies.
+ * ============================================================================
+ * Security Role Service Contract (RoleService.java)
+ * ============================================================================
+ * 
+ * Defines all role management operations and security capability templates
+ * applied across administrative staff members.
+ * 
+ * Core Capabilities:
+ *   1. Role Catalog: Lists and queries available administrative security roles.
+ *   2. Custom Roles: Creates and edits custom roles with designated CRUD and action permissions.
+ *   3. System Safeguards: Protects foundational roles (such as 'Software Engineer') from accidental deletion.
+ *   4. Referential Integrity: Automatically severs role memberships from active staff on role deletion.
+ * ============================================================================
  */
-@Service
-@Transactional
-public class RoleService {
+public interface RoleService {
 
-    private final RoleRepository roleRepository;
-    private final AdminRepository adminRepository;
+    /**
+     * Retrieves all defined administrative roles.
+     *
+     * @return List of Role entities.
+     */
+    List<Role> findAll();
 
-    @Autowired
-    public RoleService(final RoleRepository roleRepository, final AdminRepository adminRepository) {
-        this.roleRepository = roleRepository;
-        this.adminRepository = adminRepository;
-    }
+    /**
+     * Looks up a security role by its primary key ID.
+     *
+     * @param roleId Role primary key ID.
+     * @return Optional containing Role if found.
+     */
+    Optional<Role> findById(Long roleId);
 
-    @Transactional(readOnly = true)
-    public List<Role> findAll() {
-        return roleRepository.findAll();
-    }
+    /**
+     * Returns total count of registered roles.
+     *
+     * @return Total count.
+     */
+    long count();
 
-    @Transactional(readOnly = true)
-    public Optional<Role> findById(Long roleId) {
-        return roleRepository.findById(roleId);
-    }
+    /**
+     * Creates a new administrative role with unique name and specified CRUD permissions.
+     *
+     * @param req RoleDto payload containing name and permission flags.
+     * @return Persisted Role entity.
+     */
+    Role createRole(RoleDto req);
 
-    @Transactional(readOnly = true)
-    public Optional<Role> findByName(String name) {
-        return roleRepository.findByName(name);
-    }
+    /**
+     * Updates an existing role's name, CRUD permissions, and action capabilities.
+     *
+     * @param roleId ID of the role to update.
+     * @param req    RoleDto payload with updated attributes.
+     * @return Updated Role entity.
+     */
+    Role updateRole(Long roleId, RoleDto req);
 
-    @Transactional(readOnly = true)
-    public long count() {
-        return roleRepository.count();
-    }
-
-    public Role createRole(RoleDto req) {
-        if (req.getName() == null || req.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Role name is required");
-        }
-        if (roleRepository.existsByName(req.getName().trim())) {
-            throw new IllegalArgumentException("Role name '" + req.getName() + "' already exists");
-        }
-
-        Role role = new Role(
-                req.getName().trim(),
-                req.isCanCreate(),
-                req.isCanRead(),
-                req.isCanUpdate(),
-                req.isCanDelete(),
-                req.getActions()
-        );
-        return roleRepository.save(role);
-    }
-
-    public Role updateRole(Long roleId, RoleDto req) {
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
-
-        if (req.getName() != null && !req.getName().trim().isEmpty()) {
-            String newName = req.getName().trim();
-            if (!newName.equalsIgnoreCase(role.getName()) && roleRepository.existsByName(newName)) {
-                throw new IllegalArgumentException("Role name '" + newName + "' already exists");
-            }
-            role.setName(newName);
-        }
-
-        role.setCanCreate(req.isCanCreate());
-        role.setCanRead(req.isCanRead());
-        role.setCanUpdate(req.isCanUpdate());
-        role.setCanDelete(req.isCanDelete());
-        if (req.getActions() != null) {
-            role.setActions(req.getActions());
-        }
-
-        return roleRepository.save(role);
-    }
-
-    public void assignRole(Long adminId, Long roleId) {
-        if (adminRepository == null) return;
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
-
-        if (roleId == null || roleId == 0) {
-            admin.getRoles().clear();
-        } else {
-            Role role = roleRepository.findById(roleId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
-            if (admin.getRoles() == null) {
-                admin.setRoles(new HashSet<>());
-            }
-            admin.getRoles().clear();
-            admin.getRoles().add(role);
-        }
-        adminRepository.save(admin);
-    }
-
-    public void deleteRole(Long roleId) {
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
-
-        if ("Software Engineer".equalsIgnoreCase(role.getName())) {
-            throw new IllegalArgumentException("System base role 'Software Engineer' cannot be deleted");
-        }
-
-        if (adminRepository != null) {
-            List<Admin> admins = adminRepository.findAll();
-            for (Admin admin : admins) {
-                if (admin.getRoles() != null && admin.getRoles().remove(role)) {
-                    adminRepository.save(admin);
-                }
-            }
-        }
-        roleRepository.delete(role);
-    }
+    /**
+     * Deletes a role from the catalog and disassociates it from all assigned administrators.
+     * System base roles cannot be deleted.
+     *
+     * @param roleId ID of the role to delete.
+     */
+    void deleteRole(Long roleId);
 }

@@ -1,62 +1,60 @@
 package com.twekl.dashboard.repository.administration;
 
 import com.twekl.dashboard.model.administration.Customer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
     
-    List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff);
-    List<Customer> findByLastOrderDateAfter(java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
-    long countByCreatedAtAfter(java.time.Instant cutoff);
-    long countByCreatedAtBetween(java.time.Instant from, java.time.Instant to);
-    List<Customer> findByLastOrderDateBetween(java.time.Instant from, java.time.Instant to, org.springframework.data.domain.Pageable pageable);
+    List<Customer> findByLastOrderDateAfter(Instant cutoff);
+    List<Customer> findByLastOrderDateAfter(Instant cutoff, Pageable pageable);
+    long countByCreatedAtAfter(Instant cutoff);
+    long countByCreatedAtBetween(Instant from, Instant to);
+    List<Customer> findByLastOrderDateBetween(Instant from, Instant to, Pageable pageable);
 
-    Optional<Customer> findByPhoneNumber(String phoneNumber);
-    boolean existsByPhoneNumber(String phoneNumber);
-
-    org.springframework.data.domain.Page<Customer> findByCreatedAtAfter(java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
-    org.springframework.data.domain.Page<Customer> findByCreatedAtBetween(java.time.Instant from, java.time.Instant to, org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findByCreatedAtAfter(Instant cutoff, Pageable pageable);
+    Page<Customer> findByCreatedAtBetween(Instant from, Instant to, Pageable pageable);
 
     @Query(value = "SELECT c FROM Customer c WHERE EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
            countQuery = "SELECT count(c) FROM Customer c WHERE EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
-    org.springframework.data.domain.Page<Customer> findOverdueCustomers(org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findOverdueCustomers(Pageable pageable);
 
     @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
            countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
-    org.springframework.data.domain.Page<Customer> findOverdueCustomersWithCutoff(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findOverdueCustomersWithCutoff(@Param("cutoff") Instant cutoff, Pageable pageable);
 
     @Query(value = "SELECT c FROM Customer c WHERE (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))",
            countQuery = "SELECT count(c) FROM Customer c WHERE (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))")
-    org.springframework.data.domain.Page<Customer> findInQueueCustomers(org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findInQueueCustomers(Pageable pageable);
 
     @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))",
            countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND (c.totalOrders = 0 OR (NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.status = 'OVERDUE' AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true)) AND EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))))")
-    org.springframework.data.domain.Page<Customer> findInQueueCustomersWithCutoff(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findInQueueCustomersWithCutoff(@Param("cutoff") Instant cutoff, Pageable pageable);
 
     @Query(value = "SELECT c FROM Customer c WHERE c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
            countQuery = "SELECT count(c) FROM Customer c WHERE c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
-    org.springframework.data.domain.Page<Customer> findCompletedCustomers(org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findCompletedCustomers(Pageable pageable);
 
     @Query(value = "SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))",
            countQuery = "SELECT count(c) FROM Customer c WHERE c.createdAt >= :cutoff AND c.totalOrders > 0 AND NOT EXISTS (SELECT 1 FROM CustomerOrder o JOIN o.checks ch WHERE o.customer = c AND ch.completed = false AND (ch.preset IS NULL OR ch.preset.active = true))")
-    org.springframework.data.domain.Page<Customer> findCompletedCustomersWithCutoff(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
+    Page<Customer> findCompletedCustomersWithCutoff(@Param("cutoff") Instant cutoff, Pageable pageable);
 
     @Query("SELECT c FROM Customer c WHERE " +
            "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    org.springframework.data.domain.Page<Customer> searchCustomers(@Param("query") String query, org.springframework.data.domain.Pageable pageable);
+    Page<Customer> searchCustomers(@Param("query") String query, Pageable pageable);
 
     @Query("SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND " +
            "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    org.springframework.data.domain.Page<Customer> searchCustomersWithCutoff(@Param("query") String query, @Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable pageable);
-
+    Page<Customer> searchCustomersWithCutoff(@Param("query") String query, @Param("cutoff") Instant cutoff, Pageable pageable);
 
     @Query(value = "SELECT " +
            "SUM(CASE WHEN TOTAL_ORDERS >= 3 AND (LAST_ORDER_DATE IS NULL OR DATEDIFF(NOW(), LAST_ORDER_DATE) <= 90 OR TOTAL_ORDERS >= 4) THEN 1 ELSE 0 END), " +
@@ -68,4 +66,3 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
            "FROM CUSTOMERS", nativeQuery = true)
     List<Object[]> getCustomerTierStats();
 }
-

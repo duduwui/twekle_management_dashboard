@@ -2,6 +2,7 @@ package com.twekl.dashboard.service.administration;
 
 import com.twekl.dashboard.model.administration.Customer;
 import com.twekl.dashboard.repository.administration.*;
+import com.twekl.dashboard.service.administration.impl.FollowupServiceImpl;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +14,7 @@ class FollowupServiceTest {
     private final CustomerOrderRepository orders = mock(CustomerOrderRepository.class);
     private final OrderFollowupCheckRepository checks = mock(OrderFollowupCheckRepository.class);
     private final TimeFilterPresetRepository presets = mock(TimeFilterPresetRepository.class);
-    private final FollowupService service = new FollowupService(customers, orders, checks, presets);
+    private final FollowupService service = new FollowupServiceImpl(customers, orders, checks, presets);
 
     @Test
     void emptyDirectoryDoesNotReadOrdersChecksOrPresets() {

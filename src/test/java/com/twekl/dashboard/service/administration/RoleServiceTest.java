@@ -3,6 +3,7 @@ package com.twekl.dashboard.service.administration;
 import com.twekl.dashboard.dto.administration.RoleDto;
 import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.repository.administration.RoleRepository;
+import com.twekl.dashboard.service.administration.impl.RoleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ public class RoleServiceTest {
 
     @BeforeEach
     public void setUp() {
-        roleService = new RoleService(roleRepository, mock(com.twekl.dashboard.repository.administration.AdminRepository.class));
+        roleService = new RoleServiceImpl(roleRepository, mock(com.twekl.dashboard.repository.administration.AdminRepository.class));
         testRole = new Role("Support Specialist", false, true, false, false);
         testRole.setRoleId(1L);
     }

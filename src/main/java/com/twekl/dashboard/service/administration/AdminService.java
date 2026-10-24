@@ -1,216 +1,113 @@
 package com.twekl.dashboard.service.administration;
 
-import com.twekl.dashboard.dto.administration.AdminPermissionDto;
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
 import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
-import com.twekl.dashboard.exception.ResourceNotFoundException;
 import com.twekl.dashboard.model.administration.Admin;
-import com.twekl.dashboard.model.administration.AdminPermission;
-import com.twekl.dashboard.model.administration.Role;
-import com.twekl.dashboard.repository.administration.AdminRepository;
-import com.twekl.dashboard.repository.administration.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
- * Service for staff administrators and permission management.
- * Consolidated single service file with final autowired dependencies.
+ * ============================================================================
+ * Staff & Administrator Service Contract (AdminService.java)
+ * ============================================================================
+ * 
+ * Defines all administrator account management, role assignment, and granular
+ * action-level permission enforcement (CREATE, READ, UPDATE, DELETE).
+ * 
+ * Core Capabilities:
+ *   1. Account Lifecycle: Creation, update, deactivation, and safe deletion of staff accounts.
+ *   2. Authentication & Context: Retrieves current authenticated administrator session.
+ *   3. Granular Authorization: Checks module-level CRUD permissions and action flags.
+ *   4. Super Admin Safeguards: Protects the primary 'twekl_super_admin' account from deactivation or deletion.
+ * ============================================================================
  */
-@Service
-@Transactional
-public class AdminService {
+public interface AdminService {
 
-    private final AdminRepository adminRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+    /**
+     * Retrieves all administrator accounts.
+     *
+     * @return List of all Admin entities.
+     */
+    List<Admin> findAll();
 
-    @Autowired
-    public AdminService(final AdminRepository adminRepository,
-                        final RoleRepository roleRepository,
-                        final PasswordEncoder passwordEncoder) {
-        this.adminRepository = adminRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    /**
+     * Looks up an administrator by their primary key ID.
+     *
+     * @param adminId Admin primary key ID.
+     * @return Optional containing Admin if found.
+     */
+    Optional<Admin> findById(Long adminId);
 
-    @Transactional(readOnly = true)
-    public List<Admin> findAll() {
-        return adminRepository.findAll();
-    }
+    /**
+     * Looks up an administrator by their unique username.
+     *
+     * @param username Account username.
+     * @return Optional containing Admin if found.
+     */
+    Optional<Admin> findByUsername(String username);
 
-    @Transactional(readOnly = true)
-    public Optional<Admin> findById(Long adminId) {
-        return adminRepository.findById(adminId);
-    }
+    /**
+     * Returns total count of registered administrator accounts.
+     *
+     * @return Total count.
+     */
+    long count();
 
-    @Transactional(readOnly = true)
-    public Optional<Admin> findByAdminId(Long adminId) {
-        return adminRepository.findById(adminId);
-    }
+    /**
+     * Resolves the currently authenticated administrator from Spring Security's SecurityContextHolder.
+     *
+     * @return Optional containing current Admin entity, or empty if anonymous.
+     */
+    Optional<Admin> getCurrentAdmin();
 
-    @Transactional(readOnly = true)
-    public Optional<Admin> findByUsername(String username) {
-        return adminRepository.findByUsername(username);
-    }
+    /**
+     * Evaluates whether an administrator is authorized to execute a specific action on a module.
+     * Super administrators are unconditionally granted access.
+     *
+     * @param admin     Admin entity to evaluate.
+     * @param moduleKey Module identifier (e.g., 'CUSTOMER_FOLLOWUP', 'REPORTS_INSIGHTS').
+     * @param action    Action verb ('CREATE', 'READ', 'UPDATE', 'DELETE', or custom action).
+     * @return true if authorized; false otherwise.
+     */
+    boolean hasPermission(Admin admin, String moduleKey, String action);
 
-    @Transactional(readOnly = true)
-    public long count() {
-        return adminRepository.count();
-    }
+    /**
+     * Creates a new administrator account with BCrypt encrypted password and role assignments.
+     *
+     * @param req CreateAdminRequest payload.
+     * @return Persisted Admin entity.
+     */
+    Admin createAdmin(CreateAdminRequest req);
 
-    @Transactional(readOnly = true)
-    public Optional<Admin> getCurrentAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return Optional.empty();
-        }
-        return findByUsername(auth.getName());
-    }
+    /**
+     * Updates an administrator's profile, roles, password, and granular permissions.
+     *
+     * @param adminId ID of the admin to update.
+     * @param req     UpdateAdminRequest payload.
+     * @return Updated Admin entity.
+     */
+    Admin updateAdmin(Long adminId, UpdateAdminRequest req);
 
-    @Transactional(readOnly = true)
-    public boolean hasPermission(Admin admin, String moduleKey, String action) {
-        if (admin == null || action == null) return false;
-        if (admin.isSuperAdmin()) return true;
+    /**
+     * Toggles an admin's active status (active <-> inactive). Primary super admin cannot be deactivated.
+     *
+     * @param adminId ID of the admin account.
+     * @return Updated Admin entity.
+     */
+    Admin toggleStatus(Long adminId);
 
-        String actUpper = action.trim().toUpperCase();
-        if (admin.hasAction(actUpper)) {
-            return true;
-        }
+    /**
+     * Permanently deletes an administrator account. Primary super admin cannot be deleted.
+     *
+     * @param adminId ID of the admin account to delete.
+     */
+    void deleteAdmin(Long adminId);
 
-        if (moduleKey == null) return false;
-
-        if (admin.getPermissions() != null && !admin.getPermissions().isEmpty()) {
-            for (AdminPermission p : admin.getPermissions()) {
-                if (p.getModuleKey().equalsIgnoreCase(moduleKey)) {
-                    return switch (actUpper) {
-                        case "CREATE" -> p.isCanCreate();
-                        case "READ" -> p.isCanRead();
-                        case "UPDATE" -> p.isCanUpdate();
-                        case "DELETE" -> p.isCanDelete();
-                        default -> p.hasAction(actUpper);
-                    };
-                }
-            }
-        }
-        if (admin.getRoles() != null && !admin.getRoles().isEmpty()) {
-            for (Role role : admin.getRoles()) {
-                boolean allowed = switch (actUpper) {
-                    case "CREATE" -> role.isCanCreate();
-                    case "READ" -> role.isCanRead();
-                    case "UPDATE" -> role.isCanUpdate();
-                    case "DELETE" -> role.isCanDelete();
-                    default -> role.hasAction(actUpper);
-                };
-                if (allowed) return true;
-            }
-        }
-        return false;
-    }
-
-    public Admin createAdmin(CreateAdminRequest req) {
-        if (adminRepository.existsByUsername(req.getUsername())) {
-            throw new IllegalArgumentException("Username '" + req.getUsername() + "' is already taken");
-        }
-
-        Admin admin = Admin.builder()
-                .username(req.getUsername().trim())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .phoneNumber(req.getPhoneNumber())
-                .isSuperAdmin(req.isSuperAdmin())
-                .canCreateRoles(req.isCanCreateRoles())
-                .canManageUsers(req.isCanManageUsers())
-                .active(req.isActive())
-                .build();
-
-        if (req.getRoleIds() != null && !req.getRoleIds().isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(req.getRoleIds()));
-            admin.setRoles(roles);
-        }
-
-        if (req.getPermissions() != null && !req.getPermissions().isEmpty()) {
-            for (AdminPermissionDto dto : req.getPermissions()) {
-                AdminPermission p = new AdminPermission(admin, dto.getModuleKey(), dto.getModuleNameEn(),
-                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete(), dto.getActions());
-                admin.getPermissions().add(p);
-            }
-        } else {
-            seedDefaultPermissions(admin);
-        }
-
-        return adminRepository.save(admin);
-    }
-
-    public Admin updateAdmin(Long adminId, UpdateAdminRequest req) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
-
-        if (req.getPhoneNumber() != null) admin.setPhoneNumber(req.getPhoneNumber());
-        if (req.getIsSuperAdmin() != null) admin.setSuperAdmin(req.getIsSuperAdmin());
-        if (req.getCanCreateRoles() != null) admin.setCanCreateRoles(req.getCanCreateRoles());
-        if (req.getCanManageUsers() != null) admin.setCanManageUsers(req.getCanManageUsers());
-        if (req.getActive() != null) admin.setActive(req.getActive());
-        if (req.getPassword() != null && !req.getPassword().trim().isEmpty()) {
-            admin.setPassword(passwordEncoder.encode(req.getPassword().trim()));
-        }
-        if (req.getRoleIds() != null) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(req.getRoleIds()));
-            admin.setRoles(roles);
-        }
-        if (req.getPermissions() != null) {
-            admin.getPermissions().clear();
-            for (AdminPermissionDto dto : req.getPermissions()) {
-                AdminPermission p = new AdminPermission(admin, dto.getModuleKey(), dto.getModuleNameEn(),
-                        dto.isCanCreate(), dto.isCanRead(), dto.isCanUpdate(), dto.isCanDelete(), dto.getActions());
-                admin.getPermissions().add(p);
-            }
-        }
-
-        return adminRepository.save(admin);
-    }
-
-    public Admin toggleStatus(Long adminId) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
-        if ("twekl_super_admin".equalsIgnoreCase(admin.getUsername()) && admin.isActive()) {
-            throw new IllegalArgumentException("Primary super administrator account cannot be deactivated");
-        }
-        admin.setActive(!admin.isActive());
-        return adminRepository.save(admin);
-    }
-
-    public void deleteAdmin(Long adminId) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with ID: " + adminId));
-        if ("twekl_super_admin".equalsIgnoreCase(admin.getUsername())) {
-            throw new IllegalArgumentException("Primary super administrator account cannot be deleted");
-        }
-        adminRepository.delete(admin);
-    }
-
-    public void seedDefaultPermissions(Admin admin) {
-        admin.getPermissions().clear();
-        boolean isSuper = admin.isSuperAdmin();
-        boolean canManage = isSuper || admin.isCanManageUsers();
-        boolean canCreateR = isSuper || admin.isCanCreateRoles();
-
-        admin.getPermissions().add(new AdminPermission(admin, "ADMIN_MANAGEMENT", "Administration & Staff",
-                canManage, canManage, canManage, canManage));
-        admin.getPermissions().add(new AdminPermission(admin, "ROLE_MANAGEMENT", "Roles & Permissions",
-                canCreateR, canCreateR, canCreateR, canCreateR));
-        admin.getPermissions().add(new AdminPermission(admin, "CUSTOMER_FOLLOWUP", "Customer Follow-ups",
-                true, true, true, isSuper));
-        admin.getPermissions().add(new AdminPermission(admin, "TIMELINES_PRESETS", "Time Filters & Presets",
-                isSuper, true, isSuper, isSuper));
-        admin.getPermissions().add(new AdminPermission(admin, "REPORTS_INSIGHTS", "Reports & Analytics",
-                true, true, true, false));
-    }
+    /**
+     * Populates default baseline permissions for newly registered administrator accounts.
+     *
+     * @param admin Admin entity to seed permissions for.
+     */
+    void seedDefaultPermissions(Admin admin);
 }

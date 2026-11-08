@@ -146,7 +146,7 @@
                         </thead>
                         <tbody>
                             <tr ng-repeat="c in getPagedReportCustomers() track by c.id">
-                                <td class="nowrap"><strong style="color: #64748B;" ng-bind="'#' + c.id"></strong></td>
+                                <td class="nowrap"><strong style="color: #64748B;" ng-bind="c.id"></strong></td>
                                 <td><strong style="color: #0F172A;" ng-bind="c.name"></strong></td>
                                 <td class="nowrap" style="text-align: center;"><strong style="color: #0F172A;" ng-bind="c.totalOrders || 0"></strong></td>
                                 <td class="nowrap">

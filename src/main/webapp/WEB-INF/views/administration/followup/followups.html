@@ -73,7 +73,7 @@
                             <tr ng-repeat="cust in getPagedCustomers() track by cust.id"
                                 ng-class="getCustomerRowClass(cust)">
                                 <td class="nowrap">
-                                    <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="'#' + (cust.externalId || cust.id)"></strong>
+                                    <strong style="color: #0F172A; font-size: 0.95rem;" ng-bind="cust.externalId || cust.id"></strong>
                                 </td>
                                 <td>
                                     <strong style="font-size: 0.98rem; color: #0F172A;" ng-bind="cust.name"></strong>

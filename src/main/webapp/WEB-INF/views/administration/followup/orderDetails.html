@@ -10,7 +10,7 @@
                         </button>
                         <div style="font-size: 1.15rem; font-weight: 900; color: #000000; display: inline-flex; align-items: center; gap: 8px;" ng-if="selectedCustomer">
                             <span ng-bind="selectedCustomer.name"></span>
-                            <span style="font-size: 0.92rem; color: #64748B; font-weight: 700;" ng-bind="'(#' + (selectedCustomer.externalId || selectedCustomer.id) + ')'"></span>
+                            <span style="font-size: 0.92rem; color: #64748B; font-weight: 700;" ng-bind="'(' + (selectedCustomer.externalId || selectedCustomer.id) + ')'"></span>
                         </div>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
                                                     <span class="comic-tag tag-expired is-unfinished" style="margin-left: 8px; padding: 2px 8px; font-size: 0.75rem;" ng-if="isOrderUnfinished(order)">🔒 Order Marked Unfinished</span>
                                                 </div>
                                                 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
-                                                    Order #{{order.id}}
+                                                    Order {{order.orderNumber || order.id}}
                                                 </span>
                                             </div>
 

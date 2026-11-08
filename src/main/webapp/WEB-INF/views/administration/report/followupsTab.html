@@ -110,7 +110,7 @@
                         <tbody>
                             <tr ng-repeat="c in getPagedReportCustomers() track by c.id">
                                 <td class="nowrap">
-                                    <span style="color: #64748B; font-weight: 700;" ng-bind="'#' + c.id"></span>
+                                    <span style="color: #64748B; font-weight: 700;" ng-bind="c.id"></span>
                                 </td>
                                 <td>
                                     <strong style="color: #0F172A; font-size: 0.92rem;" ng-bind="c.name"></strong>

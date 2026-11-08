@@ -453,7 +453,7 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
 
         String custName = request.getCustomerName() != null && !request.getCustomerName().trim().isEmpty()
                 ? request.getCustomerName().trim()
-                : "Customer #" + (extCustomerId != null ? extCustomerId : System.currentTimeMillis());
+                : "Customer " + (extCustomerId != null ? extCustomerId : System.currentTimeMillis());
 
         // Find or create Customer
         Customer customer = null;
@@ -544,7 +544,7 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
             order.setCustomer(customer);
             order.setOrderDate(orderDate);
             // No product name needed - system simply represents the order by its Order ID
-            order.setItemsSummary("Order #" + orderNum);
+            order.setItemsSummary("Order " + orderNum);
             order.setQuantity(1);
             order.setTotalAmount(0.0);
             order.setOrderStatus("DELIVERED");

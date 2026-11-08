@@ -99,7 +99,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                 if (ord && ord.customerId) {
                     $scope.selectedCustomer = {
                         id: ord.customerId,
-                        name: ord.customerName || ('Customer #' + ord.customerId)
+                        name: ord.customerName || ('Customer ' + ord.customerId)
                     };
                     pendingTargetCustomerId = ord.customerId;
                     try {
@@ -109,11 +109,11 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                     $scope.loadCustomerOrders(ord.customerId, ord.orderId || targetOrderId, false);
                 } else {
                     $scope.customerView = 'list';
-                    ToastService.error('Order #' + targetOrderId + ' not found');
+                    ToastService.error('Order ' + targetOrderId + ' not found');
                 }
             }, function(err) {
                 $scope.customerView = 'list';
-                ToastService.error('Order #' + targetOrderId + ' not found');
+                ToastService.error('Order ' + targetOrderId + ' not found');
             });
             return;
         }
@@ -195,7 +195,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                     FollowupService.lookupOrder(orderIdParam, dateParam).then(function(res) {
                         var ord = res.data && res.data.data ? res.data.data : res.data;
                         if (ord && ord.customerId) {
-                            var resolvedName = custNameParam || ord.customerName || ('Customer #' + ord.customerId);
+                            var resolvedName = custNameParam || ord.customerName || ('Customer ' + ord.customerId);
                             $scope.selectedCustomer = {
                                 id: ord.customerId,
                                 name: resolvedName
@@ -218,11 +218,11 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                             $scope.loadCustomerOrders(ord.customerId, targetKey, shouldAutoOpen);
                         } else {
                             $scope.customerView = 'list';
-                            ToastService.error('Order #' + orderIdParam + ' not found');
+                            ToastService.error('Order ' + orderIdParam + ' not found');
                         }
                     }, function(err) {
                         $scope.customerView = 'list';
-                        ToastService.error('Order #' + orderIdParam + ' not found');
+                        ToastService.error('Order ' + orderIdParam + ' not found');
                     });
                 } else if (custIdParam) {
                     var targetId = parseInt(custIdParam, 10);
@@ -241,7 +241,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                             }
                         }, function(err) {
                             $scope.customerView = 'list';
-                            ToastService.error('Customer #' + targetId + ' not found');
+                            ToastService.error('Customer ' + targetId + ' not found');
                         });
                         $scope.loadCustomerOrders(targetId, orderIdParam, openReviewParam);
                     }
@@ -1026,7 +1026,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                         }
                     });
                 }
-                ToastService.success('Order #' + (order.orderNumber || order.id) + ' restored to Pending');
+                ToastService.success('Order ' + (order.orderNumber || order.id) + ' restored to Pending');
                 $scope.loadOrderFollowups(order.id);
                 $scope.loadCustomers();
             }, function() {
@@ -1043,7 +1043,7 @@ function($scope, $http, $timeout, $window, $interval, FollowupService, ToastServ
                         }
                     });
                 }
-                ToastService.warning('Order #' + (order.orderNumber || order.id) + ' marked as Unfinished');
+                ToastService.warning('Order ' + (order.orderNumber || order.id) + ' marked as Unfinished');
                 $scope.loadOrderFollowups(order.id);
                 $scope.loadCustomers();
             }, function() {

@@ -10,7 +10,7 @@
                         </button>
                         <div style="font-size: 1.15rem; font-weight: 900; color: #000000; display: inline-flex; align-items: center; gap: 8px;" ng-if="selectedCustomer">
                             <span ng-bind="selectedCustomer.name"></span>
-                            <span style="font-size: 0.92rem; color: #64748B; font-weight: 700;" ng-bind="'(#' + (selectedCustomer.externalId || selectedCustomer.id) + ')'"></span>
+                            <span style="font-size: 0.92rem; color: #64748B; font-weight: 700;" ng-bind="'(' + (selectedCustomer.externalId || selectedCustomer.id) + ')'"></span>
                         </div>
                     </div>
                 </div>
@@ -98,7 +98,7 @@
                                                     <strong style="font-size: 0.95rem; color: #1E1B4B;">Customer Reviews ({{ getReviewedFollowups(order.id, order).length }} Completed)</strong>
                                                 </div>
                                                 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
-                                                    Reviewed milestones & notes for Order #{{order.orderNumber || order.id}}
+                                                    Reviewed milestones & notes for Order {{order.orderNumber || order.id}}
                                                 </span>
                                             </div>
 

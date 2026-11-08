@@ -85,7 +85,7 @@
                         <tbody>
                             <tr th:each="preset : ${presetList}" class="preset-row">
                                 <td>
-                                    <strong style="color: var(--primary-dark);" th:text="'#' + ${preset.presetId}">#1</strong>
+                                    <strong style="color: var(--primary-dark);" th:text="${preset.presetId}">1</strong>
                                 </td>
                                 <td>
                                     <strong style="font-size: 0.95rem;" th:text="${preset.labelEn}">Last 24 Hours</strong>

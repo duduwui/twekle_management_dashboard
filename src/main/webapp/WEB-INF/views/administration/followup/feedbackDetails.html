@@ -74,10 +74,7 @@
                                                 <span ng-if="!isOrderExpanded(order.id)">▶</span>
                                                 <span ng-if="isOrderExpanded(order.id)">▼</span>
                                             </button>
-                                            <strong style="color: var(--primary-dark);" ng-bind="'Order #' + (order.orderNumber || order.id)"></strong>
-                                            <span class="comic-tag tag-sat-satisfied" style="padding: 2px 8px; font-size: 0.72rem; border-radius: 5px;" ng-if="getOrderSatisfaction(order) === 'SATISFIED'">Satisfied</span>
-                                            <span class="comic-tag tag-sat-neutral" style="padding: 2px 8px; font-size: 0.72rem; border-radius: 5px;" ng-if="getOrderSatisfaction(order) === 'NEUTRAL'">Neutral</span>
-                                            <span class="comic-tag tag-sat-unsatisfied" style="padding: 2px 8px; font-size: 0.72rem; border-radius: 5px;" ng-if="getOrderSatisfaction(order) === 'UNSATISFIED'">Unsatisfied</span>
+                                            <strong style="color: var(--primary-dark);" ng-bind="'Order ' + (order.orderNumber || order.id)"></strong>
                                         </div>
                                     </td>
                                     <td><span style="font-weight: 700;" ng-bind="order.orderDate | date:'yyyy-MM-dd'"></span></td>

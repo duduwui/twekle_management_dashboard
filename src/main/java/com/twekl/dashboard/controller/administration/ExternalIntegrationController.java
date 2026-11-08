@@ -777,6 +777,16 @@ public class ExternalIntegrationController {
             }
         }
 
+        if (body != null && (body.containsKey("notes") || body.containsKey("satisfaction"))) {
+            Map<String, Object> submitRes = externalIntegrationService.submitReview(
+                    resolvedOrderId,
+                    bodyStr(body, "notes", "note"),
+                    bodyStr(body, "satisfaction"),
+                    bodyStr(body, "photoUrl", "photo")
+            );
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(submitRes);
+        }
+
         Map<String, Object> data = externalIntegrationService.getCustomerReviews(
                 resolvedCustId, resolvedOrderId, resolvedCustName);
 
@@ -791,16 +801,17 @@ public class ExternalIntegrationController {
      * Always returns raw JSON containing ONLY completed customer reviews.
      * e.g. GET /review/43356 or GET /api/review/43356
      */
-    @GetMapping(value = {
+    @RequestMapping(value = {
             "/review/{id:\\d+}",
             "/api/review/{id:\\d+}",
             "/api/reviews/{id:\\d+}",
             "/api/external/review/{id:\\d+}",
             "/api/external/reviews/{id:\\d+}"
-    })
+    }, method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getCustomerReviewsById(
             @PathVariable("id") String id,
+            @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(value = "format", required = false) String format,
             HttpServletRequest request,
             HttpServletResponse response) {
@@ -869,6 +880,16 @@ public class ExternalIntegrationController {
                 unauth.put("message", "Full authentication required. Please provide a valid ?token=..., X-API-KEY header, or log in.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(unauth);
             }
+        }
+
+        if (body != null && (body.containsKey("notes") || body.containsKey("satisfaction"))) {
+            Map<String, Object> submitRes = externalIntegrationService.submitReview(
+                    id,
+                    bodyStr(body, "notes", "note"),
+                    bodyStr(body, "satisfaction"),
+                    bodyStr(body, "photoUrl", "photo")
+            );
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(submitRes);
         }
 
         // Check as Order ID first (since supervisor searches by Order ID), then fallback to Customer ID

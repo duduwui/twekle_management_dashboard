@@ -87,4 +87,9 @@ public interface ExternalIntegrationService {
      * @return Map containing search results, customer information, and reviewed checkpoints.
      */
     Map<String, Object> getCustomerReviews(String customerId, String orderId, String customerName);
+
+    /**
+     * Submits a customer review / milestone feedback directly via API.
+     */
+    Map<String, Object> submitReview(String orderId, String notes, String satisfaction, String photoUrl);
 }

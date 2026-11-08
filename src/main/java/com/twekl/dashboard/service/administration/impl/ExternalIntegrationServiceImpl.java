@@ -1026,4 +1026,56 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
         }
         return List.of(trimmed);
     }
+
+    @Override
+    public Map<String, Object> submitReview(String orderId, String notes, String satisfaction, String photoUrl) {
+        if (orderId == null || orderId.trim().isEmpty()) {
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("success", false);
+            err.put("message", "Order ID is required");
+            return err;
+        }
+        String cleanOrd = orderId.trim();
+        List<CustomerOrder> orders = customerOrderRepository.findByOrderNumberWithCustomer(cleanOrd);
+        CustomerOrder order = (orders != null && !orders.isEmpty()) ? orders.get(0) : null;
+        if (order == null) {
+            try {
+                Long numOrd = Long.parseLong(cleanOrd);
+                order = customerOrderRepository.findById(numOrd).orElse(null);
+            } catch (Exception ignored) {}
+        }
+        if (order == null) {
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("success", false);
+            err.put("message", "Order not found with ID: " + orderId);
+            return err;
+        }
+
+        List<OrderFollowupCheck> checks = followupService.findChecksByOrderId(order.getId());
+        if (checks == null || checks.isEmpty()) {
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("success", false);
+            err.put("message", "No follow-up milestones found for order #" + order.getOrderNumber());
+            return err;
+        }
+
+        OrderFollowupCheck targetCheck = checks.stream()
+                .filter(c -> !Boolean.TRUE.equals(c.isCompleted()))
+                .findFirst()
+                .orElse(checks.get(0));
+
+        String sat = (satisfaction != null && !satisfaction.trim().isEmpty()) ? satisfaction.trim().toUpperCase() : "SATISFIED";
+        String n = (notes != null && !notes.trim().isEmpty()) ? notes.trim() : "Reviewed via API";
+        followupService.updateFollowupDetails(targetCheck.getId(), n, photoUrl, sat, "COMPLETED");
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Review submitted successfully");
+        res.put("orderId", order.getOrderNumber() != null ? order.getOrderNumber() : String.valueOf(order.getId()));
+        res.put("customerName", order.getCustomer() != null ? order.getCustomer().getName() : "");
+        res.put("milestone", targetCheck.getMilestoneName());
+        res.put("satisfaction", sat);
+        res.put("notes", n);
+        return res;
+    }
 }

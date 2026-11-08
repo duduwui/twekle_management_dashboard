@@ -112,6 +112,26 @@ public interface FollowupService {
     OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction);
 
     /**
+     * Updates follow-up check review details including notes, photos, satisfaction, and dynamic status (PENDING, FINISHED, UNFINISHED).
+     */
+    OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction, String status);
+
+    /**
+     * Updates follow-up check status directly to PENDING, COMPLETED (Finished), or UNFINISHED (Skipped).
+     */
+    OrderFollowupCheck updateCheckStatus(Long checkId, String status);
+
+    /**
+     * Marks all pending checkpoints for an order as UNFINISHED (Skipped) when supervisor does not need to review this order.
+     */
+    void markOrderChecksUnfinished(Long orderId);
+
+    /**
+     * Reactivates / unskips all expired or unfinished checkpoints for an order back to active status (PENDING or OVERDUE).
+     */
+    void unskipOrderChecks(Long orderId);
+
+    /**
      * Marks a follow-up checkpoint as completed and saves full inspection details.
      *
      * @param checkId ID of the check entity.

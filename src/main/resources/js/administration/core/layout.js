@@ -104,7 +104,7 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         } else if (tabName === 'reports') {
             window.location.href = '/admin/reports';
         } else if (tabName === 'time-filters' || tabName === 'timelines') {
-            window.location.href = '/admin/timelines';
+            window.location.href = '/admin/time-filters';
         } else {
             window.location.href = '/admin/dashboard';
         }
@@ -114,7 +114,7 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
         $scope.reportSubTab = subTab;
         $scope.$broadcast('reportSubTab:changed', subTab);
         if (window.history && window.history.pushState) {
-            var newUrl = window.location.pathname + '?tab=' + encodeURIComponent(subTab);
+            var newUrl = '/admin/reports/' + encodeURIComponent(subTab);
             window.history.pushState(null, '', newUrl);
         }
     };
@@ -483,21 +483,169 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
 
     $scope.openEditFollowupModal = function(order, check, $event) {
         if ($event) $event.stopPropagation();
+        // Strict guard: cannot add feedback if order is unfinished
+        if ((order && $scope.isOrderUnfinished(order)) || (check && (check.status === 'UNFINISHED' || check.status === 'EXPIRED'))) {
+            ToastService.error('This order is marked as Unfinished. Click "Undo Unfinished" first to reactivate checkpoints.');
+            return;
+        }
+        // Strict guard: cannot follow-up on future milestones that are not due yet
+        if (check && !check.isCompleted && !check.isDue && !check.forcePending && check.status !== 'UNFINISHED') {
+            ToastService.warning('This milestone is locked. Follow-up unlocks when the milestone reaches its due time.');
+            return;
+        }
         var item = angular.copy(check) || {};
         item.orderId = order ? order.id : null;
+        item.orderNumber = order ? (order.orderNumber || order.id) : null;
+        item.milestoneName = check ? (check.milestoneName || check.presetName || 'Milestone Review') : 'Milestone Review';
+        item.presetName = item.milestoneName;
         item.note = check.note || check.notes || '';
         item.imageUrl = check.imageUrl || check.photoUrl || '';
         item.images = angular.copy($scope.getCheckImages(check));
         item.satisfaction = (check.satisfaction && check.satisfaction.trim() !== '') ? check.satisfaction.toUpperCase() : 'NEUTRAL';
+        item.status = check.status ? check.status.toUpperCase() : (check.isCompleted ? 'COMPLETED' : 'PENDING');
         $scope.editingFollowup = item;
         $scope.tempImageUrl = '';
         $scope.showEditFollowupModal = true;
+        if ($scope.$root) {
+            $scope.$root.editingFollowup = item;
+            $scope.$root.showEditFollowupModal = true;
+        }
+    };
+
+    $scope.isOrderOlderThanFourMonths = function(order) {
+        if (!order || !order.orderDate) return false;
+        var orderTime = new Date(order.orderDate).getTime();
+        var now = new Date().getTime();
+        var diffDays = (now - orderTime) / (1000 * 60 * 60 * 24);
+        return diffDays >= 120; // 4 months
+    };
+
+    $scope.formatCountdown = function(minutes) {
+        if (minutes == null || minutes < 0) return 'Soon';
+        if (minutes < 60) return minutes + 'm';
+        var hours = Math.floor(minutes / 60);
+        var remM = minutes % 60;
+        if (hours < 24) return remM > 0 ? (hours + 'h ' + remM + 'm') : (hours + 'h');
+        var days = Math.floor(hours / 24);
+        var remH = hours % 24;
+        return remH > 0 ? (days + 'd ' + remH + 'h') : (days + 'd');
+    };
+
+    $scope.getCheckStatusLabel = function(check, order) {
+        if (!check) return 'Pending';
+        if (check.status === 'COMPLETED' || check.isCompleted || (check.note && check.note.trim().length > 0)) {
+            return 'Finished';
+        }
+        if (check.forcePending) {
+            return 'Pending';
+        }
+        if ($scope.isCheckUnfinished(check, order)) {
+            return 'Unfinished';
+        }
+        return 'Pending';
+    };
+
+    $scope.getCheckStatusClass = function(check, order) {
+        var label = $scope.getCheckStatusLabel(check, order);
+        if (label === 'Finished') return 'tag-finished';
+        if (label === 'Unfinished') return 'tag-expired is-unfinished';
+        return 'tag-pending';
+    };
+
+    $scope.isOrderUnfinished = function(order) {
+        if (!order || !order.id) return false;
+        if (order.isExpired === true) return true;
+        if (order.isExpired === false) return false;
+        var checks = $scope.orderFollowups ? $scope.orderFollowups[order.id] : null;
+        if (checks && checks.length > 0) {
+            var anyCompleted = false;
+            var anyUnfinished = false;
+            var anyPending = false;
+            for (var i = 0; i < checks.length; i++) {
+                if (checks[i].isCompleted || checks[i].status === 'COMPLETED' || (checks[i].note && checks[i].note.trim())) {
+                    anyCompleted = true;
+                } else if (checks[i].forcePending) {
+                    anyPending = true;
+                } else if (checks[i].status === 'UNFINISHED' || checks[i].status === 'EXPIRED' || checks[i].status === 'SKIPPED') {
+                    anyUnfinished = true;
+                } else if ($scope.isOrderOlderThanFourMonths(order)) {
+                    anyUnfinished = true;
+                } else {
+                    anyPending = true;
+                }
+            }
+            if (anyUnfinished && !anyPending) return true;
+        } else if ($scope.isOrderOlderThanFourMonths(order)) {
+            return true;
+        }
+        return false;
+    };
+    $scope.isOrderExpired = $scope.isOrderUnfinished;
+
+    $scope.isCheckUnfinished = function(check, order) {
+        if (!check && !order) return false;
+        if (check && (check.isCompleted || (check.note && check.note.trim().length > 0) || check.forcePending)) {
+            return false;
+        }
+        if (check && (check.status === 'UNFINISHED' || check.status === 'EXPIRED' || check.status === 'SKIPPED')) {
+            return true;
+        }
+        if (order && $scope.isOrderOlderThanFourMonths(order)) {
+            return true;
+        }
+        if (check && check.orderId) {
+            var ord = $scope.findOrderById ? $scope.findOrderById(check.orderId) : null;
+            if (ord && $scope.isOrderOlderThanFourMonths(ord)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    $scope.isCheckExpired = $scope.isCheckUnfinished;
+
+    $scope.toggleOrderUnfinished = function(order, $event) {
+        if ($event) $event.stopPropagation();
+        if (!order || !order.id) return;
+        var isCurrentlyUnfinished = $scope.isOrderUnfinished(order);
+        var url = isCurrentlyUnfinished ? ('/admin/orders/' + order.id + '/unskip') : ('/admin/orders/' + order.id + '/skip');
+        $http.post(url).then(function() {
+            order.isExpired = !isCurrentlyUnfinished;
+            ToastService.success(isCurrentlyUnfinished ? 'Order restored to Pending' : 'Order marked as Unfinished');
+            $scope.$broadcast('order:reload', order.id);
+            $scope.$broadcast('customer:reload');
+        }, function() {
+            ToastService.error('Failed to update order state');
+        });
+    };
+    $scope.toggleOrderExpire = $scope.toggleOrderUnfinished;
+
+    $scope.onFeedbackNoteChange = function() {
+        if (!$scope.editingFollowup) return;
+        var hasNote = $scope.editingFollowup.note && $scope.editingFollowup.note.trim().length > 0;
+        var hasImages = $scope.editingFollowup.images && $scope.editingFollowup.images.length > 0;
+        if (hasNote || hasImages) {
+            $scope.editingFollowup.status = 'COMPLETED';
+        } else if ($scope.editingFollowup.status !== 'UNFINISHED') {
+            $scope.editingFollowup.status = 'PENDING';
+        }
     };
 
     $scope.closeEditFollowupModal = function() {
+        if ($scope.editingFollowup && $scope.editingFollowup.orderId) {
+            try {
+                sessionStorage.setItem('review_modal_opened_' + $scope.editingFollowup.orderId, 'true');
+                if ($scope.editingFollowup.orderNumber) {
+                    sessionStorage.setItem('review_modal_opened_' + $scope.editingFollowup.orderNumber, 'true');
+                }
+            } catch(e) {}
+        }
         $scope.showEditFollowupModal = false;
         $scope.editingFollowup = {};
         $scope.tempImageUrl = '';
+        if ($scope.$root) {
+            $scope.$root.showEditFollowupModal = false;
+            $scope.$root.editingFollowup = {};
+        }
     };
 
     $scope.toggleSatisfaction = function(target, val) {
@@ -543,33 +691,81 @@ function($scope, $http, $location, $window, $timeout, TimeFilterService, ToastSe
 
     $scope.saveFollowupCheck = function() {
         if (!$scope.editingFollowup || !$scope.editingFollowup.id) return;
-        var sat = $scope.editingFollowup.satisfaction || 'NEUTRAL';
         var finalImages = $scope.editingFollowup.images || [];
         var finalImageUrl = finalImages.length > 0 ? JSON.stringify(finalImages) : '';
         $scope.editingFollowup.imageUrl = finalImageUrl;
 
+        var noteText = $scope.editingFollowup.note || '';
+        // If user provided notes or proof photos, mark as Finished (COMPLETED). If cleared, it transitions to PENDING!
+        var hasFeedback = (noteText.trim().length > 0 || finalImages.length > 0);
+        var sat = hasFeedback ? ($scope.editingFollowup.satisfaction || 'NEUTRAL') : null;
+        var finalStatus = hasFeedback ? 'COMPLETED' : 'PENDING';
+
+        var checkId = $scope.editingFollowup.id;
+        var orderId = $scope.editingFollowup.orderId;
+        var noteTextVal = hasFeedback ? noteText : '';
+
         var payload = {
-            notes: $scope.editingFollowup.note || '',
+            notes: noteTextVal,
             photoUrl: finalImageUrl,
             imageUrl: finalImageUrl,
-            satisfaction: sat
+            satisfaction: sat || '',
+            status: finalStatus
         };
-        $http.post('/admin/followups/' + $scope.editingFollowup.id, payload).then(function(res) {
-            $scope.showEditFollowupModal = false;
+        $http.post('/admin/followups/' + checkId, payload).then(function(res) {
+            $scope.closeEditFollowupModal();
             $scope.$broadcast('followup:updated', {
-                checkId: $scope.editingFollowup.id,
-                orderId: $scope.editingFollowup.orderId,
-                note: $scope.editingFollowup.note,
+                checkId: checkId,
+                orderId: orderId,
+                note: noteTextVal,
+                notes: noteTextVal,
                 imageUrl: finalImageUrl,
                 photoUrl: finalImageUrl,
-                satisfaction: sat
+                satisfaction: sat,
+                status: finalStatus,
+                isCompleted: (finalStatus === 'COMPLETED'),
+                forcePending: !hasFeedback
             });
             $scope.$broadcast('dashboard:reload');
             $scope.$broadcast('customer:reload');
             $scope.$broadcast('report:reload');
-            ToastService.success('Milestone and feedback saved');
+            ToastService.success(hasFeedback ? 'Milestone and feedback saved' : 'Feedback cleared. Milestone restored to Pending.');
         }).catch(function() {
             ToastService.error('Could not save the follow-up. Your changes have not been submitted.');
+        });
+    };
+
+    $scope.deleteFollowupFeedback = function(check) {
+        if (!check || !check.id) return;
+        var checkId = check.id;
+        var orderId = check.orderId;
+        var payload = {
+            notes: '',
+            photoUrl: '',
+            imageUrl: '',
+            satisfaction: '',
+            status: 'PENDING'
+        };
+        $http.post('/admin/followups/' + checkId, payload).then(function(res) {
+            $scope.closeEditFollowupModal();
+            $scope.$broadcast('followup:updated', {
+                checkId: checkId,
+                orderId: orderId,
+                note: '',
+                notes: '',
+                imageUrl: '',
+                photoUrl: '',
+                satisfaction: null,
+                status: 'PENDING',
+                isCompleted: false,
+                forcePending: true
+            });
+            $scope.$broadcast('dashboard:reload');
+            $scope.$broadcast('customer:reload');
+            $scope.$broadcast('report:reload');
+            ToastService.success('Feedback deleted. Milestone restored to Pending.');
+        }).catch(function() {
+            ToastService.error('Could not delete feedback.');
         });
     };
 
@@ -768,3 +964,179 @@ async function toggleAdminStatusLive(btn, event) {
     }
 }
 window.toggleAdminStatusLive = toggleAdminStatusLive;
+
+/**
+ * Interactive Live Delete for Administrators
+ * Confirms with user, deletes via AJAX, and smoothly removes row without page reload.
+ */
+async function deleteAdminLive(btn, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    if (!btn || btn.classList.contains('loading')) return;
+
+    var form = btn.closest('form');
+    var adminId = btn.getAttribute('data-admin-id') || (form && form.action ? (form.action.match(/\/admin\/admins\/(\d+)\/delete-admin/)?.[1]) : null);
+    var uname = btn.getAttribute('data-uname') || (form ? form.getAttribute('data-uname') : '') || 'this administrator';
+
+    if (!confirm("Are you sure you want to delete administrator '" + uname + "'?")) {
+        return;
+    }
+
+    var row = btn.closest('tr.admin-row, tr.admin-table-row') || btn.closest('tr');
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    try {
+        var actionUrl = (form && form.action) ? form.action : ('/admin/admins/' + adminId + '/delete-admin');
+        var response = await fetch(actionUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        var data = await response.json();
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || 'Failed to delete administrator');
+        }
+
+        if (row) {
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(25px)';
+            setTimeout(function() {
+                row.remove();
+                var countElements = document.querySelectorAll('.comic-tag strong, .datatable-info strong');
+                countElements.forEach(function(el) {
+                    var cur = parseInt(el.textContent, 10);
+                    if (!isNaN(cur) && cur > 0) el.textContent = cur - 1;
+                });
+            }, 300);
+        }
+
+        showStatusToast(data.message || 'Administrator deleted successfully.', 'success');
+    } catch (err) {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        showStatusToast(err.message || 'Failed to delete administrator', 'error');
+    }
+}
+window.deleteAdminLive = deleteAdminLive;
+
+/* =========================================================
+   UNIVERSAL TABLE HEADER SORTING FOR ALL PAGES
+   ========================================================= */
+(function() {
+    function initUniversalTableSorting() {
+        document.addEventListener('click', function(e) {
+            var th = e.target.closest('table.comic-table thead th');
+            if (!th) return;
+            var table = th.closest('table.comic-table');
+            if (!table) return;
+
+            // Skip tables with specialized controllers or Angular directives
+            if (table.id === 'customerLogTable' || table.id === 'priorityAttentionTable' || th.hasAttribute('ng-click') || th.classList.contains('no-sort')) {
+                return;
+            }
+
+            var headerText = th.textContent.trim().toLowerCase();
+            if (headerText === 'action' || headerText === 'actions') {
+                return;
+            }
+
+            var thIndex = Array.prototype.indexOf.call(th.parentNode.children, th);
+            if (thIndex === -1) return;
+
+            var tbody = table.querySelector('tbody');
+            if (!tbody) return;
+
+            var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+            if (rows.length <= 1) return;
+
+            var currentDir = th.getAttribute('data-sort-dir');
+            var newDir = currentDir === 'asc' ? 'desc' : 'asc';
+
+            Array.prototype.forEach.call(th.parentNode.children, function(otherTh) {
+                otherTh.removeAttribute('data-sort-dir');
+                otherTh.classList.remove('sort-asc', 'sort-desc');
+                var icon = otherTh.querySelector('.universal-sort-icon');
+                if (icon) icon.textContent = ' ↕';
+            });
+
+            th.setAttribute('data-sort-dir', newDir);
+            th.classList.add(newDir === 'asc' ? 'sort-asc' : 'sort-desc');
+            var sortIcon = th.querySelector('.universal-sort-icon');
+            if (!sortIcon) {
+                sortIcon = document.createElement('span');
+                sortIcon.className = 'universal-sort-icon';
+                sortIcon.style.fontSize = '0.72rem';
+                sortIcon.style.marginLeft = '4px';
+                sortIcon.style.color = '#0F172A';
+                th.appendChild(sortIcon);
+            }
+            sortIcon.textContent = newDir === 'asc' ? ' ▲' : ' ▼';
+
+            rows.sort(function(rowA, rowB) {
+                var cellA = rowA.children[thIndex];
+                var cellB = rowB.children[thIndex];
+                var valA = cellA ? (cellA.dataset.sortVal || cellA.textContent).trim() : '';
+                var valB = cellB ? (cellB.dataset.sortVal || cellB.textContent).trim() : '';
+
+                var numA = parseFloat(valA.replace(/[^0-9.-]/g, ''));
+                var numB = parseFloat(valB.replace(/[^0-9.-]/g, ''));
+                if (!isNaN(numA) && !isNaN(numB) && valA.match(/^[#$€£\s0-9.,%-]+$/)) {
+                    return newDir === 'asc' ? numA - numB : numB - numA;
+                }
+
+                return newDir === 'asc' 
+                    ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+                    : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            rows.forEach(function(r) { tbody.appendChild(r); });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUniversalTableSorting);
+    } else {
+        initUniversalTableSorting();
+    }
+})();
+
+/* =========================================================
+   UNIVERSAL SCROLL POSITION PRESERVATION ON SSR FORMS & PAGE RELOADS
+   ========================================================= */
+(function() {
+    // 1. Immediately restore any saved scroll position upon page load
+    try {
+        var savedY = sessionStorage.getItem('twekl_scroll_preserve_y');
+        if (savedY !== null) {
+            sessionStorage.removeItem('twekl_scroll_preserve_y');
+            var targetY = parseInt(savedY, 10);
+            if (!isNaN(targetY) && targetY > 0) {
+                window.scrollTo({ top: targetY, behavior: 'instant' });
+                requestAnimationFrame(function() {
+                    window.scrollTo({ top: targetY, behavior: 'instant' });
+                });
+                setTimeout(function() {
+                    window.scrollTo({ top: targetY, behavior: 'instant' });
+                }, 50);
+            }
+        }
+    } catch (e) {}
+
+    // 2. Intercept standard form submissions that cause real page navigation
+    document.addEventListener('submit', function(e) {
+        try {
+            // Wait to ensure this submit was not intercepted by an AJAX preventDefault()
+            setTimeout(function() {
+                if (!e.defaultPrevented && window.scrollY > 0) {
+                    sessionStorage.setItem('twekl_scroll_preserve_y', window.scrollY.toString());
+                }
+            }, 0);
+        } catch (err) {}
+    }, true);
+})();

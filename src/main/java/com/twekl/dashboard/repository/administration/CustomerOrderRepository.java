@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Spring Data JPA Repository for Customer Orders.
@@ -16,6 +17,17 @@ import java.util.List;
  */
 @Repository
 public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Long>, JpaSpecificationExecutor<CustomerOrder> {
+
+    Optional<CustomerOrder> findByOrderNumber(String orderNumber);
+
+    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE o.id = :id")
+    Optional<CustomerOrder> findByIdWithCustomer(@Param("id") Long id);
+
+    @Query("SELECT o FROM CustomerOrder o JOIN FETCH o.customer WHERE o.orderNumber = :orderNumber ORDER BY o.id DESC")
+    List<CustomerOrder> findByOrderNumberWithCustomer(@Param("orderNumber") String orderNumber);
+
+    @Query("SELECT o FROM CustomerOrder o WHERE o.orderNumber = :orderNumber AND o.customer.id = :customerId")
+    Optional<CustomerOrder> findByOrderNumberAndCustomerId(@Param("orderNumber") String orderNumber, @Param("customerId") Long customerId);
 
     @Query("SELECT o FROM CustomerOrder o WHERE o.customer.id IN :customerIds ORDER BY o.orderDate DESC, o.id DESC")
     List<CustomerOrder> findByCustomerIds(@Param("customerIds") List<Long> customerIds);

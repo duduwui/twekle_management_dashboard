@@ -25,6 +25,11 @@ import java.util.List;
 public interface OrderOperations {
 
     /**
+     * Looks up order metadata and associated customer by order number or numeric ID.
+     */
+    ResponseEntity<ApiResponse<java.util.Map<String, Object>>> lookupOrder(String orderIdentifier);
+
+    /**
      * Retrieves all milestone checks generated for a specific order.
      *
      * @param orderId Customer order ID.

@@ -73,6 +73,9 @@ public class OrderFollowupCheck {
     @Column(name = "UPDATED_AT")
     private Instant updatedAt;
 
+    @Column(name = "FORCE_PENDING", nullable = false)
+    private boolean forcePending = false;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -127,6 +130,7 @@ public class OrderFollowupCheck {
         String u = durationUnit != null ? durationUnit.toUpperCase() : "DAYS";
         int v = durationValue != null && durationValue > 0 ? durationValue : (targetDays > 0 ? targetDays : 1);
         return switch (u) {
+            case "SECONDS" -> Math.max(0, v / 60);
             case "HOURS" -> v * 60;
             case "WEEKS" -> v * 7 * 1440;
             case "MONTHS" -> v * 30 * 1440;
@@ -250,4 +254,8 @@ public class OrderFollowupCheck {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("forcePending")
+    public boolean isForcePending() { return forcePending; }
+    public void setForcePending(boolean forcePending) { this.forcePending = forcePending; }
 }

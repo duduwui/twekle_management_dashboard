@@ -24,7 +24,7 @@ public class CustomerOrder {
     @Column(name = "ID")
     private Long id;
 
-    @Column(name = "ORDER_NUMBER", nullable = false, unique = true, length = 32)
+    @Column(name = "ORDER_NUMBER", nullable = false, length = 32)
     private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)

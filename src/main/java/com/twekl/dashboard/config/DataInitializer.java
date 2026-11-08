@@ -79,7 +79,12 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
         seedTimeFilterPresets();
         Role roleEngineer = seedRoles();
         seedSuperAdmin(roleEngineer);
-        seedCustomerPracticeData();
+        // Practice customer dataset disabled for clean live testing
+        // seedCustomerPracticeData();
+        followupCheckRepository.insertMissingChecksForActivePresets();
+        followupCheckRepository.syncPendingChecks();
+        followupCheckRepository.syncUnfinishedChecks();
+        followupCheckRepository.syncOverdueChecks();
         log.info("System initialization complete.");
     }
 

@@ -31,6 +31,9 @@ public class FollowupController implements FollowupOperations {
     private final AdminService adminService;
     private final TimeFilterService timeFilterService;
 
+    @Autowired(required = false)
+    private com.twekl.dashboard.service.administration.ExternalIntegrationService externalIntegrationService;
+
     @Autowired
     public FollowupController(final FollowupService followupService,
                               final AdminService adminService,
@@ -70,6 +73,28 @@ public class FollowupController implements FollowupOperations {
         if (!canRead()) {
             return "redirect:/admin/dashboard";
         }
+        var reqAttrs = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        if (reqAttrs instanceof org.springframework.web.context.request.ServletRequestAttributes sra) {
+            jakarta.servlet.http.HttpServletRequest req = sra.getRequest();
+            if (req.getRequestURI() != null && req.getRequestURI().contains("/admin/review")) {
+                String qOrderId = req.getParameter("orderId") != null ? req.getParameter("orderId")
+                        : (req.getParameter("order_id") != null ? req.getParameter("order_id") : req.getParameter("orderNumber"));
+                String qCustId = req.getParameter("customerId") != null ? req.getParameter("customerId") : req.getParameter("customer_id");
+                String qCustName = req.getParameter("customerName") != null ? req.getParameter("customerName")
+                        : (req.getParameter("customer_name") != null ? req.getParameter("customer_name") : req.getParameter("name"));
+                String qDate = ExternalIntegrationController.extractDateFromRequest(req, req.getParameter("date"));
+
+                if (externalIntegrationService != null && qOrderId != null && !qOrderId.trim().isEmpty()) {
+                    com.twekl.dashboard.dto.administration.ExternalReviewRequest reviewReq = new com.twekl.dashboard.dto.administration.ExternalReviewRequest();
+                    reviewReq.setOrderId(qOrderId.trim());
+                    if (qCustId != null && !qCustId.trim().isEmpty()) reviewReq.setCustomerId(qCustId.trim());
+                    if (qCustName != null && !qCustName.trim().isEmpty()) reviewReq.setCustomerName(qCustName.trim());
+                    if (qDate != null && !qDate.trim().isEmpty()) reviewReq.setDate(qDate.trim());
+                    externalIntegrationService.createReviewSession(reviewReq, "");
+                }
+                return "redirect:/followup/review/" + (qOrderId != null && !qOrderId.trim().isEmpty() ? qOrderId.trim() : "");
+            }
+        }
         model.addAttribute("activeTab", "followups");
         List<TimeFilterPreset> presets = timeFilterService.findAll();
         model.addAttribute("presets", presets);
@@ -85,6 +110,9 @@ public class FollowupController implements FollowupOperations {
                     effectiveTimeFilter = p.getPresetKey() != null ? p.getPresetKey() : p.getName();
                     break;
                 }
+            }
+            if ("ALL".equals(effectiveTimeFilter)) {
+                effectiveTimeFilter = String.valueOf(presetId);
             }
         }
 
@@ -130,7 +158,8 @@ public class FollowupController implements FollowupOperations {
                 : org.springframework.data.domain.Sort.Direction.DESC;
 
         String field = "id";
-        if ("totalOrders".equalsIgnoreCase(sortField)) field = "totalOrders";
+        if ("externalId".equalsIgnoreCase(sortField)) field = "externalId";
+        else if ("totalOrders".equalsIgnoreCase(sortField)) field = "totalOrders";
         else if ("customerType".equalsIgnoreCase(sortField)) field = "name";
         else if ("name".equalsIgnoreCase(sortField)) field = "name";
         else if ("phoneNumber".equalsIgnoreCase(sortField)) field = "phoneNumber";
@@ -153,8 +182,29 @@ public class FollowupController implements FollowupOperations {
         org.springframework.data.domain.Page<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> pagedResult =
                 followupService.findPagedSummaries(timeFilter, status, search, dateFrom, dateTo, pageable);
 
+        java.util.List<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> content = new java.util.ArrayList<>(pagedResult.getContent());
+        if ("satisfaction".equalsIgnoreCase(sortField) || "latestSatisfaction".equalsIgnoreCase(sortField)) {
+            java.util.Comparator<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> comp = java.util.Comparator.comparingInt(s -> {
+                String sat = s.getLatestSatisfaction();
+                if ("SATISFIED".equalsIgnoreCase(sat)) return 3;
+                if ("NEUTRAL".equalsIgnoreCase(sat)) return 2;
+                if ("UNSATISFIED".equalsIgnoreCase(sat)) return 1;
+                return 0;
+            });
+            if (direction == org.springframework.data.domain.Sort.Direction.DESC) {
+                comp = comp.reversed();
+            }
+            content.sort(comp);
+        } else if ("remainingFollowupsCount".equalsIgnoreCase(sortField)) {
+            java.util.Comparator<com.twekl.dashboard.dto.administration.CustomerFollowupSummary> comp = java.util.Comparator.comparingInt(com.twekl.dashboard.dto.administration.CustomerFollowupSummary::getRemainingFollowupsCount);
+            if (direction == org.springframework.data.domain.Sort.Direction.DESC) {
+                comp = comp.reversed();
+            }
+            content.sort(comp);
+        }
+
         Map<String, Object> responseData = new java.util.LinkedHashMap<>();
-        responseData.put("content", pagedResult.getContent());
+        responseData.put("content", content);
         responseData.put("currentPage", page);
         responseData.put("pageSize", pageSize);
         responseData.put("totalElements", pagedResult.getTotalElements());
@@ -190,8 +240,44 @@ public class FollowupController implements FollowupOperations {
         String notes = body != null ? body.get("notes") : null;
         String photoUrl = body != null ? body.get("photoUrl") : null;
         String satisfaction = body != null ? body.get("satisfaction") : null;
-        OrderFollowupCheck updated = followupService.updateFollowupDetails(checkId, notes, photoUrl, satisfaction);
+        String status = body != null ? body.get("status") : null;
+        OrderFollowupCheck updated = followupService.updateFollowupDetails(checkId, notes, photoUrl, satisfaction, status);
         return ResponseEntity.ok(ApiResponse.success("Follow-up updated successfully", updated));
+    }
+
+    @PostMapping("/{checkId:\\d+}/status")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<OrderFollowupCheck>> updateCheckStatus(
+            @PathVariable("checkId") Long checkId,
+            @RequestParam("status") String status) {
+        if (!canToggleCheck()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You do not have permission to change checkpoint status"));
+        }
+        OrderFollowupCheck check = followupService.updateCheckStatus(checkId, status);
+        return ResponseEntity.ok(ApiResponse.success("Checkpoint status updated to " + check.getStatus(), check));
+    }
+
+    @PostMapping("/orders/{orderId:\\d+}/skip")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Void>> skipOrderChecks(@PathVariable("orderId") Long orderId) {
+        if (!canToggleCheck()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You do not have permission to update order checks"));
+        }
+        followupService.markOrderChecksUnfinished(orderId);
+        return ResponseEntity.ok(ApiResponse.success("Order checkpoints marked as Unfinished / Skipped", null));
+    }
+
+    @PostMapping("/orders/{orderId:\\d+}/unskip")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Void>> unskipOrderChecks(@PathVariable("orderId") Long orderId) {
+        if (!canToggleCheck()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You do not have permission to update order checks"));
+        }
+        followupService.unskipOrderChecks(orderId);
+        return ResponseEntity.ok(ApiResponse.success("Order checkpoints reactivated", null));
     }
 
     @Override

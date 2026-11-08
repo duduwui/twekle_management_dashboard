@@ -41,6 +41,7 @@ public class TomcatServer {
         String docBase = new File("src/main/webapp").getAbsolutePath();
         new File(docBase).mkdirs();
         Context context = tomcat.addWebapp("", docBase);
+        context.setSessionTimeout(43200); // 30 days in minutes
         context.setParentClassLoader(TomcatServer.class.getClassLoader());
 
         File additionWebInfClasses = new File("target/classes");

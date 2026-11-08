@@ -27,6 +27,10 @@
                         <div class="filter-search-box" style="min-width: 210px;">
                             <input type="search" class="comic-search-bar" placeholder="Search product name..." ng-model="reportFilters.searchProducts">
                         </div>
+                        <a href="/admin/reports/visual/products" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="Open Visual Charts &amp; Analytics">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            <span>Visual Charts</span>
+                        </a>
                         <button th:if="${@portalAccess.canExportReports()}" type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Products to Excel">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export Excel
                         </button>

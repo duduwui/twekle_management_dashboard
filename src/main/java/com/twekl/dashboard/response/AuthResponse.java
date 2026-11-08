@@ -51,6 +51,11 @@ public class AuthResponse {
     private List<AdminPermissionDto> permissions = new ArrayList<>();
     private Set<RoleDto> roles = new HashSet<>();
     private String message;
+    private String redirectUrl;
+
+    private String token;
+    private String tokenType = "Bearer";
+    private Long expiresIn;
 
     public AuthResponse() {}
 
@@ -237,5 +242,17 @@ public class AuthResponse {
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+
+    public String getRedirectUrl() { return redirectUrl; }
+    public void setRedirectUrl(String redirectUrl) { this.redirectUrl = redirectUrl; }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
+
+    public String getTokenType() { return tokenType; }
+    public void setTokenType(String tokenType) { this.tokenType = tokenType; }
+
+    public Long getExpiresIn() { return expiresIn; }
+    public void setExpiresIn(Long expiresIn) { this.expiresIn = expiresIn; }
 }
 

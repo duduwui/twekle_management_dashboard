@@ -40,6 +40,12 @@ public class Customer {
     @Column(name = "CITY")
     private String city;
 
+    @Column(name = "CUSTOMER_TYPE", length = 32)
+    private String customerType = "INDIVIDUAL";
+
+    @Column(name = "EXTERNAL_ID", length = 64)
+    private String externalId;
+
     @Column(name = "ACTIVE", nullable = false)
     private boolean active = true;
 
@@ -120,6 +126,12 @@ public class Customer {
 
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
+
+    public String getCustomerType() { return customerType != null ? customerType : "INDIVIDUAL"; }
+    public void setCustomerType(String customerType) { this.customerType = customerType; }
+
+    public String getExternalId() { return externalId; }
+    public void setExternalId(String externalId) { this.externalId = externalId; }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }

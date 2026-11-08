@@ -33,10 +33,36 @@
             font-weight: 500;
             margin: 0;
         }
-        .active-filter-card {
-            border: 2px solid var(--primary-color) !important;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15) !important;
+        .comic-kpi-card {
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            color: #0F172A !important;
+        }
+        .comic-kpi-card:hover {
+            border-color: #0F172A !important;
+            background-color: #FFFFFF !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+        }
+        .active-filter-card,
+        .comic-kpi-card.kpi-card-active {
+            border: 2px solid #0F172A !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
             background-color: #F8FAFC !important;
+        }
+        .search-icon-svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 15px;
+            color: #94A3B8;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .comic-search-bar {
+            padding-left: 36px !important;
+            padding-right: 32px !important;
         }
         .search-clear-btn {
             position: absolute;
@@ -50,6 +76,7 @@
             cursor: pointer;
             padding: 0 4px;
             line-height: 1;
+            z-index: 3;
         }
         .search-clear-btn:hover {
             color: #0F172A;
@@ -59,16 +86,27 @@
 <body>
     <div layout:fragment="content">
         <section class="comic-card" id="customersPageContainer" th:attr="data-initial-days=${initialDays}">
+            <!-- Flash Alert Feedback Messages -->
+            <div th:if="${successMessage}" class="comic-alert-success" style="margin-bottom: 16px; padding: 12px 16px; background-color: #ECFDF5; border: 2px solid #059669; border-radius: 8px; color: #065F46; font-weight: 700;" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="comic-alert-danger" style="margin-bottom: 16px; padding: 12px 16px; background-color: #FEF2F2; border: 2px solid #DC2626; border-radius: 8px; color: #991B1B; font-weight: 700;" th:text="${errorMessage}"></div>
+
             <!-- Page Header with Back Action -->
             <div class="customer-page-header">
                 <div class="customer-header-left">
                     <h1 class="customer-page-title">
                         <span>Customer Registrations &amp; Log</span>
-                        <span class="comic-tag tag-primary" style="font-size: 0.82rem; padding: 2px 10px;" th:text="|${stats.totalCustomers} Total|">0 Total</span>
+                        <span style="font-size: 0.9rem; font-weight: 600; color: #64748B;" th:text="|(${stats.totalCustomers} Total)|">(0 Total)</span>
                     </h1>
                     <p class="customer-page-subtitle">Detailed breakdown of customer intake, order activity, and follow-up milestone status.</p>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button type="button" id="openAddCustomerModalBtn" class="comic-btn trigger-add-customer-btn" style="padding: 7px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; background-color: #0F172A; color: #FFFFFF; font-weight: 700;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>+ Add Customer</span>
+                    </button>
                     <a th:href="@{/admin/dashboard}" class="comic-btn btn-ghost" style="padding: 7px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                         <span>Dashboard</span>
@@ -85,53 +123,77 @@
                 <!-- Total All-time -->
                 <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="0" title="Click to filter all customers">
                     <span class="kpi-label">TOTAL CUSTOMERS</span>
-                    <span class="kpi-value kpi-primary" th:text="${stats.totalCustomers}">0</span>
+                    <span class="kpi-value" th:text="${stats.totalCustomers}">0</span>
                     <span class="kpi-subtext">All-time registrations</span>
                 </button>
 
                 <!-- Today (24 Hours) -->
                 <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="1" title="Click to view today's registrations">
                     <span class="kpi-label">TODAY'S INTAKE</span>
-                    <span class="kpi-value kpi-primary" th:text="${stats.customersToday}">0</span>
+                    <span class="kpi-value" th:text="${stats.customersToday}">0</span>
                     <span class="kpi-subtext">Past 24 hours</span>
                 </button>
 
                 <!-- Last 7 Days -->
                 <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="7" title="Click to view registrations from last 7 days">
                     <span class="kpi-label">LAST 7 DAYS</span>
-                    <span class="kpi-value kpi-primary" th:text="${stats.customersThisWeek}">0</span>
+                    <span class="kpi-value" th:text="${stats.customersThisWeek}">0</span>
                     <span class="kpi-subtext">Weekly customer intake</span>
                 </button>
 
                 <!-- Last 30 Days -->
                 <button type="button" class="comic-kpi-card kpi-card-clickable" data-filter-days="30" title="Click to view registrations from last 30 days">
                     <span class="kpi-label">LAST 30 DAYS</span>
-                    <span class="kpi-value kpi-primary" th:text="${stats.customersThisMonth}">0</span>
+                    <span class="kpi-value" th:text="${stats.customersThisMonth}">0</span>
                     <span class="kpi-subtext">Monthly customer intake</span>
                 </button>
             </div>
 
             <!-- 2. FILTER TOOLBAR -->
-            <div class="comic-filter-toolbar" style="margin-bottom: 16px;">
+            <div class="comic-filter-toolbar" style="margin-bottom: 12px;">
                 <div class="filter-left-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <span style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-right: 4px;">Timeframe:</span>
+                    <button type="button" class="comic-btn-sm trigger-add-customer-btn" style="background: #0F172A; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Manually add customer">
+                        + Add Customer
+                    </button>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #475569; margin: 0 4px 0 6px;">Timeframe:</span>
                     <button type="button" class="comic-btn-sm" data-filter-days="0">All Time</button>
                     <button type="button" class="comic-btn-sm" data-filter-days="1">Today</button>
                     <button type="button" class="comic-btn-sm" data-filter-days="7">Last 7 Days</button>
                     <button type="button" class="comic-btn-sm" data-filter-days="30">Last 30 Days</button>
                 </div>
 
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <span id="customerVisibleCount" style="font-size: 0.85rem; font-weight: 700; color: #64748B;">Showing customers...</span>
-                    <div class="filter-search-box" style="position: relative; width: 280px;">
-                        <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <div class="filter-search-box" style="position: relative; width: 260px;">
+                        <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="search" id="customerSearchInput" autocomplete="off" class="comic-search-bar" placeholder="Search by name, phone, city..." style="width: 100%;">
+                        <input type="search" id="customerSearchInput" autocomplete="off" class="comic-search-bar" placeholder="Search customers..." style="width: 100%;">
                         <button type="button" id="clearCustomerSearch" class="search-clear-btn" style="display: none;" title="Clear search">✕</button>
                     </div>
+
+                    <!-- Filter Criteria Modal Trigger Button -->
+                    <button type="button" id="openCustomerFilterModalBtn" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" title="Filter customers by criteria">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                        <span>Filter</span>
+                        <span id="activeCriteriaBadge" style="display: none; background: #0F172A; color: #FFFFFF; font-size: 0.70rem; font-weight: 800; padding: 1px 6px; border-radius: 9999px;">0</span>
+                    </button>
+
+                    <button type="button" id="exportCustomersExcelBtn" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;" title="Export customer directory to Excel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Export Excel</span>
+                    </button>
                 </div>
+            </div>
+
+            <!-- Active Criteria Tags Bar -->
+            <div id="activeFilterTagsBar" style="display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; padding: 8px 14px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px;">
+                <span style="font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Active Filters:</span>
+                <div id="activeFilterTagsList" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"></div>
+                <button type="button" id="clearAllFiltersBtn" class="comic-btn-sm btn-ghost" style="padding: 2px 10px; font-size: 0.76rem; margin-left: auto;">Clear All</button>
             </div>
 
             <!-- 3. CUSTOMER LOG TABLE -->
@@ -139,41 +201,38 @@
                 <table class="comic-table table-centered" id="customerLogTable" style="margin: 0;">
                     <thead style="background: #F8FAFC;">
                         <tr>
-                            <th style="width: 50px;">#</th>
-                            <th style="text-align: left;">Customer Name</th>
-                            <th>Phone Number</th>
-                            <th>City</th>
-                            <th>Registered Date &amp; Time</th>
-                            <th style="text-align: center;">Orders</th>
-                            <th style="text-align: center;">Follow-up Status</th>
+                            <th style="width: 50px;" class="sortable" data-sort="index" title="Sort by Index"># <span class="sort-icon">↕</span></th>
+                            <th style="text-align: left;" class="sortable" data-sort="name" title="Sort by Name">Customer Name <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="date" title="Sort by Date">Registered Date <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="time" title="Sort by Time">Registered Time <span class="sort-icon">↕</span></th>
+                            <th style="text-align: center;" class="sortable" data-sort="orders" title="Sort by Orders">Orders <span class="sort-icon">↕</span></th>
+                            <th style="text-align: center;" class="sortable" data-sort="status" title="Sort by Status">Follow-up Status <span class="sort-icon">↕</span></th>
                             <th style="width: 90px; text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="summary, iter : ${allCustomers}" th:with="customer=${summary.customer}"
-                            th:attr="data-registered=${customer.createdAt}, data-search=|${customer.name} ${customer.phoneNumber} ${customer.city ?: ''}|"
+                            th:attr="data-registered=${customer.createdAt}, data-search=|${customer.name}|, data-index=${iter.count}, data-name=${customer.name}, data-date=${customer.createdAt}, data-orders=${customer.totalOrders ?: 0}, data-status=${summary.allFollowupsCompleted ? 'Completed' : (summary.overdue ? 'Overdue' : 'In Queue')}"
                             class="customer-row">
                             <td style="color: #94A3B8; font-weight: 700; font-size: 0.82rem;" th:text="${iter.count}">1</td>
                             <td style="text-align: left;">
                                 <strong style="color: var(--text-main); font-size: 0.92rem;" th:text="${customer.name}">Customer Name</strong>
                             </td>
                             <td>
-                                <span style="color: #334155; font-weight: 600;" th:text="${customer.phoneNumber}">-</span>
+                                <span style="color: #334155; font-size: 0.86rem; font-weight: 600;"
+                                      th:text="${customer.createdAt != null ? #temporals.format(customer.createdAt, 'MMM d, yyyy') : '-'}">Recently</span>
                             </td>
                             <td>
-                                <span class="comic-tag tag-gray" th:text="${customer.city ?: '-'}">-</span>
-                            </td>
-                            <td>
-                                <span class="text-muted" style="font-size: 0.84rem; font-weight: 600;"
-                                      th:text="${customer.createdAt != null ? #temporals.format(customer.createdAt, 'MMM d, yyyy HH:mm') : 'Recently'}">Recently</span>
+                                <span style="color: #64748B; font-size: 0.86rem; font-weight: 600;"
+                                      th:text="${customer.createdAt != null ? #temporals.format(customer.createdAt, 'HH:mm') : '-'}">14:35</span>
                             </td>
                             <td style="text-align: center;">
-                                <strong class="comic-tag tag-primary" style="font-size: 0.85rem; padding: 2px 8px;" th:text="${customer.totalOrders ?: 0}">0</strong>
+                                <span style="font-size: 0.88rem; font-weight: 700; color: #0F172A;" th:text="${customer.totalOrders ?: 0}">0</span>
                             </td>
                             <td style="text-align: center;">
-                                <span th:if="${summary.allFollowupsCompleted}" class="comic-tag tag-success">Completed</span>
-                                <span th:if="${!summary.allFollowupsCompleted and summary.overdue}" class="comic-tag tag-danger">Overdue</span>
-                                <span th:if="${!summary.allFollowupsCompleted and !summary.overdue}" class="comic-tag tag-warning">In Queue</span>
+                                <span th:if="${summary.allFollowupsCompleted}" style="font-weight: 700; color: #16A34A;">Completed</span>
+                                <span th:if="${!summary.allFollowupsCompleted and summary.overdue}" style="font-weight: 700; color: #DC2626;">Overdue</span>
+                                <span th:if="${!summary.allFollowupsCompleted and !summary.overdue}" style="font-weight: 700; color: #D97706;">In Queue</span>
                             </td>
                             <td style="text-align: center;">
                                 <a class="comic-btn-sm" style="padding: 5px 12px; font-size: 0.80rem;"
@@ -198,6 +257,216 @@
             <!-- 4. PAGINATION FOOTER -->
             <div id="customersPagination" style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px; gap: 8px;">
                 <div id="paginationControls" style="display: flex; gap: 6px; align-items: center;"></div>
+            </div>
+
+            <!-- 5. FILTER CRITERIA MODAL OVERLAY -->
+            <div id="customerFilterModalOverlay" class="comic-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+                <div class="filter-modal-card" style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); max-width: 520px; width: 95%; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+                    
+                    <!-- Header -->
+                    <div class="filter-modal-header-simple" style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            <strong style="font-size: 1.05rem; font-weight: 800; color: #0F172A;">Filter Criteria</strong>
+                        </div>
+                        <button type="button" id="closeCustomerFilterModalBtn" class="comic-modal-close" style="background: none; border: none; font-size: 1.4rem; color: #64748B; cursor: pointer; line-height: 1; padding: 4px;" title="Close">&times;</button>
+                    </div>
+
+                    <!-- Body -->
+                    <div style="padding: 20px; overflow-y: auto;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+                            
+                            <!-- Col 1: Follow-up Status -->
+                            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 14px;">
+                                <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                    Follow-up Status
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                        <input type="radio" name="criteriaStatus" value="ALL" checked style="width: 16px; height: 16px; accent-color: #0F172A; cursor: pointer;">
+                                        <span>All Statuses</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #16A34A;">
+                                        <input type="radio" name="criteriaStatus" value="Completed" style="width: 16px; height: 16px; accent-color: #16A34A; cursor: pointer;">
+                                        <span>Completed</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #DC2626;">
+                                        <input type="radio" name="criteriaStatus" value="Overdue" style="width: 16px; height: 16px; accent-color: #DC2626; cursor: pointer;">
+                                        <span>Overdue</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #D97706;">
+                                        <input type="radio" name="criteriaStatus" value="In Queue" style="width: 16px; height: 16px; accent-color: #D97706; cursor: pointer;">
+                                        <span>In Queue</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Col 2: City / Location -->
+                            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 14px;">
+                                <div style="font-size: 0.78rem; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 6px;">
+                                    City / Location
+                                </div>
+                                <div id="criteriaCityOptions" style="display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                        <input type="radio" name="criteriaCity" value="ALL" checked style="width: 16px; height: 16px; accent-color: #0F172A; cursor: pointer;">
+                                        <span>All Cities</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="filter-modal-footer-simple" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid #E2E8F0; background: #F8FAFC;">
+                        <button type="button" id="resetCriteriaBtn" class="comic-btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">
+                            Reset All
+                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" id="cancelCriteriaBtn" class="comic-btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">
+                                Cancel
+                            </button>
+                            <button type="button" id="applyCriteriaBtn" class="comic-btn" style="padding: 8px 22px; font-size: 0.85rem;">
+                                Apply Criteria
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 6. ADD CUSTOMER MODAL OVERLAY -->
+            <div id="addCustomerModalOverlay" class="comic-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+                <div class="filter-modal-card" style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); max-width: 560px; width: 95%; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+                    
+                    <!-- Header -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: #0F172A; display: flex; align-items: center; justify-content: center; color: #FFFFFF;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 1.1rem; font-weight: 800; color: #0F172A; margin: 0;">Add New Customer</h3>
+                                <p style="font-size: 0.8rem; color: #64748B; margin: 0; font-weight: 500;">Manually register customer and initiate follow-up tracking</p>
+                            </div>
+                        </div>
+                        <button type="button" id="closeAddCustomerModalBtn" class="comic-modal-close" style="background: none; border: none; font-size: 1.4rem; color: #64748B; cursor: pointer; line-height: 1; padding: 4px;" title="Close">&times;</button>
+                    </div>
+
+                    <!-- Form Body -->
+                    <form id="addCustomerForm" th:action="@{/admin/customers/create}" method="post" autocomplete="off" style="margin: 0; display: flex; flex-direction: column; overflow-y: auto;">
+                        <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+
+                            <!-- Name & Phone -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #0F172A; display: block; margin-bottom: 6px;">
+                                        Customer Name <span style="color: #DC2626;">*</span>
+                                    </label>
+                                    <input type="text" id="custName" name="name" class="comic-input" placeholder="e.g. Ahmed Al-Saadi" required style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1.5px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem;">
+                                </div>
+
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #0F172A; display: block; margin-bottom: 6px;">
+                                        Phone Number <span style="color: #DC2626;">*</span>
+                                    </label>
+                                    <input type="tel" id="custPhone" name="phoneNumber" class="comic-input" placeholder="e.g. +964 770 123 4567" required style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1.5px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem;">
+                                </div>
+                            </div>
+
+                            <!-- City & Email -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #0F172A; display: block; margin-bottom: 6px;">
+                                        City / Location
+                                    </label>
+                                    <select id="custCity" name="city" class="comic-input" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1.5px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem; background: #FFFFFF;">
+                                        <option value="Baghdad" selected>Baghdad</option>
+                                        <option value="Erbil">Erbil</option>
+                                        <option value="Basra">Basra</option>
+                                        <option value="Sulaymaniyah">Sulaymaniyah</option>
+                                        <option value="Duhok">Duhok</option>
+                                        <option value="Najaf">Najaf</option>
+                                        <option value="Karbala">Karbala</option>
+                                        <option value="Kirkuk">Kirkuk</option>
+                                        <option value="Mosul">Mosul</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #0F172A; display: block; margin-bottom: 6px;">
+                                        Email (Optional)
+                                    </label>
+                                    <input type="email" id="custEmail" name="email" class="comic-input" placeholder="e.g. ahmed@gmail.com" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1.5px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem;">
+                                </div>
+                            </div>
+
+                            <!-- Customer Type & External ID -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #0F172A; display: block; margin-bottom: 6px;">
+                                        Customer Type
+                                    </label>
+                                    <select id="custType" name="customerType" class="comic-input" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1.5px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem; background: #FFFFFF;">
+                                        <option value="INDIVIDUAL" selected>Individual</option>
+                                        <option value="COMPANY">Company / Corporate</option>
+                                        <option value="VIP">VIP</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #0F172A; display: block; margin-bottom: 6px;">
+                                        External Reference / ID (Optional)
+                                    </label>
+                                    <input type="text" id="custExternalId" name="externalId" class="comic-input" placeholder="e.g. CUST-501" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1.5px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem;">
+                                </div>
+                            </div>
+
+                            <!-- Initial Order & Follow-up Milestone Box -->
+                            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.88rem; font-weight: 700; color: #0F172A;">
+                                    <input type="checkbox" id="custAutoOrder" name="autoOrder" value="true" checked style="width: 18px; height: 18px; accent-color: #0F172A; cursor: pointer;">
+                                    <span>Initialize First Order &amp; Schedule Follow-up Checks</span>
+                                </label>
+                                <p style="margin: 0; font-size: 0.78rem; color: #64748B; padding-left: 28px;">
+                                    Automatically attaches an intake order so follow-up milestones (24h, 3 days, 7 days) are active immediately in the queue.
+                                </p>
+
+                                <div id="initialOrderFields" style="padding-left: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">
+                                    <div>
+                                        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Order Number (Optional)</label>
+                                        <input type="text" id="custOrderNumber" name="orderNumber" placeholder="e.g. 43400 (Auto if blank)" class="comic-input" style="width: 100%; box-sizing: border-box; padding: 6px 10px; font-size: 0.82rem; border: 1px solid #CBD5E1; border-radius: 6px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Order Amount ($)</label>
+                                        <input type="number" id="custOrderAmount" name="orderAmount" value="150.0" step="0.5" class="comic-input" style="width: 100%; box-sizing: border-box; padding: 6px 10px; font-size: 0.82rem; border: 1px solid #CBD5E1; border-radius: 6px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error feedback placeholder inside modal -->
+                            <div id="addCustomerErrorAlert" style="display: none; padding: 8px 12px; background: #FEF2F2; border: 1px solid #DC2626; border-radius: 6px; color: #991B1B; font-size: 0.82rem; font-weight: 600;"></div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid #E2E8F0; background: #F8FAFC;">
+                            <button type="button" id="cancelAddCustomerBtn" class="comic-btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">
+                                Cancel
+                            </button>
+                            <button type="submit" id="saveCustomerBtn" class="comic-btn" style="padding: 8px 24px; font-size: 0.85rem; background: #0F172A; color: #FFFFFF; font-weight: 800;">
+                                Save Customer
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
             </div>
         </section>
     </div>

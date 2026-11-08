@@ -33,7 +33,7 @@
 
                 <!-- Fast Filter Input -->
                 <div class="filter-search-box">
-                    <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input type="search" id="adminSearchInput" class="comic-search-bar" placeholder="Filter administrators..." oninput="filterAdminTable()">
                 </div>
             </div>
@@ -81,9 +81,10 @@
                                 <form th:unless="${admin.username == 'twekl_super_admin'}"
                                       th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${admin.id})}"
                                       method="post"
-                                      style="display: inline-flex; align-items: center; margin: 0;">
+                                      style="display: inline-flex; align-items: center; margin: 0;"
+                                      onsubmit="return false;">
                                     <input type="hidden" name="redirectUrl" value="/admin/admins">
-                                    <button type="submit"
+                                    <button type="button"
                                             class="status-toggle-btn"
                                             th:classappend="${admin.active} ? 'active' : 'inactive'"
                                             th:data-admin-id="${admin.id}"
@@ -101,8 +102,11 @@
                             </td>
                             <td style="text-align: right;">
                                 <div style="display: inline-flex; gap: 8px; align-items: center;">
-                                    <form th:action="@{/admin/admins/{adminId}/delete-admin(adminId=${admin.id})}" method="post" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete administrator \'' + this.getAttribute('data-uname') + '\'?');" th:data-uname="${admin.username}">
-                                        <button type="submit" class="comic-btn-danger" style="cursor: pointer;">Delete</button>
+                                    <form th:action="@{/admin/admins/{adminId}/delete-admin(adminId=${admin.id})}" method="post" style="display: inline; margin: 0;" onsubmit="return false;" th:data-uname="${admin.username}">
+                                        <button type="button" class="comic-btn-danger" style="cursor: pointer;"
+                                                th:data-admin-id="${admin.id}"
+                                                th:data-uname="${admin.username}"
+                                                onclick="deleteAdminLive(this, event)">Delete</button>
                                     </form>
                                 </div>
                             </td>

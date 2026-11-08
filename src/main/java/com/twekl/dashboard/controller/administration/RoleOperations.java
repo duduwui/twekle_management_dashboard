@@ -2,6 +2,7 @@ package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.RoleDto;
 import com.twekl.dashboard.dto.administration.UpdateAdminRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -61,23 +62,26 @@ public interface RoleOperations {
      * @param roleIds            Set of assigned role IDs.
      * @param roleId             Single assigned role ID.
      * @param updateAdminRequest UpdateAdminRequest payload.
+     * @param request            HttpServletRequest container for inspecting AJAX headers.
      * @param flash              RedirectAttributes container.
-     * @return Redirect to "/admin/roles?selectedAdminId=...".
+     * @return Redirect to "/admin/roles?selectedAdminId=..." or JSON response for AJAX.
      */
-    String assignAdminRoleSsr(
+    Object assignAdminRoleSsr(
             Long pathAdminId,
             Long paramAdminId,
             Set<Long> roleIds,
             Long roleId,
             UpdateAdminRequest updateAdminRequest,
+            HttpServletRequest request,
             RedirectAttributes flash);
 
     /**
      * Deletes a custom security role template. Base roles are protected from deletion.
      *
-     * @param roleId ID of the role to delete.
-     * @param flash  RedirectAttributes container.
-     * @return Redirect to "/admin/roles".
+     * @param roleId  ID of the role to delete.
+     * @param request HttpServletRequest container for inspecting AJAX headers.
+     * @param flash   RedirectAttributes container.
+     * @return Redirect to "/admin/roles" or JSON response for AJAX.
      */
-    String deleteRoleSsr(Long roleId, RedirectAttributes flash);
+    Object deleteRoleSsr(Long roleId, HttpServletRequest request, RedirectAttributes flash);
 }

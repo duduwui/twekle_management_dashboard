@@ -65,7 +65,14 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Customer> findByCustomerId(Long customerId) {
-        return customerRepository.findById(customerId);
+        if (customerId == null) {
+            return Optional.empty();
+        }
+        Optional<Customer> direct = customerRepository.findById(customerId);
+        if (direct.isPresent()) {
+            return direct;
+        }
+        return customerRepository.findByExternalId(String.valueOf(customerId));
     }
 
     @Override
@@ -77,13 +84,35 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public List<CustomerOrder> findOrdersByCustomerId(Long customerId) {
-        return orderRepository.findByCustomerIdOrderByOrderDateDesc(customerId);
+        if (customerId == null) {
+            return Collections.emptyList();
+        }
+        List<CustomerOrder> orders = orderRepository.findByCustomerIdOrderByOrderDateDesc(customerId);
+        if (orders != null && !orders.isEmpty()) {
+            return orders;
+        }
+        Optional<Customer> byExt = customerRepository.findByExternalId(String.valueOf(customerId));
+        if (byExt.isPresent()) {
+            return orderRepository.findByCustomerIdOrderByOrderDateDesc(byExt.get().getId());
+        }
+        return Collections.emptyList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CustomerFeedback> findFeedbacksByCustomerId(Long customerId) {
-        return feedbackRepository.findByCustomerIdOrderByFeedbackDateDesc(customerId);
+        if (customerId == null) {
+            return Collections.emptyList();
+        }
+        List<CustomerFeedback> feedbacks = feedbackRepository.findByCustomerIdOrderByFeedbackDateDesc(customerId);
+        if (feedbacks != null && !feedbacks.isEmpty()) {
+            return feedbacks;
+        }
+        Optional<Customer> byExt = customerRepository.findByExternalId(String.valueOf(customerId));
+        if (byExt.isPresent()) {
+            return feedbackRepository.findByCustomerIdOrderByFeedbackDateDesc(byExt.get().getId());
+        }
+        return Collections.emptyList();
     }
 
     @Override

@@ -11,9 +11,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
+    
+    Optional<Customer> findByExternalId(String externalId);
+    Optional<Customer> findByNameIgnoreCase(String name);
+    List<Customer> findByNameContainingIgnoreCase(String name);
     
     List<Customer> findByLastOrderDateAfter(Instant cutoff);
     List<Customer> findByLastOrderDateAfter(Instant cutoff, Pageable pageable);
@@ -49,12 +54,38 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     Page<Customer> findCompletedCustomersWithCutoff(@Param("cutoff") Instant cutoff, Pageable pageable);
 
     @Query("SELECT c FROM Customer c WHERE " +
-           "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+           "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.externalId) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Customer> searchCustomers(@Param("query") String query, Pageable pageable);
 
     @Query("SELECT c FROM Customer c WHERE c.createdAt >= :cutoff AND " +
-           "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+           "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.externalId) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Customer> searchCustomersWithCutoff(@Param("query") String query, @Param("cutoff") Instant cutoff, Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT c FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                   "WHERE (:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)",
+           countQuery = "SELECT count(DISTINCT c) FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                        "WHERE (:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)")
+    Page<Customer> findCustomersByPreset(@Param("presetId") Long presetId, @Param("presetName") String presetName, Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT c FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                   "WHERE ((:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)) AND ch.status = :status AND ch.completed = false",
+           countQuery = "SELECT count(DISTINCT c) FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                        "WHERE ((:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)) AND ch.status = :status AND ch.completed = false")
+    Page<Customer> findCustomersByPresetAndStatus(@Param("presetId") Long presetId, @Param("presetName") String presetName, @Param("status") String status, Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT c FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                   "WHERE ((:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)) AND ch.completed = :completed",
+           countQuery = "SELECT count(DISTINCT c) FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                        "WHERE ((:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)) AND ch.completed = :completed")
+    Page<Customer> findCustomersByPresetAndCompleted(@Param("presetId") Long presetId, @Param("presetName") String presetName, @Param("completed") boolean completed, Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT c FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                   "WHERE ((:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)) AND " +
+                   "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.externalId) LIKE LOWER(CONCAT('%', :query, '%')))",
+           countQuery = "SELECT count(DISTINCT c) FROM Customer c JOIN CustomerOrder o ON o.customer = c JOIN o.checks ch " +
+                        "WHERE ((:presetId IS NOT NULL AND ch.preset.id = :presetId) OR (:presetName IS NOT NULL AND ch.milestoneName = :presetName)) AND " +
+                        "(LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.phoneNumber LIKE CONCAT('%', :query, '%') OR LOWER(c.city) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.externalId) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Customer> searchCustomersByPreset(@Param("presetId") Long presetId, @Param("presetName") String presetName, @Param("query") String query, Pageable pageable);
 
     @Query(value = "SELECT " +
            "SUM(CASE WHEN TOTAL_ORDERS >= 3 AND (LAST_ORDER_DATE IS NULL OR DATEDIFF(NOW(), LAST_ORDER_DATE) <= 90 OR TOTAL_ORDERS >= 4) THEN 1 ELSE 0 END), " +

@@ -5,4 +5,15 @@
          https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
     <display-name>Twekl Management Dashboard - Spring MVC</display-name>
+
+    <!-- Configure 30 days session persistence for administrators (43200 minutes) -->
+    <session-config>
+        <session-timeout>43200</session-timeout>
+        <cookie-config>
+            <name>JSESSIONID</name>
+            <http-only>true</http-only>
+            <max-age>2592000</max-age>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
 </web-app>

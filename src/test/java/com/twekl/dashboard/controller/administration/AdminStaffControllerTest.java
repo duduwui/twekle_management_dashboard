@@ -115,4 +115,15 @@ public class AdminStaffControllerTest {
                 .andExpect(redirectedUrl("/admin/admins"))
                 .andExpect(flash().attributeExists("successMessage"));
     }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
+    @DisplayName("GET /admin/api/admins as JSON returns admin info and roles")
+    public void testGetAdminsJsonAuthenticated() throws Exception {
+        mockMvc.perform(get("/admin/api/admins").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.success").value(true))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.admins").isArray())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles").isArray());
+    }
 }

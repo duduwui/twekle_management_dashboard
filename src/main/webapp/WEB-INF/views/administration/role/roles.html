@@ -89,9 +89,10 @@
                                 <form th:unless="${adm.username == 'twekl_super_admin'}"
                                       th:action="@{/admin/admins/{adminId}/toggle-status(adminId=${adm.id})}"
                                       method="post"
-                                      style="display: inline-flex; align-items: center; margin: 0;">
+                                      style="display: inline-flex; align-items: center; margin: 0;"
+                                      onsubmit="return false;">
                                     <input type="hidden" name="redirectUrl" value="/admin/roles">
-                                    <button type="submit"
+                                    <button type="button"
                                             class="status-toggle-btn"
                                             th:classappend="${adm.active} ? 'active' : 'inactive'"
                                             th:data-admin-id="${adm.id}"

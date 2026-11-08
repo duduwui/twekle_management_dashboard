@@ -25,7 +25,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <!-- Custom Comic Design System Style -->
-    <link rel="stylesheet" href="/css/style.css?v=4.3">
+    <link rel="stylesheet" href="/css/style.css?v=5.2">
 </head>
 <body th:attr="ng-controller=${activeTab == 'followups' || activeTab == 'reports' ? 'LayoutController' : null}">
 
@@ -142,7 +142,7 @@
                     <div id="subnav-reports" 
                          class="nav-sub-items" 
                          th:style="${activeTab == 'reports'} ? 'display: flex;' : 'display: none;'">
-                        <a th:href="@{/admin/reports(tab='milestones')}" 
+                        <a th:href="@{/admin/reports/milestones}" 
                            class="nav-sub-item" 
                            th:if="${@portalAccess.canViewReportMilestones()}"
                            ng-click="activeTab === 'reports' ? (setReportSubTab('milestones'), $event.preventDefault()) : null"
@@ -150,7 +150,7 @@
                            th:classappend="${activeTab == 'reports' and (reportSubTab == 'milestones' or reportSubTab == null)} ? 'active' : ''">
                             <span>Follow-ups &amp; Milestones</span>
                         </a>
-                        <a th:href="@{/admin/reports(tab='satisfaction')}" 
+                        <a th:href="@{/admin/reports/satisfaction}" 
                            class="nav-sub-item" 
                            th:if="${@portalAccess.canViewReportSatisfaction()}"
                            ng-click="activeTab === 'reports' ? (setReportSubTab('satisfaction'), $event.preventDefault()) : null"
@@ -158,7 +158,7 @@
                            th:classappend="${activeTab == 'reports' and reportSubTab == 'satisfaction'} ? 'active' : ''">
                             <span>Satisfaction &amp; Notes</span>
                         </a>
-                        <a th:href="@{/admin/reports(tab='products')}" 
+                        <a th:href="@{/admin/reports/products}" 
                            class="nav-sub-item" 
                            th:if="${@portalAccess.canViewReportProducts()}"
                            ng-click="activeTab === 'reports' ? (setReportSubTab('products'), $event.preventDefault()) : null"
@@ -166,7 +166,7 @@
                            th:classappend="${activeTab == 'reports' and reportSubTab == 'products'} ? 'active' : ''">
                             <span>Product Distribution</span>
                         </a>
-                        <a th:href="@{/admin/reports(tab='customers')}" 
+                        <a th:href="@{/admin/reports/customers}" 
                            class="nav-sub-item" 
                            th:if="${@portalAccess.canViewReportRetention()}"
                            ng-click="activeTab === 'reports' ? (setReportSubTab('customers'), $event.preventDefault()) : null"
@@ -180,7 +180,7 @@
                 <div class="nav-divider" th:if="${@portalAccess.canViewPresets()}"></div>
 
                 <!-- Group 4: Time Filter Presets -->
-                <a th:href="@{/admin/timelines}" 
+                <a th:href="@{/admin/time-filters}" 
                    class="nav-item" 
                    th:if="${@portalAccess.canViewPresets()}"
                    th:classappend="${activeTab == 'timelines' || activeTab == 'time-filters'} ? 'active' : ''">
@@ -567,7 +567,7 @@
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="isPendingPresetSelected(null)"
                                            ng-click="selectPendingPreset(null)">
                                     <span>All Time</span>
@@ -575,7 +575,7 @@
                                 <label ng-repeat="preset in timeFilterPresets track by preset.id"
                                        ng-if="preset.active !== false || preset.isActive"
                                        style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="isPendingPresetSelected(preset)"
                                            ng-click="selectPendingPreset(preset)">
                                     <span ng-bind="preset.name || preset.labelEn"></span>
@@ -590,25 +590,25 @@
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('ALL')"
                                            ng-click="selectPendingFollowupStatus('ALL')">
                                     <span>All Customers</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 700; cursor: pointer; color: #DC2626;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #DC2626; cursor: pointer;"
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('ALERT') || isPendingFollowupStatusSelected('OVERDUE')"
                                            ng-click="selectPendingFollowupStatus('ALERT')">
                                     <span>Need Follow-up</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 700; cursor: pointer; color: #D97706;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #D97706; cursor: pointer;"
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('UPCOMING') || isPendingFollowupStatusSelected('IDLE')"
                                            ng-click="selectPendingFollowupStatus('UPCOMING')">
                                     <span>Queued</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 700; cursor: pointer; color: #16A34A;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #16A34A; cursor: pointer;"
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="isPendingFollowupStatusSelected('COMPLETED') || isPendingFollowupStatusSelected('DONE')"
                                            ng-click="selectPendingFollowupStatus('COMPLETED')">
                                     <span>Finished</span>
@@ -623,19 +623,19 @@
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="pendingCustomerType === 'ALL' || !pendingCustomerType"
                                            ng-click="pendingCustomerType = 'ALL'">
                                     <span>All Types</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="pendingCustomerType === 'ORGANIZATION'"
                                            ng-click="pendingCustomerType = 'ORGANIZATION'">
                                     <span>Organization</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="pendingCustomerType === 'INDIVIDUAL'"
                                            ng-click="pendingCustomerType = 'INDIVIDUAL'">
                                     <span>Individual</span>
@@ -650,14 +650,14 @@
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="pendingCustomerCity === 'ALL' || !pendingCustomerCity"
                                            ng-click="pendingCustomerCity = 'ALL'">
                                     <span>All Cities</span>
                                 </label>
                                 <label ng-repeat="city in ['Baghdad', 'Erbil', 'Basra', 'Sulaymaniyah', 'Najaf', 'Karbala', 'Kirkuk', 'Duhok', 'Mosul'] track by city"
                                        style="display: flex; align-items: center; gap: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1E293B;">
-                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #0F172A; cursor: pointer;"
+                                    <input type="checkbox" style="width: 15px; height: 15px; accent-color: #10B981; cursor: pointer;"
                                            ng-checked="pendingCustomerCity === city"
                                            ng-click="pendingCustomerCity = city">
                                     <span ng-bind="city"></span>
@@ -692,16 +692,34 @@
         </div>
 
         <!-- Edit / Verify Follow-up Modal -->
-        <div class="comic-modal-overlay" style="display: none;" ng-style="{'display': showEditFollowupModal ? 'flex' : 'none'}" ng-cloak ng-show="showEditFollowupModal" ng-click="closeEditFollowupModal()">
+        <div class="comic-modal-overlay" ng-class="{'active': showEditFollowupModal || $root.showEditFollowupModal, 'show': showEditFollowupModal || $root.showEditFollowupModal}" ng-style="{'display': (showEditFollowupModal || $root.showEditFollowupModal) ? 'flex' : 'none'}" ng-cloak ng-show="showEditFollowupModal || $root.showEditFollowupModal" ng-click="closeEditFollowupModal()">
             <div class="filter-modal-card" style="max-width: 600px;" ng-click="$event.stopPropagation()">
                 <div class="filter-modal-header-simple">
-                    <strong class="filter-modal-title-simple">Update Milestone Details</strong>
+                    <strong class="filter-modal-title-simple">
+                        <span ng-if="editingFollowup.milestoneName || editingFollowup.presetName">{{ (editingFollowup.milestoneName || editingFollowup.presetName) }} - Customer Review</span>
+                        <span ng-if="!editingFollowup.milestoneName && !editingFollowup.presetName">Customer Review &amp; Follow-up Details</span>
+                    </strong>
                     <button type="button" class="comic-modal-close" ng-click="closeEditFollowupModal()">&times;</button>
                 </div>
                 <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Customer & Order Summary Context Box -->
+                    <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;" ng-if="selectedCustomer">
+                        <div>
+                            <div style="font-size: 0.95rem; font-weight: 800; color: #0F172A;" ng-bind="selectedCustomer.name"></div>
+                            <div style="font-size: 0.78rem; color: #64748B;">
+                                <span ng-bind="editingFollowup.milestoneName || editingFollowup.presetName || 'Milestone Stage'"></span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;" ng-if="editingFollowup.orderNumber || editingFollowup.orderId">
+                            <span class="comic-tag tag-primary" style="font-size: 0.78rem; font-weight: 800;" ng-bind="'Order #' + (editingFollowup.orderNumber || editingFollowup.orderId)"></span>
+                        </div>
+                    </div>
+
+
+
                     <div ng-if="auth.canAddFeedback !== false">
-                        <label class="form-label">Internal Notes / Log</label>
-                        <textarea class="comic-input" rows="3" ng-model="editingFollowup.note" placeholder="Write any internal operational remarks here..."></textarea>
+                        <label class="form-label">Review / Customer Notes</label>
+                        <textarea class="comic-input" rows="3" ng-model="editingFollowup.note" ng-change="onFeedbackNoteChange()" placeholder="Write customer feedback, remarks, or review notes here..."></textarea>
                     </div>
                     <div ng-if="auth.canUploadPhotos !== false">
                         <label class="form-label">Attached Proof Photos &amp; Receipts (Multiple Allowed)</label>
@@ -723,15 +741,20 @@
                     <div ng-if="auth.canAddFeedback !== false">
                         <label class="form-label">Customer Satisfaction Rating</label>
                         <div style="display: flex; gap: 8px; margin-top: 6px;">
-                            <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'SATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">Satisfied</button>
-                            <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'NEUTRAL', 'comic-btn-secondary': editingFollowup.satisfaction !== 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">Neutral</button>
-                            <button type="button" class="comic-btn-sm" ng-class="{'tag-primary': editingFollowup.satisfaction === 'UNSATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">Unsatisfied</button>
+                            <button type="button" class="comic-btn-sm" ng-class="{'btn-sat-satisfied-active': editingFollowup.satisfaction === 'SATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'SATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'SATISFIED')">Satisfied</button>
+                            <button type="button" class="comic-btn-sm" ng-class="{'btn-sat-neutral-active': editingFollowup.satisfaction === 'NEUTRAL', 'comic-btn-secondary': editingFollowup.satisfaction !== 'NEUTRAL'}" ng-click="toggleSatisfaction(editingFollowup, 'NEUTRAL')">Neutral</button>
+                            <button type="button" class="comic-btn-sm" ng-class="{'btn-sat-unsatisfied-active': editingFollowup.satisfaction === 'UNSATISFIED', 'comic-btn-secondary': editingFollowup.satisfaction !== 'UNSATISFIED'}" ng-click="toggleSatisfaction(editingFollowup, 'UNSATISFIED')">Unsatisfied</button>
                         </div>
                     </div>
                 </div>
-                <div class="filter-modal-footer-simple">
-                    <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
-                    <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Milestone</button>
+                <div class="filter-modal-footer-simple" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <button type="button" class="comic-btn-danger" style="padding: 6px 14px; font-size: 0.85rem;" ng-if="editingFollowup.note || (editingFollowup.images && editingFollowup.images.length > 0) || editingFollowup.satisfaction" ng-click="deleteFollowupFeedback(editingFollowup)" title="Delete feedback and restore to Pending">Delete Feedback</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="comic-btn-secondary" ng-click="closeEditFollowupModal()">Cancel</button>
+                        <button type="button" class="comic-btn" ng-click="saveFollowupCheck()">Save Milestone</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -784,38 +807,43 @@
     <!-- ========================================================= -->
     <!-- 4. SCRIPTS LOADING                                         -->
     <!-- ========================================================= -->
-    <th:block th:if="${activeTab == 'followups' || activeTab == 'reports'}">
-        <script src="/js/core/angular.min.js"></script>
+    <th:block th:if="${activeTab == 'followups' || activeTab == 'reports' || activeTab == 'customers'}">
+        <script src="/js/core/angular.min.js" th:if="${activeTab == 'followups' || activeTab == 'reports'}"></script>
+        <script src="/js/core/chart.umd.min.js" th:if="${activeTab == 'reports'}"></script>
         <script src="/js/core/xlsx.mini.min.js"></script>
-        <script src="/js/core/app.js?v=18"></script>
-        <script src="/js/core/dateFilterHelper.js?v=18"></script>
-        <script src="/js/core/toast.js?v=18"></script>
-        <script src="/js/core/layout.js?v=18"></script>
-        <script src="/js/timefilter/timefilter.js?v=18"></script>
+        <script src="/js/core/app.js?v=27" th:if="${activeTab == 'followups' || activeTab == 'reports'}"></script>
+        <script src="/js/core/dateFilterHelper.js?v=27" th:if="${activeTab == 'followups' || activeTab == 'reports'}"></script>
+        <script src="/js/core/toast.js?v=27" th:if="${activeTab == 'followups' || activeTab == 'reports'}"></script>
+        <script src="/js/core/layout.js?v=27" th:if="${activeTab == 'followups' || activeTab == 'reports'}"></script>
+        <script src="/js/timefilter/timefilter.js?v=27" th:if="${activeTab == 'followups' || activeTab == 'reports'}"></script>
     </th:block>
 
+    <!-- Toast Notification Engine (Available Globally) -->
+    <script src="/js/core/toast.js?v=27"></script>
+
     <!-- Consolidated Core Layout & Navigation for SSR Screens -->
-    <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=18"></script>
+    <script th:unless="${activeTab == 'followups' || activeTab == 'reports'}" src="/js/core/layout.js?v=27"></script>
 
     <!-- Dashboard Feature (Responsibility-based Dashboard JS) -->
-    <script th:if="${activeTab == 'dashboard'}" src="/js/dashboard/dashboard.js?v=18"></script>
+    <script th:if="${activeTab == 'dashboard'}" src="/js/dashboard/dashboard.js?v=27"></script>
 
     <!-- Admin Feature (Responsibility-based Admin JS) -->
-    <script th:if="${activeTab == 'admins'}" src="/js/admin/admin.js?v=18"></script>
-    <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=18"></script>
+    <script th:if="${activeTab == 'admins'}" src="/js/admin/admin.js?v=27"></script>
+    <script th:if="${activeTab == 'roles'}" src="/js/role/role.js?v=27"></script>
 
     <!-- Follow-up Feature (Service, Image Helper, Controller) -->
     <th:block th:if="${activeTab == 'followups'}">
-        <script src="/js/followup/followup-service.js?v=18"></script>
-        <script src="/js/followup/followup-image.js?v=18"></script>
-        <script src="/js/followup/followup.js?v=18"></script>
+        <script src="/js/followup/followup-service.js?v=35"></script>
+        <script src="/js/followup/followup-image.js?v=35"></script>
+        <script src="/js/followup/followup.js?v=35"></script>
     </th:block>
 
     <!-- Customer Registrations Feature -->
-    <script th:if="${activeTab == 'customers'}" src="/js/customer/customers.js?v=1"></script>
+    <script th:if="${activeTab == 'customers'}" src="/js/customer/customers.js?v=27"></script>
 
-    <script th:if="${activeTab == 'timelines'}" src="/js/timefilter/timefilter.js?v=18"></script>
-    <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=19"></script>
+    <!-- Time Filter & Milestone Presets Feature -->
+    <script th:if="${activeTab == 'timelines' || activeTab == 'time-filters'}" src="/js/timefilter/timefilter.js?v=27"></script>
+    <script th:if="${activeTab == 'reports'}" src="/js/report/report.js?v=27"></script>
 
 </body>
 </html>

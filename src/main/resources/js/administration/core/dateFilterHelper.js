@@ -37,6 +37,7 @@ angular.module('tweklApp')
         if (!preset) return 0;
         var val = parseInt(preset.durationValue, 10) || 0;
         var unit = (preset.durationUnit || 'HOURS').toUpperCase();
+        if (unit.indexOf('SEC') === 0) return Math.max(0, Math.floor(val / 60));
         if (unit.indexOf('MIN') === 0) return val;
         if (unit.indexOf('HOUR') === 0) return val * 60;
         if (unit.indexOf('DAY') === 0) return val * 24 * 60;
@@ -49,6 +50,7 @@ angular.module('tweklApp')
         if (!preset) return 0;
         var val = parseFloat(preset.durationValue) || 1;
         var unit = (preset.durationUnit || 'HOURS').toUpperCase();
+        if (unit === 'SECONDS') return val / 86400;
         if (unit === 'HOURS') return val / 24;
         if (unit === 'DAYS') return val;
         if (unit === 'WEEKS') return val * 7;

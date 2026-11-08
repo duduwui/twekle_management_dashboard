@@ -72,6 +72,64 @@ public class ReportControllerTest {
 
     @Test
     @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
+    @DisplayName("GET /admin/reports/visual redirects to specific tab page")
+    public void testGetVisualReportsRedirect() throws Exception {
+        mockMvc.perform(get("/admin/reports/visual").param("tab", "milestones"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/reports/visual/milestones"));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
+    @DisplayName("GET /admin/reports/visual/milestones renders milestones visual view")
+    public void testGetVisualMilestones() throws Exception {
+        mockMvc.perform(get("/admin/reports/visual/milestones").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(view().name("administration/report/visual/milestonesVisual"))
+                .andExpect(model().attribute("activeTab", "reports"))
+                .andExpect(model().attribute("reportSubTab", "milestones"))
+                .andExpect(model().attributeExists("reportData"))
+                .andExpect(model().attributeExists("presets"));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
+    @DisplayName("GET /admin/reports/visual/satisfaction renders satisfaction visual view")
+    public void testGetVisualSatisfaction() throws Exception {
+        mockMvc.perform(get("/admin/reports/visual/satisfaction").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(view().name("administration/report/visual/satisfactionVisual"))
+                .andExpect(model().attribute("activeTab", "reports"))
+                .andExpect(model().attribute("reportSubTab", "satisfaction"))
+                .andExpect(model().attributeExists("reportData"));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
+    @DisplayName("GET /admin/reports/visual/products renders products visual view")
+    public void testGetVisualProducts() throws Exception {
+        mockMvc.perform(get("/admin/reports/visual/products").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(view().name("administration/report/visual/productsVisual"))
+                .andExpect(model().attribute("activeTab", "reports"))
+                .andExpect(model().attribute("reportSubTab", "products"))
+                .andExpect(model().attributeExists("reportData"));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
+    @DisplayName("GET /admin/reports/visual/customers renders customers visual view")
+    public void testGetVisualCustomers() throws Exception {
+        mockMvc.perform(get("/admin/reports/visual/customers").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(view().name("administration/report/visual/customersVisual"))
+                .andExpect(model().attribute("activeTab", "reports"))
+                .andExpect(model().attribute("reportSubTab", "customers"))
+                .andExpect(model().attributeExists("reportData"));
+    }
+
+    @Test
+    @WithMockUser(username = "twekl_super_admin", roles = {"SUPER_ADMIN"})
     @DisplayName("GET /admin/reports/data as JSON returns analytics payload")
     public void testGetAnalyticsReportData() throws Exception {
         mockMvc.perform(get("/admin/reports/data").accept(MediaType.APPLICATION_JSON))

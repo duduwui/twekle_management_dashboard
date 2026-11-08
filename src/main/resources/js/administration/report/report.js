@@ -10,7 +10,7 @@
  * Purpose:
  *   Handles analytics, calculations, and reporting tab transitions across:
  *   1. Milestones: Turnaround times, delay rates, and target day performance.
- *   2. Customer Satisfaction: Rating breakdowns (1-5 stars), positive review %,
+ *   2. Customer Satisfaction: Sentiment breakdowns (Satisfied, Neutral, Unsatisfied), positive review %,
  *      sentiment filters, and CSV data export.
  *   3. Product Insights: High/low rated products and customer feedback remarks.
  *   4. Follow-up Summary: Aggregated counts, overdue rates, and staff milestones.
@@ -32,8 +32,8 @@ angular.module('tweklApp')
     };
 }])
 .controller('ReportController', [
-    '$scope', '$http', 'ReportService', 'ToastService', 'FilterHelperService',
-function($scope, $http, ReportService, ToastService, FilterHelperService) {
+    '$scope', '$http', 'ReportService', 'ToastService', 'FilterHelperService', '$timeout',
+function($scope, $http, ReportService, ToastService, FilterHelperService, $timeout) {
 
     $scope.loading = false;
     $scope.reportData = {
@@ -67,8 +67,14 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
         preset: null
     };
 
+    var pathMatch = window.location.pathname.match(/\/admin\/reports\/(milestones|satisfaction|products|customers|followups|retention)/i);
+    var tabFromPath = pathMatch ? pathMatch[1].toLowerCase() : null;
     var urlParams = new URLSearchParams(window.location.search);
-    var tabParam = urlParams.get('tab');
+    var tabParam = tabFromPath || urlParams.get('tab');
+    var milestoneParam = urlParams.get('milestone') || urlParams.get('timeFilter');
+    if (milestoneParam && milestoneParam.toLowerCase() !== 'all') {
+        $scope.reportFilters.milestoneFilter = milestoneParam;
+    }
     $scope.reportSubTab = tabParam || window.SERVER_REPORT_SUBTAB || ($scope.$parent && $scope.$parent.reportSubTab) || 'milestones';
     if ($scope.reportSubTab === 'customers' || $scope.reportSubTab === 'financial') {
         $scope.reportSubTab = ($scope.reportSubTab === 'customers') ? 'followups' : 'milestones';
@@ -80,7 +86,7 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             $scope.$parent.reportSubTab = subTab;
         }
         if (window.history && window.history.pushState) {
-            var newUrl = window.location.pathname + '?tab=' + encodeURIComponent(subTab);
+            var newUrl = '/admin/reports/' + encodeURIComponent(subTab);
             window.history.pushState(null, '', newUrl);
         }
     };
@@ -163,6 +169,8 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
             $scope.dtSatisfaction.currentPage = 1;
             $scope.dtProducts.currentPage = 1;
             $scope.dtCustomers.currentPage = 1;
+
+            $timeout($scope.initVisualCharts, 80);
         }, function(err) {
             $scope.loading = false;
             ToastService.error('Failed to load report analytics');
@@ -287,8 +295,479 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     };
 
     // =========================================================
+    // VISUAL CHARTS & ANALYTICS HELPER METHODS
+    // =========================================================
+    $scope.getOverallMilestoneStats = function() {
+        var miles = $scope.getFilteredReportMilestones();
+        var tot = 0, comp = 0, pend = 0, maxTot = 0;
+        miles.forEach(function(m) {
+            var mTot = m.total || 0;
+            var mComp = m.completed || 0;
+            var mPend = m.pending || 0;
+            tot += mTot;
+            comp += mComp;
+            pend += mPend;
+            if (mTot > maxTot) maxTot = mTot;
+        });
+        var rate = tot > 0 ? Math.round((comp / tot) * 1000) / 10 : 0;
+        return {
+            total: tot,
+            completed: comp,
+            pending: pend,
+            completionRate: rate,
+            maxTotal: Math.max(maxTot, 1)
+        };
+    };
+
+    $scope.getDonutSegments = function() {
+        var summary = ($scope.reportData && $scope.reportData.summary) ? $scope.reportData.summary : {};
+        var sat = summary.satisfiedCount || 0;
+        var neu = summary.neutralCount || 0;
+        var unsat = summary.unsatisfiedCount || 0;
+        var tot = sat + neu + unsat;
+        var circ = 282.743; // 2 * Math.PI * 45
+
+        if (tot === 0) {
+            return {
+                total: 0,
+                satDash: '0 ' + circ, satOffset: 0,
+                neuDash: '0 ' + circ, neuOffset: 0,
+                unsatDash: '0 ' + circ, unsatOffset: 0,
+                satPct: 0, neuPct: 0, unsatPct: 0
+            };
+        }
+
+        var satLen = (sat / tot) * circ;
+        var neuLen = (neu / tot) * circ;
+        var unsatLen = (unsat / tot) * circ;
+
+        return {
+            total: tot,
+            satDash: satLen + ' ' + (circ - satLen),
+            satOffset: 0,
+            neuDash: neuLen + ' ' + (circ - neuLen),
+            neuOffset: -satLen,
+            unsatDash: unsatLen + ' ' + (circ - unsatLen),
+            unsatOffset: -(satLen + neuLen),
+            satPct: Math.round((sat / tot) * 1000) / 10,
+            neuPct: Math.round((neu / tot) * 1000) / 10,
+            unsatPct: Math.round((unsat / tot) * 1000) / 10
+        };
+    };
+
+    $scope.getTopRankedProducts = function() {
+        var prods = ($scope.reportData && $scope.reportData.products) ? $scope.reportData.products.slice(0) : [];
+        prods.sort(function(a, b) {
+            return (b.orderCount || 0) - (a.orderCount || 0);
+        });
+        var maxOrders = 1;
+        prods.forEach(function(p) {
+            if ((p.orderCount || 0) > maxOrders) maxOrders = p.orderCount;
+        });
+        return {
+            items: prods.slice(0, 10),
+            maxOrders: maxOrders,
+            totalCount: prods.length
+        };
+    };
+
+    $scope.getCustomerCityStats = function() {
+        var custs = ($scope.reportData && $scope.reportData.customers) ? $scope.reportData.customers : [];
+        var cityMap = {};
+        custs.forEach(function(c) {
+            var city = (c.city || 'Other').trim();
+            if (!city || city === '-') city = 'Other';
+            cityMap[city] = (cityMap[city] || 0) + 1;
+        });
+        var list = [];
+        var maxCnt = 1;
+        var totalCusts = custs.length || 1;
+        for (var city in cityMap) {
+            if (cityMap.hasOwnProperty(city)) {
+                var cnt = cityMap[city];
+                if (cnt > maxCnt) maxCnt = cnt;
+                list.push({
+                    city: city,
+                    count: cnt,
+                    percentage: Math.round((cnt / totalCusts) * 1000) / 10
+                });
+            }
+        }
+        list.sort(function(a, b) { return b.count - a.count; });
+        return {
+            cities: list.slice(0, 8),
+            maxCount: maxCnt,
+            totalCustomers: custs.length
+        };
+    };
+
+    $scope.setQuickPreset = function(days) {
+        if (days === 0) {
+            $scope.reportFilters.dateFrom = null;
+            $scope.reportFilters.dateTo = null;
+            $scope.selectedReportPreset = null;
+        } else {
+            var now = new Date();
+            var from = new Date();
+            from.setDate(now.getDate() - (days - 1));
+            $scope.reportFilters.dateFrom = from;
+            $scope.reportFilters.dateTo = new Date();
+        }
+        $scope.loadReportData();
+    };
+
+    // =========================================================
+    // CHART.JS INTERACTIVE VISUAL CHARTS MANAGER
+    // =========================================================
+    var chartInstances = {};
+
+    function destroyChart(id) {
+        if (chartInstances[id]) {
+            try {
+                chartInstances[id].destroy();
+            } catch (e) {}
+            delete chartInstances[id];
+        }
+    }
+
+    $scope.initVisualCharts = function() {
+        if (typeof Chart === 'undefined') return;
+
+        // 1. Milestones Grouped Bar Chart (Completed vs Still Waiting)
+        var elMg = document.getElementById('milestoneGroupedChart');
+        if (elMg) {
+            destroyChart('milestoneGroupedChart');
+            var miles = $scope.getFilteredReportMilestones();
+            var labels = miles.map(function(m) { return m.presetName || 'Milestone'; });
+            var compData = miles.map(function(m) { return m.completed || 0; });
+            var pendData = miles.map(function(m) { return m.pending || 0; });
+
+            chartInstances['milestoneGroupedChart'] = new Chart(elMg, {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Milestones'],
+                    datasets: [
+                        {
+                            label: 'Completed Checks',
+                            data: compData.length > 0 ? compData : [0],
+                            backgroundColor: '#10B981',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Still Waiting',
+                            data: pendData.length > 0 ? pendData : [0],
+                            backgroundColor: '#DC2626',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { weight: 'bold' } } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // 2. Milestone Pending Backlog Donut Chart (Where is the Backlog?)
+        var elMb = document.getElementById('milestoneBacklogChart');
+        if (elMb) {
+            destroyChart('milestoneBacklogChart');
+            var milesB = $scope.getFilteredReportMilestones();
+            var bLabels = milesB.map(function(m) { return m.presetName || 'Milestone'; });
+            var bData = milesB.map(function(m) { return m.pending || 0; });
+            var totalPending = bData.reduce(function(acc, val) { return acc + val; }, 0);
+            var palette = ['#DC2626', '#EA580C', '#D97706', '#2563EB', '#7C3AED', '#DB2777', '#059669'];
+
+            chartInstances['milestoneBacklogChart'] = new Chart(elMb, {
+                type: 'doughnut',
+                data: {
+                    labels: totalPending > 0 ? bLabels : ['No Pending Backlog'],
+                    datasets: [{
+                        data: totalPending > 0 ? bData : [1],
+                        backgroundColor: totalPending > 0 ? palette.slice(0, bLabels.length) : ['#E2E8F0'],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (totalPending === 0) return 'All checks completed!';
+                                    var val = context.raw || 0;
+                                    var pct = Math.round((val / totalPending) * 100);
+                                    return context.label + ': ' + val + ' pending (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Customer Satisfaction Sentiment Doughnut (Satisfied / Neutral / Unsatisfied)
+        var elSd = document.getElementById('sentimentDoughnutChart');
+        if (elSd) {
+            destroyChart('sentimentDoughnutChart');
+            var summary = ($scope.reportData && $scope.reportData.summary) ? $scope.reportData.summary : {};
+            var sat = summary.satisfiedCount || 0;
+            var neu = summary.neutralCount || 0;
+            var unsat = summary.unsatisfiedCount || 0;
+            var totSat = sat + neu + unsat;
+
+            chartInstances['sentimentDoughnutChart'] = new Chart(elSd, {
+                type: 'doughnut',
+                data: {
+                    labels: totSat > 0 ? ['Satisfied', 'Neutral', 'Unsatisfied'] : ['No Feedback Recorded'],
+                    datasets: [{
+                        data: totSat > 0 ? [sat, neu, unsat] : [1],
+                        backgroundColor: totSat > 0 ? ['#10B981', '#64748B', '#DC2626'] : ['#E2E8F0'],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+        // 4. Customer Feedback by Milestone Stage (Stacked Bar Chart)
+        var elSm = document.getElementById('sentimentMilestoneChart');
+        if (elSm) {
+            destroyChart('sentimentMilestoneChart');
+            var notes = ($scope.reportData && $scope.reportData.satisfaction && $scope.reportData.satisfaction.recentNotes) ? $scope.reportData.satisfaction.recentNotes : [];
+            var milestoneMap = {};
+            notes.forEach(function(n) {
+                var p = n.presetName || 'Follow-up';
+                if (!milestoneMap[p]) {
+                    milestoneMap[p] = { satisfied: 0, neutral: 0, unsatisfied: 0 };
+                }
+                var s = (n.satisfaction || 'NEUTRAL').toUpperCase();
+                if (s === 'SATISFIED') milestoneMap[p].satisfied++;
+                else if (s === 'UNSATISFIED') milestoneMap[p].unsatisfied++;
+                else milestoneMap[p].neutral++;
+            });
+
+            if (Object.keys(milestoneMap).length === 0 && $scope.reportData && $scope.reportData.milestones) {
+                $scope.reportData.milestones.forEach(function(m) {
+                    var p = m.presetName || m.milestoneName || 'Milestone';
+                    milestoneMap[p] = { satisfied: 0, neutral: 0, unsatisfied: 0 };
+                });
+            }
+
+            var smLabels = Object.keys(milestoneMap);
+            var smSat = smLabels.map(function(k) { return milestoneMap[k].satisfied; });
+            var smNeu = smLabels.map(function(k) { return milestoneMap[k].neutral; });
+            var smUnsat = smLabels.map(function(k) { return milestoneMap[k].unsatisfied; });
+
+            chartInstances['sentimentMilestoneChart'] = new Chart(elSm, {
+                type: 'bar',
+                data: {
+                    labels: smLabels.length > 0 ? smLabels : ['Follow-up Stage'],
+                    datasets: [
+                        { label: 'Satisfied', data: smSat.length > 0 ? smSat : [0], backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Neutral', data: smNeu.length > 0 ? smNeu : [0], backgroundColor: '#64748B', borderRadius: 4 },
+                        { label: 'Unsatisfied', data: smUnsat.length > 0 ? smUnsat : [0], backgroundColor: '#DC2626', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: { stacked: true, beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1 } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+        // 5. Product Order Volume (Horizontal Bar Chart)
+        var elPv = document.getElementById('productVolumeChart');
+        if (elPv) {
+            destroyChart('productVolumeChart');
+            var topProds = $scope.getTopRankedProducts().items;
+            var pLabels = topProds.map(function(p) { return p.productName; });
+            var pOrders = topProds.map(function(p) { return p.orderCount || 0; });
+
+            chartInstances['productVolumeChart'] = new Chart(elPv, {
+                type: 'bar',
+                data: {
+                    labels: pLabels.length > 0 ? pLabels : ['No Products'],
+                    datasets: [{
+                        label: 'Total Orders',
+                        data: pOrders.length > 0 ? pOrders : [0],
+                        backgroundColor: '#2563EB',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1 } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // 6. Products with Most Issues & Complaints (Horizontal Bar Chart)
+        var elPc = document.getElementById('productComplaintsChart');
+        if (elPc) {
+            destroyChart('productComplaintsChart');
+            var allProds = ($scope.reportData && $scope.reportData.products) ? $scope.reportData.products.slice(0) : [];
+            allProds.sort(function(a, b) {
+                var compA = a.unsatisfiedCount || 0;
+                var compB = b.unsatisfiedCount || 0;
+                if (compB !== compA) return compB - compA;
+                return (b.defectRate || 0) - (a.defectRate || 0);
+            });
+            var topIssueProds = allProds.slice(0, 10);
+            var piLabels = topIssueProds.map(function(p) { return p.productName; });
+            var piCounts = topIssueProds.map(function(p) { return p.unsatisfiedCount || 0; });
+
+            chartInstances['productComplaintsChart'] = new Chart(elPc, {
+                type: 'bar',
+                data: {
+                    labels: piLabels.length > 0 ? piLabels : ['No Issue Reports'],
+                    datasets: [{
+                        label: 'Unsatisfied Feedback / Complaints',
+                        data: piCounts.length > 0 ? piCounts : [0],
+                        backgroundColor: '#DC2626',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1 } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // 7. Customer Retention: Repeat vs One-Time Buyers (Doughnut Chart)
+        var elLd = document.getElementById('loyaltyDoughnutChart');
+        if (elLd) {
+            destroyChart('loyaltyDoughnutChart');
+            var tiers = ($scope.reportData && $scope.reportData.loyaltyTiers && $scope.reportData.loyaltyTiers.tiers) ? $scope.reportData.loyaltyTiers.tiers : [];
+            var tLabels = tiers.map(function(t) { return t.tierName; });
+            var tCounts = tiers.map(function(t) { return t.customerCount || 0; });
+            var totCust = tCounts.reduce(function(acc, val) { return acc + val; }, 0);
+
+            chartInstances['loyaltyDoughnutChart'] = new Chart(elLd, {
+                type: 'doughnut',
+                data: {
+                    labels: totCust > 0 ? tLabels : ['Loyal (3+)', 'Regular (2)', 'One-Time (1)'],
+                    datasets: [{
+                        data: totCust > 0 ? tCounts : [0, 0, 0],
+                        backgroundColor: ['#10B981', '#2563EB', '#D97706'],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+        // 8. Top Cities Bar Chart
+        var elCb = document.getElementById('cityBarChart');
+        if (elCb) {
+            destroyChart('cityBarChart');
+            var citiesData = $scope.getCustomerCityStats().cities;
+            var cLabels = citiesData.map(function(c) { return c.city; });
+            var cCounts = citiesData.map(function(c) { return c.count; });
+
+            chartInstances['cityBarChart'] = new Chart(elCb, {
+                type: 'bar',
+                data: {
+                    labels: cLabels.length > 0 ? cLabels : ['No Location Data'],
+                    datasets: [{
+                        label: 'Customers',
+                        data: cCounts.length > 0 ? cCounts : [0],
+                        backgroundColor: '#8B5CF6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+    };
+
+    // =========================================================
     // FILTERED & PAGED SUB-TAB DATA HELPERS (40 rows per page)
     // =========================================================
+    $scope.clearMilestoneFilter = function() {
+        $scope.reportFilters.milestoneFilter = 'all';
+        if (window.history && window.history.pushState) {
+            var url = new URL(window.location.href);
+            url.searchParams.delete('milestone');
+            url.searchParams.delete('timeFilter');
+            window.history.pushState(null, '', url.toString());
+        }
+    };
+
+    $scope.getFilteredReportMilestones = function() {
+        var list = ($scope.reportData && $scope.reportData.milestones) ? $scope.reportData.milestones : [];
+        var mf = ($scope.reportFilters.milestoneFilter || '').trim().toLowerCase();
+        if ($scope.selectedReportPreset && $scope.selectedReportPreset.name) {
+            mf = $scope.selectedReportPreset.name.trim().toLowerCase();
+        }
+        if (!mf || mf === 'all') return list;
+        return list.filter(function(m) {
+            var name = (m.presetName || m.milestoneName || m.name || '').trim().toLowerCase();
+            return name === mf || name.indexOf(mf) !== -1;
+        });
+    };
+
     $scope.getFilteredReportNotes = function() {
         var notes = ($scope.reportData && $scope.reportData.satisfaction && $scope.reportData.satisfaction.recentNotes) ? $scope.reportData.satisfaction.recentNotes : [];
         var search = ($scope.reportFilters.searchNotes || '').trim().toLowerCase();
@@ -569,14 +1048,11 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
                 ToastService.warning('No customer data to export.');
                 return;
             }
-            var headers = ['ID', 'Customer Name', 'Type', 'Phone Number', 'City', 'Tier', 'Total Orders', 'Pending Checks'];
+            var headers = ['ID', 'Customer Name', 'Tier', 'Total Orders', 'Pending Checks'];
             var rows = custs.map(function(c) {
                 return [
                     c.id,
                     c.name || '',
-                    c.customerTypeLabel || (c.customerType === 'ORGANIZATION' ? 'Organization' : 'Individual'),
-                    c.phoneNumber || '',
-                    c.city || '',
                     c.tier || '',
                     c.totalOrders != null ? c.totalOrders : 0,
                     c.pendingFollowups != null ? c.pendingFollowups : 0
@@ -610,11 +1086,10 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
                 ToastService.warning('No satisfaction records to export.');
                 return;
             }
-            var headers = ['Customer Name', 'Phone Number', 'Order Number', 'Milestone', 'Rating', 'Sentiment', 'Feedback Note'];
+            var headers = ['Customer Name', 'Order Number', 'Milestone', 'Rating', 'Sentiment', 'Feedback Note'];
             var rows = notes.map(function(n) {
                 return [
                     n.customerName || '',
-                    n.customerPhone || '',
                     n.orderNumber || '',
                     n.presetName || '',
                     n.rating != null ? n.rating : '',
@@ -682,4 +1157,5 @@ function($scope, $http, ReportService, ToastService, FilterHelperService) {
     }
 
     // Initial data comes from the page model. No second request or REST fallback.
+    $timeout($scope.initVisualCharts, 120);
 }]);

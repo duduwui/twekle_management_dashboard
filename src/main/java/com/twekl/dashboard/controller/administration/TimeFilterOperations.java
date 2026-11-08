@@ -1,6 +1,7 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.model.administration.TimeFilterPreset;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -44,17 +45,19 @@ public interface TimeFilterOperations {
      * Toggles a preset's active state (active <-> inactive).
      *
      * @param presetId ID of the preset to toggle.
+     * @param request  HttpServletRequest container for inspecting AJAX headers.
      * @param flash    RedirectAttributes container.
-     * @return Redirect to "/admin/timelines".
+     * @return Redirect to "/admin/timelines" or JSON response for AJAX.
      */
-    String togglePresetSsr(Long presetId, RedirectAttributes flash);
+    Object togglePresetSsr(Long presetId, HttpServletRequest request, RedirectAttributes flash);
 
     /**
      * Deletes a preset configuration from the system.
      *
      * @param presetId ID of the preset to delete.
+     * @param request  HttpServletRequest container for inspecting AJAX headers.
      * @param flash    RedirectAttributes container.
-     * @return Redirect to "/admin/timelines".
+     * @return Redirect to "/admin/timelines" or JSON response for AJAX.
      */
-    String deletePresetSsr(Long presetId, RedirectAttributes flash);
+    Object deletePresetSsr(Long presetId, HttpServletRequest request, RedirectAttributes flash);
 }

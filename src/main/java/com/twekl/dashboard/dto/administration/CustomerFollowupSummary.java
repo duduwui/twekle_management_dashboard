@@ -15,6 +15,7 @@ public class CustomerFollowupSummary {
     private boolean allFollowupsCompleted = false;
     private int remainingFollowupsCount = 0;
     private Integer nextPendingMinutesLeft;
+    private String latestSatisfaction;
 
     public CustomerFollowupSummary() {}
 
@@ -30,6 +31,10 @@ public class CustomerFollowupSummary {
 
     public Customer getCustomer() { return customer; }
     public void setCustomer(Customer customer) { this.customer = customer; }
+
+    public String getExternalId() {
+        return customer != null ? customer.getExternalId() : null;
+    }
 
     public String getFollowupStatus() { return followupStatus; }
     public void setFollowupStatus(String followupStatus) { this.followupStatus = followupStatus; }
@@ -48,6 +53,9 @@ public class CustomerFollowupSummary {
 
     public Integer getNextPendingMinutesLeft() { return nextPendingMinutesLeft; }
     public void setNextPendingMinutesLeft(Integer nextPendingMinutesLeft) { this.nextPendingMinutesLeft = nextPendingMinutesLeft; }
+
+    public String getLatestSatisfaction() { return latestSatisfaction; }
+    public void setLatestSatisfaction(String latestSatisfaction) { this.latestSatisfaction = latestSatisfaction; }
 
     public boolean isOverdue() {
         return "ALERT".equalsIgnoreCase(followupStatus) || (nextPendingMinutesLeft != null && nextPendingMinutesLeft <= 0);

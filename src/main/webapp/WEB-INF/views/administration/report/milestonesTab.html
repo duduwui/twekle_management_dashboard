@@ -19,8 +19,15 @@
                         <span class="comic-tag tag-primary active-preset-pill" ng-if="selectedReportPreset" ng-click="selectReportPreset(null)" title="Click to clear preset">
                             <span ng-bind="selectedReportPreset.name"></span> ✕
                         </span>
+                        <span class="comic-tag tag-primary active-preset-pill" ng-if="reportFilters.milestoneFilter && reportFilters.milestoneFilter !== 'all'" ng-click="clearMilestoneFilter()" title="Click to show all milestones">
+                            <span ng-bind="reportFilters.milestoneFilter"></span> ✕
+                        </span>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
+                        <a href="/admin/reports/visual/milestones" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="Open Visual Charts &amp; Analytics">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            <span>Visual Charts</span>
+                        </a>
                         <button th:if="${@portalAccess.canExportReports()}" type="button" class="comic-btn" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Milestones to Excel">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export Excel
                         </button>
@@ -40,7 +47,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="m in reportData.milestones track by m.presetName">
+                            <tr ng-repeat="m in getFilteredReportMilestones() track by (m.presetName || $index)">
                                 <td><strong ng-bind="m.presetName"></strong></td>
                                 <td class="nowrap" style="text-align: center;" ng-bind="m.total"></td>
                                 <td class="nowrap" style="text-align: center;">
@@ -53,9 +60,9 @@
                                     <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="m.completionRate + '%'"></strong>
                                 </td>
                             </tr>
-                            <tr ng-if="!reportData.milestones || reportData.milestones.length === 0">
+                            <tr ng-if="!getFilteredReportMilestones() || getFilteredReportMilestones().length === 0">
                                 <td colspan="5" style="text-align: center; padding: 20px; color: #64748B;">
-                                    No milestone checks recorded for the selected period.
+                                    No milestone checks recorded for the selected filter.
                                 </td>
                             </tr>
                         </tbody>

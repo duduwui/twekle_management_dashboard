@@ -331,6 +331,19 @@ public class CustomerGeneratorService {
     }
 
     @Transactional
+    public Map<String, Object> wipeAllData() {
+        feedbackRepository.deleteAllInBatch();
+        followupCheckRepository.deleteAllInBatch();
+        orderRepository.deleteAllInBatch();
+        customerRepository.deleteAllInBatch();
+        evictAllCaches();
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("success", true);
+        resp.put("message", "All customers, orders, and follow-ups wiped to clean 0 state");
+        return resp;
+    }
+
+    @Transactional
     public Map<String, Object> resetAndSeed(int count) {
         feedbackRepository.deleteAllInBatch();
         followupCheckRepository.deleteAllInBatch();
@@ -344,6 +357,7 @@ public class CustomerGeneratorService {
         int v = (val != null && val > 0) ? val : 24;
         String u = (unit != null) ? unit.toUpperCase().trim() : "HOURS";
         return switch (u) {
+            case "SECONDS" -> Math.max(0, v / 3600L);
             case "DAYS" -> v * 24L;
             case "WEEKS" -> v * 168L;
             case "MONTHS" -> v * 720L;

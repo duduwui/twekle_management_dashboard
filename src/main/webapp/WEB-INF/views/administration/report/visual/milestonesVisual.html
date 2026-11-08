@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{administration/fragments/adminLayout}">
+<head>
+    <title>Milestones Visual Report | Twekl Administration</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <section class="comic-card page-slide-fade ng-cloak" ng-controller="ReportController">
+            
+            <!-- Clean Header with Direct Back Link (No redundant quick bar) -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 16px;">
+                <div>
+                    <a th:href="@{/admin/reports(tab='milestones')}"
+                       class="comic-btn-secondary"
+                       style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; text-decoration: none;"
+                       title="Back to Table Report">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <span>Back to Table Report</span>
+                    </a>
+                    <h1 style="font-size: 1.35rem; font-weight: 900; color: #0F172A; margin: 12px 0 4px;">Milestones &amp; Follow-ups Report</h1>
+                    <p style="font-size: 0.82rem; color: #64748B; margin: 0;">Track customer touchpoints, completion progress, and pending check backlogs</p>
+                </div>
+
+                <!-- Date Filter & Export -->
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span class="filter-date-label">From:</span>
+                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                    <span class="filter-date-label">To:</span>
+                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                    <button th:if="${@portalAccess.canExportReports()}" type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Milestones to Excel">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Export Excel</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simple, Natural KPIs for Clients & Managers -->
+            <div class="visual-kpi-grid">
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Total Checks</span>
+                    <div class="visual-kpi-value" ng-bind="(getOverallMilestoneStats().total | number:0)">0</div>
+                    <span class="visual-kpi-subtext">All follow-ups scheduled</span>
+                </div>
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Completed Checks</span>
+                    <div class="visual-kpi-value" style="color: #16A34A;" ng-bind="(getOverallMilestoneStats().completed | number:0)">0</div>
+                    <span class="visual-kpi-subtext">Successfully reached &amp; finished</span>
+                </div>
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Still Waiting</span>
+                    <div class="visual-kpi-value" style="color: #DC2626;" ng-bind="(getOverallMilestoneStats().pending | number:0)">0</div>
+                    <span class="visual-kpi-subtext">Checks that need to be done</span>
+                </div>
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Completion %</span>
+                    <div class="visual-kpi-value" style="color: #0F172A;" ng-bind="getOverallMilestoneStats().completionRate + '%'">0%</div>
+                    <span class="visual-kpi-subtext">Overall finished percentage</span>
+                </div>
+            </div>
+
+            <!-- Two Distinct Useful Charts (No duplication) -->
+            <div class="visual-charts-row" style="margin-top: 20px;">
+                <!-- Chart 1: Completed vs Still Waiting per Milestone -->
+                <div class="visual-chart-box">
+                    <div class="visual-chart-header">
+                        <div>
+                            <h3 class="visual-chart-title">Completed vs Waiting by Milestone</h3>
+                            <span class="visual-chart-subtitle">See progress for each follow-up stage</span>
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 280px; width: 100%;">
+                        <canvas id="milestoneGroupedChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Where is the Backlog? (Donut of Pending Checks) -->
+                <div class="visual-chart-box">
+                    <div class="visual-chart-header">
+                        <div>
+                            <h3 class="visual-chart-title">Where is the Backlog?</h3>
+                            <span class="visual-chart-subtitle">Share of pending checks across milestone stages</span>
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 280px; width: 100%;">
+                        <canvas id="milestoneBacklogChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Milestone Matrix Table Below -->
+            <div class="visual-table-section">
+                <div class="visual-table-header">
+                    <div style="font-size: 1.05rem; font-weight: 900; color: #0F172A;">Milestones Details</div>
+                </div>
+                <div class="table-responsive">
+                    <table class="comic-table">
+                        <thead>
+                            <tr>
+                                <th>Milestone Name</th>
+                                <th class="nowrap" style="text-align: center;">Total Scheduled</th>
+                                <th class="nowrap" style="text-align: center;">Completed</th>
+                                <th class="nowrap" style="text-align: center;">Still Waiting</th>
+                                <th class="nowrap" style="text-align: right;">Completion %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="m in getFilteredReportMilestones() track by (m.presetName || $index)">
+                                <td><strong style="color: #0F172A;" ng-bind="m.presetName"></strong></td>
+                                <td class="nowrap" style="text-align: center;" ng-bind="m.total"></td>
+                                <td class="nowrap" style="text-align: center;">
+                                    <span style="font-weight: 800; color: #16A34A;" ng-bind="m.completed"></span>
+                                </td>
+                                <td class="nowrap" style="text-align: center;">
+                                    <span style="font-weight: 800;" ng-style="{'color': m.pending > 0 ? '#DC2626' : '#64748B'}" ng-bind="m.pending"></span>
+                                </td>
+                                <td class="nowrap" style="text-align: right;">
+                                    <strong style="font-size: 0.95rem; color: #0F172A;" ng-bind="m.completionRate + '%'"></strong>
+                                </td>
+                            </tr>
+                            <tr ng-if="!getFilteredReportMilestones() || getFilteredReportMilestones().length === 0">
+                                <td colspan="5" style="text-align: center; padding: 24px; color: #64748B;">
+                                    No milestone checks recorded for the selected filter.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</body>
+</html>

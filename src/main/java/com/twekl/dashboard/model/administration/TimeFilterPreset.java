@@ -38,7 +38,7 @@ public class TimeFilterPreset {
     private int durationValue = 1;
 
     @Column(name = "DURATION_UNIT", nullable = false, length = 10)
-    private String durationUnit = "DAYS"; // HOURS, DAYS, WEEKS, MONTHS
+    private String durationUnit = "DAYS"; // SECONDS, HOURS, DAYS, WEEKS, MONTHS
 
     @Column(name = "ACTIVE", nullable = false)
     private boolean active = true;
@@ -97,7 +97,7 @@ public class TimeFilterPreset {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     // Compatibility aliases
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonProperty("name")
     public String getName() { return labelEn; }
     public void setName(String name) { this.labelEn = name; }
 
@@ -106,6 +106,7 @@ public class TimeFilterPreset {
     public void setIsActive(boolean isActive) { this.active = isActive; }
 
     public int getTargetDays() {
+        if ("SECONDS".equalsIgnoreCase(durationUnit)) return 0;
         if ("HOURS".equalsIgnoreCase(durationUnit)) return Math.max(1, durationValue / 24);
         if ("WEEKS".equalsIgnoreCase(durationUnit)) return durationValue * 7;
         if ("MONTHS".equalsIgnoreCase(durationUnit)) return durationValue * 30;
@@ -116,6 +117,7 @@ public class TimeFilterPreset {
         String u = durationUnit != null ? durationUnit.toUpperCase() : "DAYS";
         int v = durationValue > 0 ? durationValue : 1;
         return switch (u) {
+            case "SECONDS" -> Math.max(0, v / 60);
             case "HOURS" -> v * 60;
             case "WEEKS" -> v * 7 * 1440;
             case "MONTHS" -> v * 30 * 1440;

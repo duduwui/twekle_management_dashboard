@@ -59,8 +59,16 @@ public interface AdminOperations {
      * Permanently deletes a staff administrator account.
      *
      * @param adminId Target administrator ID.
+     * @param request HttpServletRequest container for inspecting AJAX headers.
      * @param flash   RedirectAttributes container.
-     * @return Redirect to "/admin/admins".
+     * @return Redirect to "/admin/admins" or JSON response for AJAX.
      */
-    String deleteAdminSsr(Long adminId, RedirectAttributes flash);
+    Object deleteAdminSsr(Long adminId, HttpServletRequest request, RedirectAttributes flash);
+
+    /**
+     * Returns a JSON representation of all administrator accounts and their assigned roles.
+     *
+     * @return ApiResponse wrapping the administrators and roles directory.
+     */
+    org.springframework.http.ResponseEntity<com.twekl.dashboard.response.ApiResponse<java.util.Map<String, Object>>> getAdminsJson();
 }

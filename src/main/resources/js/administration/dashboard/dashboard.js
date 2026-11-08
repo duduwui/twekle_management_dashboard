@@ -110,11 +110,35 @@
                 );
                 if (clickedOutside) toggleNativeDialog(event.target.id, false);
             }
+
+            // 4. Milestone Card Navigation (Opens Milestone Report)
+            const milestoneCard = event.target.closest('.milestone-card-clickable');
+            if (milestoneCard && !event.target.closest('a') && !event.target.closest('button')) {
+                const href = milestoneCard.getAttribute('data-href');
+                if (href) {
+                    window.location.href = href;
+                }
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                const card = document.activeElement;
+                if (card && card.classList && card.classList.contains('milestone-card-clickable')) {
+                    if (event.target.tagName !== 'A' && event.target.tagName !== 'BUTTON') {
+                        event.preventDefault();
+                        const href = card.getAttribute('data-href');
+                        if (href) {
+                            window.location.href = href;
+                        }
+                    }
+                }
+            }
         });
     }
 
     /**
-     * Client-side pagination with sliding window for Priority Attention Table
+     * Client-side pagination with sliding window and column sorting for Priority Attention Table
      */
     function initPriorityPagination() {
         const table = document.getElementById('priorityAttentionTable');
@@ -123,11 +147,82 @@
         const controls = document.getElementById('priorityPaginationControls');
         if (!table || !footer || !controls) return;
 
-        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        let rows = Array.from(table.querySelectorAll('tbody tr'));
         const totalRows = rows.length;
         const pageSize = 10;
         const totalPages = Math.ceil(totalRows / pageSize) || 1;
         let currentPage = 1;
+        let sortColumn = null;
+        let sortDirection = 'asc';
+
+        function getPriorityCellValue(row, col) {
+            const cells = row.querySelectorAll('td');
+            switch (col) {
+                case 'name':
+                    return (cells[0]?.textContent || '').trim().toLowerCase();
+                case 'phone':
+                    return (cells[1]?.textContent || '').trim().toLowerCase();
+                case 'city':
+                    return (cells[2]?.textContent || '').trim().toLowerCase();
+                case 'milestone':
+                    return (cells[3]?.textContent || '').trim().toLowerCase();
+                case 'time':
+                    const tag = cells[4]?.querySelector('[data-minutes-left]');
+                    if (tag && tag.dataset.minutesLeft) {
+                        return parseInt(tag.dataset.minutesLeft, 10);
+                    }
+                    return (cells[4]?.textContent || '').trim().toLowerCase();
+                default:
+                    return '';
+            }
+        }
+
+        function sortPriorityRows(col) {
+            if (sortColumn === col) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = col;
+                sortDirection = 'asc';
+            }
+
+            rows.sort(function(a, b) {
+                const valA = getPriorityCellValue(a, sortColumn);
+                const valB = getPriorityCellValue(b, sortColumn);
+                let cmp = 0;
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    cmp = valA - valB;
+                } else {
+                    cmp = String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' });
+                }
+                return sortDirection === 'asc' ? cmp : -cmp;
+            });
+
+            const tbody = table.querySelector('tbody');
+            if (tbody) {
+                rows.forEach(r => tbody.appendChild(r));
+            }
+
+            table.querySelectorAll('thead th.sortable').forEach(function(th) {
+                const icon = th.querySelector('.sort-icon');
+                if (th.dataset.sort === sortColumn) {
+                    th.classList.toggle('sort-asc', sortDirection === 'asc');
+                    th.classList.toggle('sort-desc', sortDirection === 'desc');
+                    if (icon) icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                } else {
+                    th.classList.remove('sort-asc', 'sort-desc');
+                    if (icon) icon.textContent = '↕';
+                }
+            });
+
+            renderPage(1);
+        }
+
+        table.querySelectorAll('thead th.sortable').forEach(function(th) {
+            th.addEventListener('click', function() {
+                const col = this.dataset.sort;
+                if (col) sortPriorityRows(col);
+            });
+        });
 
         if (totalRows <= pageSize) {
             footer.style.display = totalRows > 0 ? '' : 'none';
@@ -396,15 +491,19 @@
             const completed = Number(m.completed || 0);
             const overdue = Number(m.overdue || 0);
             const pending = Number(m.pending || 0);
+            const name = m.name || '';
+            const followupUrl = `/admin/followups?presetId=${encodeURIComponent(m.id || '')}&timeFilter=${encodeURIComponent(name)}`;
 
             html += `
-                <a href="/admin/followups?presetId=${encodeURIComponent(m.id || '')}&timeFilter=${encodeURIComponent(m.name || '')}"
-                   class="milestone-bar-item milestone-card-clickable"
-                   data-preset-id="${m.id}"
-                   data-preset-name="${escapeHtml(m.name || '')}"
-                   title="Click to open Follow-ups and filter by this milestone">
+                <div class="milestone-bar-item milestone-card-clickable"
+                     role="button"
+                     tabindex="0"
+                     data-href="${followupUrl}"
+                     data-preset-id="${m.id}"
+                     data-preset-name="${escapeHtml(name)}"
+                     title="Click to open Follow-ups for ${escapeHtml(name)}">
                     <div class="milestone-meta-row">
-                        <span class="milestone-name-tag">${escapeHtml(m.name || '')}</span>
+                        <span class="milestone-name-tag">${escapeHtml(name)}</span>
                         <span class="milestone-rate-text">${compRate}% Done</span>
                     </div>
                     <div class="milestone-bar-row">
@@ -419,7 +518,7 @@
                             <span class="count-inqueue-tag"><strong>${pending}</strong> in queue</span>
                         </span>
                     </div>
-                </a>
+                </div>
             `;
         });
         container.innerHTML = html;

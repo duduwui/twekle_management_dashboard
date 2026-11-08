@@ -29,12 +29,15 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final AdminRepository adminRepository;
     private final SecurityContextRepository securityContextRepository;
+    private final ExternalIntegrationService externalIntegrationService;
 
     @Autowired
     public AuthService(final AuthenticationManager authenticationManager,
-                       final AdminRepository adminRepository) {
+                       final AdminRepository adminRepository,
+                       @org.springframework.context.annotation.Lazy final ExternalIntegrationService externalIntegrationService) {
         this.authenticationManager = authenticationManager;
         this.adminRepository = adminRepository;
+        this.externalIntegrationService = externalIntegrationService;
         this.securityContextRepository = new HttpSessionSecurityContextRepository();
     }
 
@@ -54,7 +57,27 @@ public class AuthService {
         Admin admin = adminRepository.findByUsername(request.getUsername().trim())
                 .orElseThrow(() -> new RuntimeException("Authenticated admin profile not found"));
 
-        return AuthResponse.fromAdmin(admin);
+        AuthResponse authResponse = AuthResponse.fromAdmin(admin);
+
+        long jwtValiditySeconds = 86400L * 7; // 7 days in seconds
+        if (externalIntegrationService != null) {
+            String jwt = externalIntegrationService.generateUserJwt(admin.getUsername(), authResponse.getRole(), jwtValiditySeconds);
+            authResponse.setToken(jwt);
+            authResponse.setTokenType("Bearer");
+            authResponse.setExpiresIn(jwtValiditySeconds);
+        }
+
+        HttpSession session = httpRequest.getSession(true);
+        if (session != null) {
+            session.setMaxInactiveInterval(30 * 24 * 60 * 60); // 30 days in seconds
+            String target = (String) session.getAttribute("TARGET_AFTER_LOGIN");
+            if (target != null && !target.trim().isEmpty()) {
+                session.removeAttribute("TARGET_AFTER_LOGIN");
+                authResponse.setRedirectUrl(target.trim());
+            }
+        }
+
+        return authResponse;
     }
 
     public void logout(HttpServletRequest httpRequest) {

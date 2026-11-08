@@ -113,13 +113,40 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     List<Object[]> getSatisfactionCountsCombined(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
+    @Query(value = "INSERT INTO ORDER_FOLLOWUP_CHECKS (ORDER_ID, PRESET_ID, MILESTONE_NAME, DURATION_VALUE, DURATION_UNIT, TARGET_DAYS, STATUS, COMPLETED, CREATED_AT, UPDATED_AT) " +
+                   "SELECT o.ID, p.ID, COALESCE(p.LABEL_EN, p.NAME, p.PRESET_KEY, 'Milestone'), " +
+                   "       COALESCE(p.DURATION_VALUE, 1), COALESCE(p.DURATION_UNIT, 'DAYS'), " +
+                   "       CASE " +
+                   "         WHEN p.DURATION_UNIT = 'SECONDS' THEN 0 " +
+                   "         WHEN p.DURATION_UNIT = 'HOURS' THEN GREATEST(1, FLOOR(COALESCE(p.DURATION_VALUE, 24) / 24)) " +
+                   "         WHEN p.DURATION_UNIT = 'DAYS' THEN COALESCE(p.DURATION_VALUE, 1) " +
+                   "         WHEN p.DURATION_UNIT = 'WEEKS' THEN COALESCE(p.DURATION_VALUE, 1) * 7 " +
+                   "         WHEN p.DURATION_UNIT = 'MONTHS' THEN COALESCE(p.DURATION_VALUE, 1) * 30 " +
+                   "         ELSE COALESCE(p.DURATION_VALUE, 1) " +
+                   "       END, " +
+                   "       'PENDING', 0, UTC_TIMESTAMP(), UTC_TIMESTAMP() " +
+                   "FROM CUSTOMER_ORDERS o CROSS JOIN TIME_FILTER_PRESETS p " +
+                   "WHERE p.ACTIVE = 1 AND NOT EXISTS (" +
+                   "  SELECT 1 FROM ORDER_FOLLOWUP_CHECKS c WHERE c.ORDER_ID = o.ID AND c.PRESET_ID = p.ID" +
+                   ")", nativeQuery = true)
+    int insertMissingChecksForActivePresets();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "DELETE FROM ORDER_FOLLOWUP_CHECKS WHERE PRESET_ID = :presetId", nativeQuery = true)
+    int deleteByPresetId(@Param("presetId") Long presetId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
                    "LEFT JOIN TIME_FILTER_PRESETS p ON ch.PRESET_ID = p.ID " +
                    "SET ch.STATUS = 'OVERDUE' " +
-                   "WHERE ch.COMPLETED = 0 AND ch.STATUS != 'OVERDUE' " +
+                   "WHERE ch.COMPLETED = 0 AND ch.STATUS NOT IN ('OVERDUE', 'UNFINISHED', 'EXPIRED', 'SKIPPED') " +
+                   "  AND (o.ORDER_DATE > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY) OR ch.FORCE_PENDING = 1) " +
                    "  AND (ch.PRESET_ID IS NULL OR (p.ID IS NOT NULL AND p.ACTIVE = 1)) " +
                    "  AND (CASE " +
+                   "        WHEN ch.DURATION_UNIT = 'SECONDS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE SECOND) " +
                    "        WHEN ch.DURATION_UNIT = 'HOURS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE HOUR) " +
                    "        WHEN ch.DURATION_UNIT = 'DAYS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE DAY) " +
                    "        WHEN ch.DURATION_UNIT = 'WEEKS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL (ch.DURATION_VALUE * 7) DAY) " +
@@ -129,13 +156,25 @@ public interface OrderFollowupCheckRepository extends JpaRepository<OrderFollowu
     int syncOverdueChecks();
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
+    @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
+                   "SET ch.STATUS = 'UNFINISHED' " +
+                   "WHERE ch.COMPLETED = 0 AND ch.FORCE_PENDING = 0 " +
+                   "  AND ch.STATUS NOT IN ('COMPLETED', 'FINISHED') " +
+                   "  AND (ch.NOTES IS NULL OR TRIM(ch.NOTES) = '') " +
+                   "  AND (ch.IMAGE_URL IS NULL OR TRIM(ch.IMAGE_URL) = '') " +
+                   "  AND o.ORDER_DATE <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)", nativeQuery = true)
+    int syncUnfinishedChecks();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query(value = "UPDATE ORDER_FOLLOWUP_CHECKS ch JOIN CUSTOMER_ORDERS o ON ch.ORDER_ID = o.ID " +
                    "LEFT JOIN TIME_FILTER_PRESETS p ON ch.PRESET_ID = p.ID " +
                    "SET ch.STATUS = 'PENDING' " +
                    "WHERE ch.COMPLETED = 0 AND ch.STATUS = 'OVERDUE' " +
                    "  AND ((ch.PRESET_ID IS NOT NULL AND (p.ID IS NULL OR p.ACTIVE = 0)) " +
                    "       OR (CASE " +
+                   "        WHEN ch.DURATION_UNIT = 'SECONDS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE SECOND) " +
                    "        WHEN ch.DURATION_UNIT = 'HOURS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE HOUR) " +
                    "        WHEN ch.DURATION_UNIT = 'DAYS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL ch.DURATION_VALUE DAY) " +
                    "        WHEN ch.DURATION_UNIT = 'WEEKS' THEN DATE_ADD(o.ORDER_DATE, INTERVAL (ch.DURATION_VALUE * 7) DAY) " +

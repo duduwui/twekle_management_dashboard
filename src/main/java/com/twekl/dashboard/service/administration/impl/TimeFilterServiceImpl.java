@@ -76,6 +76,7 @@ public class TimeFilterServiceImpl implements TimeFilterService {
         }
 
         TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
+        followupCheckRepository.insertMissingChecksForActivePresets();
         followupCheckRepository.syncPendingChecks();
         followupCheckRepository.syncOverdueChecks();
         return saved;
@@ -89,6 +90,9 @@ public class TimeFilterServiceImpl implements TimeFilterService {
 
         preset.setActive(!preset.isActive());
         TimeFilterPreset saved = timeFilterPresetRepository.save(preset);
+        if (saved.isActive()) {
+            followupCheckRepository.insertMissingChecksForActivePresets();
+        }
         followupCheckRepository.syncPendingChecks();
         followupCheckRepository.syncOverdueChecks();
         return saved;
@@ -100,6 +104,7 @@ public class TimeFilterServiceImpl implements TimeFilterService {
         TimeFilterPreset preset = timeFilterPresetRepository.findById(presetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Time filter preset not found with ID: " + presetId));
 
+        followupCheckRepository.deleteByPresetId(presetId);
         timeFilterPresetRepository.delete(preset);
         followupCheckRepository.syncPendingChecks();
         followupCheckRepository.syncOverdueChecks();

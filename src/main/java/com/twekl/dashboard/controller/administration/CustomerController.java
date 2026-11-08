@@ -98,7 +98,8 @@ public class CustomerController implements CustomerOperations {
                 : org.springframework.data.domain.Sort.Direction.DESC;
 
         String field = "id";
-        if ("totalOrders".equalsIgnoreCase(sortField)) field = "totalOrders";
+        if ("externalId".equalsIgnoreCase(sortField)) field = "externalId";
+        else if ("totalOrders".equalsIgnoreCase(sortField)) field = "totalOrders";
         else if ("totalSpent".equalsIgnoreCase(sortField)) field = "totalSpent";
         else if ("name".equalsIgnoreCase(sortField)) field = "name";
         else if ("phoneNumber".equalsIgnoreCase(sortField)) field = "phoneNumber";
@@ -199,6 +200,88 @@ public class CustomerController implements CustomerOperations {
                 .body(ApiResponse.success("Customer created successfully with synchronized activity checks", created));
     }
 
+    /**
+     * Handles manual customer creation from Web form submission with flash attributes redirect.
+     */
+    @PostMapping(value = "/create", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public String createCustomerForm(
+            @RequestParam("name") String name,
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "customerType", defaultValue = "INDIVIDUAL") String customerType,
+            @RequestParam(value = "externalId", required = false) String externalId,
+            @RequestParam(value = "autoOrder", defaultValue = "true") boolean autoOrder,
+            @RequestParam(value = "orderNumber", required = false) String orderNumber,
+            @RequestParam(value = "orderAmount", required = false) Double orderAmount,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            if (name == null || name.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Customer name is required.");
+                return "redirect:/admin/customers";
+            }
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Customer phone number is required.");
+                return "redirect:/admin/customers";
+            }
+            Customer customer = new Customer();
+            customer.setName(name.trim());
+            customer.setPhoneNumber(phoneNumber.trim());
+            if (email != null && !email.trim().isEmpty()) customer.setEmail(email.trim());
+            if (city != null && !city.trim().isEmpty()) customer.setCity(city.trim());
+            if (customerType != null && !customerType.trim().isEmpty()) customer.setCustomerType(customerType.trim());
+            if (externalId != null && !externalId.trim().isEmpty()) customer.setExternalId(externalId.trim());
+            customer.setCreatedAt(java.time.Instant.now());
+
+            Customer created = customerService.createCustomer(customer);
+            if (autoOrder) {
+                CustomerOrder initialOrder = new CustomerOrder();
+                initialOrder.setCustomer(created);
+                initialOrder.setOrderNumber((orderNumber != null && !orderNumber.trim().isEmpty())
+                        ? orderNumber.trim()
+                        : "ORD-" + System.currentTimeMillis());
+                initialOrder.setItemsSummary("Customer Initial Intake Order");
+                initialOrder.setQuantity(1);
+                initialOrder.setTotalAmount((orderAmount != null && orderAmount > 0) ? orderAmount : 150.0);
+                initialOrder.setOrderDate(created.getCreatedAt());
+                customerService.createOrder(initialOrder);
+            }
+            redirectAttributes.addFlashAttribute("successMessage", "Customer '" + created.getName() + "' created successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to create customer: " + e.getMessage());
+        }
+        return "redirect:/admin/customers";
+    }
+
+    /**
+     * Alternate JSON endpoint for manual customer creation from asynchronous modal dialogs.
+     */
+    @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Customer>> createCustomerJson(
+            @RequestBody Customer customer,
+            @RequestParam(value = "autoOrder", defaultValue = "true") boolean autoOrder,
+            @RequestParam(value = "orderNumber", required = false) String orderNumber,
+            @RequestParam(value = "orderAmount", required = false) Double orderAmount) {
+        Customer created = customerService.createCustomer(customer);
+        if (autoOrder && created.getTotalOrders() == 0) {
+            CustomerOrder initialOrder = new CustomerOrder();
+            initialOrder.setCustomer(created);
+            initialOrder.setOrderNumber((orderNumber != null && !orderNumber.trim().isEmpty())
+                    ? orderNumber.trim()
+                    : "ORD-" + System.currentTimeMillis());
+            initialOrder.setItemsSummary("Customer Initial Intake Order");
+            initialOrder.setQuantity(1);
+            initialOrder.setTotalAmount((orderAmount != null && orderAmount > 0)
+                    ? orderAmount
+                    : (created.getTotalSpent() > 0 ? created.getTotalSpent() : 150.0));
+            initialOrder.setOrderDate(created.getCreatedAt() != null ? created.getCreatedAt() : java.time.Instant.now());
+            customerService.createOrder(initialOrder);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Customer created successfully", created));
+    }
+
     @Override
     @PostMapping(value = "/generate", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateCustomers(
@@ -223,6 +306,12 @@ public class CustomerController implements CustomerOperations {
             @RequestParam(value = "count", defaultValue = "40") int count) {
         Map<String, Object> result = customerGeneratorService.resetAndSeed(count);
         return ResponseEntity.ok(ApiResponse.success("Catalog reset and cleanly seeded with diverse staggered intake times", result));
+    }
+
+    @PostMapping(value = "/wipe-data", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Map<String, Object>>> wipeData() {
+        Map<String, Object> result = customerGeneratorService.wipeAllData();
+        return ResponseEntity.ok(ApiResponse.success("Catalog completely cleared to clean zero slate", result));
     }
 
     @Override

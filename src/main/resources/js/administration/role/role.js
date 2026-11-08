@@ -232,8 +232,103 @@ function checkAction(moduleKey, actionKey) {
     if (cb) cb.checked = true;
 }
 
-// Auto-select admin on load if redirected with selectedAdminId
+/**
+ * Updates in-memory DOM permission dataset for the given admin ID
+ * so if the user selects another admin and returns, the updated permissions persist.
+ */
+function updateAdminPermsDataInDom(adminId) {
+    if (!adminId) return;
+    var container = document.getElementById('perms-data-' + adminId);
+    if (!container) return;
+
+    roleModules.forEach(function(mod) {
+        var actionsInput = document.getElementById('actions_' + mod);
+        var actionsVal = actionsInput ? actionsInput.value : '';
+        var canC = (document.getElementById('canCreate_' + mod) || {}).value === 'true';
+        var canR = (document.getElementById('canRead_' + mod) || {}).value === 'true';
+        var canU = (document.getElementById('canUpdate_' + mod) || {}).value === 'true';
+        var canD = (document.getElementById('canDelete_' + mod) || {}).value === 'true';
+
+        var span = container.querySelector('span[data-module="' + mod + '"]');
+        if (!span) {
+            span = document.createElement('span');
+            span.setAttribute('data-module', mod);
+            container.appendChild(span);
+        }
+        span.setAttribute('data-actions', actionsVal);
+        span.setAttribute('data-create', canC ? 'true' : 'false');
+        span.setAttribute('data-read', canR ? 'true' : 'false');
+        span.setAttribute('data-update', canU ? 'true' : 'false');
+        span.setAttribute('data-delete', canD ? 'true' : 'false');
+    });
+}
+
+// Intercept form submission to save via AJAX without page reload or viewport jump
 document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('roleAssignForm');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!currentAdminId) {
+                if (typeof showStatusToast === 'function') {
+                    showStatusToast('No administrator selected.', 'error');
+                }
+                return;
+            }
+
+            var saveBtns = form.querySelectorAll('button[type="submit"]');
+            saveBtns.forEach(function(b) {
+                b.disabled = true;
+                b.setAttribute('data-orig-text', b.innerHTML);
+                b.innerHTML = 'Saving...';
+            });
+
+            try {
+                form.action = '/admin/roles/' + currentAdminId + '/assign_user_role';
+
+                var formData = new FormData(form);
+                var response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                var data = {};
+                try {
+                    data = await response.json();
+                } catch(jsonErr) {
+                    data = {};
+                }
+
+                if (!response.ok || data.success === false) {
+                    throw new Error(data.message || 'Failed to update administrator permissions');
+                }
+
+                // Update hidden DOM storage for this admin
+                updateAdminPermsDataInDom(currentAdminId);
+
+                if (typeof showStatusToast === 'function') {
+                    showStatusToast(data.message || 'Assigned permissions updated successfully.', 'success');
+                }
+            } catch(err) {
+                if (typeof showStatusToast === 'function') {
+                    showStatusToast(err.message || 'Failed to save permissions', 'error');
+                }
+            } finally {
+                saveBtns.forEach(function(b) {
+                    b.disabled = false;
+                    var orig = b.getAttribute('data-orig-text');
+                    if (orig) b.innerHTML = orig;
+                });
+            }
+        });
+    }
+
     var params = new URLSearchParams(window.location.search);
     var selectedId = params.get('selectedAdminId');
     if (selectedId) {

@@ -39,6 +39,11 @@ if (typeof angular !== 'undefined') {
             },
 
             // Follow-up checklists & milestone updates
+            lookupOrder: function(orderId, date) {
+                var p = { orderId: orderId };
+                if (date) p.date = date;
+                return $http.get(ORDERS + '/lookup', { params: p });
+            },
             getFollowups: function(orderId) {
                 return $http.get(ORDERS + '/' + orderId + '/followups');
             },
@@ -47,6 +52,15 @@ if (typeof angular !== 'undefined') {
             },
             toggleStatus: function(id) {
                 return $http.patch(BASE + '/' + id + '/status', {});
+            },
+            updateCheckStatus: function(id, status) {
+                return $http.post(BASE + '/' + id + '/status', null, { params: { status: status } });
+            },
+            skipOrderChecks: function(orderId) {
+                return $http.post(BASE + '/orders/' + orderId + '/skip');
+            },
+            unskipOrderChecks: function(orderId) {
+                return $http.post(BASE + '/orders/' + orderId + '/unskip');
             }
         };
     }])

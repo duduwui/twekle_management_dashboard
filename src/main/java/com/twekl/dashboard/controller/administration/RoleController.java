@@ -6,7 +6,10 @@ import com.twekl.dashboard.model.administration.Admin;
 import com.twekl.dashboard.model.administration.Role;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 /**
  * Controller for Role & Permission templates management.
@@ -99,51 +103,104 @@ public class RoleController implements RoleOperations {
 
     @Override
     @PostMapping({"/assign_user_role", "/{adminId:\\d+}/assign_user_role"})
-    public String assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
+    public Object assignAdminRoleSsr(@PathVariable(value = "adminId", required = false) Long pathAdminId,
                                      @RequestParam(value = "adminId", required = false) Long paramAdminId,
                                      @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
                                      @RequestParam(value = "roleId", required = false) Long roleId,
                                      @ModelAttribute UpdateAdminRequest updateAdminRequest,
+                                     HttpServletRequest request,
                                      RedirectAttributes flash) {
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
         if (!portalAccess.canEditPermissions()) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "Access denied: You do not have permission to modify staff permissions."));
+            }
             flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to modify staff permissions.");
             return "redirect:/admin/roles";
         }
         Long targetAdminId = pathAdminId != null ? pathAdminId : paramAdminId;
         if (targetAdminId == null) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "No administrator was selected for role assignment."));
+            }
             flash.addFlashAttribute("errorMessage", "No administrator was selected for role assignment.");
             return "redirect:/admin/roles";
         }
 
-        return executeRoleAction(flash, "Assigned permissions updated successfully.",
-                "redirect:/admin/roles?selectedAdminId=" + targetAdminId, () -> {
-                    Set<Long> targetRoleIds = new HashSet<>();
-                    if (roleIds != null && !roleIds.isEmpty()) {
-                        targetRoleIds.addAll(roleIds);
-                    } else if (roleId != null && roleId > 0) {
-                        targetRoleIds.add(roleId);
-                    } else if (updateAdminRequest.getRoleIds() != null && !updateAdminRequest.getRoleIds().isEmpty()) {
-                        targetRoleIds.addAll(updateAdminRequest.getRoleIds());
-                    }
+        try {
+            Set<Long> targetRoleIds = new HashSet<>();
+            if (roleIds != null && !roleIds.isEmpty()) {
+                targetRoleIds.addAll(roleIds);
+            } else if (roleId != null && roleId > 0) {
+                targetRoleIds.add(roleId);
+            } else if (updateAdminRequest.getRoleIds() != null && !updateAdminRequest.getRoleIds().isEmpty()) {
+                targetRoleIds.addAll(updateAdminRequest.getRoleIds());
+            }
 
-                    UpdateAdminRequest updateReq = new UpdateAdminRequest();
-                    updateReq.setRoleIds(targetRoleIds);
-                    if (updateAdminRequest.getPermissions() != null) {
-                        updateReq.setPermissions(updateAdminRequest.getPermissions());
-                    }
-                    adminService.updateAdmin(targetAdminId, updateReq);
-                });
+            UpdateAdminRequest updateReq = new UpdateAdminRequest();
+            updateReq.setRoleIds(targetRoleIds);
+            if (updateAdminRequest.getPermissions() != null) {
+                updateReq.setPermissions(updateAdminRequest.getPermissions());
+            }
+            adminService.updateAdmin(targetAdminId, updateReq);
+
+            if (isAjax) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "adminId", targetAdminId,
+                        "message", "Assigned permissions updated successfully."
+                ));
+            }
+            flash.addFlashAttribute("successMessage", "Assigned permissions updated successfully.");
+        } catch (Exception ex) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", ex.getMessage()));
+            }
+            flash.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/admin/roles?selectedAdminId=" + targetAdminId;
     }
 
     @Override
     @PostMapping("/{roleId:\\d+}/delete")
-    public String deleteRoleSsr(@PathVariable("roleId") Long roleId, RedirectAttributes flash) {
+    public Object deleteRoleSsr(@PathVariable("roleId") Long roleId,
+                                HttpServletRequest request,
+                                RedirectAttributes flash) {
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
         if (!portalAccess.canEditPermissions()) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "Access denied: You do not have permission to delete roles."));
+            }
             flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to delete roles.");
             return "redirect:/admin/roles";
         }
-        return executeRoleAction(flash, "Role template deleted successfully.",
-                "redirect:/admin/roles", () -> roleService.deleteRole(roleId));
+
+        try {
+            roleService.deleteRole(roleId);
+            if (isAjax) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "roleId", roleId,
+                        "message", "Role template deleted successfully."
+                ));
+            }
+            flash.addFlashAttribute("successMessage", "Role template deleted successfully.");
+        } catch (Exception ex) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", ex.getMessage()));
+            }
+            flash.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/admin/roles";
     }
 
     // =========================================================

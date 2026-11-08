@@ -48,12 +48,26 @@ public class ReportController implements ReportOperations {
     }
 
     @Override
-    @GetMapping
+    @GetMapping(value = {"", "/milestones", "/satisfaction", "/products", "/customers", "/followups", "/retention"}, produces = MediaType.TEXT_HTML_VALUE)
     public String showReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
-                              @RequestParam(value = "tab", defaultValue = "milestones") String tab,
+                              @RequestParam(value = "tab", required = false) String tab,
                               @RequestParam(value = "dateFrom", required = false) String dateFrom,
                               @RequestParam(value = "dateTo", required = false) String dateTo,
                               Model model) {
+        var reqAttrs = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        if (reqAttrs instanceof org.springframework.web.context.request.ServletRequestAttributes sra) {
+            String uri = sra.getRequest().getRequestURI();
+            if (uri != null) {
+                if (uri.endsWith("/milestones")) tab = "milestones";
+                else if (uri.endsWith("/satisfaction")) tab = "satisfaction";
+                else if (uri.endsWith("/products")) tab = "products";
+                else if (uri.endsWith("/customers") || uri.endsWith("/followups") || uri.endsWith("/retention")) tab = "customers";
+            }
+        }
+        if (tab == null || tab.trim().isEmpty()) {
+            tab = "milestones";
+        }
+
         boolean canMilestones = portalAccess.canViewReportMilestones();
         boolean canSatisfaction = portalAccess.canViewReportSatisfaction();
         boolean canProducts = portalAccess.canViewReportProducts();
@@ -80,6 +94,90 @@ public class ReportController implements ReportOperations {
         model.addAttribute("reportData", reportService.generateReport(period, dateFrom, dateTo));
         model.addAttribute("presets", timeFilterService.findAll());
         return "administration/report/reports";
+    }
+
+    private void populateVisualModel(Model model, String tab, String period, String dateFrom, String dateTo) {
+        model.addAttribute("activeTab", "reports");
+        model.addAttribute("reportSubTab", tab);
+        model.addAttribute("period", period);
+        model.addAttribute("reportData", reportService.generateReport(period, dateFrom, dateTo));
+        model.addAttribute("presets", timeFilterService.findAll());
+    }
+
+    @Override
+    @GetMapping("/visual")
+    public String showVisualReports(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                                    @RequestParam(value = "tab", defaultValue = "milestones") String tab,
+                                    @RequestParam(value = "dateFrom", required = false) String dateFrom,
+                                    @RequestParam(value = "dateTo", required = false) String dateTo,
+                                    Model model) {
+        String normalized = ("customers".equalsIgnoreCase(tab) || "followups".equalsIgnoreCase(tab)) ? "customers" : tab.toLowerCase();
+        StringBuilder url = new StringBuilder("redirect:/admin/reports/visual/").append(normalized);
+        boolean first = true;
+        if (period != null && !period.equals("ALL")) {
+            url.append(first ? "?" : "&").append("period=").append(period);
+            first = false;
+        }
+        if (dateFrom != null && !dateFrom.isEmpty()) {
+            url.append(first ? "?" : "&").append("dateFrom=").append(dateFrom);
+            first = false;
+        }
+        if (dateTo != null && !dateTo.isEmpty()) {
+            url.append(first ? "?" : "&").append("dateTo=").append(dateTo);
+        }
+        return url.toString();
+    }
+
+    @Override
+    @GetMapping("/visual/milestones")
+    public String showVisualMilestones(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                                       @RequestParam(value = "dateFrom", required = false) String dateFrom,
+                                       @RequestParam(value = "dateTo", required = false) String dateTo,
+                                       Model model) {
+        if (!portalAccess.canViewReportMilestones()) {
+            return "redirect:/admin/dashboard";
+        }
+        populateVisualModel(model, "milestones", period, dateFrom, dateTo);
+        return "administration/report/visual/milestonesVisual";
+    }
+
+    @Override
+    @GetMapping("/visual/satisfaction")
+    public String showVisualSatisfaction(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                                         @RequestParam(value = "dateFrom", required = false) String dateFrom,
+                                         @RequestParam(value = "dateTo", required = false) String dateTo,
+                                         Model model) {
+        if (!portalAccess.canViewReportSatisfaction()) {
+            return "redirect:/admin/dashboard";
+        }
+        populateVisualModel(model, "satisfaction", period, dateFrom, dateTo);
+        return "administration/report/visual/satisfactionVisual";
+    }
+
+    @Override
+    @GetMapping("/visual/products")
+    public String showVisualProducts(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                                     @RequestParam(value = "dateFrom", required = false) String dateFrom,
+                                     @RequestParam(value = "dateTo", required = false) String dateTo,
+                                     Model model) {
+        if (!portalAccess.canViewReportProducts()) {
+            return "redirect:/admin/dashboard";
+        }
+        populateVisualModel(model, "products", period, dateFrom, dateTo);
+        return "administration/report/visual/productsVisual";
+    }
+
+    @Override
+    @GetMapping("/visual/customers")
+    public String showVisualCustomers(@RequestParam(value = "period", defaultValue = "ALL") String period,
+                                      @RequestParam(value = "dateFrom", required = false) String dateFrom,
+                                      @RequestParam(value = "dateTo", required = false) String dateTo,
+                                      Model model) {
+        if (!portalAccess.canViewReportRetention()) {
+            return "redirect:/admin/dashboard";
+        }
+        populateVisualModel(model, "customers", period, dateFrom, dateTo);
+        return "administration/report/visual/customersVisual";
     }
 
     @Override

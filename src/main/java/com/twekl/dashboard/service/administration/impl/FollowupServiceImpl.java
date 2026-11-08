@@ -70,9 +70,10 @@ public class FollowupServiceImpl implements FollowupService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void syncOverdueStatuses() {
         try {
+            int unfinishedUpdated = followupCheckRepository.syncUnfinishedChecks();
             int overdueUpdated = followupCheckRepository.syncOverdueChecks();
             int pendingUpdated = followupCheckRepository.syncPendingChecks();
-            if ((overdueUpdated > 0 || pendingUpdated > 0) && cacheManager != null) {
+            if ((overdueUpdated > 0 || unfinishedUpdated > 0 || pendingUpdated > 0) && cacheManager != null) {
                 for (String cacheName : List.of("dashboardSummary", "customerStats", "followupSummaries")) {
                     var cache = cacheManager.getCache(cacheName);
                     if (cache != null) {
@@ -104,30 +105,19 @@ public class FollowupServiceImpl implements FollowupService {
             Pageable pageable) {
 
         List<TimeFilterPreset> activePresets = timeFilterPresetRepository.findByActiveTrueOrderByDisplayOrderAsc();
-        Instant cutoff = null;
+        TimeFilterPreset targetPreset = null;
         if (timeFilter != null && !timeFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(timeFilter)) {
             for (TimeFilterPreset p : activePresets) {
                 if (String.valueOf(p.getId()).equals(timeFilter.trim())
                         || (p.getPresetKey() != null && p.getPresetKey().equalsIgnoreCase(timeFilter.trim()))
                         || (p.getLabelEn() != null && p.getLabelEn().equalsIgnoreCase(timeFilter.trim()))
                         || (p.getName() != null && p.getName().equalsIgnoreCase(timeFilter.trim()))) {
-                    java.time.ZonedDateTime nowUtc = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC);
-                    String unit = p.getDurationUnit() != null ? p.getDurationUnit().toUpperCase() : "DAYS";
-                    int val = p.getDurationValue();
-                    cutoff = switch (unit) {
-                        case "HOURS" -> nowUtc.minusHours(val).toInstant();
-                        case "DAYS" -> nowUtc.minusDays(val).toInstant();
-                        case "WEEKS" -> nowUtc.minusWeeks(val).toInstant();
-                        case "MONTHS" -> nowUtc.minusMonths(val).toInstant();
-                        default -> nowUtc.minusDays(val).toInstant();
-                    };
+                    targetPreset = p;
                     break;
                 }
             }
         }
-        if (cutoff == null) {
-            cutoff = DateUtil.getFilterCutoff(timeFilter);
-        }
+
         String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
         String status = (statusFilter != null) ? statusFilter.trim().toUpperCase() : "ALL";
 
@@ -136,28 +126,34 @@ public class FollowupServiceImpl implements FollowupService {
         boolean isCompleted = "DONE".equals(status) || "COMPLETED".equals(status) || "FINISHED".equals(status);
 
         Page<Customer> customerPage;
-        if (cleanSearch != null) {
-            customerPage = (cutoff == null)
-                    ? customerRepository.searchCustomers(cleanSearch, pageable)
-                    : customerRepository.searchCustomersWithCutoff(cleanSearch, cutoff, pageable);
-        } else if (isAlert) {
-            customerPage = (cutoff == null)
-                    ? customerRepository.findOverdueCustomers(pageable)
-                    : customerRepository.findOverdueCustomersWithCutoff(cutoff, pageable);
-        } else if (isPending) {
-            customerPage = (cutoff == null)
-                    ? customerRepository.findInQueueCustomers(pageable)
-                    : customerRepository.findInQueueCustomersWithCutoff(cutoff, pageable);
-        } else if (isCompleted) {
-            customerPage = (cutoff == null)
-                    ? customerRepository.findCompletedCustomers(pageable)
-                    : customerRepository.findCompletedCustomersWithCutoff(cutoff, pageable);
-        } else if (dateFrom != null && dateTo != null) {
-            customerPage = customerRepository.findByCreatedAtBetween(dateFrom, dateTo, pageable);
+        if (targetPreset != null) {
+            Long pId = targetPreset.getId();
+            String pName = targetPreset.getName() != null ? targetPreset.getName() : targetPreset.getLabelEn();
+            if (cleanSearch != null) {
+                customerPage = customerRepository.searchCustomersByPreset(pId, pName, cleanSearch, pageable);
+            } else if (isAlert) {
+                customerPage = customerRepository.findCustomersByPresetAndStatus(pId, pName, "OVERDUE", pageable);
+            } else if (isPending) {
+                customerPage = customerRepository.findCustomersByPresetAndStatus(pId, pName, "PENDING", pageable);
+            } else if (isCompleted) {
+                customerPage = customerRepository.findCustomersByPresetAndCompleted(pId, pName, true, pageable);
+            } else {
+                customerPage = customerRepository.findCustomersByPreset(pId, pName, pageable);
+            }
         } else {
-            customerPage = (cutoff == null)
-                    ? customerRepository.findAll(pageable)
-                    : customerRepository.findByCreatedAtAfter(cutoff, pageable);
+            if (cleanSearch != null) {
+                customerPage = customerRepository.searchCustomers(cleanSearch, pageable);
+            } else if (isAlert) {
+                customerPage = customerRepository.findOverdueCustomers(pageable);
+            } else if (isPending) {
+                customerPage = customerRepository.findInQueueCustomers(pageable);
+            } else if (isCompleted) {
+                customerPage = customerRepository.findCompletedCustomers(pageable);
+            } else if (dateFrom != null && dateTo != null) {
+                customerPage = customerRepository.findByCreatedAtBetween(dateFrom, dateTo, pageable);
+            } else {
+                customerPage = customerRepository.findAll(pageable);
+            }
         }
 
         if (customerPage == null || customerPage.isEmpty()) {
@@ -202,7 +198,7 @@ public class FollowupServiceImpl implements FollowupService {
             double totalSpent = orders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
             c.setTotalSpent(totalSpent);
 
-            CustomerFollowupSummary summary = buildSummary(c, orders, checksByOrderId, activePresetIds, activePresetNames, now);
+            CustomerFollowupSummary summary = buildSummary(c, orders, checksByOrderId, activePresetIds, activePresetNames, targetPreset, now);
             results.add(summary);
         }
 
@@ -274,7 +270,7 @@ public class FollowupServiceImpl implements FollowupService {
             double totalSpent = orders.stream().mapToDouble(CustomerOrder::getTotalAmount).sum();
             c.setTotalSpent(totalSpent);
 
-            CustomerFollowupSummary summary = buildSummary(c, orders, checksByOrderId, activePresetIds, activePresetNames, now);
+            CustomerFollowupSummary summary = buildSummary(c, orders, checksByOrderId, activePresetIds, activePresetNames, null, now);
             results.add(summary);
         }
 
@@ -323,12 +319,43 @@ public class FollowupServiceImpl implements FollowupService {
             result.add(check);
         }
 
+        boolean isOrderOld = order.getOrderDate() != null
+                && Duration.between(order.getOrderDate(), Instant.now()).toDays() >= 120;
+
+        Instant now = Instant.now();
         for (OrderFollowupCheck ch : result) {
             Instant dueTime = calculateDueTime(order.getOrderDate(), ch.getDurationUnit(), ch.getDurationValue());
             if (dueTime != null) {
-                int mins = (int) Duration.between(Instant.now(), dueTime).toMinutes();
+                int mins = (int) Duration.between(now, dueTime).toMinutes();
                 ch.setMinutesUntilDue(mins);
-                ch.setIsDue(!ch.isCompleted() && Instant.now().isAfter(dueTime));
+                ch.setIsDue(!ch.isCompleted() && now.isAfter(dueTime));
+            }
+
+            boolean hasFeedback = (ch.getNotes() != null && !ch.getNotes().trim().isEmpty())
+                    || (ch.getImageUrl() != null && !ch.getImageUrl().trim().isEmpty());
+
+            if (ch.isCompleted() || hasFeedback) {
+                if (!ch.isCompleted() || !"COMPLETED".equalsIgnoreCase(ch.getStatus())) {
+                    ch.setCompleted(true);
+                    ch.setStatus("COMPLETED");
+                    followupCheckRepository.save(ch);
+                }
+            } else if (isOrderOld && !ch.isForcePending()) {
+                if (!"UNFINISHED".equalsIgnoreCase(ch.getStatus())) {
+                    ch.setStatus("UNFINISHED");
+                    ch.setCompleted(false);
+                    followupCheckRepository.save(ch);
+                }
+            } else if ("UNFINISHED".equalsIgnoreCase(ch.getStatus()) || "EXPIRED".equalsIgnoreCase(ch.getStatus())) {
+                // Preserve explicitly marked UNFINISHED status!
+                ch.setCompleted(false);
+            } else {
+                // If not in 4 months or if forcePending, it's PENDING (or OVERDUE)
+                String expectedStatus = (ch.getIsDue() != null && ch.getIsDue()) ? "OVERDUE" : "PENDING";
+                if (!expectedStatus.equalsIgnoreCase(ch.getStatus()) && !"PENDING".equalsIgnoreCase(ch.getStatus())) {
+                    ch.setStatus(expectedStatus);
+                    followupCheckRepository.save(ch);
+                }
             }
         }
 
@@ -346,6 +373,7 @@ public class FollowupServiceImpl implements FollowupService {
         if (check.isCompleted()) {
             check.setCompleted(false);
             check.setStatus("PENDING");
+            check.setForcePending(true);
             check.setCompletedDate(null);
         } else {
             check.setCompleted(true);
@@ -359,6 +387,13 @@ public class FollowupServiceImpl implements FollowupService {
     @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
     @Transactional
     public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction) {
+        return updateFollowupDetails(checkId, notes, photoUrl, satisfaction, null);
+    }
+
+    @Override
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
+    @Transactional
+    public OrderFollowupCheck updateFollowupDetails(Long checkId, String notes, String photoUrl, String satisfaction, String status) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found with ID: " + checkId));
 
@@ -367,8 +402,44 @@ public class FollowupServiceImpl implements FollowupService {
 
         if (satisfaction != null && !satisfaction.trim().isEmpty()) {
             check.setSatisfaction(satisfaction.toUpperCase());
-        } else if (check.getSatisfaction() == null && ((notes != null && !notes.trim().isEmpty()) || (photoUrl != null && !photoUrl.trim().isEmpty()))) {
-            check.setSatisfaction("NEUTRAL");
+        }
+
+        boolean hasFeedback = (check.getNotes() != null && !check.getNotes().trim().isEmpty())
+                || (check.getImageUrl() != null && !check.getImageUrl().trim().isEmpty());
+
+        if (status != null && !status.trim().isEmpty()) {
+            String upper = status.trim().toUpperCase();
+            if ("COMPLETED".equals(upper) || "FINISHED".equals(upper)) {
+                check.setStatus("COMPLETED");
+                check.setCompleted(true);
+                if (check.getCompletedDate() == null) check.setCompletedDate(Instant.now());
+            } else if ("UNFINISHED".equals(upper) || "SKIPPED".equals(upper)) {
+                check.setStatus("UNFINISHED");
+                check.setCompleted(false);
+                check.setForcePending(false);
+                check.setCompletedDate(null);
+            } else {
+                check.setStatus("PENDING");
+                check.setCompleted(false);
+                check.setForcePending(true);
+                check.setCompletedDate(null);
+            }
+        } else {
+            if (hasFeedback) {
+                check.setStatus("COMPLETED");
+                check.setCompleted(true);
+                if (check.getSatisfaction() == null || check.getSatisfaction().trim().isEmpty()) {
+                    check.setSatisfaction("NEUTRAL");
+                }
+                if (check.getCompletedDate() == null) check.setCompletedDate(Instant.now());
+            } else {
+                // Notes/photos deleted/cleared -> transition to PENDING and stay PENDING!
+                check.setStatus("PENDING");
+                check.setCompleted(false);
+                check.setForcePending(true); // "even if u had a unfinshed made a note then delete it will be pending not unfinshed again"
+                check.setCompletedDate(null);
+                check.setSatisfaction(null);
+            }
         }
 
         Instant now = Instant.now();
@@ -384,14 +455,84 @@ public class FollowupServiceImpl implements FollowupService {
     @Override
     @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
     @Transactional
+    public OrderFollowupCheck updateCheckStatus(Long checkId, String status) {
+        OrderFollowupCheck check = followupCheckRepository.findById(checkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Checkpoint not found with ID: " + checkId));
+
+        String upper = status != null ? status.trim().toUpperCase() : "PENDING";
+        if ("COMPLETED".equals(upper) || "FINISHED".equals(upper)) {
+            check.setStatus("COMPLETED");
+            check.setCompleted(true);
+            check.setCompletedDate(Instant.now());
+        } else if ("UNFINISHED".equals(upper) || "SKIPPED".equals(upper)) {
+            check.setStatus("UNFINISHED");
+            check.setCompleted(false);
+            check.setForcePending(false);
+            check.setCompletedDate(null);
+        } else {
+            check.setStatus("PENDING");
+            check.setCompleted(false);
+            check.setForcePending(true);
+            check.setCompletedDate(null);
+        }
+
+        check.setUpdatedAt(Instant.now());
+        return followupCheckRepository.save(check);
+    }
+
+    @Override
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
+    @Transactional
+    public void markOrderChecksUnfinished(Long orderId) {
+        List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderId(orderId);
+        Instant now = Instant.now();
+        for (OrderFollowupCheck ch : checks) {
+            if (!ch.isCompleted()) {
+                ch.setStatus("UNFINISHED");
+                ch.setCompleted(false);
+                ch.setForcePending(false);
+                ch.setCompletedDate(null);
+                ch.setUpdatedAt(now);
+                followupCheckRepository.save(ch);
+            }
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
+    @Transactional
+    public void unskipOrderChecks(Long orderId) {
+        CustomerOrder order = orderRepository.findById(orderId).orElse(null);
+        List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderId(orderId);
+        Instant now = Instant.now();
+        for (OrderFollowupCheck ch : checks) {
+            if (!ch.isCompleted()) {
+                ch.setStatus("PENDING");
+                ch.setCompleted(false);
+                ch.setForcePending(true); // Persist as PENDING so it never flips back to UNFINISHED
+                ch.setCompletedDate(null);
+                ch.setUpdatedAt(now);
+                followupCheckRepository.save(ch);
+            }
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"customerStats", "dashboardSummary", "followupSummaries", "reportData", "satisfactionDetails"}, allEntries = true)
+    @Transactional
     public OrderFollowupCheck completeCheck(Long checkId, FollowupCheckRequest req) {
         OrderFollowupCheck check = followupCheckRepository.findById(checkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Follow-up check not found with ID: " + checkId));
+
+        if ("UNFINISHED".equalsIgnoreCase(check.getStatus()) || "EXPIRED".equalsIgnoreCase(check.getStatus())) {
+            throw new IllegalStateException("This checkpoint belongs to an unfinished order and cannot receive feedback until restored.");
+        }
 
         check.setCompleted(true);
         check.setCompletedDate(Instant.now());
         check.setCheckedAt(Instant.now());
         check.setStatus("COMPLETED");
+        check.setForcePending(false);
 
         if (req != null) {
             if (req.getNotes() != null) check.setNotes(req.getNotes());
@@ -408,6 +549,7 @@ public class FollowupServiceImpl implements FollowupService {
                                                  Map<Long, List<OrderFollowupCheck>> checksByOrderId,
                                                  Set<Long> activePresetIds,
                                                  Set<String> activePresetNames,
+                                                 TimeFilterPreset targetPreset,
                                                  Instant now) {
         CustomerFollowupSummary summary = new CustomerFollowupSummary();
         summary.setCustomer(c);
@@ -420,7 +562,110 @@ public class FollowupServiceImpl implements FollowupService {
             return summary;
         }
 
+        // Resolve the customer's latest recorded satisfaction across all checks
+        OrderFollowupCheck latestRatedCheck = null;
+        Instant latestRatingTime = null;
+        for (CustomerOrder ord : orders) {
+            List<OrderFollowupCheck> checks = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
+            for (OrderFollowupCheck ch : checks) {
+                if (ch.getSatisfaction() != null && !ch.getSatisfaction().trim().isEmpty()) {
+                    Instant t = ch.getCheckedAt() != null ? ch.getCheckedAt() :
+                                (ch.getUpdatedAt() != null ? ch.getUpdatedAt() :
+                                (ch.getCompletedDate() != null ? ch.getCompletedDate() :
+                                (ord.getOrderDate() != null ? ord.getOrderDate() : ch.getCreatedAt())));
+                    if (latestRatedCheck == null || (t != null && (latestRatingTime == null || t.isAfter(latestRatingTime)))) {
+                        latestRatedCheck = ch;
+                        latestRatingTime = t;
+                    }
+                }
+            }
+        }
+        if (latestRatedCheck != null) {
+            summary.setLatestSatisfaction(latestRatedCheck.getSatisfaction().trim().toUpperCase());
+        }
+
+        if (targetPreset != null) {
+            OrderFollowupCheck targetCheck = null;
+            Long targetOrderId = null;
+            CustomerOrder targetOrder = null;
+
+            for (CustomerOrder ord : orders) {
+                List<OrderFollowupCheck> checks = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
+                for (OrderFollowupCheck ch : checks) {
+                    boolean match = (ch.getPreset() != null && targetPreset.getId() != null && targetPreset.getId().equals(ch.getPreset().getId()))
+                            || (ch.getMilestoneName() != null && targetPreset.getName() != null && targetPreset.getName().equalsIgnoreCase(ch.getMilestoneName().trim()))
+                            || (ch.getMilestoneName() != null && targetPreset.getLabelEn() != null && targetPreset.getLabelEn().equalsIgnoreCase(ch.getMilestoneName().trim()));
+                    if (match) {
+                        targetCheck = ch;
+                        targetOrderId = ord.getId();
+                        targetOrder = ord;
+                        break;
+                    }
+                }
+                if (targetCheck != null) break;
+            }
+
+            if (targetCheck != null) {
+                if (targetCheck.getSatisfaction() != null && !targetCheck.getSatisfaction().trim().isEmpty()) {
+                    summary.setLatestSatisfaction(targetCheck.getSatisfaction().trim().toUpperCase());
+                }
+                String mName = targetCheck.getMilestoneName() != null ? targetCheck.getMilestoneName() : targetPreset.getName();
+                summary.setNextPendingFollowup(mName);
+                summary.setNextPendingOrderId(targetOrderId);
+
+                boolean isOrderOld = targetOrder != null && targetOrder.getOrderDate() != null
+                        && Duration.between(targetOrder.getOrderDate(), now).toDays() >= 120;
+                boolean isCompleted = targetCheck.isCompleted()
+                        || (targetCheck.getNotes() != null && !targetCheck.getNotes().trim().isEmpty())
+                        || (targetCheck.getImageUrl() != null && !targetCheck.getImageUrl().trim().isEmpty());
+                boolean isTargetUnfinished = !isCompleted && !targetCheck.isForcePending() && (
+                        isOrderOld
+                        || "UNFINISHED".equalsIgnoreCase(targetCheck.getStatus())
+                        || "EXPIRED".equalsIgnoreCase(targetCheck.getStatus())
+                        || "SKIPPED".equalsIgnoreCase(targetCheck.getStatus())
+                );
+
+                if (isCompleted) {
+                    summary.setFollowupStatus("DONE");
+                    summary.setAllFollowupsCompleted(true);
+                    summary.setRemainingFollowupsCount(0);
+                    summary.setNextPendingMinutesLeft(null);
+                    return summary;
+                } else if (isTargetUnfinished) {
+                    summary.setFollowupStatus("UNFINISHED");
+                    summary.setAllFollowupsCompleted(false);
+                    summary.setRemainingFollowupsCount(0);
+                    summary.setNextPendingFollowup("Unfinished");
+                    summary.setNextPendingMinutesLeft(null);
+                    return summary;
+                } else if ("OVERDUE".equalsIgnoreCase(targetCheck.getStatus())) {
+                    summary.setFollowupStatus("ALERT");
+                    summary.setAllFollowupsCompleted(false);
+                    summary.setRemainingFollowupsCount(1);
+                    Instant ordDate = targetOrder != null ? targetOrder.getOrderDate() : orders.get(0).getOrderDate();
+                    Instant dueTime = calculateDueTime(ordDate, targetCheck.getDurationUnit(), targetCheck.getDurationValue());
+                    if (dueTime != null) {
+                        summary.setNextPendingMinutesLeft((int) Duration.between(now, dueTime).toMinutes());
+                    }
+                    return summary;
+                } else {
+                    summary.setFollowupStatus("IDLE");
+                    summary.setAllFollowupsCompleted(false);
+                    summary.setRemainingFollowupsCount(1);
+                    Instant ordDate = targetOrder != null ? targetOrder.getOrderDate() : orders.get(0).getOrderDate();
+                    Instant dueTime = calculateDueTime(ordDate, targetCheck.getDurationUnit(), targetCheck.getDurationValue());
+                    if (dueTime != null) {
+                        summary.setNextPendingMinutesLeft((int) Duration.between(now, dueTime).toMinutes());
+                    }
+                    return summary;
+                }
+            }
+        }
+
         int pendingCount = 0;
+        int completedCount = 0;
+        int expiredCount = 0;
+
         OrderFollowupCheck mostOverdueCheck = null;
         Instant earliestOverdueTime = null;
         Long overdueOrderId = null;
@@ -430,6 +675,8 @@ public class FollowupServiceImpl implements FollowupService {
         Long upcomingOrderId = null;
 
         for (CustomerOrder ord : orders) {
+            boolean isOrderOld = ord.getOrderDate() != null &&
+                    Duration.between(ord.getOrderDate(), now).toDays() >= 120; // 4 months
             List<OrderFollowupCheck> checks = checksByOrderId.getOrDefault(ord.getId(), Collections.emptyList());
 
             for (OrderFollowupCheck ch : checks) {
@@ -439,7 +686,22 @@ public class FollowupServiceImpl implements FollowupService {
                     continue;
                 }
 
-                if (!ch.isCompleted()) {
+                boolean isCompleted = ch.isCompleted()
+                        || (ch.getNotes() != null && !ch.getNotes().trim().isEmpty())
+                        || (ch.getImageUrl() != null && !ch.getImageUrl().trim().isEmpty());
+
+                boolean isUnfinished = !isCompleted && !ch.isForcePending() && (
+                        isOrderOld
+                        || "UNFINISHED".equalsIgnoreCase(ch.getStatus())
+                        || "EXPIRED".equalsIgnoreCase(ch.getStatus())
+                        || "SKIPPED".equalsIgnoreCase(ch.getStatus())
+                );
+
+                if (isCompleted) {
+                    completedCount++;
+                } else if (isUnfinished) {
+                    expiredCount++;
+                } else {
                     pendingCount++;
                     Instant dueTime = calculateDueTime(ord.getOrderDate(), ch.getDurationUnit(), ch.getDurationValue());
                     if (dueTime != null && now.isAfter(dueTime)) {
@@ -462,11 +724,31 @@ public class FollowupServiceImpl implements FollowupService {
         summary.setRemainingFollowupsCount(pendingCount);
 
         if (pendingCount == 0) {
-            summary.setFollowupStatus("DONE");
-            summary.setAllFollowupsCompleted(true);
-            summary.setNextPendingFollowup("All Done");
-            summary.setNextPendingOrderId(null);
-            summary.setNextPendingMinutesLeft(null);
+            if (expiredCount > 0 && completedCount == 0) {
+                summary.setFollowupStatus("UNFINISHED");
+                summary.setAllFollowupsCompleted(false);
+                summary.setNextPendingFollowup("Unfinished");
+                summary.setNextPendingOrderId(null);
+                summary.setNextPendingMinutesLeft(null);
+            } else if (completedCount > 0 && expiredCount == 0) {
+                summary.setFollowupStatus("DONE");
+                summary.setAllFollowupsCompleted(true);
+                summary.setNextPendingFollowup("All Done");
+                summary.setNextPendingOrderId(null);
+                summary.setNextPendingMinutesLeft(null);
+            } else if (expiredCount > 0) {
+                summary.setFollowupStatus("UNFINISHED");
+                summary.setAllFollowupsCompleted(false);
+                summary.setNextPendingFollowup("Unfinished");
+                summary.setNextPendingOrderId(null);
+                summary.setNextPendingMinutesLeft(null);
+            } else {
+                summary.setFollowupStatus("IDLE");
+                summary.setAllFollowupsCompleted(false);
+                summary.setNextPendingFollowup("-");
+                summary.setNextPendingOrderId(null);
+                summary.setNextPendingMinutesLeft(null);
+            }
         } else if (mostOverdueCheck != null) {
             summary.setFollowupStatus("ALERT");
             summary.setAllFollowupsCompleted(false);
@@ -489,6 +771,7 @@ public class FollowupServiceImpl implements FollowupService {
         String u = unit != null ? unit.toUpperCase() : "DAYS";
         int v = val > 0 ? val : 1;
         return switch (u) {
+            case "SECONDS" -> start.plus(v, ChronoUnit.SECONDS);
             case "HOURS" -> start.plus(v, ChronoUnit.HOURS);
             case "WEEKS" -> start.plus(v * 7L, ChronoUnit.DAYS);
             case "MONTHS" -> start.plus(v * 30L, ChronoUnit.DAYS);

@@ -14,9 +14,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
+import jakarta.servlet.http.HttpSession;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -81,6 +84,50 @@ public class SecurityConfig {
         return new HandlerMappingIntrospector();
     }
 
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            HttpSession session = request.getSession(true);
+            if (session != null) {
+                session.setMaxInactiveInterval(30 * 24 * 60 * 60); // 30 days in seconds
+            }
+
+            String target = request.getParameter("redirect");
+            if (target == null || target.trim().isEmpty() || target.equals("/login")) {
+                if (session != null) {
+                    target = (String) session.getAttribute("TARGET_AFTER_LOGIN");
+                    if (target != null) session.removeAttribute("TARGET_AFTER_LOGIN");
+                }
+            }
+            if (target == null || target.trim().isEmpty()) {
+                jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+                if (cookies != null) {
+                    for (jakarta.servlet.http.Cookie c : cookies) {
+                        if ("TARGET_AFTER_LOGIN".equals(c.getName()) && c.getValue() != null && !c.getValue().trim().isEmpty()) {
+                            try {
+                                target = java.net.URLDecoder.decode(c.getValue(), java.nio.charset.StandardCharsets.UTF_8);
+                            } catch (Exception ignored) {}
+                            jakarta.servlet.http.Cookie clear = new jakarta.servlet.http.Cookie("TARGET_AFTER_LOGIN", "");
+                            clear.setPath("/");
+                            clear.setMaxAge(0);
+                            response.addCookie(clear);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (target != null && !target.trim().isEmpty() && !target.equals("/login")) {
+                response.sendRedirect(target.trim());
+                return;
+            }
+
+            SavedRequestAwareAuthenticationSuccessHandler delegate = new SavedRequestAwareAuthenticationSuccessHandler();
+            delegate.setDefaultTargetUrl("/admin/dashboard");
+            delegate.onAuthenticationSuccess(request, response, authentication);
+        };
+    }
+
     /**
      * Security Filter Chain: Defines authentication endpoints, session creation,
      * CSRF protection, and role/permission authorization checks.
@@ -89,7 +136,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .securityContext(securityContext -> securityContext
                 .securityContextRepository(securityContextRepository())
             )
@@ -105,8 +152,30 @@ public class SecurityConfig {
             // - Role & permission templates: requires ROLE_SUPER_ADMIN or PERMISSION_CREATE_ROLES
             // - General portal routes (/admin/**): requires ROLE_ADMIN or ROLE_SUPER_ADMIN
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(antMatcher("/"), antMatcher("/login"), antMatcher("/login/**"), antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/images/**"), antMatcher("/favicon.ico")).permitAll()
-                .requestMatchers(antMatcher("/admin/auth/login")).permitAll()
+                .requestMatchers(
+                    antMatcher("/"), antMatcher("/login"), antMatcher("/login/**"),
+                    antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/images/**"), antMatcher("/favicon.ico"),
+                    antMatcher("/review"), antMatcher("/review/**"),
+                    antMatcher("/product-review"), antMatcher("/product-review/**"),
+                    antMatcher("/api/review"), antMatcher("/api/review/**"),
+                    antMatcher("/api/reviews"), antMatcher("/api/reviews/**"),
+                    antMatcher("/api/customer-reviews"), antMatcher("/api/customer-reviews/**"),
+                    antMatcher("/followup"), antMatcher("/followup/**"),
+                    antMatcher("/followups"), antMatcher("/followups/**"),
+                    antMatcher("/api/followup"), antMatcher("/api/followup/**"),
+                    antMatcher("/api/jwt"), antMatcher("/api/jwt/**"),
+                    antMatcher("/api/session"), antMatcher("/api/session/**"),
+                    antMatcher("/api/external/**"), antMatcher("/admin/external/**"),
+                    antMatcher("/api/admins"), antMatcher("/api/admins/**"),
+                    antMatcher("/api/users"), antMatcher("/api/users/**")
+                ).permitAll()
+                .requestMatchers(
+                    antMatcher("/admin/auth/**"),
+                    antMatcher("/api/auth/**"),
+                    antMatcher("/api/login"),
+                    antMatcher("/api/token"),
+                    antMatcher("/oauth/token")
+                ).permitAll()
                 .requestMatchers(antMatcher("/admin/admins"), antMatcher("/admin/admins/**")).hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_MANAGE_USERS", "ACTION_STAFF_MANAGE", "ACTION_STAFF_PERMISSIONS")
                 .requestMatchers(antMatcher("/admin/roles"), antMatcher("/admin/roles/**")).hasAnyAuthority("ROLE_SUPER_ADMIN", "PERMISSION_CREATE_ROLES", "ACTION_STAFF_PERMISSIONS", "ACTION_STAFF_MANAGE")
                 .requestMatchers(antMatcher("/admin/**")).hasAnyRole("SUPER_ADMIN", "ADMIN")
@@ -114,7 +183,7 @@ public class SecurityConfig {
             )
             .formLogin(form -> form.loginPage("/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/admin/dashboard", true)
+                .successHandler(authenticationSuccessHandler())
                 .failureUrl("/login?error")
                 .permitAll())
             .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))

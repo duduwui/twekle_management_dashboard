@@ -1,6 +1,9 @@
 package com.twekl.dashboard.controller.administration;
 
 import com.twekl.dashboard.dto.administration.CreateAdminRequest;
+import com.twekl.dashboard.dto.administration.AdminUserDto;
+import com.twekl.dashboard.dto.administration.RoleDto;
+import com.twekl.dashboard.response.ApiResponse;
 import com.twekl.dashboard.service.administration.AdminService;
 import com.twekl.dashboard.service.administration.RoleService;
 import com.twekl.dashboard.model.administration.Admin;
@@ -8,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,6 +19,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,6 +62,31 @@ public class AdminController implements AdminOperations {
             model.addAttribute("newAdmin", new CreateAdminRequest());
         }
         return "administration/admin/admins";
+    }
+
+    @Override
+    @GetMapping(value = {"/admin/admins/json", "/admin/api/admins", "/admin/admins/api"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminsJson() {
+        if (!portalAccess.canViewStaff()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied: You do not have permission to view administrators."));
+        }
+        List<AdminUserDto> dtos = adminService.findAll().stream()
+                .map(AdminUserDto::fromEntity)
+                .toList();
+
+        List<RoleDto> roleDtos = roleService.findAll().stream()
+                .map(r -> new RoleDto(r.getId(), r.getName(), r.isCanCreate(), r.isCanRead(), r.isCanUpdate(), r.isCanDelete(), r.getActions()))
+                .toList();
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("totalCount", dtos.size());
+        data.put("admins", dtos);
+        data.put("users", dtos);
+        data.put("roles", roleDtos);
+
+        return ResponseEntity.ok(ApiResponse.success("Administrators and roles retrieved successfully", data));
     }
 
     @Override
@@ -120,13 +151,39 @@ public class AdminController implements AdminOperations {
 
     @Override
     @PostMapping("/admin/admins/{adminId:\\d+}/delete-admin")
-    public String deleteAdminSsr(@PathVariable("adminId") Long adminId, RedirectAttributes flash) {
+    public Object deleteAdminSsr(@PathVariable("adminId") Long adminId,
+                                 HttpServletRequest request,
+                                 RedirectAttributes flash) {
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
         if (!portalAccess.canManageStaff()) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "Access denied: You do not have permission to delete administrators."));
+            }
             flash.addFlashAttribute("errorMessage", "Access denied: You do not have permission to delete administrators.");
             return "redirect:/admin/admins";
         }
-        return executeAdminAction(flash, "Administrator deleted successfully.", 
-                () -> adminService.deleteAdmin(adminId));
+
+        try {
+            adminService.deleteAdmin(adminId);
+            if (isAjax) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "adminId", adminId,
+                        "message", "Administrator deleted successfully."
+                ));
+            }
+            flash.addFlashAttribute("successMessage", "Administrator deleted successfully.");
+        } catch (Exception ex) {
+            if (isAjax) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", ex.getMessage()));
+            }
+            flash.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/admin/admins";
     }
 
     // =========================================================

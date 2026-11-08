@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{administration/fragments/adminLayout}">
+<head>
+    <title>Product Distribution Visual Report | Twekl Administration</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <section class="comic-card page-slide-fade ng-cloak" ng-controller="ReportController">
+            
+            <!-- Clean Header with Direct Back Link (No redundant quick bar) -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 16px;">
+                <div>
+                    <a th:href="@{/admin/reports(tab='products')}"
+                       class="comic-btn-secondary"
+                       style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; text-decoration: none;"
+                       title="Back to Table Report">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <span>Back to Table Report</span>
+                    </a>
+                    <h1 style="font-size: 1.35rem; font-weight: 900; color: #0F172A; margin: 12px 0 4px;">Product Distribution &amp; Performance</h1>
+                    <p style="font-size: 0.82rem; color: #64748B; margin: 0;">Track product sales volume, customer feedback, and issues per product</p>
+                </div>
+
+                <!-- Date Filter & Export -->
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span class="filter-date-label">From:</span>
+                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateFrom" ng-change="applyReportDateFilter()" title="Start Date">
+                    <span class="filter-date-label">To:</span>
+                    <input type="date" lang="en-GB" class="comic-date-input" ng-model="reportFilters.dateTo" ng-change="applyReportDateFilter()" title="End Date">
+
+                    <button th:if="${@portalAccess.canExportReports()}" type="button" class="comic-btn" style="padding: 6px 14px; font-size: 0.85rem; white-space: nowrap;" ng-click="exportReportExcel()" title="Export Products to Excel">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Export Excel</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simple, Natural KPIs for Clients & Managers -->
+            <div class="visual-kpi-grid">
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Total Products</span>
+                    <div class="visual-kpi-value" ng-bind="getTopRankedProducts().totalCount">0</div>
+                    <span class="visual-kpi-subtext">Monitored catalog products</span>
+                </div>
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Total Orders</span>
+                    <div class="visual-kpi-value" style="color: #2563EB;" ng-bind="((reportData.summary.totalOrders || 0) | number:0)">0</div>
+                    <span class="visual-kpi-subtext">Orders across all products</span>
+                </div>
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Happy Reviews</span>
+                    <div class="visual-kpi-value" style="color: #16A34A;" ng-bind="((reportData.summary.satisfiedCount || 0) | number:0)">0</div>
+                    <span class="visual-kpi-subtext">Satisfied customer responses</span>
+                </div>
+                <div class="visual-kpi-card">
+                    <span class="visual-kpi-label">Issues &amp; Complaints</span>
+                    <div class="visual-kpi-value" style="color: #DC2626;" ng-bind="((reportData.summary.unsatisfiedCount || 0) | number:0)">0</div>
+                    <span class="visual-kpi-subtext">Customer reported issues</span>
+                </div>
+            </div>
+
+            <!-- Two Distinct Useful Charts (No duplication) -->
+            <div class="visual-charts-row" style="margin-top: 20px;">
+                <!-- Chart 1: Top Ordered Products (Horizontal Bar Chart) -->
+                <div class="visual-chart-box">
+                    <div class="visual-chart-header">
+                        <div>
+                            <h3 class="visual-chart-title">Top Ordered Products</h3>
+                            <span class="visual-chart-subtitle">Most frequently purchased products by order count</span>
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="productVolumeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Products with Issues & Complaints (Bar Chart) -->
+                <div class="visual-chart-box">
+                    <div class="visual-chart-header">
+                        <div>
+                            <h3 class="visual-chart-title">Products with Most Issues</h3>
+                            <span class="visual-chart-subtitle">Products receiving the highest unsatisfied feedback</span>
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="productComplaintsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table Section (Bottom Half) -->
+            <div class="visual-table-section">
+                <div class="visual-table-header">
+                    <div style="font-size: 1.05rem; font-weight: 900; color: #0F172A;">Product Distribution &amp; Review Details</div>
+                    <div class="filter-search-box" style="min-width: 240px;">
+                        <input type="search" class="comic-search-bar" placeholder="Search product name..." ng-model="reportFilters.searchProducts">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="comic-table">
+                        <thead>
+                            <tr>
+                                <th>Product Bundle Name</th>
+                                <th class="nowrap" style="text-align: center;">Orders</th>
+                                <th class="nowrap" style="text-align: center;">Satisfied</th>
+                                <th class="nowrap" style="text-align: center;">Neutral</th>
+                                <th class="nowrap" style="text-align: center;">Unsatisfied</th>
+                                <th class="nowrap" style="text-align: right;">Defect / Issue Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="p in getPagedReportProducts() track by p.productName">
+                                <td><strong style="color: #0F172A; font-size: 0.92rem;" ng-bind="p.productName"></strong></td>
+                                <td class="nowrap" style="text-align: center;"><strong ng-bind="p.orderCount + ' Orders'"></strong></td>
+                                <td class="nowrap" style="text-align: center;"><span class="sat-badge sat-badge-satisfied" ng-bind="p.satisfiedCount"></span></td>
+                                <td class="nowrap" style="text-align: center;"><span class="sat-badge sat-badge-neutral" ng-bind="p.neutralCount"></span></td>
+                                <td class="nowrap" style="text-align: center;"><span class="sat-badge sat-badge-unsatisfied" ng-bind="p.unsatisfiedCount"></span></td>
+                                <td class="nowrap" style="text-align: right;">
+                                    <strong ng-style="{'color': p.defectRate > 20 ? '#DC2626' : '#16A34A'}" ng-bind="p.defectRate + '%'"></strong>
+                                </td>
+                            </tr>
+                            <tr ng-if="!getFilteredReportProducts() || getFilteredReportProducts().length === 0">
+                                <td colspan="6" style="text-align: center; padding: 24px; color: #64748B;">
+                                    No products found for the selected period.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</body>
+</html>

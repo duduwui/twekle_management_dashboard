@@ -40,6 +40,38 @@ public interface ReportOperations {
     String showReports(String period, String tab, String dateFrom, String dateTo, Model model);
 
     /**
+     * Redirects to the dedicated visual charts view for the requested tab.
+     *
+     * @param period   Filter preset parameter.
+     * @param tab      Active sub-tab ('milestones', 'satisfaction', 'products', 'retention'/'customers').
+     * @param dateFrom Custom start date.
+     * @param dateTo   Custom end date.
+     * @param model    Spring MVC Model container.
+     * @return Redirect to dedicated visual tab path.
+     */
+    String showVisualReports(String period, String tab, String dateFrom, String dateTo, Model model);
+
+    /**
+     * Renders the dedicated Milestones Visual Analytics page.
+     */
+    String showVisualMilestones(String period, String dateFrom, String dateTo, Model model);
+
+    /**
+     * Renders the dedicated Customer Satisfaction & Sentiment Visual Analytics page.
+     */
+    String showVisualSatisfaction(String period, String dateFrom, String dateTo, Model model);
+
+    /**
+     * Renders the dedicated Product Insights & Defect Distribution Visual Analytics page.
+     */
+    String showVisualProducts(String period, String dateFrom, String dateTo, Model model);
+
+    /**
+     * Renders the dedicated Customer Lifecycles & Retention Visual Analytics page.
+     */
+    String showVisualCustomers(String period, String dateFrom, String dateTo, Model model);
+
+    /**
      * Returns structured analytics report payload for a given time period or date range.
      *
      * @param period   Filter period key (default 'ALL').

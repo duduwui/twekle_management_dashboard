@@ -85,12 +85,29 @@ public class WebMvcConfig implements WebMvcConfigurer {
     }
 
     @Override
+    public void addInterceptors(org.springframework.web.servlet.config.annotation.InterceptorRegistry registry) {
+        registry.addInterceptor(new org.springframework.web.servlet.HandlerInterceptor() {
+            @Override
+            public boolean preHandle(jakarta.servlet.http.HttpServletRequest request,
+                                     jakarta.servlet.http.HttpServletResponse response,
+                                     Object handler) {
+                jakarta.servlet.http.HttpSession session = request.getSession(false);
+                if (session != null) {
+                    session.setMaxInactiveInterval(30 * 24 * 60 * 60); // 30 days in seconds
+                }
+                return true;
+            }
+        });
+    }
+
+    @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         for (HttpMessageConverter<?> converter : converters) {
             if (converter instanceof MappingJackson2HttpMessageConverter jacksonConverter) {
                 ObjectMapper mapper = jacksonConverter.getObjectMapper();
                 mapper.registerModule(new JavaTimeModule());
                 mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                mapper.enable(SerializationFeature.INDENT_OUTPUT);
                 return;
             }
         }
@@ -98,6 +115,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
         jacksonConverter.setObjectMapper(mapper);
         converters.add(0, jacksonConverter);
     }

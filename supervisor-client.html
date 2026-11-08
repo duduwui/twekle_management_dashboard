@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisor Website - Review Product Button</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #F1F5F9;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .sv-card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            padding: 30px;
+            max-width: 480px;
+            width: 100%;
+        }
+        h2 {
+            margin-top: 0;
+            color: #0F172A;
+            font-size: 1.25rem;
+        }
+        p {
+            color: #64748B;
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-small {
+            background: #E2E8F0;
+            color: #1E293B;
+            border: none;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-small:hover {
+            background: #CBD5E1;
+        }
+        .btn-review {
+            width: 100%;
+            background: #2563EB;
+            color: #FFF;
+            border: none;
+            padding: 13px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-review:hover {
+            background: #1D4ED8;
+        }
+        .info-box {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            color: #1E40AF;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sv-card">
+        <h2>Supervisor Website</h2>
+        <p>Clicking the button below submits the 4 customer data points to the Twekl review endpoint.</p>
+
+        <div class="info-box">
+            💡 <strong>Dynamic Order Creation:</strong> Entering a new Order ID for an existing customer creates and adds a new order to their profile. Entering an existing Order ID opens that order directly.
+        </div>
+
+        <!-- FORM THAT SENDS TO OUR TWEKL API -->
+        <form method="GET" action="http://192.168.1.7:8085/review">
+            <div class="form-group">
+                <label>Customer Name</label>
+                <input type="text" name="customerName" id="customerName" value="Aram" required>
+            </div>
+
+            <div class="form-group">
+                <label>Customer ID</label>
+                <input type="text" name="customerId" id="customerId" value="101" required>
+            </div>
+
+            <div class="form-group">
+                <label>Order ID</label>
+                <div class="input-row">
+                    <input type="text" name="orderId" id="orderId" value="505" required>
+                    <button type="button" class="btn-small" onclick="generateNewOrderId()" title="Generate a new Order ID to add a new purchase for this person">🎲 New ID</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="date" id="orderDate" required>
+            </div>
+
+            <button type="submit" class="btn-review">
+                ⚡ Review Product
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Set today's date automatically
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementById('orderDate').value = today;
+
+        function generateNewOrderId() {
+            var randomId = Math.floor(100 + Math.random() * 900);
+            document.getElementById('orderId').value = randomId;
+        }
+    </script>
+
+</body>
+</html>

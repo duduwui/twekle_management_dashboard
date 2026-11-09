@@ -1124,11 +1124,8 @@ public class ExternalIntegrationController {
         // Single order or customer lookup
         if (targetOrder != null || targetCustomer != null) {
             Map<String, Object> result = externalIntegrationService.getLastReview(targetOrder, targetCustomer, isSimple);
-            if (result == null) {
-                Map<String, Object> err = new LinkedHashMap<>();
-                err.put("status", 404);
-                err.put("message", "Order or customer not found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+            if (result == null || (result.containsKey("status") && Integer.valueOf(404).equals(result.get("status")))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result != null ? result : Map.of("status", 404, "message", "Order or customer not found"));
             }
             return ResponseEntity.ok(result);
         }

@@ -1164,32 +1164,34 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
             }
         }
 
-        Object lastReviewValue;
-        String followupType = latestReviewed != null && latestReviewed.getMilestoneName() != null ? latestReviewed.getMilestoneName() : null;
+        if (latestReviewed == null) {
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("status", 404);
+            err.put("message", "No completed reviews found for this customer or order");
+            return err;
+        }
 
-        if (latestReviewed != null) {
-            String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
-            if (simpleFormat) {
-                lastReviewValue = sat;
-            } else {
-                Map<String, Object> details = new LinkedHashMap<>();
-                details.put("satisfaction", sat);
-                if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
-                    details.put("notes", latestReviewed.getNotes().trim());
-                }
-                if (latestTime != null) {
-                    details.put("date", DateTimeFormatter.ISO_INSTANT.format(latestTime).substring(0, 10));
-                }
-                lastReviewValue = details;
-            }
+        String followupType = latestReviewed.getMilestoneName() != null ? latestReviewed.getMilestoneName() : "General Follow-up";
+        String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
+        Object lastReviewValue;
+        if (simpleFormat) {
+            lastReviewValue = sat;
         } else {
-            lastReviewValue = simpleFormat ? "PENDING" : null;
+            Map<String, Object> details = new LinkedHashMap<>();
+            details.put("satisfaction", sat);
+            if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
+                details.put("notes", latestReviewed.getNotes().trim());
+            }
+            if (latestTime != null) {
+                details.put("date", DateTimeFormatter.ISO_INSTANT.format(latestTime).substring(0, 10));
+            }
+            lastReviewValue = details;
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("order", ordNum);
         result.put("customerId", custId);
-        result.put("followupType", followupType != null ? followupType : "None");
+        result.put("followupType", followupType != null ? followupType : "General Follow-up");
         result.put("lastReview", lastReviewValue);
         return result;
     }
@@ -1241,42 +1243,35 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
                 }
             }
 
-            CustomerOrder finalOrder = bestOrder != null ? bestOrder : custOrders.get(0);
-            String ordNum = finalOrder.getOrderNumber() != null ? finalOrder.getOrderNumber() : String.valueOf(finalOrder.getId());
-            String followupType = latestReviewed != null && latestReviewed.getMilestoneName() != null ? latestReviewed.getMilestoneName() : null;
+            // Exclude pending/unreviewed customers: only return customers who actually have a completed review
+            if (latestReviewed == null || bestOrder == null) {
+                continue;
+            }
 
+            CustomerOrder finalOrder = bestOrder;
+            String ordNum = finalOrder.getOrderNumber() != null ? finalOrder.getOrderNumber() : String.valueOf(finalOrder.getId());
+            String followupType = latestReviewed.getMilestoneName() != null ? latestReviewed.getMilestoneName() : "General Follow-up";
+
+            String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
             Object lastReviewValue;
-            if (latestReviewed != null) {
-                String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
-                if (simpleFormat) {
-                    lastReviewValue = sat;
-                } else {
-                    Map<String, Object> details = new LinkedHashMap<>();
-                    details.put("satisfaction", sat);
-                    if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
-                        details.put("notes", latestReviewed.getNotes().trim());
-                    }
-                    if (latestTime != null) {
-                        details.put("date", DateTimeFormatter.ISO_INSTANT.format(latestTime).substring(0, 10));
-                    }
-                    lastReviewValue = details;
-                }
+            if (simpleFormat) {
+                lastReviewValue = sat;
             } else {
-                if (simpleFormat) {
-                    lastReviewValue = "PENDING";
-                } else {
-                    Map<String, Object> details = new LinkedHashMap<>();
-                    details.put("status", "PENDING");
-                    details.put("notes", "No review submitted yet");
-                    lastReviewValue = details;
+                Map<String, Object> details = new LinkedHashMap<>();
+                details.put("satisfaction", sat);
+                if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
+                    details.put("notes", latestReviewed.getNotes().trim());
                 }
-                followupType = "Pending";
+                if (latestTime != null) {
+                    details.put("date", DateTimeFormatter.ISO_INSTANT.format(latestTime).substring(0, 10));
+                }
+                lastReviewValue = details;
             }
 
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("order", ordNum);
             m.put("customerId", custId);
-            m.put("followupType", followupType != null ? followupType : "None");
+            m.put("followupType", followupType);
             m.put("lastReview", lastReviewValue);
             list.add(m);
         }

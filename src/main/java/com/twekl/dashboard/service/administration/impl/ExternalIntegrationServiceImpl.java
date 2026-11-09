@@ -1156,12 +1156,15 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
         }
 
         Object lastReviewValue;
+        String followupType = latestReviewed != null && latestReviewed.getMilestoneName() != null ? latestReviewed.getMilestoneName() : null;
+
         if (latestReviewed != null) {
             String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
             if (simpleFormat) {
                 lastReviewValue = sat;
             } else {
                 Map<String, Object> details = new LinkedHashMap<>();
+                details.put("followupType", followupType != null ? followupType : "General Follow-up");
                 details.put("satisfaction", sat);
                 if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
                     details.put("notes", latestReviewed.getNotes().trim());
@@ -1178,6 +1181,7 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("order", ordNum);
         result.put("customerId", custId);
+        result.put("followupType", followupType != null ? followupType : "None");
         result.put("lastReview", lastReviewValue);
         return result;
     }

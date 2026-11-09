@@ -1055,6 +1055,35 @@ public class ExternalIntegrationController {
                 || "simple".equalsIgnoreCase(formatParam)
                 || "string".equalsIgnoreCase(formatParam);
 
+        // Security check: require authenticated admin session, valid API key, or Bearer JWT token
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
+        String apiKey = firstNonEmpty(request.getHeader("X-API-KEY"), request.getParameter("apiKey"), request.getParameter("api_key"), bodyStr(body, "apiKey", "api_key", "key"));
+        boolean hasValidApiKey = apiKey != null && externalIntegrationService.isValidApiKey(apiKey);
+
+        String rawToken = firstNonEmpty(
+                request.getParameter("token"),
+                request.getParameter("jwt"),
+                request.getParameter("jwtToken"),
+                request.getHeader("X-AUTH-TOKEN"),
+                bodyStr(body, "token", "jwt", "jwtToken", "accessToken")
+        );
+        if (rawToken == null) {
+            String authH = request.getHeader("Authorization");
+            if (authH != null && authH.startsWith("Bearer ")) {
+                rawToken = authH.substring(7).trim();
+            }
+        }
+        boolean hasValidToken = (rawToken != null && (externalIntegrationService.decryptSession(rawToken) != null || externalIntegrationService.isValidApiKey(rawToken)));
+
+        if (!isAuthenticated && !hasValidApiKey && !hasValidToken) {
+            Map<String, Object> unauth = new LinkedHashMap<>();
+            unauth.put("status", 401);
+            unauth.put("error", "Unauthorized");
+            unauth.put("message", "Authentication required. Please provide a valid Bearer token in 'Authorization: Bearer <token>' header or '?token=<token>'");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(unauth);
+        }
+
         String targetOrder = firstNonEmpty(
                 idPath, orderParam, orderIdParam, orderIdSnake,
                 bodyStr(body, "order", "orderId", "order_id", "orderNumber", "order_number")

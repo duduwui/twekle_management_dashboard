@@ -1108,7 +1108,16 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
             if (customer != null) {
                 List<CustomerOrder> custOrders = customerOrderRepository.findByCustomerIdOrderByOrderDateDesc(customer.getId());
                 if (custOrders != null && !custOrders.isEmpty()) {
-                    order = custOrders.get(0);
+                    for (CustomerOrder co : custOrders) {
+                        List<OrderFollowupCheck> chks = followupCheckRepository.findByOrderId(co.getId());
+                        if (chks != null && chks.stream().anyMatch(c -> c.isCompleted() && c.getSatisfaction() != null)) {
+                            order = co;
+                            break;
+                        }
+                    }
+                    if (order == null) {
+                        order = custOrders.get(0);
+                    }
                 }
             }
         }

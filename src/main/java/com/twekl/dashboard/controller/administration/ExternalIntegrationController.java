@@ -1015,4 +1015,95 @@ public class ExternalIntegrationController {
         }
         return "redirect:/admin/followups?status=DONE";
     }
+
+    /**
+     * Clean 3-Parameter Review API:
+     * Returns or submits:
+     * - "order": order ID / order number
+     * - "customerId": customer ID
+     * - "lastReview": review status or details
+     *
+     * Example Endpoints:
+     *   GET /api/last-review?order=4399
+     *   GET /api/last-review/4399
+     *   GET /api/last-review?customerId=201
+     *   POST /api/last-review  (with body: { "order": "4399" })
+     *   POST /api/last-review  (with body: { "order": "4399", "customerId": "201", "lastReview": "SATISFIED" })
+     */
+    @RequestMapping(value = {
+            "/api/last-review",
+            "/api/last-review/{id}",
+            "/api/latest-review",
+            "/api/latest-review/{id}",
+            "/api/review/last",
+            "/api/review/latest"
+    }, method = {RequestMethod.GET, RequestMethod.POST})
+    @ResponseBody
+    public ResponseEntity<?> getLastReviewApi(
+            @PathVariable(value = "id", required = false) String idPath,
+            @RequestParam(value = "order", required = false) String orderParam,
+            @RequestParam(value = "orderId", required = false) String orderIdParam,
+            @RequestParam(value = "order_id", required = false) String orderIdSnake,
+            @RequestParam(value = "customerId", required = false) String customerIdParam,
+            @RequestParam(value = "customer_id", required = false) String customerIdSnake,
+            @RequestParam(value = "format", required = false) String formatParam,
+            @RequestParam(value = "simple", required = false) Boolean simpleParam,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpServletRequest request) {
+
+        boolean isSimple = Boolean.TRUE.equals(simpleParam)
+                || "simple".equalsIgnoreCase(formatParam)
+                || "string".equalsIgnoreCase(formatParam);
+
+        String targetOrder = firstNonEmpty(
+                idPath, orderParam, orderIdParam, orderIdSnake,
+                bodyStr(body, "order", "orderId", "order_id", "orderNumber", "order_number")
+        );
+
+        String targetCustomer = firstNonEmpty(
+                customerIdParam, customerIdSnake,
+                bodyStr(body, "customerId", "customer_id", "customer")
+        );
+
+        // If POST request includes a lastReview to submit/save:
+        if (body != null && (body.containsKey("lastReview") || body.containsKey("last_review") || body.containsKey("satisfaction"))) {
+            Object revObj = body.get("lastReview");
+            if (revObj == null) revObj = body.get("last_review");
+
+            String sat = null;
+            String notes = null;
+            if (revObj instanceof String strRev) {
+                sat = strRev;
+            } else if (revObj instanceof Map<?, ?> revMap) {
+                if (revMap.get("satisfaction") != null) sat = revMap.get("satisfaction").toString();
+                if (revMap.get("notes") != null) notes = revMap.get("notes").toString();
+            }
+            if (sat == null && body.get("satisfaction") != null) {
+                sat = body.get("satisfaction").toString();
+            }
+            if (notes == null && body.get("notes") != null) {
+                notes = body.get("notes").toString();
+            }
+
+            if (targetOrder != null && sat != null) {
+                externalIntegrationService.submitReview(targetOrder, notes, sat, null);
+            }
+        }
+
+        // Single order or customer lookup
+        if (targetOrder != null || targetCustomer != null) {
+            Map<String, Object> result = externalIntegrationService.getLastReview(targetOrder, targetCustomer, isSimple);
+            if (result == null) {
+                Map<String, Object> err = new LinkedHashMap<>();
+                err.put("status", 404);
+                err.put("message", "Order or customer not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+            }
+            return ResponseEntity.ok(result);
+        }
+
+        // No order specified: return list of all reviewed orders
+        List<Map<String, Object>> allList = externalIntegrationService.getAllLastReviews(isSimple);
+        return ResponseEntity.ok(allList);
+    }
 }

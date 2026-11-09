@@ -92,4 +92,18 @@ public interface ExternalIntegrationService {
      * Submits a customer review / milestone feedback directly via API.
      */
     Map<String, Object> submitReview(String orderId, String notes, String satisfaction, String photoUrl);
+
+    /**
+     * Retrieves the last review made for a given order or customer.
+     * Returns a 3-parameter map:
+     * - order: order number
+     * - customerId: customer ID
+     * - lastReview: review details / satisfaction
+     */
+    Map<String, Object> getLastReview(String orderId, String customerId, boolean simpleFormat);
+
+    /**
+     * Lists the last reviews for all reviewed orders.
+     */
+    java.util.List<Map<String, Object>> getAllLastReviews(boolean simpleFormat);
 }

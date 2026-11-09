@@ -1078,4 +1078,120 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
         res.put("notes", n);
         return res;
     }
+
+    @Override
+    public Map<String, Object> getLastReview(String orderId, String customerId, boolean simpleFormat) {
+        CustomerOrder order = null;
+        if (orderId != null && !orderId.trim().isEmpty()) {
+            String cleanOrd = orderId.trim();
+            List<CustomerOrder> orders = customerOrderRepository.findByOrderNumberWithCustomer(cleanOrd);
+            if (orders != null && !orders.isEmpty()) {
+                order = orders.get(0);
+            }
+            if (order == null) {
+                try {
+                    Long numOrd = Long.parseLong(cleanOrd);
+                    order = customerOrderRepository.findByIdWithCustomer(numOrd).orElse(null);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (order == null && customerId != null && !customerId.trim().isEmpty()) {
+            String cleanCust = customerId.trim();
+            Customer customer = customerRepository.findByExternalId(cleanCust).orElse(null);
+            if (customer == null) {
+                try {
+                    Long numCust = Long.parseLong(cleanCust);
+                    customer = customerRepository.findById(numCust).orElse(null);
+                } catch (Exception ignored) {}
+            }
+            if (customer != null) {
+                List<CustomerOrder> custOrders = customerOrderRepository.findByCustomerIdOrderByOrderDateDesc(customer.getId());
+                if (custOrders != null && !custOrders.isEmpty()) {
+                    order = custOrders.get(0);
+                }
+            }
+        }
+
+        if (order == null) {
+            return null;
+        }
+
+        return formatLastReviewMap(order, simpleFormat);
+    }
+
+    private Map<String, Object> formatLastReviewMap(CustomerOrder order, boolean simpleFormat) {
+        String ordNum = order.getOrderNumber() != null ? order.getOrderNumber() : String.valueOf(order.getId());
+        Customer cust = order.getCustomer();
+        String custId = cust != null
+                ? (cust.getExternalId() != null && !cust.getExternalId().trim().isEmpty() ? cust.getExternalId() : String.valueOf(cust.getId()))
+                : "";
+
+        List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderId(order.getId());
+        OrderFollowupCheck latestReviewed = null;
+        Instant latestTime = null;
+
+        if (checks != null) {
+            for (OrderFollowupCheck ch : checks) {
+                boolean isCompleted = ch.isCompleted()
+                        || "COMPLETED".equalsIgnoreCase(ch.getStatus())
+                        || "FINISHED".equalsIgnoreCase(ch.getStatus());
+                boolean isUnfinished = "UNFINISHED".equalsIgnoreCase(ch.getStatus())
+                        || "EXPIRED".equalsIgnoreCase(ch.getStatus());
+                boolean hasContent = (ch.getNotes() != null && !ch.getNotes().trim().isEmpty())
+                        || (ch.getSatisfaction() != null && !ch.getSatisfaction().trim().isEmpty());
+
+                if (!isCompleted || isUnfinished || !hasContent) {
+                    continue;
+                }
+
+                Instant rTime = ch.getCheckedAt() != null ? ch.getCheckedAt() :
+                        (ch.getCompletedDate() != null ? ch.getCompletedDate() : ch.getUpdatedAt());
+
+                if (latestReviewed == null || (rTime != null && (latestTime == null || rTime.isAfter(latestTime)))) {
+                    latestReviewed = ch;
+                    latestTime = rTime;
+                }
+            }
+        }
+
+        Object lastReviewValue;
+        if (latestReviewed != null) {
+            String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
+            if (simpleFormat) {
+                lastReviewValue = sat;
+            } else {
+                Map<String, Object> details = new LinkedHashMap<>();
+                details.put("satisfaction", sat);
+                if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
+                    details.put("notes", latestReviewed.getNotes().trim());
+                }
+                if (latestTime != null) {
+                    details.put("date", DateTimeFormatter.ISO_INSTANT.format(latestTime).substring(0, 10));
+                }
+                lastReviewValue = details;
+            }
+        } else {
+            lastReviewValue = simpleFormat ? "PENDING" : null;
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("order", ordNum);
+        result.put("customerId", custId);
+        result.put("lastReview", lastReviewValue);
+        return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getAllLastReviews(boolean simpleFormat) {
+        List<CustomerOrder> allOrders = customerOrderRepository.findAll();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (CustomerOrder ord : allOrders) {
+            Map<String, Object> m = formatLastReviewMap(ord, simpleFormat);
+            if (m.get("lastReview") != null) {
+                list.add(m);
+            }
+        }
+        return list;
+    }
 }

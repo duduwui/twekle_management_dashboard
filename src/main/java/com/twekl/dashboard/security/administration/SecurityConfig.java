@@ -159,6 +159,8 @@ public class SecurityConfig {
                     antMatcher("/product-review"), antMatcher("/product-review/**"),
                     antMatcher("/api/review"), antMatcher("/api/review/**"),
                     antMatcher("/api/reviews"), antMatcher("/api/reviews/**"),
+                    antMatcher("/api/last-review"), antMatcher("/api/last-review/**"),
+                    antMatcher("/api/latest-review"), antMatcher("/api/latest-review/**"),
                     antMatcher("/api/customer-reviews"), antMatcher("/api/customer-reviews/**"),
                     antMatcher("/followup"), antMatcher("/followup/**"),
                     antMatcher("/followups"), antMatcher("/followups/**"),

@@ -417,7 +417,7 @@
             return;
         }
 
-        const headers = ['#', 'Customer Name', 'Registered Date', 'Registered Time', 'Orders', 'Follow-up Status'];
+        const headers = ['ID', 'Customer Name', 'Registered Date', 'Registered Time', 'Orders', 'Follow-up Status'];
         const data = rowsToExport.map(function(row) {
             const tds = row.querySelectorAll('td');
             return [

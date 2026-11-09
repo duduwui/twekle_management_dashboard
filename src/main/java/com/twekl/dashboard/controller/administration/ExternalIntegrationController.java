@@ -1032,8 +1032,10 @@ public class ExternalIntegrationController {
      */
     @RequestMapping(value = {
             "/api/last-review",
-            "/api/last-review/{id}",
+            "/api/last-reviews",
             "/api/latest-review",
+            "/api/latest-reviews",
+            "/api/last-review/{id}",
             "/api/latest-review/{id}",
             "/api/review/last",
             "/api/review/latest"

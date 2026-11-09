@@ -1055,7 +1055,7 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
         if (checks == null || checks.isEmpty()) {
             Map<String, Object> err = new LinkedHashMap<>();
             err.put("success", false);
-            err.put("message", "No follow-up milestones found for order #" + order.getOrderNumber());
+            err.put("message", "No follow-up milestones found for order " + order.getOrderNumber());
             return err;
         }
 
@@ -1197,14 +1197,92 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
 
     @Override
     public List<Map<String, Object>> getAllLastReviews(boolean simpleFormat) {
-        List<CustomerOrder> allOrders = customerOrderRepository.findAll();
+        List<Customer> allCustomers = customerRepository.findAll();
         List<Map<String, Object>> list = new ArrayList<>();
-        for (CustomerOrder ord : allOrders) {
-            Map<String, Object> m = formatLastReviewMap(ord, simpleFormat);
-            if (m.get("lastReview") != null) {
-                list.add(m);
+
+        for (Customer customer : allCustomers) {
+            String custId = customer.getExternalId() != null && !customer.getExternalId().trim().isEmpty()
+                    ? customer.getExternalId().trim()
+                    : String.valueOf(customer.getId());
+
+            List<CustomerOrder> custOrders = customerOrderRepository.findByCustomerIdOrderByOrderDateDesc(customer.getId());
+            if (custOrders == null || custOrders.isEmpty()) {
+                continue;
             }
+
+            CustomerOrder bestOrder = null;
+            OrderFollowupCheck latestReviewed = null;
+            Instant latestTime = null;
+
+            for (CustomerOrder ord : custOrders) {
+                List<OrderFollowupCheck> checks = followupCheckRepository.findByOrderId(ord.getId());
+                if (checks == null) continue;
+
+                for (OrderFollowupCheck ch : checks) {
+                    boolean isCompleted = ch.isCompleted()
+                            || "COMPLETED".equalsIgnoreCase(ch.getStatus())
+                            || "FINISHED".equalsIgnoreCase(ch.getStatus());
+                    boolean isUnfinished = "UNFINISHED".equalsIgnoreCase(ch.getStatus())
+                            || "EXPIRED".equalsIgnoreCase(ch.getStatus());
+                    boolean hasContent = (ch.getNotes() != null && !ch.getNotes().trim().isEmpty())
+                            || (ch.getSatisfaction() != null && !ch.getSatisfaction().trim().isEmpty());
+
+                    if (!isCompleted || isUnfinished || !hasContent) {
+                        continue;
+                    }
+
+                    Instant rTime = ch.getCheckedAt() != null ? ch.getCheckedAt() :
+                            (ch.getCompletedDate() != null ? ch.getCompletedDate() : ch.getUpdatedAt());
+
+                    if (latestReviewed == null || (rTime != null && (latestTime == null || rTime.isAfter(latestTime)))) {
+                        latestReviewed = ch;
+                        latestTime = rTime;
+                        bestOrder = ord;
+                    }
+                }
+            }
+
+            CustomerOrder finalOrder = bestOrder != null ? bestOrder : custOrders.get(0);
+            String ordNum = finalOrder.getOrderNumber() != null ? finalOrder.getOrderNumber() : String.valueOf(finalOrder.getId());
+            String followupType = latestReviewed != null && latestReviewed.getMilestoneName() != null ? latestReviewed.getMilestoneName() : null;
+
+            Object lastReviewValue;
+            if (latestReviewed != null) {
+                String sat = latestReviewed.getSatisfaction() != null ? latestReviewed.getSatisfaction().toUpperCase() : "SATISFIED";
+                if (simpleFormat) {
+                    lastReviewValue = sat;
+                } else {
+                    Map<String, Object> details = new LinkedHashMap<>();
+                    details.put("followupType", followupType != null ? followupType : "General Follow-up");
+                    details.put("satisfaction", sat);
+                    if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
+                        details.put("notes", latestReviewed.getNotes().trim());
+                    }
+                    if (latestTime != null) {
+                        details.put("date", DateTimeFormatter.ISO_INSTANT.format(latestTime).substring(0, 10));
+                    }
+                    lastReviewValue = details;
+                }
+            } else {
+                if (simpleFormat) {
+                    lastReviewValue = "PENDING";
+                } else {
+                    Map<String, Object> details = new LinkedHashMap<>();
+                    details.put("status", "PENDING");
+                    details.put("notes", "No review submitted yet");
+                    lastReviewValue = details;
+                }
+                followupType = "Pending";
+            }
+
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("order", ordNum);
+            m.put("customerId", custId);
+            m.put("followupType", followupType != null ? followupType : "None");
+            m.put("lastReview", lastReviewValue);
+            list.add(m);
         }
+
         return list;
     }
 }

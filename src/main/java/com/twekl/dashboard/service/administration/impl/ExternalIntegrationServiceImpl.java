@@ -1173,7 +1173,6 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
                 lastReviewValue = sat;
             } else {
                 Map<String, Object> details = new LinkedHashMap<>();
-                details.put("followupType", followupType != null ? followupType : "General Follow-up");
                 details.put("satisfaction", sat);
                 if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
                     details.put("notes", latestReviewed.getNotes().trim());
@@ -1253,7 +1252,6 @@ public class ExternalIntegrationServiceImpl implements ExternalIntegrationServic
                     lastReviewValue = sat;
                 } else {
                     Map<String, Object> details = new LinkedHashMap<>();
-                    details.put("followupType", followupType != null ? followupType : "General Follow-up");
                     details.put("satisfaction", sat);
                     if (latestReviewed.getNotes() != null && !latestReviewed.getNotes().trim().isEmpty()) {
                         details.put("notes", latestReviewed.getNotes().trim());
